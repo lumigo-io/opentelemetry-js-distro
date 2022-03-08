@@ -17,7 +17,6 @@ setup_git
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
 
-
 echo "Push to NPM"
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
 npm run semantic-release
