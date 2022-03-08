@@ -12,8 +12,11 @@ npm ci
 
 echo "Setup git"
 setup_git
+ls
+echo "clean"
+rm -rf lib dist node_modules
 
-echo "Build tracer"
+echo "Build node wrapper"
 npm run build
 npm version patch
 cp package.json lib
@@ -24,6 +27,7 @@ echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
 
 echo "Creating new credential files"
+ls
 enc_location=../common-resources/encrypted_files/credentials_production.enc
 if [[ ! -f ${enc_location} ]]
 then
