@@ -17,6 +17,7 @@ echo "clean"
 rm -rf lib dist node_modules
 
 echo "Build node wrapper"
+npm i
 npm run build
 npm version patch
 cp package.json lib
