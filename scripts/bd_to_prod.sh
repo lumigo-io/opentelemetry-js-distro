@@ -10,9 +10,15 @@ setup_git() {
 echo "Install a project with a clean state"
 npm ci
 
+echo "Setup git"
+setup_git
+
 echo "Build tracer"
 npm run build
-setup_git
+npm version patch
+cp package.json lib
+cd lib
+
 
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production

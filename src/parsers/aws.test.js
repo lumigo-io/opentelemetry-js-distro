@@ -56,11 +56,9 @@ describe('aws parser', () => {
     const headersUpdate = { 'x-amz-target': 'DynamoDB_20120810.UpdateItem' };
     const requestDataUpdate = { headers: headersUpdate, body: bodyUpdate };
     const expectedUpdate = {
-      awsServiceData: {
-        resourceName: resourceName,
-        dynamodbMethod: 'UpdateItem',
-        messageId: md5Hash({ key: { S: 'value' } }),
-      },
+      'aws.dynamodb.method': 'UpdateItem',
+      'aws.resource.name': resourceName,
+      messageId: md5Hash({ key: { S: 'value' } }),
     };
     expect(aws.dynamodbParser(requestDataUpdate)).toEqual(expectedUpdate);
 
@@ -77,12 +75,11 @@ describe('aws parser', () => {
       body: bodyWriteBatch,
     };
     const expectedWriteBatch = {
-      awsServiceData: {
-        resourceName: resourceName,
-        dynamodbMethod: 'BatchWriteItem',
-        messageId: md5Hash({ key: { S: 'value' } }),
-      },
+      'aws.dynamodb.method': 'BatchWriteItem',
+      'aws.resource.name': resourceName,
+      messageId: md5Hash({ key: { S: 'value' } }),
     };
+
     expect(aws.dynamodbParser(requestDataWriteBatch)).toEqual(expectedWriteBatch);
 
     const bodyGetBatch = JSON.stringify({
@@ -100,10 +97,8 @@ describe('aws parser', () => {
       body: bodyGetBatch,
     };
     const expectedDataGetBatch = {
-      awsServiceData: {
-        resourceName: resourceName,
-        dynamodbMethod: 'BatchGetItem',
-      },
+      'aws.dynamodb.method': 'BatchGetItem',
+      'aws.resource.name': resourceName,
     };
     expect(aws.dynamodbParser(requestDataGetBatch)).toEqual(expectedDataGetBatch);
 
@@ -120,11 +115,9 @@ describe('aws parser', () => {
       body: bodyDeleteBatch,
     };
     const expectedDeleteBatch = {
-      awsServiceData: {
-        resourceName: resourceName,
-        dynamodbMethod: 'BatchWriteItem',
-        messageId: md5Hash({ key: { S: 'value' } }),
-      },
+      'aws.dynamodb.method': 'BatchWriteItem',
+      'aws.resource.name': resourceName,
+      messageId: md5Hash({ key: { S: 'value' } }),
     };
     expect(aws.dynamodbParser(requestDataDeleteBatch)).toEqual(expectedDeleteBatch);
   });
@@ -188,10 +181,8 @@ describe('aws parser', () => {
     const result = aws.snsParser(requestData, {});
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceName: topicArn,
-        targetArn: topicArn,
-      },
+      'aws.resource.name': 'SOME-TOPIC-ARN',
+      'aws.targetArn': 'SOME-TOPIC-ARN',
     });
   });
 
@@ -213,11 +204,7 @@ describe('aws parser', () => {
     const result = aws.snsParser({}, response);
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: '72eaeab7-267d-5bac-8eee-bf0d69758085',
-        resourceName: undefined,
-        targetArn: undefined,
-      },
+      "messageId": "72eaeab7-267d-5bac-8eee-bf0d69758085"
     });
   });
 

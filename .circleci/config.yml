@@ -110,46 +110,8 @@ jobs:
           - envs/
           - stack/
           - .aws/
-  deploy-beta:
-    working_directory: ~/lumigo-node
-    docker:
-    - image: lumigo/ci:latest
-      auth:
-        username: lumigo
-        password: $DOCKERHUB_PASSWORD
-    resource_class: medium+
-    environment:
-    - TZ: Asia/Jerusalem
-    steps:
-    - run:
-        command: |
-          mkdir ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
-          cd ..
-          git clone git@github.com:lumigo-io/common-resources.git
-    - run:
-        command: |
-          cd ..
-          git clone git@github.com:lumigo-io/utils.git
-    - run:
-        command: |
-          cd ..
-          git clone git@github.com:lumigo-io/larn.git
-    - checkout
-    - run:
-        name: Check if tagged
-        command: |
-          tags=$(git tag -l --points-at HEAD)
-          echo "Tags $tags"
-          if [[ ! -z "$tags" ]]
-          then
-            echo "A tagged commit, skip..."
-            circleci step halt
-          fi
-    - run:
-        name: deploy beta to npm + release with delay
-        command: ./scripts/bd_to_beta.sh
   deploy:
-    working_directory: ~/lumigo-node
+    working_directory: ~/lumigo-node-wrapper
     docker:
     - image: lumigo/ci:latest
       auth:
@@ -184,7 +146,7 @@ jobs:
             circleci step halt
           fi
     - run:
-        name: deploy to npm + lambda layer
+        name: deploy to npm
         command: ./scripts/bd_to_prod.sh
 workflows:
   test-deploy:
@@ -199,8 +161,8 @@ workflows:
             ignore: master
         requires:
         - test
-    - deploy-beta:
-        filters:
-          branches:
-            only: master
+    - deploy:
+        branches:
+          only: master
+
   version: 2
