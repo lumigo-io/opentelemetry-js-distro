@@ -1,6 +1,6 @@
 {
   "name": "@orrlev/lumigo-node-wrapper",
-  "version": "1.1.0",
+  "version": "0.2.10",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "lib/src/wrapper.js",
   "private": false,
@@ -69,14 +69,13 @@
     "webpack-cli": "^3.3.4"
   },
   "release": {
-    "branches": [
-      "master"
-    ],
+    "branches": ["master"],
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
       "@semantic-release/npm",
-      "@semantic-release/git"
+      "@semantic-release/git",
+      "@semantic-release/github"
     ]
   },
   "husky": {
