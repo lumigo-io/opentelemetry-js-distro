@@ -1,5 +1,5 @@
 {
-  "name": "lumigo-wrapper",
+  "name": "lumigo-node-wrapper",
   "version": "0.2.10",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "lib/src/wrapper.js",
