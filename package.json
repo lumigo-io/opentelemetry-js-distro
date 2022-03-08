@@ -2,9 +2,9 @@
   "name": "@orrlev/lumigo-node-wrapper",
   "version": "0.2.10",
   "description": "Lumigo wrapper to trace distributed architecture",
-  "main": "src/wrapper.js",
+  "main": "lib/src/wrapper.js",
   "private": false,
-  "types": "src/wrapper.d.ts",
+  "types": "lib/src/wrapper.d.ts",
   "scripts": {
     "start-example": "export LUMIGO_TOKEN=XXXXX && export LUMIGO_SERVICE_NAME=service-name && node -r lumigo-node-wrapper example/expressApp.js",
     "build": "rm -rf lib && tsc --build --force",

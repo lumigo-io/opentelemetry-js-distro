@@ -6,26 +6,15 @@ setup_git() {
     git config --global user.name "CircleCI"
     git checkout master
 }
-
 echo "Install a project with a clean state"
 npm ci
 
+echo "Build node wrapper"
+npm run build
+
 echo "Setup git"
 setup_git
-ls
-echo "clean"
-rm -rf lib dist node_modules
 
-echo "Build node wrapper"
-npm i
-npm run build
-npm version patch
-cp package.json lib
-cp package-lock.json lib
-pushd lib
-npm i
-echo ls1
-ls
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
 
