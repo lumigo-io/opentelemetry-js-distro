@@ -40,7 +40,7 @@
     "path-to-regexp": "^0.1.7",
     "shimmer": "^1.2.1"
   },
-  "homepage": "https://github.com/lumigo-io/distributed-tracing.git",
+  "homepage": "https://github.com/lumigo-io/lumigo-node-wrapper.git",
   "devDependencies": {
     "@opentelemetry/plugin-express": "^0.15.0",
     "@opentelemetry/plugin-http": "^0.18.2",
