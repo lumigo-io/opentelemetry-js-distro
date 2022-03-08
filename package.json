@@ -69,7 +69,7 @@
     "webpack-cli": "^3.3.4"
   },
   "release": {
-    "branches": ["master"],
+    "branch": "master",
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
