@@ -9,7 +9,7 @@
     "start-example": "export LUMIGO_TOKEN=XXXXX && export LUMIGO_SERVICE_NAME=service-name && node -r lumigo-node-wrapper example/expressApp.js",
     "build": "rm -rf lib && tsc --build --force",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
-    "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test",
+//    "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
     "semantic-release": "semantic-release",
