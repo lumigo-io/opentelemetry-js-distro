@@ -16,10 +16,7 @@
     "test": "npm run build && jest --detectOpenHandles --runInBand --forceExit",
     "tsc": "tsc"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/lumigo-io/distributed-tracing.git"
-  },
+  "repository": "git@github.com/lumigo-io/lumigo-node-wrapper.git",
   "author": "Orr Levinger",
   "dependencies": {
     "@opentelemetry/api": "^1.0.2",
