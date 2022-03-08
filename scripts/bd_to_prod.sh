@@ -14,6 +14,7 @@ echo "Build tracer"
 npm run build
 setup_git
 
+
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
 
