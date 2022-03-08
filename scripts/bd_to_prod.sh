@@ -23,6 +23,9 @@ npm version patch
 cp package.json lib
 cp package-lock.json lib
 pushd lib
+npm i
+echo ls1
+ls
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
 
