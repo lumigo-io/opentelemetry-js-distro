@@ -21,13 +21,13 @@ npm i
 npm run build
 npm version patch
 cp package.json lib
-
+cp package-lock.json lib
+pushd lib
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
 
 echo "Push to NPM"
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-pushd lib
 npm run semantic-release
 
 echo \{\"type\":\"Release\",\"repo\":\"${CIRCLE_PROJECT_REPONAME}\",\"buildUrl\":\"${CIRCLE_BUILD_URL}\"\} | curl -X POST "https://listener.logz.io:8071?token=${LOGZ}" -v --data-binary @-
