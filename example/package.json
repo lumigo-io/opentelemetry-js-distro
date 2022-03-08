@@ -1,12 +1,12 @@
 {
-  "name": "lumigo-wrapper-test",
+  "name": "lumigo-node-wrapper-test",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-app": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r lumigo-wrapper expressApp.js",
+    "start-app": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r lumigo-node-wrapper expressApp.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lumigo-wrapper": "lumigo-wrapper"
+    "lumigo-node-wrapper": "lumigo-node-wrapper"
   },
   "author": "",
   "license": "ISC",
@@ -14,7 +14,7 @@
     "axios": "^0.25.0",
     "body-parser": "^1.19.1",
     "express": "^4.17.1",
-    "lumigo-wrapper": "^0.2.11",
+    "lumigo-node-wrapper": "^0.2.11",
     "uuid": "^8.3.2"
   }
 }

@@ -5,7 +5,7 @@
   "main": "lib/src/wrapper.js",
   "types": "lib/src/wrapper.d.ts",
   "scripts": {
-    "start-example": "export LUMIGO_TOKEN=XXXXX && export LUMIGO_SERVICE_NAME=service-name && node -r lumigo-wrapper example/expressApp.js",
+    "start-example": "export LUMIGO_TOKEN=XXXXX && export LUMIGO_SERVICE_NAME=service-name && node -r lumigo-node-wrapper example/expressApp.js",
     "build": "rm -rf lib && tsc --build --force",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test",
