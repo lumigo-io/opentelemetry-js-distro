@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/lumigo-node-wrapper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "lib/src/wrapper.js",
   "private": false,
