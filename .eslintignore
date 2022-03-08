@@ -1,1 +1,4 @@
 **/*.js
+**/*.test.*s
+src/**/jsonSortify.ts
+src/**/xmlToJson.ts

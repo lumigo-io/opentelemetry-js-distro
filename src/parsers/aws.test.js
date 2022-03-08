@@ -204,7 +204,7 @@ describe('aws parser', () => {
     const result = aws.snsParser({}, response);
 
     expect(result).toEqual({
-      "messageId": "72eaeab7-267d-5bac-8eee-bf0d69758085"
+      messageId: '72eaeab7-267d-5bac-8eee-bf0d69758085',
     });
   });
 

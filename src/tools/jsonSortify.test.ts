@@ -1,4 +1,5 @@
 // @ts-nocheck
+// @ts-ignore
 import { sortify } from './jsonSortify';
 JSON.sortify = sortify;
 describe('JSON.sortify', function () {

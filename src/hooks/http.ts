@@ -1,5 +1,5 @@
 import * as shimmer from 'shimmer';
-import {diag, Span} from '@opentelemetry/api';
+import { diag, Span } from '@opentelemetry/api';
 import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { InstrumentationIfc } from './hooksIfc';
 import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
@@ -10,8 +10,8 @@ const noop = () => {};
 const isFunctionAlreadyWrapped = (fn) => fn && fn.__wrapped;
 
 export type HookOptions = {
-  beforeHook?: Function,
-  afterHook?: Function,
+  beforeHook?: Function;
+  afterHook?: Function;
 };
 
 const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer) => {
@@ -37,7 +37,11 @@ const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer)
 
 const MAX_SIZE = 4084;
 
-const createEmitResponseOnEmitBeforeHookHandler = (requestData: RequestData,response: any,  span: Span & {attributes: Record<string, string>}) => {
+const createEmitResponseOnEmitBeforeHookHandler = (
+  requestData: RequestData,
+  response: any,
+  span: Span & { attributes: Record<string, string> }
+) => {
   let body = '';
   let maxPayloadSize = MAX_SIZE;
   return function (args) {
@@ -82,20 +86,29 @@ export const isEncodingType = (encodingType): boolean =>
   );
 
 export const extractBodyFromEmitSocketEvent = (socketEventArgs) => {
-  return safeExecute(() => {
-    if (socketEventArgs && socketEventArgs._httpMessage && socketEventArgs._httpMessage._hasBody) {
-      const httpMessage = socketEventArgs._httpMessage;
-      let lines = [];
-      if (httpMessage.hasOwnProperty('outputData')) {
-        lines = httpMessage.outputData[0]?.data.split('\n') || [];
-      } else if (httpMessage.hasOwnProperty('output')) {
-        lines = httpMessage.output[0]?.split('\n') || [];
+  return safeExecute(
+    () => {
+      if (
+        socketEventArgs &&
+        socketEventArgs._httpMessage &&
+        socketEventArgs._httpMessage._hasBody
+      ) {
+        const httpMessage = socketEventArgs._httpMessage;
+        let lines = [];
+        if (httpMessage.hasOwnProperty('outputData')) {
+          lines = httpMessage.outputData[0]?.data.split('\n') || [];
+        } else if (httpMessage.hasOwnProperty('output')) {
+          lines = httpMessage.output[0]?.split('\n') || [];
+        }
+        if (lines.length > 0) {
+          return lines[lines.length - 1];
+        }
       }
-      if (lines.length > 0) {
-        return lines[lines.length - 1];
-      }
-    }
-  },"failed to extractBodyFromEmitSocketEvent", "warn", "")();
+    },
+    'failed to extractBodyFromEmitSocketEvent',
+    'warn',
+    ''
+  )();
 };
 
 export const isEmptyString = (str): boolean =>
@@ -112,7 +125,10 @@ export const extractBodyFromWriteOrEndFunc = (writeEventArgs) => {
   })();
 };
 
-const createEmitResponseHandler = (requestData: RequestData, span: Span & {attributes: Record<string, string>}) => {
+const createEmitResponseHandler = (
+  requestData: RequestData,
+  span: Span & { attributes: Record<string, string> }
+) => {
   return (response) => {
     const onHandler = createEmitResponseOnEmitBeforeHookHandler(requestData, response, span);
     hook(response, 'emit', {
@@ -131,7 +147,10 @@ const httpRequestWriteBeforeHookWrapper = (requestData: RequestData, span: Span)
   };
 };
 
-const httpRequestEmitBeforeHookWrapper = (requestData, span: Span & {attributes: Record<string, string>}) => {
+const httpRequestEmitBeforeHookWrapper = (
+  requestData,
+  span: Span & { attributes: Record<string, string> }
+) => {
   const emitResponseHandler = createEmitResponseHandler(requestData, span);
   const oneTimerEmitResponseHandler = runOneTimeWrapper(emitResponseHandler, {});
   return function (args) {
@@ -149,24 +168,24 @@ const httpRequestEmitBeforeHookWrapper = (requestData, span: Span & {attributes:
 };
 
 export type HttpRequest = {
-  host?: string,
-  body?: string,
-  path?: string
-  headers?: Record<string, string>,
-}
-
-export type HttpResponse = {
-  statusCode?: number
-  body?: string,
-  headers?: Record<string, string>,
-}
-
-export type RequestData = {
-  request: HttpRequest,
-  response: HttpResponse,
+  host?: string;
+  body?: string;
+  path?: string;
+  headers?: Record<string, string>;
 };
 
-type RequestType = (ClientRequest | IncomingMessage) & { headers?: any, getHeaders: () => any };
+export type HttpResponse = {
+  statusCode?: number;
+  body?: string;
+  headers?: Record<string, string>;
+};
+
+export type RequestData = {
+  request: HttpRequest;
+  response: HttpResponse;
+};
+
+type RequestType = (ClientRequest | IncomingMessage) & { headers?: any; getHeaders: () => any };
 
 function getRequestHeaders(request: RequestType) {
   return request.headers || request.getHeaders();
@@ -176,17 +195,17 @@ export const HttpHooks: InstrumentationIfc<
   ClientRequest | IncomingMessage,
   IncomingMessage | ServerResponse
 > = {
-  requestHook(span: Span & {attributes: Record<string, string>}, request: RequestType) {
-    diag.debug("@opentelemetry/instrumentation-http on requestHook()")
-    safeExecute(()=>{
+  requestHook(span: Span & { attributes: Record<string, string> }, request: RequestType) {
+    diag.debug('@opentelemetry/instrumentation-http on requestHook()');
+    safeExecute(() => {
       const requestData: RequestData = {
         request: {
           body: '',
-          headers: {}
+          headers: {},
         },
         response: {
           body: '',
-          headers: {}
+          headers: {},
         },
       };
       let headers = getRequestHeaders(request);
@@ -213,13 +232,12 @@ export const HttpHooks: InstrumentationIfc<
       hook(request, 'end', { beforeHook: endWrapper });
       hook(request, 'emit', { beforeHook: emitWrapper });
       hook(request, 'write', { beforeHook: writeWrapper });
-    })()
+    })();
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
-    diag.debug("@opentelemetry/instrumentation-http on responseHook()")
-    if (response.headers){
+    diag.debug('@opentelemetry/instrumentation-http on responseHook()');
+    if (response.headers) {
       span.setAttribute('http.response.headers', JSON.stringify(response.headers));
     }
-
   },
 };

@@ -8,11 +8,9 @@ import {
   apigwParser,
   eventBridgeParser,
 } from '../parsers/aws';
-import {Span} from "@opentelemetry/api";
+import { Span } from '@opentelemetry/api';
 
 export const EXTERNAL_SERVICE = 'external';
-
-
 
 export const AWS_PARSED_SERVICES = ['dynamodb', 'sns', 'lambda', 'sqs', 'kinesis', 'events'];
 

@@ -94,14 +94,14 @@ export const traverse = (xml, attributeMode?) => {
         const temp = json[tag];
         json[tag] = [temp];
         const nextObj = {};
-        for (let key in next) {
+        for (const key in next) {
           nextObj[key] = next[key];
         }
         temporary = { ...temporary, ...nextObj };
         json[tag].push(temporary);
       } else if (tagShouldBeArray) {
         const nextObj = {};
-        for (let key in next) {
+        for (const key in next) {
           nextObj[key] = next[key];
         }
         temporary = { ...temporary, ...nextObj };

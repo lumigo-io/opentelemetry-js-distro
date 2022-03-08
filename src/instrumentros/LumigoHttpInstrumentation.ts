@@ -2,7 +2,7 @@ import { HttpHooks } from '../hooks/http';
 
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
 import axios, { AxiosResponse } from 'axios';
-import {LUMIGO_ENDPOINT} from "../wrapper";
+import { LUMIGO_ENDPOINT } from '../wrapper';
 
 let metadata;
 
@@ -29,7 +29,7 @@ export default class LumigoHttpInstrumentation {
       ignoreOutgoingUrls: process.env['ECS_CONTAINER_METADATA_URI']
         ? [process.env['ECS_CONTAINER_METADATA_URI'], endPoint, LUMIGO_ENDPOINT]
         : [endPoint, LUMIGO_ENDPOINT],
-      applyCustomAttributesOnSpan: (span, request, response) => {
+      applyCustomAttributesOnSpan: (span) => {
         if (metadata) span.setAttribute('metadata', JSON.stringify(metadata));
         if (lumigoToken) span.setAttribute('lumigoToken', lumigoToken);
       },

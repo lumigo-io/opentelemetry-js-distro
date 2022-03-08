@@ -1,13 +1,12 @@
 import * as crypto from 'crypto';
 import { sortify } from './tools/jsonSortify';
-  '["secretsmanager.*.amazonaws.com", "ssm.*.amazonaws.com", "kms.*.amazonaws.com", "sts..*amazonaws.com"]';
-
+('["secretsmanager.*.amazonaws.com", "ssm.*.amazonaws.com", "kms.*.amazonaws.com", "sts..*amazonaws.com"]');
 
 export function safeExecute<T>(
-    callback: Function,
-    message: string = 'Error in Lumigo tracer',
-    logLevel: string = "warn",
-    defaultReturn: T = undefined
+  callback: Function,
+  message: string = 'Error in Lumigo tracer',
+  logLevel: string = 'warn',
+  defaultReturn: T = undefined
 ): Function {
   return function (...args) {
     try {
@@ -30,7 +29,6 @@ export const runOneTimeWrapper = (func: Function, context: any = undefined): Fun
   };
 };
 
-
 export const safeGet = (obj, arr, dflt = null) => {
   let current = obj;
   for (let i in arr) {
@@ -41,8 +39,6 @@ export const safeGet = (obj, arr, dflt = null) => {
   }
   return current || dflt;
 };
-
-
 
 export const isAwsService = (host, responseData = undefined): boolean => {
   if (host && host.includes('amazonaws.com')) {
@@ -55,29 +51,22 @@ export const isAwsService = (host, responseData = undefined): boolean => {
   );
 };
 
-
 export const parseQueryParams = (queryParams) => {
-  return safeExecute(
-    () => {
-      if (typeof queryParams !== 'string') return {};
-      let obj = {};
-      queryParams.replace(
-        /([^=&]+)=([^&]*)/g,
-        // @ts-ignore
-        safeExecute(
-          (m, key, value) => {
-            obj[decodeURIComponent(key)] = decodeURIComponent(value);
-          },
-          'Failed to parse a specific key in parseQueryParams',
-        )
-      );
-      return obj;
-    },
-    'Failed to parse query params',
-  )();
+  return safeExecute(() => {
+    if (typeof queryParams !== 'string') return {};
+    let obj = {};
+    queryParams.replace(
+      /([^=&]+)=([^&]*)/g,
+      // @ts-ignore
+      safeExecute((m, key, value) => {
+        obj[decodeURIComponent(key)] = decodeURIComponent(value);
+      }, 'Failed to parse a specific key in parseQueryParams')
+    );
+    return obj;
+  }, 'Failed to parse query params')();
 };
 
-
+// eslint-disable-next-line no-unused-vars
 const recursiveGetKeyByDepth = (event, keyToSearch, maxDepth) => {
   if (maxDepth === 0) {
     return undefined;

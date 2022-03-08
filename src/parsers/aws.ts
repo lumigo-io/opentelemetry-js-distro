@@ -1,7 +1,7 @@
 import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
 import { traverse } from '../tools/xmlToJson';
-import {HttpRequest, HttpResponse} from "../hooks/http";
-import * as Http from "http";
+import { HttpRequest, HttpResponse } from '../hooks/http';
+import * as Http from 'http';
 
 const extractDynamodbMessageId = (reqBody, method) => {
   if (method === 'PutItem' && reqBody['Item']) {
@@ -66,7 +66,7 @@ export const lambdaParser = (requestData: HttpRequest, responseData: HttpRespons
   return {
     'aws.resource.name': resourceName,
     'aws.invocation.type': invocationType,
-    'aws.request.id': spanId
+    'aws.request.id': spanId,
   };
 };
 
@@ -116,7 +116,7 @@ export const eventBridgeParser = (requestData, responseData) => {
     : undefined;
   return {
     'aws.resource.names': resourceNames,
-    'messageIds': messageIds,
+    messageIds: messageIds,
   };
 };
 

@@ -53,7 +53,7 @@ describe('happy flow', () => {
   });
 
   test('Trim whitespaces in token', () => {
-    wrapper.trace(" t_10faa5e13e7844aaa1234   ", 'service-1');
+    wrapper.trace(' t_10faa5e13e7844aaa1234   ', 'service-1');
     expect(NodeTracerProvider).toHaveBeenCalledWith({
       plugins: {
         'aws-sdk': {
