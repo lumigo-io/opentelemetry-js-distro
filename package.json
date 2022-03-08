@@ -16,7 +16,7 @@
     "test": "npm run build && jest --detectOpenHandles --runInBand --forceExit",
     "tsc": "tsc"
   },
-  "repository": "git@github.com/lumigo-io/lumigo-node-wrapper.git",
+  "repository": "git@github.com:lumigo-io/lumigo-node-wrapper.git",
   "author": "Orr Levinger",
   "dependencies": {
     "@opentelemetry/api": "^1.0.2",
