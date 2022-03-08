@@ -5,6 +5,7 @@ import { InstrumentationIfc } from './hooksIfc';
 import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
 import { getAwsServiceData } from '../spans/awsSpan';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
 const isFunctionAlreadyWrapped = (fn) => fn && fn.__wrapped;
@@ -43,7 +44,7 @@ const createEmitResponseOnEmitBeforeHookHandler = (
   span: Span & { attributes: Record<string, string> }
 ) => {
   let body = '';
-  let maxPayloadSize = MAX_SIZE;
+  const maxPayloadSize = MAX_SIZE;
   return function (args) {
     const { headers, statusCode } = response;
     if (args[0] === 'data' && body.length < maxPayloadSize) {
@@ -95,8 +96,10 @@ export const extractBodyFromEmitSocketEvent = (socketEventArgs) => {
       ) {
         const httpMessage = socketEventArgs._httpMessage;
         let lines = [];
+        // eslint-disable-next-line no-prototype-builtins
         if (httpMessage.hasOwnProperty('outputData')) {
           lines = httpMessage.outputData[0]?.data.split('\n') || [];
+          // eslint-disable-next-line no-prototype-builtins
         } else if (httpMessage.hasOwnProperty('output')) {
           lines = httpMessage.output[0]?.split('\n') || [];
         }
@@ -208,7 +211,7 @@ export const HttpHooks: InstrumentationIfc<
           headers: {},
         },
       };
-      let headers = getRequestHeaders(request);
+      const headers = getRequestHeaders(request);
       requestData.request.host = span?.attributes && span.attributes['http.host'];
       if (headers) {
         requestData.request.headers = headers;

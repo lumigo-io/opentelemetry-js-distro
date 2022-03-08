@@ -2,3 +2,4 @@
 **/*.test.*s
 src/**/jsonSortify.ts
 src/**/xmlToJson.ts
+src/**/logsInstrumentation.ts

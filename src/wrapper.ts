@@ -3,11 +3,11 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 // And optionally change the logging level (Defaults to INFO)
 import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
 import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
-const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
-const { BatchSpanProcessor } = require('@opentelemetry/sdk-trace-base');
-const { registerInstrumentations } = require('@opentelemetry/instrumentation');
-const { Resource } = require('@opentelemetry/resources');
-const { CollectorTraceExporter } = require('@opentelemetry/exporter-collector');
+import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { registerInstrumentations } from "@opentelemetry/instrumentation";
+import { Resource } from "@opentelemetry/resources";
+import { CollectorTraceExporter } from "@opentelemetry/exporter-collector";
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
     ? DiagLogLevel.ALL
@@ -17,6 +17,7 @@ export const LUMIGO_ENDPOINT =
   'http://lumigo-wrapper-collector.golumigo.com:55681/v1/trace' || process.env.LUMIGO_ENDPOINT;
 
 export const getTracerInfo = (): { name: string; version: string } => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const pkg = require('../package.json');
   const { name, version } = pkg;
   return { name, version };
@@ -40,6 +41,7 @@ const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIGO_ENDPO
       return;
     }
     const exporter = new CollectorTraceExporter({
+    // @ts-ignore
       serviceName,
       url: endpoint,
     });
@@ -59,7 +61,9 @@ const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIGO_ENDPO
 
     registerInstrumentations({
       instrumentations: [
+        // @ts-ignore
         new LumigoHttpInstrumentation(lumigoToken, endpoint),
+        // @ts-ignore
         new LumigoExpressInstrumentation(),
       ],
     });
@@ -86,6 +90,6 @@ module.exports = {
   LumigoExpressInstrumentation,
   LumigoInstrumentations: (lumigoToken?: string) => [
     new LumigoHttpInstrumentation(lumigoToken),
-    new LumigoExpressInstrumentation(lumigoToken),
+    new LumigoExpressInstrumentation(),
   ],
 };

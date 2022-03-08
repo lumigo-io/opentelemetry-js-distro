@@ -4,8 +4,8 @@ import { sortify } from './tools/jsonSortify';
 
 export function safeExecute<T>(
   callback: Function,
-  message: string = 'Error in Lumigo tracer',
-  logLevel: string = 'warn',
+  message = 'Error in Lumigo tracer',
+  logLevel = 'warn',
   defaultReturn: T = undefined
 ): Function {
   return function (...args) {
@@ -31,7 +31,7 @@ export const runOneTimeWrapper = (func: Function, context: any = undefined): Fun
 
 export const safeGet = (obj, arr, dflt = null) => {
   let current = obj;
-  for (let i in arr) {
+  for (const i in arr) {
     if (!current) {
       return dflt;
     }
@@ -54,7 +54,7 @@ export const isAwsService = (host, responseData = undefined): boolean => {
 export const parseQueryParams = (queryParams) => {
   return safeExecute(() => {
     if (typeof queryParams !== 'string') return {};
-    let obj = {};
+    const obj = {};
     queryParams.replace(
       /([^=&]+)=([^&]*)/g,
       // @ts-ignore

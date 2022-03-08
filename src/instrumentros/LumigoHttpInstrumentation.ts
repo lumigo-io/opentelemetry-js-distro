@@ -1,6 +1,6 @@
 import { HttpHooks } from '../hooks/http';
 
-const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
+import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import axios, { AxiosResponse } from 'axios';
 import { LUMIGO_ENDPOINT } from '../wrapper';
 

@@ -17,11 +17,13 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
     res.send = function (data: any) {
       response = data;
       res.send = oldResSend;
+      // eslint-disable-next-line prefer-rest-params
       return oldResSend.apply(res, arguments);
     };
     res.end = function () {
       diag.debug('opentelemetry-instrumentation-express on end()');
       return safeExecute(() => {
+        // eslint-disable-next-line prefer-rest-params
         const origRes = oldResEnd.apply(res, arguments);
         if (res.getHeaders())
           span.setAttribute('http.response.headers', JSON.stringify(res.getHeaders()));
