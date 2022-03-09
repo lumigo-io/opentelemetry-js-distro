@@ -17,8 +17,12 @@ export const LUMIGO_ENDPOINT =
   'http://lumigo-wrapper-collector.golumigo.com:55681/v1/trace' || process.env.LUMIGO_ENDPOINT;
 
 export const getTracerInfo = (): { name: string; version: string } => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const pkg = require('../package.json');
+  let pkg;
+  try {
+    pkg = require("../package.json");
+  } catch (e) {
+    pkg = require("../../package.json");
+  }
   const { name, version } = pkg;
   return { name, version };
 };
