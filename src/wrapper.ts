@@ -8,6 +8,7 @@ import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { CollectorTraceExporter } from '@opentelemetry/exporter-collector';
+import { safeExecute } from './utils';
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
     ? DiagLogLevel.ALL
@@ -17,14 +18,21 @@ export const LUMIGO_ENDPOINT =
   'http://lumigo-wrapper-collector.golumigo.com:55681/v1/trace' || process.env.LUMIGO_ENDPOINT;
 
 export const getTracerInfo = (): { name: string; version: string } => {
-  let pkg;
-  try {
-    pkg = require("../package.json");
-  } catch (e) {
-    pkg = require("../../package.json");
-  }
-  const { name, version } = pkg;
-  return { name, version };
+  return safeExecute(
+    () => {
+      let pkg;
+      try {
+        pkg = require('../package.json');
+      } catch (e) {
+        pkg = require('../../package.json');
+      }
+      const { name, version } = pkg;
+      return { name, version };
+    },
+    'Failed to get wrapper version',
+    'warn',
+    { name: '@lumigo/lumigo-node-wrapper', version: '0.0.0' }
+  )();
 };
 
 function requireIfAvailable(name) {
