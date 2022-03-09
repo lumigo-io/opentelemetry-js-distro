@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Deleting old node_modules"
-rm -rf node_modules
+setup_git() {
+    git config --global user.email "no-reply@build.com"
+    git config --global user.name "CircleCI"
+    git checkout master
+}
 
-echo "Installing dependencies"
-npm i
+echo "Install a project with a clean state"
+npm ci
 
 echo "Build tracer"
 npm run build
+cp package.json lib
+setup_git
 
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
 
-echo "Getting latest changes from git"
-changes=$(git log $(git describe --tags --abbrev=0)..HEAD --oneline)
-echo ${changes}
+echo "Push to NPM"
+echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+npm run semantic-release
+
+echo \{\"type\":\"Release\",\"repo\":\"${CIRCLE_PROJECT_REPONAME}\",\"buildUrl\":\"${CIRCLE_BUILD_URL}\"\} | curl -X POST "https://listener.logz.io:8071?token=${LOGZ}" -v --data-binary @-
+git push origin master
