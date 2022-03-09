@@ -242,11 +242,9 @@ describe('aws parser', () => {
     const result = aws.snsParser(requestData, response);
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: '72eaeab7-267d-5bac-8eee-bf0d69758085',
-        resourceName: topicArn,
-        targetArn: topicArn,
-      },
+      'aws.resource.name': topicArn,
+      'aws.targetArn': topicArn,
+      messageId: '72eaeab7-267d-5bac-8eee-bf0d69758085',
     });
   });
 
@@ -261,11 +259,9 @@ describe('aws parser', () => {
     const result = aws.snsParser(requestData, {});
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceName: undefined,
-        targetArn: undefined,
-        messageId: undefined,
-      },
+      resourceName: undefined,
+      targetArn: undefined,
+      messageId: undefined,
     });
   });
 
@@ -298,10 +294,8 @@ describe('aws parser', () => {
       const result = aws.sqsParser(requestData, responseData);
 
       expect(result).toEqual({
-        awsServiceData: {
-          resourceName: queueUrl,
-          messageId: '85dc3997-b060-47bc-9d89-c754d7260dbd',
-        },
+        'aws.resource.name': queueUrl,
+        messageId: '85dc3997-b060-47bc-9d89-c754d7260dbd',
       });
     })
   );
@@ -321,19 +315,15 @@ describe('aws parser', () => {
     const result = aws.sqsParser(requestData, {});
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceName: queueUrl,
-        messageId: null,
-      },
+      'aws.resource.name': queueUrl,
+      messageId: null,
     });
   });
 
   test('sqsParser -> empty request', () => {
     const result = aws.sqsParser({}, null);
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: null,
-      },
+      messageId: null,
     });
   });
 
@@ -347,10 +337,8 @@ describe('aws parser', () => {
     const result = aws.sqsParser(requestData, {});
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: null,
-        resourceName: undefined,
-      },
+      messageId: null,
+      resourceName: undefined,
     });
   });
 
@@ -393,10 +381,8 @@ describe('aws parser', () => {
     const result = aws.eventBridgeParser(requestData, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceNames: ['test', 'test2'],
-        messageIds: ['1-2-3-4', '6-7-8-9'],
-      },
+      'aws.resource.names': ['test', 'test2'],
+      messageIds: ['1-2-3-4', '6-7-8-9'],
     });
   });
 
@@ -434,9 +420,7 @@ describe('aws parser', () => {
     const result = aws.eventBridgeParser(requestData, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceNames: ['test', 'test2'],
-      },
+      'aws.resource.names': ['test', 'test2'],
     });
   });
 
@@ -450,10 +434,8 @@ describe('aws parser', () => {
     const result = aws.eventBridgeParser(requestData, {});
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageIds: undefined,
-        resourceName: undefined,
-      },
+      messageIds: undefined,
+      resourceName: undefined,
     });
   });
 
@@ -471,10 +453,8 @@ describe('aws parser', () => {
     const result = aws.kinesisParser(requestData, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceName: streamName,
-        messageId: '1',
-      },
+      'aws.resource.name': streamName,
+      messageId: '1',
     });
   });
 
@@ -494,10 +474,8 @@ describe('aws parser', () => {
     const result = aws.kinesisParser(requestData, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceName: streamName,
-        messageIds: ['1', '2'],
-      },
+      'aws.resource.name': streamName,
+      messageIds: ['1', '2'],
     });
   });
 
@@ -510,9 +488,7 @@ describe('aws parser', () => {
     const result = aws.kinesisParser(requestData, {});
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceName: undefined,
-      },
+      'aws.resource.name': undefined,
     });
   });
 
@@ -528,9 +504,7 @@ describe('aws parser', () => {
     const result = aws.kinesisParser(requestData, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        resourceName: undefined,
-      },
+      'aws.resource.name': undefined,
     });
   });
 
@@ -543,9 +517,7 @@ describe('aws parser', () => {
     const result = aws.apigwParser({}, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: '123',
-      },
+      messageId: '123',
     });
   });
 
@@ -558,9 +530,7 @@ describe('aws parser', () => {
     const result = aws.apigwParser({}, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: '123',
-      },
+      messageId: '123',
     });
   });
 
@@ -573,9 +543,7 @@ describe('aws parser', () => {
     const result = aws.apigwParser({}, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: 'x-amzn-123',
-      },
+      messageId: 'x-amzn-123',
     });
   });
 
@@ -588,9 +556,7 @@ describe('aws parser', () => {
     const result = aws.awsParser({}, responseData);
 
     expect(result).toEqual({
-      awsServiceData: {
-        messageId: '123',
-      },
+      messageId: '123',
     });
   });
 

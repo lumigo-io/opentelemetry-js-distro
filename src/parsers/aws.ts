@@ -126,7 +126,7 @@ export const sqsParser = (requestData, responseData) => {
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;
   const parsedResBody = resBody ? traverse(resBody) : undefined;
   const resourceName = parsedReqBody ? parsedReqBody['QueueUrl'] : undefined;
-  const awsServiceData = { 'aws.resourceName': resourceName };
+  const awsServiceData = { 'aws.resource.name': resourceName };
   // @ts-ignore
   awsServiceData.messageId =
     safeGet(parsedResBody, ['SendMessageResponse', 'SendMessageResult', 'MessageId'], undefined) ||
@@ -166,7 +166,7 @@ export const kinesisParser = (requestData, responseData) => {
     resBodyJSON = {};
   }
   const resourceName = (reqBodyJSON['StreamName'] && reqBodyJSON.StreamName) || undefined;
-  const awsServiceData = { 'aws.resourceName': resourceName };
+  const awsServiceData = { 'aws.resource.name': resourceName };
   if (resBodyJSON['SequenceNumber']) {
     // @ts-ignore
     awsServiceData.messageId = resBodyJSON['SequenceNumber'];

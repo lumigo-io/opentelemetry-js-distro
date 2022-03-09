@@ -3,11 +3,11 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 // And optionally change the logging level (Defaults to INFO)
 import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
 import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { registerInstrumentations } from "@opentelemetry/instrumentation";
-import { Resource } from "@opentelemetry/resources";
-import { CollectorTraceExporter } from "@opentelemetry/exporter-collector";
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { Resource } from '@opentelemetry/resources';
+import { CollectorTraceExporter } from '@opentelemetry/exporter-collector';
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
     ? DiagLogLevel.ALL
@@ -41,7 +41,7 @@ const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIGO_ENDPO
       return;
     }
     const exporter = new CollectorTraceExporter({
-    // @ts-ignore
+      // @ts-ignore
       serviceName,
       url: endpoint,
     });
