@@ -1,14 +1,9 @@
-pushd wrappers/node || exit 1
+#!/usr/bin/env bash
+
 echo "clean"
-rm -rf lib dist node_modules wrapper.tgz wrapper.gz
-
-echo "build..."
-npm i
+rm -rf lib dist wrapper.tgz || true
+echo "build"
+nmp ci
 npm run build
-cp package.json lib
-
-# NPM
-wrapper="$(npm pack | tail -1)"
-mv $wrapper wrapper.tgz
-
-popd
+tracer="$(npm pack)"
+mv $tracer wrapper.tgz
