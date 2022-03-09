@@ -17,7 +17,6 @@ diag.setLogger(new DiagConsoleLogger(), logLevel);
 export const LUMIGO_ENDPOINT =
   'http://lumigo-wrapper-collector.golumigo.com:55681/v1/trace' || process.env.LUMIGO_ENDPOINT;
 
-
 export const getTracerInfo = (): { name: string; version: string } => {
   return safeExecute(
     () => {
