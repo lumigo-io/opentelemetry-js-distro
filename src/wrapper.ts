@@ -31,7 +31,7 @@ export const getTracerInfo = (): { name: string; version: string } => {
     },
     'Failed to get wrapper version',
     'warn',
-    { name: '@lumigo/lumigo-node-wrapper', version: '0.0.0' }
+    { name: '@lumigo/microservices-node-tracer', version: '0.0.0' }
   )();
 };
 

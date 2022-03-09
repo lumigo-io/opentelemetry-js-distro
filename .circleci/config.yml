@@ -47,7 +47,7 @@ jobs:
         path: coverage
         prefix: coverage
   integration-test:
-    working_directory: ~/lumigo-node
+    working_directory: ~/lumigo-node-wrapper
     docker:
     - image: lumigo/ci:latest
       auth:
@@ -100,7 +100,7 @@ jobs:
         version: 19.03.13
     - run:
         name: run tests
-        command: cd ../integration-tests && export CURRENT_REPO=lumigo-node && export testNode=true && npm run test-parallel
+        command: cd ../integration-tests && export CURRENT_REPO=lumigo-node-wrapper && npm run test-parallel
         no_output_timeout: 30m
     - store_test_results:
           path: ../integration-tests/src/test/test-results
