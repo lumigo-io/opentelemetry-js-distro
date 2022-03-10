@@ -36,3 +36,43 @@ workflows:
           branches:
             only: master
   version: 2
+
+
+jobs:
+  test:
+    working_directory: ~/lumigo-node-wrapper
+    docker:
+      - image: lumigo/ci:latest
+        auth:
+          username: lumigo
+          password: $DOCKERHUB_PASSWORD
+    environment:
+      - TZ: Asia/Jerusalem
+      - NODE_OPTIONS: --max_old_space_size=1500
+    resource_class: medium+
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: install-npm-wee
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+      - run:
+          name: prettier
+          command: npm run prettier:ci
+      - run:
+          name: test
+          command: npm test
+      - run:
+          name: eslint
+          command: npm run lint
+      - run:
+          name: code-coverage
+          command: npm test --coverage && codecov
+      - store_artifacts:
+          path: coverage
+          prefix: coverage
