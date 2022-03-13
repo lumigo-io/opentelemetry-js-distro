@@ -10,6 +10,7 @@ setup_git() {
 echo "Install a project with a clean state"
 npm ci
 
+
 echo "Build tracer"
 npm run build
 cp package.json lib
