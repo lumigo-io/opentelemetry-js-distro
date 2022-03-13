@@ -37,7 +37,7 @@ lumigoWrapper.trace(‘YOUR-TOKEN-HERE’,‘YOUR-SERVICE-NAME’);
 "start": "export LUMIGO_TOKEN=‘YOUR-TOKEN-HERE’ && export LUMIGO_SERVICE_NAME=‘YOUR-SERVICE-NAME’ && node -r @lumigo/microservices-node-tracer app.js"
 }
 ~~~
-
+* Finally: Re-deploy your app.
 
 
 ## Configuration
