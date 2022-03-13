@@ -31,7 +31,7 @@ workflows:
             ignore: master
         requires:
           - lumigo-orb/be-deploy
-    - lumigo-orb/deploy:
+    - deploy:
         filters:
           branches:
             only: master
@@ -76,3 +76,37 @@ jobs:
       - store_artifacts:
           path: coverage
           prefix: coverage
+  deploy:
+    working_directory: ~/lumigo-node-wrapper
+    docker:
+      - image: lumigo/ci:latest
+        auth:
+          username: lumigo
+          password: $DOCKERHUB_PASSWORD
+    environment:
+      - TZ: Asia/Jerusalem
+    resource_class: medium+
+    steps:
+      - run:
+          command: |
+            mkdir ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+            cd ..
+            git clone git@github.com:lumigo-io/common-resources.git
+      - run:
+          command: |
+            cd ..
+            git clone git@github.com:lumigo-io/utils.git
+      - checkout
+      - run:
+          name: Check if tagged
+          command: |
+            tags=$(git tag -l --points-at HEAD)
+            echo "Tags $tags"
+            if [[ ! -z "$tags" ]]
+            then
+              echo "A tagged commit, skip..."
+              circleci step halt
+            fi
+      - run:
+          name: deploy to npm
+          command: ./scripts/bd_to_prod.sh
