@@ -54,7 +54,7 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
       diag.debug('Lumigo is switched off');
       return;
     }
-    if(isTraced){
+    if (isTraced) {
       diag.debug('Lumigo already traced');
       return;
     }
@@ -95,7 +95,7 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
   }
 };
 
-if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME) {
+if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME && !isTraced) {
   trace(
     process.env.LUMIGO_TOKEN,
     process.env.LUMIGO_SERVICE_NAME,
