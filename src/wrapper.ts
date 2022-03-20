@@ -17,6 +17,8 @@ diag.setLogger(new DiagConsoleLogger(), logLevel);
 export const LUMIGO_ENDPOINT =
   'http://lumigo-wrapper-collector.golumigo.com:55681/v1/trace' || process.env.LUMIGO_ENDPOINT;
 
+let isTraced = false;
+
 export const getTracerInfo = (): { name: string; version: string } => {
   return safeExecute(
     () => {
@@ -52,6 +54,10 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
       diag.debug('Lumigo is switched off');
       return;
     }
+    if (isTraced) {
+      diag.debug('Lumigo already traced');
+      return;
+    }
     const exporter = new CollectorTraceExporter({
       // @ts-ignore
       serviceName,
@@ -82,13 +88,14 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
     requireIfAvailable('express');
     requireIfAvailable('http');
     requireIfAvailable('https');
+    isTraced = true;
     diag.debug('Lumigo instrumentation started');
   } catch (e) {
     console.error('Lumigo tracer had an Error: ', e);
   }
 };
 
-if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME) {
+if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME && !isTraced) {
   trace(
     process.env.LUMIGO_TOKEN,
     process.env.LUMIGO_SERVICE_NAME,
