@@ -33,7 +33,7 @@ export const addInstrumentation = (instrumentation: InstrumentationBase) => {
   }
 };
 
-export const getTracerInfo = (): { name: string, version: string } => {
+export const getTracerInfo = (): { name: string; version: string } => {
   return safeExecute(
     () => {
       let pkg;
@@ -104,7 +104,7 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
     });
     requireIfAvailable([
       ...MODULES_TO_INSTRUMENT,
-      ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || "[]"),
+      ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
     ]);
     isTraced = true;
     diag.debug('Lumigo instrumentation started');
