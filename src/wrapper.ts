@@ -1,13 +1,11 @@
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
-// Setting the default Global logger to use the Console
-// And optionally change the logging level (Defaults to INFO)
 import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
 import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';
 import { safeExecute } from './utils';
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
@@ -19,7 +17,23 @@ export const LUMIGO_ENDPOINT =
 
 let isTraced = false;
 
-export const getTracerInfo = (): { name: string; version: string } => {
+const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
+
+const externalInstrumentations = [];
+
+export const addInstrumentation = (instrumentation: InstrumentationBase) => {
+  if (isTraced) {
+    console.warn(
+      `Lumigo already traced, Try to first add your instrumentation and then calling trace()`
+    );
+  } else if (instrumentation instanceof InstrumentationBase) {
+    externalInstrumentations.push(instrumentation);
+  } else {
+    console.warn(`instrumentation is not instance of InstrumentationBase`);
+  }
+};
+
+export const getTracerInfo = (): { name: string, version: string } => {
   return safeExecute(
     () => {
       let pkg;
@@ -37,15 +51,17 @@ export const getTracerInfo = (): { name: string; version: string } => {
   )();
 };
 
-function requireIfAvailable(name) {
-  try {
-    require.resolve(name);
-    require(name);
-  } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND') {
-      console.warn(`module [${name}] not installed`);
+function requireIfAvailable(names: string[]) {
+  names.forEach((name) => {
+    try {
+      require.resolve(name);
+      require(name);
+    } catch (e) {
+      if (e.code === 'MODULE_NOT_FOUND') {
+        console.warn(`module [${name}] not installed`);
+      }
     }
-  }
+  });
 }
 
 export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIGO_ENDPOINT) => {
@@ -58,7 +74,7 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
       diag.debug('Lumigo already traced');
       return;
     }
-    const exporter = new CollectorTraceExporter({
+    const exporter = new OTLPTraceExporter({
       // @ts-ignore
       serviceName,
       url: endpoint,
@@ -83,11 +99,13 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
         new LumigoHttpInstrumentation(lumigoToken, endpoint),
         // @ts-ignore
         new LumigoExpressInstrumentation(),
+        ...externalInstrumentations,
       ],
     });
-    requireIfAvailable('express');
-    requireIfAvailable('http');
-    requireIfAvailable('https');
+    requireIfAvailable([
+      ...MODULES_TO_INSTRUMENT,
+      ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || "[]"),
+    ]);
     isTraced = true;
     diag.debug('Lumigo instrumentation started');
   } catch (e) {

@@ -1,9 +1,9 @@
-const express = require('express');
-const lumigoWrapper = require("@lumigo/microservices-node-tracer");
-lumigoWrapper.trace('XXXXX', 'service-name');
+import {trace} from "@lumigo/microservices-node-tracer";
+trace('XXXXX', 'service-name');
+import express from 'express';
 
-const axios = require("axios");
-const bodyParser = require('body-parser')
+import axios from "axios";
+import bodyParser from 'body-parser'
 const app = express();
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
