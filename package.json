@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/microservices-node-tracer",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "lib/src/wrapper.js",
   "private": false,
