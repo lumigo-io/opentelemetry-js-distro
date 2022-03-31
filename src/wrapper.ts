@@ -5,7 +5,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { safeExecute } from './utils';
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
@@ -33,15 +33,11 @@ export const addInstrumentation = (instrumentation: InstrumentationBase) => {
   }
 };
 
-export const getTracerInfo = (): { name: string; version: string } => {
+export const getTracerInfo = (): { name: string, version: string } => {
   return safeExecute(
     () => {
-      let pkg;
-      try {
-        pkg = require('../package.json');
-      } catch (e) {
-        pkg = require('../../package.json');
-      }
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const pkg = require('../package.json');
       const { name, version } = pkg;
       return { name, version };
     },

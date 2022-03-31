@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["ES2019", "DOM"],
+    "target": "es2019",
+    "lib": [ "ES2020" ],
     "module": "commonjs",
     "moduleResolution": "node",
+    "sourceMap": true,
     "strict": false,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
     "composite": true,
     "inlineSources": true,
     "allowSyntheticDefaultImports": true,
