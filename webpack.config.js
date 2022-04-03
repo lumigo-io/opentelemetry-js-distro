@@ -5,11 +5,11 @@ module.exports = {
   entry: './src/wrapper.ts',
   mode: "production",
   devtool: 'source-map',
+  externalsPresets: { node: true },
   module: {
     rules: [
       {
         test: /\.(ts|js)x?$/,
-        exclude: /node_modules/,
         use: 'ts-loader'
       },
     ],
@@ -23,12 +23,13 @@ module.exports = {
     modules: ['node_modules', path.join(__dirname, 'src')],
     extensions: ['.tsx', '.ts', '.js'],
   },
+
   output: {
     globalObject: 'this',
     library: 'lumigoNodeWrapper',
     filename: 'wrapper.js',
     libraryTarget: 'umd',
     umdNamedDefine: true,
-    path: path.resolve(__dirname, 'bundle'),
+    path: path.resolve(__dirname, 'lib'),
   },
 };

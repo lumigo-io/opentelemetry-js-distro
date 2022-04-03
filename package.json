@@ -35,6 +35,7 @@
     "opentelemetry-instrumentation-express": "^0.27.0",
     "path-to-regexp": "^0.1.7",
     "shimmer": "^1.2.1",
+    "stream-http": "^3.2.0",
     "util": "^0.12.4"
   },
   "homepage": "https://github.com/lumigo-io/lumigo-node-wrapper.git",

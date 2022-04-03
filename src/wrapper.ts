@@ -7,6 +7,8 @@ import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/in
 import { Resource } from '@opentelemetry/resources';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { safeExecute } from './utils';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 console.log('process.env', process.env);
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
@@ -34,6 +36,35 @@ export const addInstrumentation = (instrumentation: InstrumentationBase) => {
   }
 };
 
+const safeRequire = (libId) => {
+  try {
+    const customReq =
+      // eslint-disable-next-line no-undef,camelcase
+      // @ts-ignore
+      typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+    return customReq(libId);
+  } catch (e) {
+    try {
+      const customReq =
+        // eslint-disable-next-line no-undef,camelcase
+        // @ts-ignore
+        typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+      const path = customReq.resolve(libId, {
+        paths: [...process.env.NODE_PATH.split(':'), '/var/task/node_modules/'],
+      });
+      return customReq(path);
+    } catch (e) {
+      if (e.code !== 'MODULE_NOT_FOUND') {
+        diag.warn('Cant load Module', {
+          error: e,
+          libId: libId,
+        });
+      }
+    }
+  }
+  return undefined;
+};
+
 export const getTracerInfo = (): { name: string, version: string } => {
   return safeExecute(
     () => {
@@ -49,16 +80,7 @@ export const getTracerInfo = (): { name: string, version: string } => {
 };
 
 function requireIfAvailable(names: string[]) {
-  names.forEach((name) => {
-    try {
-      require.resolve(name);
-      require(name);
-    } catch (e) {
-      if (e.code === 'MODULE_NOT_FOUND') {
-        console.warn(`module [${name}] not installed`);
-      }
-    }
-  });
+  names.forEach((name) => safeRequire(name));
 }
 
 export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIGO_ENDPOINT) => {
@@ -86,10 +108,10 @@ export const trace = (lumigoToken: string, serviceName: string, endpoint = LUMIG
         envs: JSON.stringify(process.env),
       }),
     };
+    console.log('2');
     const traceProvider = new NodeTracerProvider(config);
     traceProvider.addSpanProcessor(new BatchSpanProcessor(exporter));
     traceProvider.register();
-
     registerInstrumentations({
       instrumentations: [
         // @ts-ignore
