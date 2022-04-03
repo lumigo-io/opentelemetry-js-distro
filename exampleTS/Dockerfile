@@ -13,9 +13,6 @@ COPY . /application/
 WORKDIR /application
 RUN npm install
 RUN npm run compile
-ENV AWS_DEFAULT_REGION ""
-ENV AWS_ACCESS_KEY_ID ""
-ENV AWS_SECRET_ACCESS_KEY ""
 CMD [ "npm", "run", "local"]
 
 EXPOSE 80

@@ -22,7 +22,7 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
     };
     res.end = function () {
       diag.debug('opentelemetry-instrumentation-express on end()');
-      return safeExecute(() => {
+      return safeExecute(function() {
         // eslint-disable-next-line prefer-rest-params
         const origRes = oldResEnd.apply(res, arguments);
         if (res.getHeaders())

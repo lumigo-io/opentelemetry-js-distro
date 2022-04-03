@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es2019",
-    "lib": [ "ES2020" ],
+    "target": "es5",
     "module": "commonjs",
+    "lib": [ "es2015" ],
     "moduleResolution": "node",
     "sourceMap": true,
-    "strict": false,
     "declaration": true,
+    "strict": false,
     "declarationMap": true,
     "composite": true,
     "inlineSources": true,

@@ -7,6 +7,7 @@ import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/in
 import { Resource } from '@opentelemetry/resources';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { safeExecute } from './utils';
+console.log('process.env', process.env);
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
     ? DiagLogLevel.ALL
@@ -116,13 +117,3 @@ if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME && !isTraced) {
     process.env.LUMIGO_ENDPOINT || LUMIGO_ENDPOINT
   );
 }
-
-module.exports = {
-  trace,
-  LumigoHttpInstrumentation,
-  LumigoExpressInstrumentation,
-  LumigoInstrumentations: (lumigoToken?: string) => [
-    new LumigoHttpInstrumentation(lumigoToken),
-    new LumigoExpressInstrumentation(),
-  ],
-};
