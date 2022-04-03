@@ -7,9 +7,7 @@ import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/in
 import { Resource } from '@opentelemetry/resources';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { safeExecute } from './utils';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 
-console.log('process.env', process.env);
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
     ? DiagLogLevel.ALL
