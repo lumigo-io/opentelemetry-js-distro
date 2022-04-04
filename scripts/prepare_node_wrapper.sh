@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo "clean"
-rm -rf lib dist wrapper.tgz || true
+rm -rf dist wrapper.tgz || true
 echo "build"
 npm ci
 npm run build

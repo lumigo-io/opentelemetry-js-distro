@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start-progrematically": "node src/expressAppScript.js",
-    "start-script": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r @lumigo/microservices-node-tracer expressApp.js",
+    "start-script": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && node -r @lumigo/microservices-node-tracer expressAppScript.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "tsc"
   },

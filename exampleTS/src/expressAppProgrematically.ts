@@ -1,4 +1,4 @@
-import {trace} from "../../lib/src/wrapper";
+import {trace} from "@lumigo/microservices-node-tracer";
 trace('XXXXX', 'service-name');
 import express from 'express';
 

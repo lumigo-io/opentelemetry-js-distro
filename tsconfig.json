@@ -1,24 +1,20 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["ES2019", "DOM"],
+    "allowJs": true,
+    "target": "es6",
     "module": "commonjs",
     "moduleResolution": "node",
-    "strict": false,
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
-    "composite": true,
     "inlineSources": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "noImplicitOverride": true,
-    "rootDir": ".",
-    "outDir": "lib"
-
+    "rootDir": "./src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true
   },
-  "include": [
-    "src/**/*.ts",
-  ],
+  "include": ["./src/**/*"],
   "exclude": ["**/*.test.js", "**/*.test.ts"]
 }
