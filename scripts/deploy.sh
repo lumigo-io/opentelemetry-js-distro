@@ -10,14 +10,13 @@ setup_git() {
 echo "Install a project with a clean state"
 npm ci
 
+echo "Setting production ad NODE_ENV"
+export NODE_ENV=production
 
 echo "Build tracer"
 npm run build
 cp package.json lib
 setup_git
-
-echo "Setting production ad NODE_ENV"
-export NODE_ENV=production
 
 echo "Push to NPM"
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc

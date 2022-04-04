@@ -1,22 +1,20 @@
 {
   "compilerOptions": {
+    "allowJs": true,
     "target": "es6",
     "module": "es2015",
     "moduleResolution": "node",
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true,
     "inlineSources": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "noImplicitOverride": true,
-    "rootDir": ".",
-    "outDir": "lib"
-
+    "rootDir": "./src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true
   },
-  "include": [
-    "src/**/*.ts",
-  ],
+  "include": ["./src/**/*"],
   "exclude": ["**/*.test.js", "**/*.test.ts"]
 }

@@ -2,9 +2,9 @@
   "name": "@lumigo/microservices-node-tracer",
   "version": "1.0.8",
   "description": "Lumigo wrapper to trace distributed architecture",
-  "main": "lib/src/wrapper.js",
+  "main": "dist/wrapper.js",
   "private": false,
-  "types": "lib/src/wrapper.d.ts",
+  "types": "dist/wrapper.d.ts",
   "scripts": {
     "build": "rm -rf lib dist && webpack --mode production",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test",
