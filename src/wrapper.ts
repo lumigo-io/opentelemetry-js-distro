@@ -81,7 +81,11 @@ function requireIfAvailable(names: string[]) {
   names.forEach((name) => safeRequire(name));
 }
 
-export const trace = (lumigoToken= "", serviceName = "service-name", endpoint = LUMIGO_ENDPOINT) => {
+export const trace = (
+  lumigoToken = '',
+  serviceName = 'service-name',
+  endpoint = LUMIGO_ENDPOINT
+) => {
   try {
     if (process.env.LUMIGO_SWITCH_OFF && process.env.LUMIGO_SWITCH_OFF.toLowerCase() === 'true') {
       diag.debug('Lumigo is switched off');
