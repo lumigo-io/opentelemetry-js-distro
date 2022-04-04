@@ -6,7 +6,7 @@
   "private": false,
   "types": "lib/src/wrapper.d.ts",
   "scripts": {
-    "build": "rm -rf lib bundle && webpack --mode production",
+    "build": "rm -rf lib dist && webpack --mode production",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",

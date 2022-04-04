@@ -14,7 +14,7 @@
     "esModuleInterop": true,
     "noImplicitOverride": true,
     "rootDir": ".",
-    "outDir": "lib"
+    "outDir": "dist"
 
   },
   "include": [
