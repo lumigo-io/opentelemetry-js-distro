@@ -140,3 +140,13 @@ if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME && !isTraced) {
     process.env.LUMIGO_ENDPOINT || LUMIGO_ENDPOINT
   );
 }
+
+module.exports = {
+  trace,
+  LumigoHttpInstrumentation,
+  LumigoExpressInstrumentation,
+  LumigoInstrumentations: (lumigoToken?: string) => [
+    new LumigoHttpInstrumentation(lumigoToken),
+    new LumigoExpressInstrumentation(),
+  ],
+};
