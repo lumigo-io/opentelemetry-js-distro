@@ -30,6 +30,6 @@ module.exports = {
     filename: 'wrapper.js',
     libraryTarget: 'umd',
     umdNamedDefine: true,
-    path: path.resolve(__dirname, 'lib'),
+    path: path.resolve(__dirname, 'lib/src'),
   },
 };

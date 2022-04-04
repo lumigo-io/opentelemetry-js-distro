@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "lib": [ "es2015" ],
+    "target": "es6",
+    "module": "es2015",
     "moduleResolution": "node",
     "sourceMap": true,
     "declaration": true,
-    "strict": false,
     "declarationMap": true,
     "composite": true,
     "inlineSources": true,
@@ -14,7 +12,7 @@
     "esModuleInterop": true,
     "noImplicitOverride": true,
     "rootDir": ".",
-    "outDir": "dist"
+    "outDir": "lib"
 
   },
   "include": [
