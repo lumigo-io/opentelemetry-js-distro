@@ -1,6 +1,7 @@
+console.log("TS CONTAINER");
+import express from 'express';
 import {trace} from "@lumigo/microservices-node-tracer";
 trace('XXXXX', 'service-name');
-import express from 'express';
 
 import axios from "axios";
 import bodyParser from 'body-parser'
