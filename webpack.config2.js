@@ -2,7 +2,7 @@ const nodeExternals = require('webpack-node-externals');
 const path = require('path');
 
 module.exports = {
-  entry: './src/expressAppProgrematically.ts',
+  entry: './src/wrapper.ts',
   mode: 'production',
   devtool: 'source-map',
   target: 'node',
@@ -20,7 +20,18 @@ module.exports = {
   externals: [
     nodeExternals({
       allowlist: [
-        'axios'
+        '@opentelemetry/api',
+        '@opentelemetry/auto-instrumentations-node',
+        '@opentelemetry/core',
+        '@opentelemetry/exporter-jaeger',
+        '@opentelemetry/exporter-trace-otlp-http',
+        '@opentelemetry/instrumentation',
+        '@opentelemetry/instrumentation-http',
+        '@opentelemetry/resources',
+        '@opentelemetry/sdk-node',
+        '@opentelemetry/sdk-trace-base',
+        '@opentelemetry/sdk-trace-node',
+        '@opentelemetry/semantic-conventions',
       ],
     }),
   ],

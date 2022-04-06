@@ -1,12 +1,12 @@
 {
   "name": "@lumigo/microservices-node-tracer",
-  "version": "1.0.9",
+  "version": "1.0.8-alpha",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/wrapper.js",
   "private": false,
   "types": "dist/wrapper.d.ts",
   "scripts": {
-    "build": "rm -rf lib dist && webpack --mode production",
+    "build": "rm -rf dist && tsc --build --force",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
@@ -30,13 +30,10 @@
     "@opentelemetry/sdk-trace-base": "^1.1.0",
     "@opentelemetry/sdk-trace-node": "^1.1.0",
     "@opentelemetry/semantic-conventions": "^1.1.0",
-    "aws-config": "^1.4.0",
-    "crypto-browserify": "^3.12.0",
     "opentelemetry-instrumentation-express": "^0.27.0",
+    "aws-config": "^1.4.0",
     "path-to-regexp": "^0.1.7",
-    "shimmer": "^1.2.1",
-    "stream-http": "^3.2.0",
-    "util": "^0.12.4"
+    "shimmer": "^1.2.1"
   },
   "homepage": "https://github.com/lumigo-io/lumigo-node-wrapper.git",
   "devDependencies": {
@@ -68,12 +65,10 @@
     "jest": "^26.6.3",
     "prettier": "^2.2.1",
     "semantic-release": "^19.0.2",
-    "ts-loader": "^8.2.0",
     "ts-node": "^9.1.1",
-    "typescript": "^4.6.3",
-    "webpack": "^5.70.0",
-    "webpack-cli": "^3.3.12",
-    "webpack-node-externals": "^3.0.0"
+    "typescript": "^4.3.4",
+    "webpack": "^4.35.0",
+    "webpack-cli": "^3.3.4"
   },
   "release": {
     "branch": "master",
