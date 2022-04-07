@@ -1,4 +1,3 @@
-console.log("TS CONTAINER");
 import express from 'express';
 import {trace} from "@lumigo/microservices-node-tracer";
 trace('XXXXX', 'service-name');

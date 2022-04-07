@@ -60,13 +60,13 @@ const createEmitResponseOnEmitBeforeHookHandler = (
       requestData.response.body = body;
       requestData.response.headers = headers;
       requestData.response.statusCode = statusCode;
-      requestData.request.path = span.attributes['http.target'];
-      requestData.request.host = span.attributes['http.host'];
+      requestData.request.path = span.attributes?.['http.target'];
+      requestData.request.host = span.attributes?.['http.host'];
       span.setAttribute('http.response.body', body);
       try {
         if (isAwsService(requestData.request.host, requestData.response)) {
           span.setAttributes(getAwsServiceData(requestData.request, requestData.response, span));
-          span.setAttribute('aws.region', span.attributes['http.host'].split('.')[1]);
+          span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
         }
       } catch (e) {
         console.warn('Failed to parse aws service data', e);
@@ -212,7 +212,7 @@ export const HttpHooks: InstrumentationIfc<
         },
       };
       const headers = getRequestHeaders(request);
-      requestData.request.host = span?.attributes && span.attributes['http.host'];
+      requestData.request.host = span?.attributes?.['http.host'];
       if (headers) {
         requestData.request.headers = headers;
         span.setAttribute('http.request.headers', JSON.stringify(headers));
