@@ -81,6 +81,20 @@ function requireIfAvailable(names: string[]) {
   names.forEach((name) => safeRequire(name));
 }
 
+registerInstrumentations({
+  instrumentations: [
+    // @ts-ignore
+    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, LUMIGO_ENDPOINT),
+    // @ts-ignore
+    new LumigoExpressInstrumentation(),
+    ...externalInstrumentations,
+  ],
+});
+requireIfAvailable([
+  ...MODULES_TO_INSTRUMENT,
+  ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
+]);
+
 export const trace = (
   lumigoToken = '',
   serviceName = 'service-name',
@@ -113,21 +127,8 @@ export const trace = (
     const traceProvider = new NodeTracerProvider(config);
     traceProvider.addSpanProcessor(new BatchSpanProcessor(exporter));
     traceProvider.register();
-    registerInstrumentations({
-      instrumentations: [
-        // @ts-ignore
-        new LumigoHttpInstrumentation(lumigoToken, endpoint),
-        // @ts-ignore
-        new LumigoExpressInstrumentation(),
-        ...externalInstrumentations,
-      ],
-    });
-    requireIfAvailable([
-      ...MODULES_TO_INSTRUMENT,
-      ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
-    ]);
     isTraced = true;
-    diag.debug('Lumigo instrumentation started');
+    diag.debug(`Lumigo instrumentation started on ${serviceName}`);
   } catch (e) {
     console.error('Lumigo tracer had an Error: ', e);
   }
