@@ -24,7 +24,7 @@ fetchMetadataUri().then((res) => {
 });
 
 export default class LumigoHttpInstrumentation {
-  constructor(lumigoToken?: string, endPoint?: string) {
+  constructor(lumigoToken = '', endPoint = LUMIGO_ENDPOINT) {
     return new HttpInstrumentation({
       ignoreOutgoingUrls: process.env['ECS_CONTAINER_METADATA_URI']
         ? [process.env['ECS_CONTAINER_METADATA_URI'], endPoint, LUMIGO_ENDPOINT]
