@@ -4,7 +4,7 @@ import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { InstrumentationIfc } from './hooksIfc';
 import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
 import { getAwsServiceData } from '../spans/awsSpan';
-import { setSpanAttribute, setSpanAttributes } from "../spans/Span";
+import { setSpanAttribute, setSpanAttributes } from '../spans/Span';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
@@ -63,10 +63,13 @@ const createEmitResponseOnEmitBeforeHookHandler = (
       requestData.response.statusCode = statusCode;
       requestData.request.path = span.attributes?.['http.target'];
       requestData.request.host = span.attributes?.['http.host'];
-      setSpanAttribute(span,'http.response.body', body);
+      setSpanAttribute(span, 'http.response.body', body);
       try {
         if (isAwsService(requestData.request.host, requestData.response)) {
-          setSpanAttributes(span, getAwsServiceData(requestData.request, requestData.response, span));
+          setSpanAttributes(
+            span,
+            getAwsServiceData(requestData.request, requestData.response, span)
+          );
           setSpanAttribute(span, 'aws.region', span.attributes?.['http.host'].split('.')[1]);
         }
       } catch (e) {
@@ -146,7 +149,7 @@ const httpRequestWriteBeforeHookWrapper = (requestData: RequestData, span: Span)
     if (isEmptyString(requestData.request.body)) {
       const body = extractBodyFromWriteOrEndFunc(args);
       requestData.request.body += body;
-      setSpanAttribute(span,'http.request.body', requestData.request.body);
+      setSpanAttribute(span, 'http.request.body', requestData.request.body);
     }
   };
 };
@@ -165,7 +168,7 @@ const httpRequestEmitBeforeHookWrapper = (
       if (isEmptyString(requestData.request.body)) {
         const body = extractBodyFromEmitSocketEvent(args[1]);
         requestData.request.body += body;
-        setSpanAttribute(span,'http.request.body', requestData.request.body);
+        setSpanAttribute(span, 'http.request.body', requestData.request.body);
       }
     }
   };
@@ -216,7 +219,7 @@ export const HttpHooks: InstrumentationIfc<
       requestData.request.host = span?.attributes?.['http.host'];
       if (headers) {
         requestData.request.headers = headers;
-        setSpanAttribute(span,'http.request.headers', headers);
+        setSpanAttribute(span, 'http.request.headers', headers);
       }
 
       const emitWrapper = httpRequestEmitBeforeHookWrapper(requestData, span);
@@ -228,7 +231,7 @@ export const HttpHooks: InstrumentationIfc<
           if (isEmptyString(requestData.request.body)) {
             const body = extractBodyFromWriteOrEndFunc(args);
             requestData.request.body += body;
-            setSpanAttribute(span,'http.request.body', requestData.request.body);
+            setSpanAttribute(span, 'http.request.body', requestData.request.body);
           }
         };
       };
@@ -241,7 +244,7 @@ export const HttpHooks: InstrumentationIfc<
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
     diag.debug('@opentelemetry/instrumentation-http on responseHook()');
     if (response.headers) {
-      setSpanAttribute(span,'http.response.headers',response.headers);
+      setSpanAttribute(span, 'http.response.headers', response.headers);
     }
   },
 };

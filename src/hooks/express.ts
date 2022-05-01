@@ -5,7 +5,7 @@ import { diag, Span } from '@opentelemetry/api';
 import { safeExecute } from '../utils';
 import { setSpanAttribute } from '../spans/Span';
 
-type ExpressRequestType = { req: PatchedRequest, res: express.Response };
+type ExpressRequestType = { req: PatchedRequest; res: express.Response };
 
 export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
   requestHook(span: Span, { req, res }: ExpressRequestType): void {
