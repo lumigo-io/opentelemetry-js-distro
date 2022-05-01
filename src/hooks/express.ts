@@ -3,7 +3,7 @@ import { PatchedRequest } from '@opentelemetry/plugin-express/build/src/types';
 import { InstrumentationIfc } from './hooksIfc';
 import { diag, Span } from '@opentelemetry/api';
 import { safeExecute } from '../utils';
-import { setSpanAttribute } from '../spans/Span';
+import { setSpanAttribute } from '../spans/span';
 
 type ExpressRequestType = { req: PatchedRequest; res: express.Response };
 

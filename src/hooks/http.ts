@@ -4,7 +4,7 @@ import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { InstrumentationIfc } from './hooksIfc';
 import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
 import { getAwsServiceData } from '../spans/awsSpan';
-import { setSpanAttribute, setSpanAttributes } from '../spans/Span';
+import { setSpanAttribute, setSpanAttributes } from '../spans/span';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
