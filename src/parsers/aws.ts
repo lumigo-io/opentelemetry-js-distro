@@ -1,7 +1,6 @@
 import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
 import { traverse } from '../tools/xmlToJson';
-import { HttpRequest, HttpResponse } from '../hooks/http';
-import * as Http from 'http';
+import { HttpRawRequest, HttpRawResponse } from "@lumigo/node-core/lib/types/spans";
 
 const extractDynamodbMessageId = (reqBody, method) => {
   if (method === 'PutItem' && reqBody['Item']) {
@@ -55,7 +54,7 @@ export const isArn = (arnToValidate) => {
 
 export const extractLambdaNameFromArn = (arn) => arn.split(':')[6];
 
-export const lambdaParser = (requestData: HttpRequest, responseData: HttpResponse) => {
+export const lambdaParser = (requestData: HttpRawRequest, responseData: HttpRawResponse) => {
   if (!responseData) return {};
   const { path, headers } = requestData;
   let resourceName = decodeURIComponent(path).split('/')[3];

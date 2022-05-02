@@ -4,7 +4,8 @@ import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { InstrumentationIfc } from './hooksIfc';
 import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
 import { getAwsServiceData } from '../spans/awsSpan';
-import { setSpanAttribute, setSpanAttributes } from '../spans/span';
+import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
+import { CommonUtils } from '@lumigo/node-core';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
@@ -12,8 +13,8 @@ const noop = () => {};
 const isFunctionAlreadyWrapped = (fn) => fn && fn.__wrapped;
 
 export type HookOptions = {
-  beforeHook?: Function;
-  afterHook?: Function;
+  beforeHook?: Function,
+  afterHook?: Function,
 };
 
 const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer) => {
@@ -39,43 +40,61 @@ const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer)
 
 const MAX_SIZE = 4084;
 
+type OnRequestEndOptionsType = {
+  body: string,
+  headers: Record<string, string>,
+  statusCode: number,
+  truncated: boolean,
+};
+
+const onRequestEnd = (span: Span & { attributes: Record<string, string> }) => {
+  return (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => {
+    const { body, headers, statusCode, truncated } = options;
+    requestRawData.response.body = body;
+    requestRawData.response.headers = headers;
+    requestRawData.response.statusCode = statusCode;
+    requestRawData.response.truncated = truncated;
+    const scrubed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
+    span.setAttribute(
+      'http.response.body',
+      scrubed
+    );
+    try {
+      if (isAwsService(requestRawData.request.host, requestRawData.response)) {
+        span.setAttributes(
+          getAwsServiceData(requestRawData.request, requestRawData.response, span)
+        );
+        span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
+      }
+    } catch (e) {
+      console.warn('Failed to parse aws service data', e);
+      console.warn('getHttpSpan args', { requestData: requestRawData });
+    }
+  };
+};
+
 const createEmitResponseOnEmitBeforeHookHandler = (
-  requestData: RequestData,
+  requestRawData: RequestRawData,
   response: any,
-  span: Span & { attributes: Record<string, string> }
+  onRequestEnd: (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => void
 ) => {
   let body = '';
   const maxPayloadSize = MAX_SIZE;
   return function (args) {
+    let truncated = false;
     const { headers, statusCode } = response;
     if (args[0] === 'data' && body.length < maxPayloadSize) {
       let chunk = args[1].toString();
       const allowedLengthToAdd = maxPayloadSize - body.length;
       //if we reached or close to limit get only substring of the part to reach the limit
       if (chunk.length > allowedLengthToAdd) {
+        truncated = true;
         chunk = chunk.substr(0, allowedLengthToAdd);
       }
       body += chunk;
     }
     if (args[0] === 'end') {
-      requestData.response.body = body;
-      requestData.response.headers = headers;
-      requestData.response.statusCode = statusCode;
-      requestData.request.path = span.attributes?.['http.target'];
-      requestData.request.host = span.attributes?.['http.host'];
-      setSpanAttribute(span, 'http.response.body', body);
-      try {
-        if (isAwsService(requestData.request.host, requestData.response)) {
-          setSpanAttributes(
-            span,
-            getAwsServiceData(requestData.request, requestData.response, span)
-          );
-          setSpanAttribute(span, 'aws.region', span.attributes?.['http.host'].split('.')[1]);
-        }
-      } catch (e) {
-        console.warn('Failed to parse aws service data', e);
-        console.warn('getHttpSpan args', { requestData });
-      }
+      onRequestEnd(requestRawData, { body, truncated, headers, statusCode });
     }
   };
 };
@@ -133,29 +152,37 @@ export const extractBodyFromWriteOrEndFunc = (writeEventArgs) => {
 };
 
 const createEmitResponseHandler = (
-  requestData: RequestData,
+  requestData: RequestRawData,
   span: Span & { attributes: Record<string, string> }
 ) => {
   return (response) => {
-    const onHandler = createEmitResponseOnEmitBeforeHookHandler(requestData, response, span);
+    const onHandler = createEmitResponseOnEmitBeforeHookHandler(
+      requestData,
+      response,
+      onRequestEnd(span)
+    );
     hook(response, 'emit', {
       beforeHook: onHandler,
     });
   };
 };
 
-const httpRequestWriteBeforeHookWrapper = (requestData: RequestData, span: Span) => {
+const httpRequestWriteBeforeHookWrapper = (requestData: RequestRawData, span: Span) => {
   return function (args) {
+    const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
     if (isEmptyString(requestData.request.body)) {
       const body = extractBodyFromWriteOrEndFunc(args);
       requestData.request.body += body;
-      setSpanAttribute(span, 'http.request.body', requestData.request.body);
+      span.setAttribute(
+        'http.request.body',
+        scrubed
+      );
     }
   };
 };
 
 const httpRequestEmitBeforeHookWrapper = (
-  requestData,
+  requestData: RequestRawData,
   span: Span & { attributes: Record<string, string> }
 ) => {
   const emitResponseHandler = createEmitResponseHandler(requestData, span);
@@ -164,35 +191,21 @@ const httpRequestEmitBeforeHookWrapper = (
     if (args[0] === 'response') {
       oneTimerEmitResponseHandler(args[1]);
     }
+    const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
     if (args[0] === 'socket') {
       if (isEmptyString(requestData.request.body)) {
         const body = extractBodyFromEmitSocketEvent(args[1]);
         requestData.request.body += body;
-        setSpanAttribute(span, 'http.request.body', requestData.request.body);
+        span.setAttribute(
+          'http.request.body',
+          scrubed
+        );
       }
     }
   };
 };
 
-export type HttpRequest = {
-  host?: string;
-  body?: string;
-  path?: string;
-  headers?: Record<string, string>;
-};
-
-export type HttpResponse = {
-  statusCode?: number;
-  body?: string;
-  headers?: Record<string, string>;
-};
-
-export type RequestData = {
-  request: HttpRequest;
-  response: HttpResponse;
-};
-
-type RequestType = (ClientRequest | IncomingMessage) & { headers?: any; getHeaders: () => any };
+type RequestType = (ClientRequest | IncomingMessage) & { headers?: any, getHeaders: () => any };
 
 function getRequestHeaders(request: RequestType) {
   return request.headers || request.getHeaders();
@@ -205,33 +218,34 @@ export const HttpHooks: InstrumentationIfc<
   requestHook(span: Span & { attributes: Record<string, string> }, request: RequestType) {
     diag.debug('@opentelemetry/instrumentation-http on requestHook()');
     safeExecute(() => {
-      const requestData: RequestData = {
+      const requestData: RequestRawData = {
         request: {
+          path: span.attributes?.['http.target'],
+          host: span.attributes?.['http.host'],
+          truncated: false,
           body: '',
-          headers: {},
+          headers: getRequestHeaders(request),
         },
         response: {
+          truncated: false,
           body: '',
           headers: {},
         },
       };
-      const headers = getRequestHeaders(request);
-      requestData.request.host = span?.attributes?.['http.host'];
-      if (headers) {
-        requestData.request.headers = headers;
-        setSpanAttribute(span, 'http.request.headers', headers);
-      }
-
       const emitWrapper = httpRequestEmitBeforeHookWrapper(requestData, span);
 
       const writeWrapper = httpRequestWriteBeforeHookWrapper(requestData, span);
 
-      const endWrapper = (requestData: RequestData, span: Span) => {
+      const endWrapper = (requestData: RequestRawData, span: Span) => {
         return function (args) {
+          const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
           if (isEmptyString(requestData.request.body)) {
             const body = extractBodyFromWriteOrEndFunc(args);
             requestData.request.body += body;
-            setSpanAttribute(span, 'http.request.body', requestData.request.body);
+            span.setAttribute(
+              'http.request.body',
+              scrubed
+            );
           }
         };
       };
@@ -244,7 +258,7 @@ export const HttpHooks: InstrumentationIfc<
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
     diag.debug('@opentelemetry/instrumentation-http on responseHook()');
     if (response.headers) {
-      setSpanAttribute(span, 'http.response.headers', response.headers);
+      span.setAttribute('http.response.headers', response.headers);
     }
   },
 };
