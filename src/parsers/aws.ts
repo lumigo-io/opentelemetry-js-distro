@@ -1,6 +1,6 @@
 import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
 import { traverse } from '../tools/xmlToJson';
-import { HttpRawRequest, HttpRawResponse } from "@lumigo/node-core/lib/types/spans";
+import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
 
 const extractDynamodbMessageId = (reqBody, method) => {
   if (method === 'PutItem' && reqBody['Item']) {

@@ -13,8 +13,8 @@ const noop = () => {};
 const isFunctionAlreadyWrapped = (fn) => fn && fn.__wrapped;
 
 export type HookOptions = {
-  beforeHook?: Function,
-  afterHook?: Function,
+  beforeHook?: Function;
+  afterHook?: Function;
 };
 
 const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer) => {
@@ -41,10 +41,10 @@ const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer)
 const MAX_SIZE = 4084;
 
 type OnRequestEndOptionsType = {
-  body: string,
-  headers: Record<string, string>,
-  statusCode: number,
-  truncated: boolean,
+  body: string;
+  headers: Record<string, string>;
+  statusCode: number;
+  truncated: boolean;
 };
 
 const onRequestEnd = (span: Span & { attributes: Record<string, string> }) => {
@@ -55,10 +55,7 @@ const onRequestEnd = (span: Span & { attributes: Record<string, string> }) => {
     requestRawData.response.statusCode = statusCode;
     requestRawData.response.truncated = truncated;
     const scrubed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
-    span.setAttribute(
-      'http.response.body',
-      scrubed
-    );
+    span.setAttribute('http.response.body', scrubed);
     try {
       if (isAwsService(requestRawData.request.host, requestRawData.response)) {
         span.setAttributes(
@@ -169,15 +166,11 @@ const createEmitResponseHandler = (
 
 const httpRequestWriteBeforeHookWrapper = (requestData: RequestRawData, span: Span) => {
   return function (args) {
-
     if (isEmptyString(requestData.request.body)) {
       const body = extractBodyFromWriteOrEndFunc(args);
       requestData.request.body += body;
       const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-      span.setAttribute(
-        'http.request.body',
-        scrubed
-      );
+      span.setAttribute('http.request.body', scrubed);
     }
   };
 };
@@ -197,16 +190,13 @@ const httpRequestEmitBeforeHookWrapper = (
         const body = extractBodyFromEmitSocketEvent(args[1]);
         requestData.request.body += body;
         const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-        span.setAttribute(
-          'http.request.body',
-          scrubed
-        );
+        span.setAttribute('http.request.body', scrubed);
       }
     }
   };
 };
 
-type RequestType = (ClientRequest | IncomingMessage) & { headers?: any, getHeaders: () => any };
+type RequestType = (ClientRequest | IncomingMessage) & { headers?: any; getHeaders: () => any };
 
 function getRequestHeaders(request: RequestType) {
   return request.headers || request.getHeaders();
@@ -245,10 +235,7 @@ export const HttpHooks: InstrumentationIfc<
             const body = extractBodyFromWriteOrEndFunc(args);
             requestData.request.body += body;
             const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-            span.setAttribute(
-              'http.request.body',
-              scrubed
-            );
+            span.setAttribute('http.request.body', scrubed);
           }
         };
       };
