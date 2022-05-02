@@ -169,10 +169,11 @@ const createEmitResponseHandler = (
 
 const httpRequestWriteBeforeHookWrapper = (requestData: RequestRawData, span: Span) => {
   return function (args) {
-    const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
+
     if (isEmptyString(requestData.request.body)) {
       const body = extractBodyFromWriteOrEndFunc(args);
       requestData.request.body += body;
+      const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
       span.setAttribute(
         'http.request.body',
         scrubed
@@ -191,11 +192,11 @@ const httpRequestEmitBeforeHookWrapper = (
     if (args[0] === 'response') {
       oneTimerEmitResponseHandler(args[1]);
     }
-    const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
     if (args[0] === 'socket') {
       if (isEmptyString(requestData.request.body)) {
         const body = extractBodyFromEmitSocketEvent(args[1]);
         requestData.request.body += body;
+        const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
         span.setAttribute(
           'http.request.body',
           scrubed
@@ -232,16 +233,18 @@ export const HttpHooks: InstrumentationIfc<
           headers: {},
         },
       };
+      const scrubedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
+      span.setAttribute('http.request.headers', scrubedHeaders);
       const emitWrapper = httpRequestEmitBeforeHookWrapper(requestData, span);
 
       const writeWrapper = httpRequestWriteBeforeHookWrapper(requestData, span);
 
       const endWrapper = (requestData: RequestRawData, span: Span) => {
         return function (args) {
-          const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
           if (isEmptyString(requestData.request.body)) {
             const body = extractBodyFromWriteOrEndFunc(args);
             requestData.request.body += body;
+            const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
             span.setAttribute(
               'http.request.body',
               scrubed
@@ -257,8 +260,9 @@ export const HttpHooks: InstrumentationIfc<
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
     diag.debug('@opentelemetry/instrumentation-http on responseHook()');
+    const scrubedHeaders = CommonUtils.payloadStringify(response.headers);
     if (response.headers) {
-      span.setAttribute('http.response.headers', response.headers);
+      span.setAttribute('http.response.headers', scrubedHeaders);
     }
   },
 };
