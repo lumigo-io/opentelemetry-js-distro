@@ -8,7 +8,7 @@ setup_git() {
 }
 
 echo "Install a project with a clean state"
-npm ci
+npm ci --only=prod
 
 echo "Setting production ad NODE_ENV"
 export NODE_ENV=production
