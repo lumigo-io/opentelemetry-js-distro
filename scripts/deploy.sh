@@ -15,7 +15,7 @@ export NODE_ENV=production
 
 echo "Build tracer"
 npm run build
-cp package.json lib
+cp package.json dist
 setup_git
 
 echo "Push to NPM"
