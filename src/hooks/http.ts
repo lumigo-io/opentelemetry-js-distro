@@ -212,7 +212,7 @@ export const HttpHooks: InstrumentationIfc<
       const requestData: RequestRawData = {
         request: {
           path: span.attributes?.['http.target'],
-          host: span.attributes?.['http.host'],
+          host: span.attributes?.['http.host'] || span.attributes?.['net.peer.name'],
           truncated: false,
           body: '',
           headers: getRequestHeaders(request),
