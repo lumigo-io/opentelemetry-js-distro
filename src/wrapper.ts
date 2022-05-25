@@ -15,7 +15,7 @@ const logLevel =
     : DiagLogLevel.ERROR;
 diag.setLogger(new DiagConsoleLogger(), logLevel);
 export const LUMIGO_ENDPOINT =
-  "https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans" || process.env.LUMIGO_ENDPOINT;
+  'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans' || process.env.LUMIGO_ENDPOINT;
 
 let isTraced = false;
 
@@ -122,7 +122,7 @@ export const trace = (
         runtime: `node${process.version}`,
         tracerVersion: getTracerInfo().version,
         framework: 'express',
-        exporter: "opentelemetry",
+        exporter: 'opentelemetry',
         envs: JSON.stringify(process.env),
       }),
     };
