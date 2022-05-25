@@ -6,7 +6,6 @@ import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 
 import { safeExecute } from './utils';
 
@@ -123,7 +122,7 @@ export const trace = (
         runtime: `node${process.version}`,
         tracerVersion: getTracerInfo().version,
         framework: 'express',
-        exporter: "zipkin",
+        exporter: "opentelemetry",
         envs: JSON.stringify(process.env),
       }),
     };
