@@ -130,9 +130,9 @@ export const trace = (
     traceProvider.addSpanProcessor(
       new BatchSpanProcessor(exporter, {
         // The maximum queue size. After the size is reached spans are dropped.
-        maxQueueSize: 100,
+        maxQueueSize: 1000,
         // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-        maxExportBatchSize: 10,
+        maxExportBatchSize: 100,
       })
     );
     traceProvider.register();
