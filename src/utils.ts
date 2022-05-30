@@ -18,6 +18,13 @@ export function safeExecute<T>(
   };
 }
 
+export const isEncodingType = (encodingType): boolean =>
+  !!(
+    encodingType &&
+    typeof encodingType === 'string' &&
+    ['ascii', 'utf8', 'utf16le', 'ucs2', 'base64', 'binary', 'hex'].includes(encodingType)
+  );
+
 export const runOneTimeWrapper = (func: Function, context: any = undefined): Function => {
   let done = false;
   return (...args) => {

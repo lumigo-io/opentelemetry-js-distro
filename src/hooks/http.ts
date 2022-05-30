@@ -6,6 +6,7 @@ import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
 import { getAwsServiceData } from '../spans/awsSpan';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { CommonUtils } from '@lumigo/node-core';
+import { URL } from "url";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
@@ -47,54 +48,6 @@ type OnRequestEndOptionsType = {
   truncated: boolean;
 };
 
-const onRequestEnd = (span: Span & { attributes: Record<string, string> }) => {
-  return (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => {
-    const { body, headers, statusCode, truncated } = options;
-    requestRawData.response.body = body;
-    requestRawData.response.headers = headers;
-    requestRawData.response.statusCode = statusCode;
-    requestRawData.response.truncated = truncated;
-    const scrubed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
-    span.setAttribute('http.response.body', scrubed);
-    try {
-      if (isAwsService(requestRawData.request.host, requestRawData.response)) {
-        span.setAttributes(
-          getAwsServiceData(requestRawData.request, requestRawData.response, span)
-        );
-        span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
-      }
-    } catch (e) {
-      console.warn('Failed to parse aws service data', e);
-      console.warn('getHttpSpan args', { requestData: requestRawData });
-    }
-  };
-};
-
-const createEmitResponseOnEmitBeforeHookHandler = (
-  requestRawData: RequestRawData,
-  response: any,
-  onRequestEnd: (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => void
-) => {
-  let body = '';
-  const maxPayloadSize = MAX_SIZE;
-  return function (args) {
-    let truncated = false;
-    const { headers, statusCode } = response;
-    if (args[0] === 'data' && body.length < maxPayloadSize) {
-      let chunk = args[1].toString();
-      const allowedLengthToAdd = maxPayloadSize - body.length;
-      //if we reached or close to limit get only substring of the part to reach the limit
-      if (chunk.length > allowedLengthToAdd) {
-        truncated = true;
-        chunk = chunk.substr(0, allowedLengthToAdd);
-      }
-      body += chunk;
-    }
-    if (args[0] === 'end') {
-      onRequestEnd(requestRawData, { body, truncated, headers, statusCode });
-    }
-  };
-};
 
 export const isValidHttpRequestBody = (reqBody) =>
   !!(reqBody && (typeof reqBody === 'string' || reqBody instanceof Buffer));
@@ -106,101 +59,11 @@ export const isEncodingType = (encodingType): boolean =>
     ['ascii', 'utf8', 'utf16le', 'ucs2', 'base64', 'binary', 'hex'].includes(encodingType)
   );
 
-export const extractBodyFromEmitSocketEvent = (socketEventArgs) => {
-  return safeExecute(
-    () => {
-      if (
-        socketEventArgs &&
-        socketEventArgs._httpMessage &&
-        socketEventArgs._httpMessage._hasBody
-      ) {
-        const httpMessage = socketEventArgs._httpMessage;
-        let lines = [];
-        // eslint-disable-next-line no-prototype-builtins
-        if (httpMessage.hasOwnProperty('outputData')) {
-          lines = httpMessage.outputData[0]?.data.split('\n') || [];
-          // eslint-disable-next-line no-prototype-builtins
-        } else if (httpMessage.hasOwnProperty('output')) {
-          lines = httpMessage.output[0]?.split('\n') || [];
-        }
-        if (lines.length > 0) {
-          return lines[lines.length - 1];
-        }
-      }
-    },
-    'failed to extractBodyFromEmitSocketEvent',
-    'warn',
-    ''
-  )();
-};
-
 export const isEmptyString = (str): boolean =>
   !!(!str || (typeof str === 'string' && str.length === 0));
 
-export const extractBodyFromWriteOrEndFunc = (writeEventArgs) => {
-  return safeExecute(() => {
-    if (isValidHttpRequestBody(writeEventArgs[0])) {
-      const encoding = isEncodingType(writeEventArgs[1]) ? writeEventArgs[1] : 'utf8';
-      return typeof writeEventArgs[0] === 'string'
-        ? new Buffer(writeEventArgs[0]).toString(encoding)
-        : writeEventArgs[0].toString();
-    }
-  })();
-};
-
-const createEmitResponseHandler = (
-  requestData: RequestRawData,
-  span: Span & { attributes: Record<string, string> }
-) => {
-  return (response) => {
-    const onHandler = createEmitResponseOnEmitBeforeHookHandler(
-      requestData,
-      response,
-      onRequestEnd(span)
-    );
-    hook(response, 'emit', {
-      beforeHook: onHandler,
-    });
-  };
-};
-
-const httpRequestWriteBeforeHookWrapper = (requestData: RequestRawData, span: Span) => {
-  return function (args) {
-    if (isEmptyString(requestData.request.body)) {
-      const body = extractBodyFromWriteOrEndFunc(args);
-      requestData.request.body += body;
-      const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-      span.setAttribute('http.request.body', scrubed);
-    }
-  };
-};
-
-const httpRequestEmitBeforeHookWrapper = (
-  requestData: RequestRawData,
-  span: Span & { attributes: Record<string, string> }
-) => {
-  const emitResponseHandler = createEmitResponseHandler(requestData, span);
-  const oneTimerEmitResponseHandler = runOneTimeWrapper(emitResponseHandler, {});
-  return function (args) {
-    if (args[0] === 'response') {
-      oneTimerEmitResponseHandler(args[1]);
-    }
-    if (args[0] === 'socket') {
-      if (isEmptyString(requestData.request.body)) {
-        const body = extractBodyFromEmitSocketEvent(args[1]);
-        requestData.request.body += body;
-        const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-        span.setAttribute('http.request.body', scrubed);
-      }
-    }
-  };
-};
-
 type RequestType = (ClientRequest | IncomingMessage) & { headers?: any; getHeaders: () => any };
 
-function getRequestHeaders(request: RequestType) {
-  return request.headers || request.getHeaders();
-}
 
 export const HttpHooks: InstrumentationIfc<
   ClientRequest | IncomingMessage,
@@ -215,7 +78,7 @@ export const HttpHooks: InstrumentationIfc<
           host: span.attributes?.['http.host'] || span.attributes?.['net.peer.name'],
           truncated: false,
           body: '',
-          headers: getRequestHeaders(request),
+          headers: Http.getRequestHeaders(request),
         },
         response: {
           truncated: false,
@@ -225,14 +88,14 @@ export const HttpHooks: InstrumentationIfc<
       };
       const scrubedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
       span.setAttribute('http.request.headers', scrubedHeaders);
-      const emitWrapper = httpRequestEmitBeforeHookWrapper(requestData, span);
+      const emitWrapper = Http.httpRequestEmitBeforeHookWrapper(requestData, span);
 
-      const writeWrapper = httpRequestWriteBeforeHookWrapper(requestData, span);
+      const writeWrapper = Http.httpRequestWriteBeforeHookWrapper(requestData, span);
 
       const endWrapper = (requestData: RequestRawData, span: Span) => {
         return function (args) {
           if (isEmptyString(requestData.request.body)) {
-            const body = extractBodyFromWriteOrEndFunc(args);
+            const body = Http.extractBodyFromWriteOrEndFunc(args);
             requestData.request.body += body;
             const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
             span.setAttribute('http.request.body', scrubed);
@@ -253,3 +116,184 @@ export const HttpHooks: InstrumentationIfc<
     }
   },
 };
+
+
+export class Http {
+
+  static onRequestEnd (span: Span & { attributes: Record<string, string> }){
+    return (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => {
+      const { body, headers, statusCode, truncated } = options;
+      requestRawData.response.body = body;
+      requestRawData.response.headers = headers;
+      requestRawData.response.statusCode = statusCode;
+      requestRawData.response.truncated = truncated;
+      const scrubed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
+      span.setAttribute('http.response.body', scrubed);
+      try {
+        if (isAwsService(requestRawData.request.host, requestRawData.response)) {
+          span.setAttributes(
+            getAwsServiceData(requestRawData.request, requestRawData.response, span)
+          );
+          span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
+        }
+      } catch (e) {
+        console.warn('Failed to parse aws service data', e);
+        console.warn('getHttpSpan args', { requestData: requestRawData });
+      }
+    };
+  };
+
+  static extractBodyFromEmitSocketEvent(socketEventArgs){
+    return safeExecute(
+      () => {
+        if (
+          socketEventArgs &&
+          socketEventArgs._httpMessage &&
+          socketEventArgs._httpMessage._hasBody
+        ) {
+          const httpMessage = socketEventArgs._httpMessage;
+          let lines = [];
+          // eslint-disable-next-line no-prototype-builtins
+          if (httpMessage.hasOwnProperty('outputData')) {
+            lines = httpMessage.outputData[0]?.data.split('\n') || [];
+            // eslint-disable-next-line no-prototype-builtins
+          } else if (httpMessage.hasOwnProperty('output')) {
+            lines = httpMessage.output[0]?.split('\n') || [];
+          }
+          if (lines.length > 0) {
+            return lines[lines.length - 1];
+          }
+        }
+      },
+      'failed to extractBodyFromEmitSocketEvent',
+      'warn',
+      ''
+    )();
+  };
+  static getRequestHeaders(request: RequestType) {
+    return request.headers || request.getHeaders();
+  }
+
+  static extractBodyFromWriteOrEndFunc = (writeEventArgs) => {
+    return safeExecute(() => {
+      if (isValidHttpRequestBody(writeEventArgs[0])) {
+        const encoding = isEncodingType(writeEventArgs[1]) ? writeEventArgs[1] : 'utf8';
+        return typeof writeEventArgs[0] === 'string'
+          ? new Buffer(writeEventArgs[0]).toString(encoding)
+          : writeEventArgs[0].toString();
+      }
+    })();
+  };
+
+  static httpRequestArguments(args) {
+    if (args.length === 0) {
+      throw new Error('http/s.request(...) was called without any arguments.');
+    }
+
+    let url = undefined;
+    let options = undefined;
+    let callback = undefined;
+
+    if (typeof args[0] === 'string' || args[0] instanceof URL) {
+      url = args[0];
+      if (args[1]) {
+        if (typeof args[1] === 'function') {
+          callback = args[1];
+        } else {
+          options = args[1];
+          if (typeof args[2] === 'function') {
+            callback = args[2];
+          }
+        }
+      }
+    } else {
+      options = args[0];
+      if (typeof args[1] === 'function') {
+        callback = args[1];
+      }
+    }
+    return { url, options, callback };
+  }
+
+  static getHostFromOptionsOrUrl(options, url) {
+    if (url) {
+      return new URL(url).hostname;
+    }
+    return options.hostname || options.host || (options.uri && options.uri.hostname) || 'localhost';
+  }
+
+
+  static httpRequestWriteBeforeHookWrapper(requestData: RequestRawData, span: Span){
+    return function (args) {
+      if (isEmptyString(requestData.request.body)) {
+        const body = Http.extractBodyFromWriteOrEndFunc(args);
+        requestData.request.body += body;
+        const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
+        span.setAttribute('http.request.body', scrubed);
+      }
+    };
+  };
+
+  static createEmitResponseOnEmitBeforeHookHandler(
+    requestRawData: RequestRawData,
+    response: any,
+    onRequestEnd: (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => void
+  ) {
+    let body = '';
+    const maxPayloadSize = MAX_SIZE;
+    return function(args) {
+      let truncated = false;
+      const { headers, statusCode } = response;
+      if (args[0] === 'data' && body.length < maxPayloadSize) {
+        let chunk = args[1].toString();
+        const allowedLengthToAdd = maxPayloadSize - body.length;
+        //if we reached or close to limit get only substring of the part to reach the limit
+        if (chunk.length > allowedLengthToAdd) {
+          truncated = true;
+          chunk = chunk.substr(0, allowedLengthToAdd);
+        }
+        body += chunk;
+      }
+      if (args[0] === 'end') {
+        onRequestEnd(requestRawData, { body, truncated, headers, statusCode });
+      }
+    }
+  }
+
+  static createEmitResponseHandler(
+    requestData: RequestRawData,
+    span: Span & { attributes: Record<string, string> }
+  ) {
+    return (response) => {
+      const onHandler = Http.createEmitResponseOnEmitBeforeHookHandler(
+        requestData,
+        response,
+        Http.onRequestEnd(span)
+      );
+      hook(response, 'emit', {
+        beforeHook: onHandler,
+      })
+    }
+  }
+
+  static httpRequestEmitBeforeHookWrapper(
+    requestData: RequestRawData,
+    span: Span & { attributes: Record<string, string> }
+  ){
+    const emitResponseHandler = Http.createEmitResponseHandler(requestData, span);
+    const oneTimerEmitResponseHandler = runOneTimeWrapper(emitResponseHandler, {});
+    return function (args) {
+      if (args[0] === 'response') {
+        oneTimerEmitResponseHandler(args[1]);
+      }
+      if (args[0] === 'socket') {
+        if (isEmptyString(requestData.request.body)) {
+          const body = Http.extractBodyFromEmitSocketEvent(args[1]);
+          requestData.request.body += body;
+          const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
+          span.setAttribute('http.request.body', scrubed);
+        }
+      }
+    };
+  };
+}

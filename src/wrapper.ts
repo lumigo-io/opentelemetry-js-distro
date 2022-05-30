@@ -23,6 +23,8 @@ const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 
 const externalInstrumentations = [];
 
+export const clearIsTraced = () => isTraced = false
+
 export const addInstrumentation = (instrumentation: InstrumentationBase) => {
   if (isTraced) {
     console.warn(
@@ -152,6 +154,7 @@ if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME && !isTraced) {
 }
 
 module.exports = {
+  clearIsTraced,
   trace,
   LumigoHttpInstrumentation,
   LumigoExpressInstrumentation,
