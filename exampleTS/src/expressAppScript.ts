@@ -1,4 +1,4 @@
-import {trace} from "@lumigo/microservices-node-tracer";
+import {trace} from "@lumigo/opentelemetry";
 trace('XXXXX', 'service-name');
 import express from 'express';
 
