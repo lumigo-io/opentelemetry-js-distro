@@ -1,5 +1,5 @@
 const express = require('express');
-const lumigoWrapper = require("@lumigo/microservices-node-tracer");
+const lumigoWrapper = require("@lumigo/opentelemetry");
 lumigoWrapper.trace('XXXXX', 'orr1');
 
 const axios = require("axios");
