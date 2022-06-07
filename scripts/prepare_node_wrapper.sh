@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 echo "clean"
+echo "I AM HERE " && pwd
+echo "i have here:  " && ls
+
 rm -rf dist wrapper.tgz || true
 echo "build"
 npm ci
