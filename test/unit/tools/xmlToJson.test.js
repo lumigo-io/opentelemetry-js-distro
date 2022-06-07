@@ -1,4 +1,4 @@
-import { traverse } from './xmlToJson';
+import { traverse } from '../../../src/tools/xmlToJson';
 
 const clean = function cleanXML(xml) {
   return xml

@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/**/*.test.ts','**/**/*.test.js'],
-  roots: ['./src'],
+  roots: ['./test/unit'],
   coverageDirectory: './coverage/',
   collectCoverage: true,
   collectCoverageFrom: [

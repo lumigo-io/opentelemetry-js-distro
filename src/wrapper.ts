@@ -2,24 +2,25 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
 import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-
-import { safeExecute } from './utils';
+import { isEnvVarTrue, safeExecute } from './utils';
+import { SpanExporter } from '@opentelemetry/sdk-trace-base/build/src/export/SpanExporter';
 
 const logLevel =
   (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
     ? DiagLogLevel.ALL
     : DiagLogLevel.ERROR;
 diag.setLogger(new DiagConsoleLogger(), logLevel);
-export const LUMIGO_ENDPOINT =
-  'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans' || process.env.LUMIGO_ENDPOINT;
+export const LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans';
 
 let isTraced = false;
 
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
+const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
+const LUMIGO_DEBUG_SPANDUMP = 'LUMIGO_DEBUG_SPANDUMP';
 
 const externalInstrumentations = [];
 
@@ -64,7 +65,7 @@ const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getTracerInfo = (): { name: string; version: string } => {
+export const getTracerInfo = (): { name: string, version: string } => {
   return safeExecute(
     () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -102,7 +103,7 @@ export const trace = (
   endpoint = LUMIGO_ENDPOINT
 ) => {
   try {
-    if (process.env.LUMIGO_SWITCH_OFF && process.env.LUMIGO_SWITCH_OFF.toLowerCase() === 'true') {
+    if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
       diag.debug('Lumigo is switched off');
       return;
     }
@@ -110,11 +111,13 @@ export const trace = (
       diag.debug('Lumigo already traced');
       return;
     }
-    const exporter = new OTLPTraceExporter({
-      // @ts-ignore
-      serviceName,
-      url: endpoint,
-    });
+    const exporter: SpanExporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
+      ? new ConsoleSpanExporter()
+      : new OTLPTraceExporter({
+          // @ts-ignore
+          serviceName,
+          url: endpoint,
+        });
     const config = {
       resource: new Resource({
         lumigoToken: lumigoToken.trim(),

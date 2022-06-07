@@ -75,7 +75,7 @@ jobs:
           command: npm run prettier:ci
       - run:
           name: test
-          command: npm test
+          command: npm run test:unit
       - run:
           name: eslint
           command: npm run lint
@@ -95,7 +95,9 @@ jobs:
     steps:
       - checkout
       - run: npm install
-      - run: npm test
+      - run: ./scripts/install_integration.sh
+      - run: ./scripts/prepare_node_wrapper.sh
+      - run: npm run test:integration
   deploy:
     working_directory: ~/opentelemetry-js-distro
     docker:
