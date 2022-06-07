@@ -92,7 +92,6 @@ jobs:
       - image: cimg/node:<< parameters.node_cimg_tag >>
     steps:
       - checkout
-      - run: echo "I AM HERE " && pwd
       - run: npm install
       - run: ./scripts/prepare_node_wrapper.sh
       - run: ./scripts/install_integration.sh
