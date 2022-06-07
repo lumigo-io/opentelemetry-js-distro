@@ -49,7 +49,7 @@ export async function executeNpmScriptWithCallback(
             });
         });
         await onAppReady(port);
-        return port;
+        return expressApp;
     } catch (e) {
         if (!shouldFail) {
             fail(e);
