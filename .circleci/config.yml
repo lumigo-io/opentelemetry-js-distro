@@ -26,17 +26,6 @@ workflows:
         filters:
           branches:
             ignore: master
-    - test-integration-js:
-        parameters:
-          node_cimg_tag:
-            type: string
-        docker:
-          - image: cimg/node:<< parameters.node_cimg_tag >>
-        working_directory: ~/opentelemetry-js-distro
-        steps:
-          - checkout
-          - run: npm inatall
-          - run: npm test
     - lumigo-orb/be-deploy:
         filters:
           branches:
@@ -96,6 +85,17 @@ jobs:
       - store_artifacts:
           path: coverage
           prefix: coverage
+  test-integration-js:
+    parameters:
+      node_cimg_tag:
+        type: string
+    docker:
+      - image: cimg/node:<< parameters.node_cimg_tag >>
+    working_directory: ~/opentelemetry-js-distro
+    steps:
+      - checkout
+      - run: npm inatall
+      - run: npm test
   deploy:
     working_directory: ~/opentelemetry-js-distro
     docker:
