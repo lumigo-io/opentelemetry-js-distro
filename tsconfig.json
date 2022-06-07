@@ -9,7 +9,7 @@
     "inlineSources": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "rootDirs": ["./"],
+    "rootDirs": ["./src"],
     "experimentalDecorators": true,
     "noImplicitOverride": true,
     "declaration": true,
