@@ -9,7 +9,7 @@ describe('interface', function () {
     const customDependencies = require('./node/package.json').customDependecies;
     for (const dependency in customDependencies) {
         customDependencies[dependency].forEach((version) => {
-            it(`test ${dependency}@${version === "" ? "latest" : version} on node@${process.versions}`, async () => {
+            it(`test ${dependency}@${version === "" ? "latest" : version} on node@${process.version}`, async () => {
                 jest.setTimeout(30000);
                 let resolver;
                 const foundTransaction = (resolver, value) => resolver(value);
