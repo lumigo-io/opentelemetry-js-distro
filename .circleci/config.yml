@@ -16,8 +16,6 @@ workflows:
       - test-integration-js:
           matrix:
             parameters:
-              # These must be valid tag values for the cimg/node container image
-              # on Docker Hub, see https://hub.docker.com/r/cimg/node/tags
               node_cimg_tag: [ "18.3.0", "18.1.0" ]
           filters:
             branches:
@@ -28,7 +26,7 @@ workflows:
         filters:
           branches:
             ignore: master
-    - test-integration-node:
+    - test-integration-js:
         parameters:
           node_cimg_tag:
             type: string
