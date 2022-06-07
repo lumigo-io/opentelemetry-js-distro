@@ -1,4 +1,4 @@
-import {spawn, exec} from "child_process";
+import {spawn} from "child_process";
 import axios from "axios";
 
 export async function executeNpmScriptWithCallback(
@@ -11,10 +11,6 @@ export async function executeNpmScriptWithCallback(
 ) {
     let expressApp;
     try {
-
-        exec("pwd", (err,res)=>{
-            console.log("IM IN:", res)
-        })
         expressApp = spawn(`cd ${path} && npm`, ["run", script], {
             env: { ...process.env, ...env },
             shell: true

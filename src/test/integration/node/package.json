@@ -4,13 +4,19 @@
   "description": "",
   "scripts": {
     "start:injected": "node -r lumigo-wrapper wrapperInjected.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "installDeps": "node installDeps.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.1",
-    "express": "^4.17.1",
+    "express": "^4.15.1",
     "lumigo-wrapper": "file:../../../../wrapper.tgz"
+  },
+  "customDependecies": {
+    "express": [
+      "4.15.2",
+      "4.15.1"
+    ]
   }
 }

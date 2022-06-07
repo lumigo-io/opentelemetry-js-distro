@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require(`express@${process.env.EXPRESS_VERSION}`);
 const bodyParser = require("body-parser");
 const app = express();
 const axios = require("axios");
