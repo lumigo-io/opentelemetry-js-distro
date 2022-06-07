@@ -11,17 +11,15 @@ orbs:
   lumigo-orb: lumigo/lumigo-orb@volatile
 
 workflows:
-  test-integration-js:
-    jobs:
-      - test-integration-js:
-          matrix:
-            parameters:
-              node_cimg_tag: [ "12.13", "14.19", "16.15" ]
-          filters:
-            branches:
-              ignore: master
   test-deploy:
     jobs:
+    - test-integration-js:
+        matrix:
+          parameters:
+            node_cimg_tag: [ "8.17", "12.13", "14.19", "16.15" ]
+        filters:
+          branches:
+            ignore: master
     - test:
         filters:
           branches:
