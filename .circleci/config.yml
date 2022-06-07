@@ -94,7 +94,7 @@ jobs:
       - checkout
       - run: npm install
       - run: ./scripts/prepare_node_wrapper.sh
-      - run: npm run installDeps
+      - run: ./scripts/install_integration.sh
       - run: npm run test:integration
   deploy:
     working_directory: ~/opentelemetry-js-distro
