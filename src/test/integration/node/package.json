@@ -11,6 +11,6 @@
   "dependencies": {
     "body-parser": "^1.19.1",
     "express": "^4.17.1",
-    "lumigo-wrapper": "file:../../../wrapper.tgz"
+    "lumigo-wrapper": "file:../../../../wrapper.tgz"
   }
 }
