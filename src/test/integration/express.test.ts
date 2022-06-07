@@ -13,7 +13,7 @@ describe('interface', function () {
       resolver = resolve;
     });
     app = await executeNpmScriptWithCallback(
-      '.src/test/integration/node',
+      './src/test/integration/node',
       (port) =>
         callContainer(port, 'chucknorris', 'get', {
           a: '1',
