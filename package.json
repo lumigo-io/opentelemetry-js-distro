@@ -64,8 +64,7 @@
     "semantic-release": "^19.0.2",
     "ts-node": "^9.1.1",
     "typescript": "^4.3.4",
-    "webpack": "^5.72.1",
-    "webpack-cli": "^3.3.4"
+    "webpack": "^5.72.1"
   },
   "release": {
     "branch": "master",
