@@ -10,3 +10,4 @@ npm ci
 npm run build
 tracer="$(npm pack)"
 mv $tracer wrapper.tgz
+echo "i have here 2:  " && ls
