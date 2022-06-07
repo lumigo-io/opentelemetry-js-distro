@@ -1,7 +1,7 @@
 // @ts-ignore
 import {callContainer, executeNpmScriptWithCallback} from "./helpers/helpers";
 
-describe('interface', function () {
+describe('integration tests all versions of supported instrumentations', function () {
   let app;
   afterEach(() => {
     if (app) app.kill();
