@@ -11,12 +11,34 @@ orbs:
   lumigo-orb: lumigo/lumigo-orb@volatile
 
 workflows:
+  test-integration-js:
+    jobs:
+      - test-integration-js:
+          matrix:
+            parameters:
+              # These must be valid tag values for the cimg/node container image
+              # on Docker Hub, see https://hub.docker.com/r/cimg/node/tags
+              node_cimg_tag: [ "18.3.0", "18.1.0" ]
+          filters:
+            branches:
+              ignore: master
   test-deploy:
     jobs:
     - test:
         filters:
           branches:
             ignore: master
+    - test-integration-node:
+        parameters:
+          node_cimg_tag:
+            type: string
+        docker:
+          - image: cimg/node:<< parameters.node_cimg_tag >>
+        working_directory: ~/opentelemetry-js-distro
+        steps:
+          - checkout
+          - run: npm inatall
+          - run: npm test
     - lumigo-orb/be-deploy:
         filters:
           branches:
