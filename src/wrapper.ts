@@ -16,12 +16,8 @@ const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 const LUMIGO_DEBUG_SPANDUMP = 'LUMIGO_DEBUG_SPANDUMP';
 
-const logLevel =
-    isEnvVarTrue(LUMIGO_DEBUG)
-        ? DiagLogLevel.ALL
-        : DiagLogLevel.ERROR;
+const logLevel = isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.ALL : DiagLogLevel.ERROR;
 diag.setLogger(new DiagConsoleLogger(), logLevel);
-
 
 const externalInstrumentations = [];
 
