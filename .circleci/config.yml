@@ -94,7 +94,7 @@ jobs:
     working_directory: ~/opentelemetry-js-distro
     steps:
       - checkout
-      - run: npm inatall
+      - run: npm install
       - run: npm test
   deploy:
     working_directory: ~/opentelemetry-js-distro
