@@ -16,7 +16,7 @@ workflows:
     - test-integration-js:
         matrix:
           parameters:
-            node_cimg_tag: ["12.13", "14.19", "16.15" ]
+            node_cimg_tag: [10.x, 12.x, 14.x, 16.x]
         filters:
           branches:
             ignore: master

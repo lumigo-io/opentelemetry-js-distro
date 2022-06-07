@@ -7,20 +7,21 @@ import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/in
 import { Resource } from '@opentelemetry/resources';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { isEnvVarTrue, safeExecute } from './utils';
-import { SpanExporter } from '@opentelemetry/sdk-trace-base/build/src/export/SpanExporter';
-
-const logLevel =
-  (process.env.LUMIGO_DEBUG || 'false').toLowerCase() === 'true'
-    ? DiagLogLevel.ALL
-    : DiagLogLevel.ERROR;
-diag.setLogger(new DiagConsoleLogger(), logLevel);
-export const LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans';
 
 let isTraced = false;
 
+export const LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
+const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 const LUMIGO_DEBUG_SPANDUMP = 'LUMIGO_DEBUG_SPANDUMP';
+
+const logLevel =
+    isEnvVarTrue(LUMIGO_DEBUG)
+        ? DiagLogLevel.ALL
+        : DiagLogLevel.ERROR;
+diag.setLogger(new DiagConsoleLogger(), logLevel);
+
 
 const externalInstrumentations = [];
 
@@ -111,7 +112,7 @@ export const trace = (
       diag.debug('Lumigo already traced');
       return;
     }
-    const exporter: SpanExporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
+    const exporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
       ? new ConsoleSpanExporter()
       : new OTLPTraceExporter({
           // @ts-ignore
