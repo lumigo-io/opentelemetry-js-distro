@@ -1,5 +1,5 @@
-import * as aws from '../../../src/parsers/aws';
-import { md5Hash } from '../../../src/utils';
+import * as aws from '../../../parsers/aws';
+import { md5Hash } from '../../../utils';
 
 describe('aws parser', () => {
   test('dynamodbParser', () => {

@@ -1,4 +1,4 @@
-const wrapper = require('../src/wrapper');
+const wrapper = require('../wrapper');
 
 jest.mock('@opentelemetry/node');
 jest.mock('@opentelemetry/exporter-collector');
