@@ -1,12 +1,12 @@
 {
-  "name": "lumigo-node-wrapper-test",
+  "name": "opentelemetry-js-distro-test",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start-progrematically": "node src/expressAppScript.js",
     "local": "node src/expressAppScript.js",
-    "start-script": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r @lumigo/microservices-node-tracer expressApp.js",
+    "start-script": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r @lumigo/opentelemetry expressApp.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "tsc"
   },
@@ -17,6 +17,6 @@
     "body-parser": "^1.19.1",
     "express": "^4.17.1",
     "uuid": "^8.3.2",
-    "@lumigo/microservices-node-tracer": "1.0.11"
+    "@lumigo/opentelemetry": "1.0.17"
   }
 }
