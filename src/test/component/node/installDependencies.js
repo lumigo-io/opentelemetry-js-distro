@@ -1,10 +1,11 @@
 const {spawnSync} = require('child_process');
 
-const customDependencies = require('./package.json').customDependecies;
+const customDependencies = require('./package.json').customDependencies;
 spawnSync('npm', ['install']);
 spawnSync('mkdir', ['./node_modules/.tmp']);
 
 for (const dependency in customDependencies) {
+  // install each dependency version and move it to a holding location
   customDependencies[dependency].forEach((version) => {
     console.log(`Installing ${dependency}@${version}`);
     if (version) {
@@ -17,6 +18,7 @@ for (const dependency in customDependencies) {
 
   });
 
+  // move each dependency version from its holding location to an active module directory
   customDependencies[dependency].forEach((version) => {
     console.log(`Moving ${dependency}@${version}`);
     if (version) {

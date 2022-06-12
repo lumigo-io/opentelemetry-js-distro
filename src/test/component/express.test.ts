@@ -1,12 +1,15 @@
 // @ts-ignore
-import {callContainer, executeNpmScriptWithCallback} from "./helpers/helpers";
+import {
+  callContainer,
+  executeNpmScriptWithCallback,
+} from './helpers/helpers';
 
-describe('integration tests all versions of supported instrumentations', function () {
-  let app;
-  afterEach(() => {
-    if (app) app.kill();
-  });
-    const customDependencies = require('./node/package.json').customDependecies;
+describe('component and compatibility tests for all versions of supported instrumentation', function () {
+    let app;
+    afterEach(() => {
+        if (app) app.kill();
+    });
+    const customDependencies = require('./node/package.json').customDependencies;
     for (const dependency in customDependencies) {
         customDependencies[dependency].forEach((version) => {
             it(`test ${dependency}@${version === "" ? "latest" : version} on node@${process.version}`, async () => {
@@ -17,7 +20,7 @@ describe('integration tests all versions of supported instrumentations', functio
                     resolver = resolve;
                 });
                 app = await executeNpmScriptWithCallback(
-                    './src/test/integration/node',
+                    './src/test/component/node',
                     (port) =>
                         callContainer(port, 'chucknorris', 'get', {
                             a: '1',

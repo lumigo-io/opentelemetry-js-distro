@@ -13,7 +13,7 @@ orbs:
 workflows:
   test-deploy:
     jobs:
-    - test-integration-js:
+    - test-component-js:
         matrix:
           parameters:
             node_cimg_tag: ["12.13", "14.19", "16.15" ]
@@ -83,7 +83,7 @@ jobs:
       - store_artifacts:
           path: coverage
           prefix: coverage
-  test-integration-js:
+  test-component-js:
     working_directory: ~/opentelemetry-js-distro
     parameters:
       node_cimg_tag:
@@ -92,10 +92,10 @@ jobs:
       - image: cimg/node:<< parameters.node_cimg_tag >>
     steps:
       - checkout
-      - run: npm install
+      - run: npm ci
       - run: ./scripts/prepare_node_wrapper.sh
-      - run: ./scripts/install_integration.sh
-      - run: npm run test:integration
+      - run: ./scripts/install_component.sh
+      - run: npm run test:component
   deploy:
     working_directory: ~/opentelemetry-js-distro
     docker:

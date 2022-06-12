@@ -1,5 +1,5 @@
-import {spawn} from "child_process";
-import axios from "axios";
+import axios from 'axios';
+import { spawn } from 'child_process';
 
 export async function executeNpmScriptWithCallback(
     path,
@@ -28,19 +28,21 @@ export async function executeNpmScriptWithCallback(
             if (signal) console.log(`Process killed with signal: ${signal}`);
             console.log("Done ✅");
         });
-        const port = await new Promise(resolve => {
-            let port = undefined;
+        let port:string = undefined;
+        await new Promise<void>(resolve => {
             expressApp.stdout.on("data", data => {
                 onData(data);
                 console.log("stdout: ", data.toString());
-                const dataStr = data.toString();
-                const portRegex = new RegExp(".*(PORT):([0-9]*)", "g");
+                if (!port) {
+                    const dataStr = data.toString();
+                    const portRegex = new RegExp(".*(PORT):([0-9]*)", "g");
 
-                const portRegexMatch = portRegex.exec(dataStr);
+                    const portRegexMatch = portRegex.exec(dataStr);
 
-                if (portRegexMatch && portRegexMatch.length >= 3) {
-                    port = portRegexMatch[2];
-                    resolve(port);
+                    if (portRegexMatch && portRegexMatch.length >= 3) {
+                        port = portRegexMatch[2];
+                        resolve();
+                    }
                 }
             });
         });
