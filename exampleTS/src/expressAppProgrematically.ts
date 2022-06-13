@@ -1,9 +1,11 @@
+import axios from 'axios';
+import bodyParser from 'body-parser';
 import express from 'express';
-import {trace} from "@lumigo/opentelemetry";
+
+import { trace } from '@lumigo/opentelemetry';
+
 trace('XXXXX', 'service-name');
 
-import axios from "axios";
-import bodyParser from 'body-parser'
 const app = express();
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -14,9 +16,6 @@ app.use(bodyParser.json())
 
 app.get('/chucknorris', async  (req, res) => {
 	const response = await axios.get('https://api.chucknorris.io/jokes/random', {
-		data: {
-			a: "a"
-		},
 		headers: {
 			header: "a"
 		}

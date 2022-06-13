@@ -1,18 +1,27 @@
 import axios from 'axios';
-import { spawn } from 'child_process';
+import {
+  ChildProcessWithoutNullStreams,
+  spawn,
+} from 'child_process';
+
+export const callContainer = async (port: number, path: string, method = "get", body = {}) => {
+    const httpResponse = await axios[method](`http://localhost:${port}/${path}`, body);
+    expect(httpResponse.status).toBeGreaterThan(199);
+    expect(httpResponse.status).toBeLessThan(300);
+};
 
 export async function executeNpmScriptWithCallback(
-    path,
-    onAppReady,
-    onData,
-    script,
-    env,
+    path: string,
+    onAppReady: (port: number) => Promise<void>,
+    onData: (data: string|Buffer|any) => void,
+    scriptName: string,
+    environmentVariables: any,
     shouldFail = false
 ) {
-    let expressApp;
+    let expressApp: ChildProcessWithoutNullStreams;
     try {
-        expressApp = spawn(`cd ${path} && npm`, ["run", script], {
-            env: { ...process.env, ...env },
+        expressApp = spawn(`cd ${path} && npm`, ["run", scriptName], {
+            env: { ...process.env, ...environmentVariables },
             shell: true
         });
         expressApp.stderr.on("data", data => {
@@ -28,8 +37,8 @@ export async function executeNpmScriptWithCallback(
             if (signal) console.log(`Process killed with signal: ${signal}`);
             console.log("Done ✅");
         });
-        let port:string = undefined;
-        await new Promise<void>(resolve => {
+        let port:number = undefined;
+        await new Promise<void>((resolve, reject) => {
             expressApp.stdout.on("data", data => {
                 onData(data);
                 console.log("stdout: ", data.toString());
@@ -40,25 +49,23 @@ export async function executeNpmScriptWithCallback(
                     const portRegexMatch = portRegex.exec(dataStr);
 
                     if (portRegexMatch && portRegexMatch.length >= 3) {
-                        port = portRegexMatch[2];
-                        resolve();
+                        try {
+                            port = parseInt(portRegexMatch[2]);
+                            resolve();
+                        } catch (exception) {
+                            reject(exception);
+                        }
                     }
                 }
             });
         });
         await onAppReady(port);
         return expressApp;
-    } catch (e) {
+    } catch (exception) {
         if (!shouldFail) {
-            fail(e);
+            fail(exception);
         }
     } finally {
         expressApp.kill(0);
     }
 }
-
-export const callContainer = async (port, path, method = "get", body = {}) => {
-    const httpResponse = await axios[method](`http://localhost:${port}/${path}`, body);
-    expect(httpResponse.status).toBeGreaterThan(199);
-    expect(httpResponse.status).toBeLessThan(300);
-};

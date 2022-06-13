@@ -1,7 +1,10 @@
-const express = process.env.EXPRESS_VERSION !== "" ? require(`express@${process.env.EXPRESS_VERSION}`) : require(`express`);
+const AXIOS_VERSION = process.env.AXIOS_VERSION === "" ? "axios" : `axios@${process.env.AXIOS_VERSION}`;
+const EXPRESS_VERSION = process.env.EXPRESS_VERSION === "" ? "express" : `express@${process.env.EXPRESS_VERSION}`;
+
+const axios = require(AXIOS_VERSION);
+const express = require(EXPRESS_VERSION);
 const bodyParser = require("body-parser");
 const app = express();
-const axios = require("axios");
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -9,7 +12,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const init = () => {
-	app.get('/chucknorris', async  (req, res) => {
+	app.get('/invoke-requests', async  (req, res) => {
 		const response = await axios.get('https://api.chucknorris.io/jokes/random', {
 			headers: {
 				header: "a"

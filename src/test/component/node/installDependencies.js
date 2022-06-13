@@ -1,12 +1,14 @@
 const {spawnSync} = require('child_process');
 
-const customDependencies = require('./package.json').customDependencies;
+console.log(`Installing supported dependency versions...`);
+
+const supportedDependencies = require('./package.json').lumigo.supportedDependencies;
 spawnSync('npm', ['install']);
 spawnSync('mkdir', ['./node_modules/.tmp']);
 
-for (const dependency in customDependencies) {
+for (const dependency in supportedDependencies) {
   // install each dependency version and move it to a holding location
-  customDependencies[dependency].forEach((version) => {
+  supportedDependencies[dependency].forEach((version) => {
     console.log(`Installing ${dependency}@${version}`);
     if (version) {
       spawnSync('npm', ['install', `${dependency}@${version}`]);
@@ -19,7 +21,7 @@ for (const dependency in customDependencies) {
   });
 
   // move each dependency version from its holding location to an active module directory
-  customDependencies[dependency].forEach((version) => {
+  supportedDependencies[dependency].forEach((version) => {
     console.log(`Moving ${dependency}@${version}`);
     if (version) {
       spawnSync('mv', [`./node_modules/.tmp/${dependency}@${version}`, `./node_modules/${dependency}@${version}`]);
@@ -29,4 +31,4 @@ for (const dependency in customDependencies) {
   });
 }
 spawnSync('rm', ['-rf', './node_modules/.tmp']);
-console.log(`Installing Deps finished.`);
+console.log(`Supported dependency versions installed successfully.`);
