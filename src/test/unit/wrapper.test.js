@@ -6,7 +6,7 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
-const wrapper = require('../src/wrapper');
+const wrapper = require('../../wrapper');
 
 jest.mock('@opentelemetry/exporter-trace-otlp-http');
 jest.mock('@opentelemetry/sdk-trace-node');
@@ -73,7 +73,6 @@ describe('happy flow', () => {
   test('OTLPTraceExporter should have been called with config', () => {
     wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(OTLPTraceExporter).toHaveBeenCalledWith({
-      serviceName: 'service-1',
       url: ENDPOINT,
     });
   });
