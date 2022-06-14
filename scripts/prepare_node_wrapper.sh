@@ -7,4 +7,4 @@ echo "build"
 npm ci
 npm run build
 tracer="$(npm pack)"
-mv $tracer wrapper.tgz
+mv "$tracer" wrapper.tgz

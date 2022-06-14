@@ -13,7 +13,7 @@
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
     "semantic-release": "semantic-release",
     "test:unit": "npm run build && jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit",
-    "test:component": "npm run build && jest -c jest.component.config.js --detectOpenHandles --runInBand --forceExit",
+    "test:component:express": "npm run build && jest -c jest.express.component.config.js --detectOpenHandles --runInBand --forceExit",
     "tsc": "tsc"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
