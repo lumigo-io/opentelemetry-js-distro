@@ -1,12 +1,14 @@
-import * as shimmer from 'shimmer';
-import { diag, Span } from '@opentelemetry/api';
 import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
-import { InstrumentationIfc } from './hooksIfc';
-import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
-import { getAwsServiceData } from '../spans/awsSpan';
-import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
+import * as shimmer from 'shimmer';
+import { URL } from 'url';
+
 import { CommonUtils } from '@lumigo/node-core';
-import { URL } from "url";
+import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
+import { diag, Span } from '@opentelemetry/api';
+
+import { getAwsServiceData } from '../spans/awsSpan';
+import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
+import { InstrumentationIfc } from './hooksIfc';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
@@ -48,7 +50,6 @@ type OnRequestEndOptionsType = {
   truncated: boolean;
 };
 
-
 export const isValidHttpRequestBody = (reqBody) =>
   !!(reqBody && (typeof reqBody === 'string' || reqBody instanceof Buffer));
 
@@ -63,7 +64,6 @@ export const isEmptyString = (str): boolean =>
   !!(!str || (typeof str === 'string' && str.length === 0));
 
 type RequestType = (ClientRequest | IncomingMessage) & { headers?: any; getHeaders: () => any };
-
 
 export const HttpHooks: InstrumentationIfc<
   ClientRequest | IncomingMessage,
@@ -117,10 +117,8 @@ export const HttpHooks: InstrumentationIfc<
   },
 };
 
-
 export class Http {
-
-  static onRequestEnd (span: Span & { attributes: Record<string, string> }){
+  static onRequestEnd(span: Span & { attributes: Record<string, string> }) {
     return (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => {
       const { body, headers, statusCode, truncated } = options;
       requestRawData.response.body = body;
@@ -141,9 +139,9 @@ export class Http {
         console.warn('getHttpSpan args', { requestData: requestRawData });
       }
     };
-  };
+  }
 
-  static extractBodyFromEmitSocketEvent(socketEventArgs){
+  static extractBodyFromEmitSocketEvent(socketEventArgs) {
     return safeExecute(
       () => {
         if (
@@ -169,7 +167,8 @@ export class Http {
       'warn',
       ''
     )();
-  };
+  }
+
   static getRequestHeaders(request: RequestType) {
     return request.headers || request.getHeaders();
   }
@@ -222,8 +221,7 @@ export class Http {
     return options.hostname || options.host || (options.uri && options.uri.hostname) || 'localhost';
   }
 
-
-  static httpRequestWriteBeforeHookWrapper(requestData: RequestRawData, span: Span){
+  static httpRequestWriteBeforeHookWrapper(requestData: RequestRawData, span: Span) {
     return function (args) {
       if (isEmptyString(requestData.request.body)) {
         const body = Http.extractBodyFromWriteOrEndFunc(args);
@@ -232,7 +230,7 @@ export class Http {
         span.setAttribute('http.request.body', scrubed);
       }
     };
-  };
+  }
 
   static createEmitResponseOnEmitBeforeHookHandler(
     requestRawData: RequestRawData,
@@ -241,7 +239,7 @@ export class Http {
   ) {
     let body = '';
     const maxPayloadSize = MAX_SIZE;
-    return function(args) {
+    return function (args) {
       let truncated = false;
       const { headers, statusCode } = response;
       if (args[0] === 'data' && body.length < maxPayloadSize) {
@@ -257,7 +255,7 @@ export class Http {
       if (args[0] === 'end') {
         onRequestEnd(requestRawData, { body, truncated, headers, statusCode });
       }
-    }
+    };
   }
 
   static createEmitResponseHandler(
@@ -272,14 +270,14 @@ export class Http {
       );
       hook(response, 'emit', {
         beforeHook: onHandler,
-      })
-    }
+      });
+    };
   }
 
   static httpRequestEmitBeforeHookWrapper(
     requestData: RequestRawData,
     span: Span & { attributes: Record<string, string> }
-  ){
+  ) {
     const emitResponseHandler = Http.createEmitResponseHandler(requestData, span);
     const oneTimerEmitResponseHandler = runOneTimeWrapper(emitResponseHandler, {});
     return function (args) {
@@ -295,5 +293,5 @@ export class Http {
         }
       }
     };
-  };
+  }
 }

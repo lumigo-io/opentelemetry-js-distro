@@ -23,7 +23,7 @@ const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 
 const externalInstrumentations = [];
 
-export const clearIsTraced = () => isTraced = false
+export const clearIsTraced = () => (isTraced = false);
 
 export const addInstrumentation = (instrumentation: InstrumentationBase) => {
   if (isTraced) {
