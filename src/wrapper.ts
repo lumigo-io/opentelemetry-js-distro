@@ -147,7 +147,7 @@ export const trace = (
     }
     traceProvider.register();
     isTraced = true;
-    diag.info(`Lumigo tracer started on ${serviceName}`);
+    diag.debug(`Lumigo tracer started on ${serviceName}`);
   } catch (exception) {
     console.error('Error initializing Lumigo tracer: ', exception);
   }

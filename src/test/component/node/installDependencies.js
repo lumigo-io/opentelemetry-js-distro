@@ -17,7 +17,6 @@ for (const dependency in supportedDependencies) {
       spawnSync('npm', ['install', `${dependency}`]);
       spawnSync('mv', [`./node_modules/${dependency}`, `./node_modules/.tmp/${dependency}`]);
     }
-
   });
 
   // move each dependency version from its holding location to an active module directory
