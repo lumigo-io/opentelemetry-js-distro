@@ -9,7 +9,7 @@ describe('component compatibility tests for all supported versions of express', 
     afterEach(() => {
         if (app) app.kill();
     });
-    const supportedVersions = require('./package.json').lumigo.supportedDependencies["express"];
+    const supportedVersions = require('./node/package.json').lumigo.supportedDependencies["express"];
     supportedVersions.forEach((expressVersion: string) => {
         it(`test transactionId truthy on express@${expressVersion} / node@${process.version}`, async () => {
             jest.setTimeout(30000);
