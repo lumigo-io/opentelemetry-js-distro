@@ -47,6 +47,9 @@ export const safeGet = (obj, arr, dflt = null) => {
   return current || dflt;
 };
 
+export const isEnvVarTrue = (envVar: string) =>
+  process.env[envVar] && process.env[envVar].toLowerCase() === 'true';
+
 export const isAwsService = (host, responseData = undefined): boolean => {
   if (host && host.includes('amazonaws.com')) {
     return true;
