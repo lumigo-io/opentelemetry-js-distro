@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 echo "clean"
+
 rm -rf dist wrapper.tgz || true
 echo "build"
 npm ci

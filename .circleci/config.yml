@@ -13,6 +13,13 @@ orbs:
 workflows:
   test-deploy:
     jobs:
+    - test-component-js:
+        matrix:
+          parameters:
+            node_cimg_tag: ["12.13", "14.19", "16.15" ]
+        filters:
+          branches:
+            ignore: master
     - test:
         filters:
           branches:
@@ -66,7 +73,7 @@ jobs:
           command: npm run prettier:ci
       - run:
           name: test
-          command: npm test
+          command: npm run test:unit
       - run:
           name: eslint
           command: npm run lint
@@ -76,6 +83,19 @@ jobs:
       - store_artifacts:
           path: coverage
           prefix: coverage
+  test-component-js:
+    working_directory: ~/opentelemetry-js-distro
+    parameters:
+      node_cimg_tag:
+        type: string
+    docker:
+      - image: cimg/node:<< parameters.node_cimg_tag >>
+    steps:
+      - checkout
+      - run: npm ci
+      - run: ./scripts/prepare_node_wrapper.sh
+      - run: ./scripts/install_component.sh
+      - run: npm run test:component
   deploy:
     working_directory: ~/opentelemetry-js-distro
     docker:

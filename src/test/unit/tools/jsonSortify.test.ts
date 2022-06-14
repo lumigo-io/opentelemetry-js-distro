@@ -1,6 +1,6 @@
 // @ts-nocheck
 // @ts-ignore
-import { sortify } from './jsonSortify';
+import { sortify } from '../../../tools/jsonSortify';
 JSON.sortify = sortify;
 describe('JSON.sortify', function () {
   describe('interface', function () {
