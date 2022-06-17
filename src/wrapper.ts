@@ -12,7 +12,7 @@ import { isEnvVarTrue, safeExecute } from './utils';
 let isLumigoSwitchedOffStatusReported = false;
 let isTraced = false;
 
-export const LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans';
+export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
@@ -87,22 +87,14 @@ function requireIfAvailable(names: string[]) {
   names.forEach((name) => safeRequire(name));
 }
 
-registerInstrumentations({
-  instrumentations: [
-    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, LUMIGO_ENDPOINT),
-    new LumigoExpressInstrumentation(),
-    ...externalInstrumentations,
-  ],
-});
 requireIfAvailable([
   ...MODULES_TO_INSTRUMENT,
   ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
 ]);
 
-export const trace = (
-  lumigoToken = '',
-  serviceName = 'service-name',
-  endpoint = LUMIGO_ENDPOINT
+const trace = (
+  lumigoEndpoint: string,
+  lumigoToken: string,
 ) => {
   try {
     if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
@@ -119,12 +111,13 @@ export const trace = (
     const exporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
       ? new ConsoleSpanExporter()
       : new OTLPTraceExporter({
-          url: endpoint,
+          url: lumigoEndpoint,
+          headers: {
+            'Authorization': `LumigoToken ${lumigoToken}`
+          }
         });
     const config = {
       resource: new Resource({
-        lumigoToken: lumigoToken.trim(),
-        'service.name': serviceName,
         runtime: `node${process.version}`,
         tracerVersion: getTracerInfo().version,
         framework: 'express',
@@ -147,26 +140,29 @@ export const trace = (
     }
     traceProvider.register();
     isTraced = true;
-    diag.debug(`Lumigo tracer started on ${serviceName}`);
+
+    registerInstrumentations({
+      instrumentations: [
+        new LumigoHttpInstrumentation(lumigoEndpoint),
+        new LumigoExpressInstrumentation(),
+        ...externalInstrumentations,
+      ],
+    });
+    
+    diag.debug('Lumigo tracer started');
   } catch (exception) {
     console.error('Error initializing Lumigo tracer: ', exception);
   }
 };
 
-if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME && !isTraced) {
+if (!isTraced) {
   trace(
+    process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT,
     process.env.LUMIGO_TOKEN,
-    process.env.LUMIGO_SERVICE_NAME,
-    process.env.LUMIGO_ENDPOINT || LUMIGO_ENDPOINT
   );
 }
 
 module.exports = {
-  trace,
   LumigoHttpInstrumentation,
   LumigoExpressInstrumentation,
-  LumigoInstrumentations: (lumigoToken?: string) => [
-    new LumigoHttpInstrumentation(lumigoToken),
-    new LumigoExpressInstrumentation(),
-  ],
 };

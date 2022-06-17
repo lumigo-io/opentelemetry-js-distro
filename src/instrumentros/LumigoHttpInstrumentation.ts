@@ -2,7 +2,6 @@ import { HttpHooks } from '../hooks/http';
 
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import axios, { AxiosResponse } from 'axios';
-import { LUMIGO_ENDPOINT } from '../wrapper';
 
 let metadata;
 
@@ -24,14 +23,17 @@ fetchMetadataUri().then((res) => {
 });
 
 export default class LumigoHttpInstrumentation {
-  constructor(lumigoToken = '', endPoint = LUMIGO_ENDPOINT) {
+  constructor(lumigoEndpoint: string) {
+    const ignoreOutgoingUrls = [lumigoEndpoint]
+    if (process.env['ECS_CONTAINER_METADATA_URI']) {
+      ignoreOutgoingUrls.concat(process.env['ECS_CONTAINER_METADATA_URI'])
+    }
+
     return new HttpInstrumentation({
-      ignoreOutgoingUrls: process.env['ECS_CONTAINER_METADATA_URI']
-        ? [process.env['ECS_CONTAINER_METADATA_URI'], endPoint, LUMIGO_ENDPOINT]
-        : [endPoint, LUMIGO_ENDPOINT],
+      ignoreOutgoingUrls: ignoreOutgoingUrls,
       applyCustomAttributesOnSpan: (span) => {
+        // TODO Move metadata to resource detector
         if (metadata) span.setAttribute('metadata', JSON.stringify(metadata));
-        if (lumigoToken) span.setAttribute('lumigoToken', lumigoToken);
       },
       requestHook: HttpHooks.requestHook,
       responseHook: HttpHooks.responseHook,
