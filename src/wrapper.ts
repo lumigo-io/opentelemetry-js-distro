@@ -1,6 +1,6 @@
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
@@ -27,18 +27,6 @@ if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
 diag.setLogger(new DiagConsoleLogger(), logLevel);
 
 const externalInstrumentations = [];
-
-export const addInstrumentation = (instrumentation: InstrumentationBase) => {
-  if (isTraced) {
-    console.warn(
-      `Lumigo already traced, Try first adding your instrumentation and then calling trace()`
-    );
-  } else if (instrumentation instanceof InstrumentationBase) {
-    externalInstrumentations.push(instrumentation);
-  } else {
-    console.warn(`"instrumentation" is not an instance of InstrumentationBase`);
-  }
-};
 
 const safeRequire = (libId) => {
   try {
@@ -92,22 +80,11 @@ requireIfAvailable([
   ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
 ]);
 
-const trace = (
+const initializeTracer = (
   lumigoEndpoint: string,
   lumigoToken: string,
 ) => {
   try {
-    if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
-      if (!isLumigoSwitchedOffStatusReported) {
-        isLumigoSwitchedOffStatusReported = true;
-        diag.info('Lumigo is switched off, aborting tracer initialization...');
-      }
-      return;
-    }
-    if (isTraced) {
-      diag.debug('Lumigo already traced, aborting tracer initialization...');
-      return;
-    }
     const exporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
       ? new ConsoleSpanExporter()
       : new OTLPTraceExporter({
@@ -125,6 +102,7 @@ const trace = (
         envs: JSON.stringify(process.env),
       }),
     };
+
     const traceProvider = new NodeTracerProvider(config);
     traceProvider.addSpanProcessor(
       new BatchSpanProcessor(exporter, {
@@ -134,10 +112,7 @@ const trace = (
         maxExportBatchSize: 100,
       })
     );
-    if (isTraced) {
-      diag.debug('Lumigo already traced, aborting tracer initialization...');
-      return;
-    }
+
     traceProvider.register();
     isTraced = true;
 
@@ -155,11 +130,20 @@ const trace = (
   }
 };
 
-if (!isTraced) {
-  trace(
-    process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT,
-    process.env.LUMIGO_TOKEN,
-  );
+if (isTraced) {
+  diag.debug('Lumigo already traced, aborting tracer initialization...');
+} else {
+  if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
+    if (!isLumigoSwitchedOffStatusReported) {
+      isLumigoSwitchedOffStatusReported = true;
+      diag.info('Lumigo is switched off, aborting tracer initialization...');
+    }
+  } else {
+    initializeTracer(
+      process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT,
+      process.env.LUMIGO_TOKEN,
+    );
+  }
 }
 
 module.exports = {
