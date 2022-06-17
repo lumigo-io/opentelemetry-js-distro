@@ -2,11 +2,12 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
-import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
+import { FileSpanExporter } from './exporters';
 import { isEnvVarTrue, safeExecute } from './utils';
 
 let isLumigoSwitchedOffStatusReported = false;
@@ -16,7 +17,6 @@ export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golum
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
-const LUMIGO_DEBUG_SPANDUMP = 'LUMIGO_DEBUG_SPANDUMP';
 
 let logLevel: DiagLogLevel;
 if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
@@ -85,33 +85,43 @@ const initializeTracer = (
   lumigoToken: string,
 ) => {
   try {
-    const exporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
-      ? new ConsoleSpanExporter()
-      : new OTLPTraceExporter({
-          url: lumigoEndpoint,
-          headers: {
-            'Authorization': `LumigoToken ${lumigoToken}`
-          }
-        });
-    const config = {
-      resource: new Resource({
+    const traceProvider = new NodeTracerProvider({
+      resource: Resource.default().merge(new Resource({
         runtime: `node${process.version}`,
         tracerVersion: getTracerInfo().version,
         framework: 'express',
         exporter: 'opentelemetry',
         envs: JSON.stringify(process.env),
-      }),
-    };
+      })),
+    });
 
-    const traceProvider = new NodeTracerProvider(config);
-    traceProvider.addSpanProcessor(
-      new BatchSpanProcessor(exporter, {
-        // The maximum queue size. After the size is reached spans are dropped.
-        maxQueueSize: 1000,
-        // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-        maxExportBatchSize: 100,
-      })
-    );
+    if (lumigoToken) {
+      const exporter = new OTLPTraceExporter({
+        // @ts-ignore
+        url: endpoint,
+        headers: {
+          'Authorization': `LumigoToken ${lumigoToken}`
+        }
+      });
+      traceProvider.addSpanProcessor(
+        new BatchSpanProcessor(exporter, {
+          // The maximum queue size. After the size is reached spans are dropped.
+          maxQueueSize: 1000,
+          // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+          maxExportBatchSize: 100,
+        })
+      );
+    } else {
+      diag.warn(
+        "Lumigo token not provided (env var 'LUMIGO_TRACER_TOKEN' not set); no data will be sent to Lumigo"
+      )
+    }
+
+    const lumigoSpanDumpFile = process.env.LUMIGO_DEBUG_SPANDUMP
+    if (lumigoSpanDumpFile) {
+      traceProvider.addSpanProcessor(new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpFile)));
+      traceProvider.register();
+    }
 
     traceProvider.register();
     isTraced = true;
