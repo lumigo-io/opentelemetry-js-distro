@@ -1,5 +1,5 @@
-import * as aws from '../../../parsers/aws';
-import { md5Hash } from '../../../utils';
+import * as aws from './aws';
+import { md5Hash } from '../utils';
 
 describe('aws parser', () => {
   test('dynamodbParser', () => {
@@ -129,9 +129,9 @@ describe('aws parser', () => {
     const headers = {
       'x-amz-invocation-type': invocationType,
     };
-    const requestData = { path, headers };
+    const requestData = { path, headers, truncated: false };
     const spanId = '1234-abcd-efgh';
-    const responseData = { headers: { 'x-amzn-requestid': spanId } };
+    const responseData = { headers: { 'x-amzn-requestid': spanId }, truncated: false };
     const expected = {
       'aws.invocation.type': invocationType,
       'aws.request.id': spanId,
@@ -150,9 +150,9 @@ describe('aws parser', () => {
     const headers = {
       'x-amz-invocation-type': invocationType,
     };
-    const requestData = { path, headers };
+    const requestData = { path, headers, truncated: false};
     const spanId = '1234-abcd-efgh';
-    const responseData = { headers: { 'x-amzn-requestid': spanId } };
+    const responseData = { headers: { 'x-amzn-requestid': spanId }, truncated: false };
     const expected = {
       'aws.invocation.type': invocationType,
       'aws.request.id': spanId,

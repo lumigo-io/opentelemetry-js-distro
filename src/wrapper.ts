@@ -5,15 +5,15 @@ import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
-import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
-import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
+import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
+import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { FileSpanExporter } from './exporters';
 import { isEnvVarTrue, safeExecute } from './utils';
 
 let isLumigoSwitchedOffStatusReported = false;
 let isTraced = false;
 
-export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans';
+export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
@@ -97,12 +97,12 @@ const initializeTracer = (
 
     if (lumigoToken) {
       const exporter = new OTLPTraceExporter({
-        // @ts-ignore
-        url: endpoint,
+        url: lumigoEndpoint,
         headers: {
           'Authorization': `LumigoToken ${lumigoToken}`
         }
       });
+
       traceProvider.addSpanProcessor(
         new BatchSpanProcessor(exporter, {
           // The maximum queue size. After the size is reached spans are dropped.
@@ -120,11 +120,7 @@ const initializeTracer = (
     const lumigoSpanDumpFile = process.env.LUMIGO_DEBUG_SPANDUMP
     if (lumigoSpanDumpFile) {
       traceProvider.addSpanProcessor(new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpFile)));
-      traceProvider.register();
     }
-
-    traceProvider.register();
-    isTraced = true;
 
     registerInstrumentations({
       instrumentations: [
@@ -134,24 +130,27 @@ const initializeTracer = (
       ],
     });
     
-    diag.debug('Lumigo tracer started');
+    traceProvider.register();
+    isTraced = true;
+
+    diag.debug('Lumigo tracer initialized');
   } catch (exception) {
-    console.error('Error initializing Lumigo tracer: ', exception);
+    diag.error('Error initializing Lumigo tracer: ', exception);
   }
 };
 
 if (isTraced) {
-  diag.debug('Lumigo already traced, aborting tracer initialization...');
+  diag.debug('Lumigo tracer already initialized');
 } else {
   if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
     if (!isLumigoSwitchedOffStatusReported) {
       isLumigoSwitchedOffStatusReported = true;
-      diag.info('Lumigo is switched off, aborting tracer initialization...');
+      diag.info('Lumigo is switched off, tracer will not be initialized');
     }
   } else {
     initializeTracer(
       process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT,
-      process.env.LUMIGO_TOKEN,
+      process.env.LUMIGO_TRACER_TOKEN,
     );
   }
 }
@@ -159,4 +158,6 @@ if (isTraced) {
 module.exports = {
   LumigoHttpInstrumentation,
   LumigoExpressInstrumentation,
+  externalInstrumentations,
+  initializeTracer,
 };

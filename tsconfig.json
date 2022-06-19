@@ -3,6 +3,7 @@
     "outDir": "dist",
     "allowJs": true,
     "target": "es6",
+    "types": ["node", "jest"],
     "module": "CommonJS",
     "moduleResolution": "node",
     "sourceMap": true,

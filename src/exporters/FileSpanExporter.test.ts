@@ -1,4 +1,4 @@
-import { FileSpanExporter } from '../../../exporters';
+import { FileSpanExporter } from '.';
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { Span, SpanKind } from '@opentelemetry/api';
 
