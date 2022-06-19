@@ -11,7 +11,7 @@ module.exports = {
     '!./src/expressAppProgrematically.js',
     '!./src/instrumentros/logsInstrumentation.ts',
   ],
-  // setupFilesAfterEnv: ['./testUtils/jest.setup.js'],
+  setupFilesAfterEnv: ['./testUtils/jest.setup.js'],
   coverageThreshold: {
     global: {
       lines: 100,
