@@ -8,7 +8,6 @@ import {
   apigwParser,
   eventBridgeParser,
 } from '../parsers/aws';
-import { Span } from '@opentelemetry/api';
 
 export const EXTERNAL_SERVICE = 'external';
 
@@ -32,7 +31,7 @@ export type AwsServiceData = {
   messageId?: string;
   [key: string]: any;
 };
-export const getAwsServiceData = (requestData, responseData, span: Span): AwsServiceData => {
+export const getAwsServiceData = (requestData, responseData): AwsServiceData => {
   const { host } = requestData;
   const awsService = getAwsServiceFromHost(host);
 

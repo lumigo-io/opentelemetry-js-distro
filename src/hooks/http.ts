@@ -59,7 +59,7 @@ const onRequestEnd = (span: Span & { attributes: Record<string, string> }) => {
     try {
       if (isAwsService(requestRawData.request.host, requestRawData.response)) {
         span.setAttributes(
-          getAwsServiceData(requestRawData.request, requestRawData.response, span)
+          getAwsServiceData(requestRawData.request, requestRawData.response)
         );
         span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
       }
