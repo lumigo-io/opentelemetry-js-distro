@@ -6,9 +6,10 @@
   "private": false,
   "types": "dist/wrapper.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc --build --force",
+    "build": "rm -rf dist wrapper.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" wrapper.tgz",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
+    "install-component": "scripts/install_component.sh",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
     "semantic-release": "semantic-release",

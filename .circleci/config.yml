@@ -95,8 +95,8 @@ jobs:
       - image: cimg/node:<< parameters.node_cimg_tag >>
     steps:
       - checkout
-      - run: ./scripts/prepare_node_wrapper.sh
-      - run: ./scripts/install_component.sh
+      - run: npm ci
+      - run: npm run install-component
       - run: npm run test:component:<< parameters.test_category>>
   deploy:
     working_directory: ~/opentelemetry-js-distro
