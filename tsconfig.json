@@ -16,6 +16,5 @@
     "declarationMap": true,
     "composite": true
   },
-  "include": ["./src/**/*"],
-  "exclude": ["**/*.test.js", "**/*.test.ts"]
+  "include": ["./src/**/*"]
 }
