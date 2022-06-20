@@ -7,7 +7,7 @@ import * as https from 'https';
  */
  export class AwsEcsDetector implements Detector {
 
-    detect(_config?: ResourceDetectionConfig): Promise<Resource> {
+    async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
         const metadataUriV4 = process.env['ECS_CONTAINER_METADATA_URI_V4'];
 
         if (!metadataUriV4) {

@@ -6,7 +6,6 @@ import * as detectors from './resources/detectors';
 jest.mock('@opentelemetry/api');
 jest.mock('@opentelemetry/exporter-trace-otlp-http');
 jest.mock('./exporters');
-jest.mock('./resources/detectors');
 
 
 const TOKEN = 't_10faa5e13e7844aaa1234';
@@ -55,7 +54,7 @@ describe('Distro initialization', () => {
 
         try {
           await wrapper.sdkInit;
-          throw new Error('The SDK init would have failed!')
+          throw new Error('The SDK init should have failed!')
         } catch (error) {
           // Good case
         }

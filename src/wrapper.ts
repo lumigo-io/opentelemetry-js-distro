@@ -2,7 +2,7 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
-import { BatchSpanProcessor, SimpleSpanProcessor, SpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
@@ -92,16 +92,25 @@ const init = async (
     }
   })
   .then(() => {
+    const lumigoDistroPromise: Promise<Resource> = new LumigoDistroDetector(__dirname).detect().catch((exception) => {
+      diag.error("An error occurred while running detecting the version of the Lumigo OpenTelemetry distro", exception);
+      return Resource.EMPTY;
+    });
+    const awsEcsPromise: Promise<Resource> = new AwsEcsDetector().detect().catch((exception) => {
+      diag.error("An error occurred while running detecting AWS ECS resource attributes", exception);
+      return Resource.EMPTY;
+    });
+
     return Promise.all(
       [
-        new LumigoDistroDetector(__dirname).detect(),
+        lumigoDistroPromise,
+        awsEcsPromise,
         Promise.resolve(new Resource({
           runtime: `node${process.version}`,
           framework: 'express',
           exporter: 'opentelemetry',
           envs: JSON.stringify(process.env),
         })),
-        new AwsEcsDetector().detect()
       ]
     );
   })
@@ -112,9 +121,11 @@ const init = async (
     });
     return resource;
   }) // Init trace provider
-  .then((resource) => new NodeTracerProvider({
-    resource: resource,
-  })) // Init span processors
+  .then((resource) => {
+    return new NodeTracerProvider({
+      resource: resource,
+    });
+  }) // Init span processors
   .then((traceProvider) => {
     if (lumigoToken) {
       const exporter = new OTLPTraceExporter({

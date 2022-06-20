@@ -12,18 +12,15 @@ import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/reso
         this._packageRoot = packageRoot;
     }
 
-    detect(_config?: ResourceDetectionConfig): Promise<Resource> {
-        return Promise.resolve(this._packageRoot)
-            .then(packageRoot => {
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const { name, version } = require(packageRoot + '/../package.json');
-                return { name, version };
-            }) //
-            .then(packageInfo => {
-                return new Resource({
-                    lumigoDistroVersion: packageInfo.version
-                });
-            })
+    async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
+        return new Promise((resolve, reject) => {
+            console.log(this._packageRoot)
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { name, version } = require(this._packageRoot + '/../package.json');
+            resolve(new Resource({
+                lumigoDistroVersion: version
+            }));
+        });
     }
 
 }
