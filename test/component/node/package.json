@@ -1,9 +1,9 @@
 {
-  "name": "lumigo-wrapper-test",
+  "name": "lumigo-opentelemetry-test",
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start:injected": "node -r lumigo-wrapper wrapperInjected.js",
+    "start:injected": "node -r @lumigo/opentelemetry wrapperInjected.js",
     "install-dependencies": "node installDependencies.js"
   },
   "author": "",
@@ -11,7 +11,7 @@
   "dependencies": {
     "body-parser": "^1.19.1",
     "express": "^4.15.1",
-    "lumigo-wrapper": "file:../../../../wrapper.tgz"
+    "@lumigo/opentelemetry": "file:../../../../../dist/"
   },
   "customDependencies": {
     "express": [

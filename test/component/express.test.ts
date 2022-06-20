@@ -20,7 +20,7 @@ describe('component and compatibility tests for all versions of supported instru
                     resolver = resolve;
                 });
                 app = await executeNpmScriptWithCallback(
-                    './src/test/component/node',
+                    './test/component/node',
                     (port) =>
                         callContainer(port, 'chucknorris', 'get', {
                             a: '1',
