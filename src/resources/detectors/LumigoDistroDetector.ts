@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 
 /**

@@ -7,6 +7,7 @@ import * as https from 'https';
  */
  export class AwsEcsDetector implements Detector {
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
         const metadataUriV4 = process.env['ECS_CONTAINER_METADATA_URI_V4'];
 
