@@ -1,0 +1,1 @@
+export { AwsEcsDetector } from './AwsEcsDetector';
