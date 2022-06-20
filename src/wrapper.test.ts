@@ -1,7 +1,8 @@
 import * as api from '@opentelemetry/api';
+import { DiagLogger } from '@opentelemetry/api';
 import * as otlp from '@opentelemetry/exporter-trace-otlp-http';
 import * as exporters from './exporters';
-import * as detectors from './resources/detectors';
+import { NodeTracerConfig, NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 jest.mock('@opentelemetry/api');
 jest.mock('@opentelemetry/exporter-trace-otlp-http');
@@ -13,9 +14,19 @@ const ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v
 
 describe('Distro initialization', () => {
 
+  const logger: DiagLogger = {
+   error: jest.fn(),
+   warn: jest.fn(),
+   info:  jest.fn(),
+   debug:  jest.fn(),
+   verbose: jest.fn(),
+  };
+
   const OLD_ENV = process.env;
 
   beforeEach(() => {
+    jest.spyOn(api.diag, 'createComponentLogger').mockImplementation(() => logger);
+
     process.env = { ...OLD_ENV }; // Make a copy of env so that we can alter it in tests
   });
 
@@ -35,33 +46,9 @@ describe('Distro initialization', () => {
         const sdkInitialized = await wrapper.sdkInit;
 
         expect(sdkInitialized).toBe(false);
-        expect(api.diag.info).toBeCalledWith('Lumigo is switched off, tracer will not be initialized');
+        expect(logger.info).toBeCalledWith('Lumigo OpenTelemetry Distro is switched off, no telemetry will be collected');
       });
 
-    });
-
-  });
-
-  describe('with no an error occurring in a detector', () => {
-
-    it('should reject the init promise', async () => {
-      jest.isolateModules(async () => {
-        jest.spyOn(detectors.AwsEcsDetector.prototype, 'detect').mockImplementation(config => {
-          return Promise.reject(new Error("YOLO!"));
-        });
-
-        const wrapper = require('./wrapper');
-
-        try {
-          await wrapper.sdkInit;
-          throw new Error('The SDK init should have failed!')
-        } catch (error) {
-          // Good case
-        }
-
-        expect(api.diag.error).toBeCalledWith('Error initializing Lumigo tracer: %e', new Error("YOLO!"));  
-        expect(otlp.OTLPTraceExporter).not.toBeCalled();
-      });
     });
 
   });
@@ -75,7 +62,7 @@ describe('Distro initialization', () => {
         const sdkInitialized = await wrapper.sdkInit;
 
         expect(sdkInitialized).toBe(true);
-        expect(api.diag.warn).toBeCalledWith("Lumigo token not provided (env var 'LUMIGO_TRACER_TOKEN' not set); no data will be sent to Lumigo");  
+        expect(logger.warn).toBeCalledWith("Lumigo token not provided (env var 'LUMIGO_TRACER_TOKEN' not set); no data will be sent to Lumigo");  
         expect(otlp.OTLPTraceExporter).not.toBeCalled();
       });
     });
@@ -101,7 +88,7 @@ describe('Distro initialization', () => {
             'Authorization': `LumigoToken ${TOKEN}`
           }
         });
-        expect(api.diag.debug).toBeCalledWith('Lumigo tracer initialized');
+        expect(logger.debug).toBeCalledWith('Lumigo OpenTelemetry Distro initialized');
       });
     });
 
@@ -124,7 +111,7 @@ describe('Distro initialization', () => {
               'Authorization': `LumigoToken ${TOKEN}`
             }
           });
-          expect(api.diag.debug).toBeCalledWith('Lumigo tracer initialized');
+          expect(logger.debug).toBeCalledWith('Lumigo OpenTelemetry Distro initialized');
         });
       });
 
@@ -146,7 +133,7 @@ describe('Distro initialization', () => {
 
         expect(sdkInitialized).toBe(true);
         expect(exporters.FileSpanExporter).toBeCalledWith('test.json');
-        expect(api.diag.debug).toBeCalledWith('Lumigo tracer initialized');
+        expect(logger.debug).toBeCalledWith('Lumigo OpenTelemetry Distro initialized');
       });
     });
     

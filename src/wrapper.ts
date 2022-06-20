@@ -1,4 +1,4 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagLogger, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
@@ -20,9 +20,13 @@ let logLevel: DiagLogLevel;
 if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
   logLevel = DiagLogLevel.INFO;
 } else {
-  logLevel = isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.ALL : DiagLogLevel.ERROR;
+  logLevel = isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.ALL : DiagLogLevel.INFO;
 }
 diag.setLogger(new DiagConsoleLogger(), logLevel);
+
+const logger: DiagLogger = diag.createComponentLogger({
+  namespace: '@lumigo/opentelemetry:'
+});
 
 const externalInstrumentations = [];
 
@@ -45,7 +49,7 @@ const safeRequire = (libId) => {
       return customReq(path);
     } catch (e) {
       if (e.code !== 'MODULE_NOT_FOUND') {
-        diag.warn('Unable to load module', {
+        logger.warn('Unable to load module', {
           error: e,
           libId: libId,
         });
@@ -63,12 +67,6 @@ requireIfAvailable([
   ...MODULES_TO_INSTRUMENT,
   ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
 ]);
-
-export class LumigoInitializationError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
 
 class LumigoSwitchedOffError extends Error {
   constructor(message: string) {
@@ -93,11 +91,11 @@ const init = async (
   })
   .then(() => {
     const lumigoDistroPromise: Promise<Resource> = new LumigoDistroDetector(__dirname).detect().catch((exception) => {
-      diag.error("An error occurred while running detecting the version of the Lumigo OpenTelemetry distro", exception);
+      logger.error('An error occurred while running detecting the version of the Lumigo OpenTelemetry Distro', exception);
       return Resource.EMPTY;
     });
     const awsEcsPromise: Promise<Resource> = new AwsEcsDetector().detect().catch((exception) => {
-      diag.error("An error occurred while running detecting AWS ECS resource attributes", exception);
+      logger.error('An error occurred while running detecting AWS ECS resource attributes', exception);
       return Resource.EMPTY;
     });
 
@@ -116,6 +114,7 @@ const init = async (
   })
   .then((resources: Resource[]) => {
     let resource = Resource.default();
+
     resources.forEach(otherResource => {
       resource = resource.merge(otherResource);
     });
@@ -144,7 +143,7 @@ const init = async (
         })
       );
     } else {
-      diag.warn(
+      logger.warn(
         "Lumigo token not provided (env var 'LUMIGO_TRACER_TOKEN' not set); no data will be sent to Lumigo"
       )
     }
@@ -169,16 +168,16 @@ const init = async (
   }) // Register trace provider and start the collection of spans
   .then((traceProvider) => {
     traceProvider.register();
-    diag.debug('Lumigo tracer initialized');
+    logger.debug('Lumigo OpenTelemetry Distro initialized');
     return true;
   }) //
   .catch((exception) => {
     if (exception instanceof LumigoSwitchedOffError) {
-      diag.info('Lumigo is switched off, tracer will not be initialized');
+      logger.info('Lumigo OpenTelemetry Distro is switched off, no telemetry will be collected');
       return false;
     } else {
-      diag.error('Error initializing Lumigo tracer: %e', exception);
-      throw new LumigoInitializationError(exception);
+      logger.error('Error initializing the Lumigo OpenTelemetry Distro, no telemetry will be collected: ', exception);
+      return Promise.reject(exception);
     }
   });
 }
@@ -189,13 +188,12 @@ const init = async (
  * variable is set to true. The Promise is rejected if an initialization error
  * occurs.
  */
-export const sdkInit: Promise<boolean> = init(
+export const sdkInit: Promise<boolean | Error> = init(
   process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT,
   process.env.LUMIGO_TRACER_TOKEN,
 );
 
 module.exports = {
-  LumigoInitializationError,
   LumigoHttpInstrumentation,
   LumigoExpressInstrumentation,
   externalInstrumentations,
