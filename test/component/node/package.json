@@ -9,9 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../dist/",
     "body-parser": "^1.19.1",
-    "express": "^4.15.1",
-    "@lumigo/opentelemetry": "file:../../../../../dist/"
+    "express": "^4.15.1"
   },
   "customDependencies": {
     "express": [

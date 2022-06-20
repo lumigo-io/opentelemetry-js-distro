@@ -8,8 +8,8 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { FileSpanExporter } from './exporters';
-import { AwsEcsDetector } from './resources/detectors';
-import { isEnvVarTrue, safeExecute } from './utils';
+import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
+import { isEnvVarTrue } from './utils';
 
 export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
@@ -55,20 +55,6 @@ const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getTracerInfo = (): { name: string; version: string } => {
-  return safeExecute(
-    () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const pkg = require('../package.json');
-      const { name, version } = pkg;
-      return { name, version };
-    },
-    'Failed to determine wrapper version',
-    'warn',
-    { name: '@lumigo/opentelemetry', version: '0.0.0' }
-  )();
-};
-
 function requireIfAvailable(names: string[]) {
   names.forEach((name) => safeRequire(name));
 }
@@ -108,9 +94,9 @@ const init = async (
   .then(() => {
     return Promise.all(
       [
+        new LumigoDistroDetector(__dirname).detect(),
         Promise.resolve(new Resource({
           runtime: `node${process.version}`,
-          tracerVersion: getTracerInfo().version,
           framework: 'express',
           exporter: 'opentelemetry',
           envs: JSON.stringify(process.env),
@@ -130,8 +116,6 @@ const init = async (
     resource: resource,
   })) // Init span processors
   .then((traceProvider) => {
-    const spanProcessors: SpanProcessor[] = [];
-
     if (lumigoToken) {
       const exporter = new OTLPTraceExporter({
         url: lumigoEndpoint,
