@@ -1,5 +1,5 @@
 import type express from 'express';
-import { PatchedRequest } from '@opentelemetry/plugin-express/build/src/types';
+import { PatchedRequest } from '@opentelemetry/instrumentation-express/build/src/types';
 import { InstrumentationIfc } from './hooksIfc';
 import { diag, Span } from '@opentelemetry/api';
 import { safeExecute } from '../utils';
