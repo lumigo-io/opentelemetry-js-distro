@@ -1,9 +1,10 @@
 import * as shimmer from 'shimmer';
-import {
-  HttpsMocker,
-} from '../../../../testUtils/httpsMocker';
 
-import { Http } from '../../../hooks/http';
+import { HttpsMocker } from '../../../../testUtils/httpsMocker';
+import {
+  Http,
+  isValidHttpRequestBody,
+} from '../../../hooks/http';
 
 describe('http hook', () => {
   process.env['AWS_REGION'] = 'us-east-x';
@@ -37,4 +38,18 @@ describe('http hook', () => {
     expect(requestData).toEqual({ body: '' });
   });
 
+  test('isValidHttpRequestBody - simple flow', () => {
+    expect(isValidHttpRequestBody('BODY')).toEqual(true);
+    expect(isValidHttpRequestBody(Buffer.from('BODY'))).toEqual(true);
+  });
+
+  test('isValidHttpRequestBody -> empty flow', () => {
+    expect(isValidHttpRequestBody()).toEqual(false);
+    expect(isValidHttpRequestBody('')).toEqual(false);
+    expect(isValidHttpRequestBody(0)).toEqual(false);
+    expect(isValidHttpRequestBody([])).toEqual(false);
+    expect(isValidHttpRequestBody({})).toEqual(false);
+    expect(isValidHttpRequestBody(undefined)).toEqual(false);
+    expect(isValidHttpRequestBody(null)).toEqual(false);
+  });
 });
