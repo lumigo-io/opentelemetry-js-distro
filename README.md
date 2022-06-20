@@ -3,7 +3,10 @@
 [![CircleCI](https://circleci.com/gh/lumigo-io/opentelemetry-js-distro/tree/master.svg?style=svg&circle-token=488f0e5cc37e20e9a85123a3afe3457a5efdcc55)](https://circleci.com/gh/lumigo-io/opentelemetry-js-distro/tree/master)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
-This is [`@lumigo/opentelemetry`](https://npm.io/package/@lumigo/opentelemetry), Lumigo's distribution of OpenTelemetry for Node.js, intended for use with containerized applications.
+This is the source repository of [`@lumigo/opentelemetry`](https://npm.io/package/@lumigo/opentelemetry), Lumigo OpenTelemetry Distribution for Node.js, intended for use with containerized applications.
+
+The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream OpenTelemetry packaged, additional automated quality-assurance and customizations that __optimize for no-code injection__, meaning that you should change no code in your application to make use of the Lumigo OpenTelemetry Distribution.
+(You do not believe it? Check out the [Node-code instrumentation](#node-code-instrumentation) section.)
 
 **Note:** If you are looking for the Lumigo Node.js tracer for Lambda, go to [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer).
 
