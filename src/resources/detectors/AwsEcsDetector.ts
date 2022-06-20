@@ -3,8 +3,7 @@ import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/reso
 import * as https from 'https';
 
 /**
- * OSDetector detects the resources related to the operating system (OS) on
- * which the process represented by this resource is running.
+ * AwsEcsDetector detects the resources related with AWS ECS (EC2 and Fargate).
  */
  export class AwsEcsDetector implements Detector {
 
