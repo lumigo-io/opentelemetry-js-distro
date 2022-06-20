@@ -56,7 +56,11 @@ import * as https from 'https';
                 // All the data has been read, resolve the Promise 
                 response.on('end', () => resolve(responseBody));
             });
-            // Timeout, connection error, etc.
+            // Set an aggressive timeout to prevent lock-ups
+            request.setTimeout(5, () => {
+                request.destroy();
+            });
+            // Connection error, disconnection, etc.
             request.on('error', reject);
             request.end();
         });
