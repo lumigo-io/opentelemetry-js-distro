@@ -25,7 +25,7 @@ if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
 diag.setLogger(new DiagConsoleLogger(), logLevel);
 
 const logger: DiagLogger = diag.createComponentLogger({
-  namespace: '@lumigo/opentelemetry:'
+  namespace: '@lumigo/opentelemetry:',
 });
 
 const externalInstrumentations = [];
@@ -78,10 +78,7 @@ class LumigoSwitchedOffError extends Error {
  * We do not use the `@opentelemetry/sdk-node` package because it has a large
  * amount of dependencies.
  */
-const init = async (
-  lumigoEndpoint: string,
-  lumigoToken: string,
-) => {
+const init = async (lumigoEndpoint: string, lumigoToken: string) => {
   return new Promise((resolve, reject) => {
     if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
       reject(new LumigoSwitchedOffError('Lumigo is switched off, tracer will not be initialized'));
@@ -89,98 +86,111 @@ const init = async (
       resolve(undefined);
     }
   })
-  .then(() => {
-    const lumigoDistroPromise: Promise<Resource> = new LumigoDistroDetector(__dirname).detect().catch((exception) => {
-      logger.error('An error occurred while running detecting the version of the Lumigo OpenTelemetry Distro', exception);
-      return Resource.EMPTY;
-    });
-    const awsEcsPromise: Promise<Resource> = new AwsEcsDetector().detect().catch((exception) => {
-      logger.error('An error occurred while running detecting AWS ECS resource attributes', exception);
-      return Resource.EMPTY;
-    });
+    .then(() => {
+      const lumigoDistroPromise: Promise<Resource> = new LumigoDistroDetector(__dirname)
+        .detect()
+        .catch((exception) => {
+          logger.error(
+            'An error occurred while running detecting the version of the Lumigo OpenTelemetry Distro',
+            exception
+          );
+          return Resource.EMPTY;
+        });
+      const awsEcsPromise: Promise<Resource> = new AwsEcsDetector().detect().catch((exception) => {
+        logger.error(
+          'An error occurred while running detecting AWS ECS resource attributes',
+          exception
+        );
+        return Resource.EMPTY;
+      });
 
-    return Promise.all(
-      [
+      return Promise.all([
         lumigoDistroPromise,
         awsEcsPromise,
-        Promise.resolve(new Resource({
-          runtime: `node${process.version}`,
-          framework: 'express',
-          exporter: 'opentelemetry',
-          envs: JSON.stringify(process.env),
-        })),
-      ]
-    );
-  })
-  .then((resources: Resource[]) => {
-    let resource = Resource.default();
+        Promise.resolve(
+          new Resource({
+            runtime: `node${process.version}`,
+            framework: 'express',
+            exporter: 'opentelemetry',
+            envs: JSON.stringify(process.env),
+          })
+        ),
+      ]);
+    })
+    .then((resources: Resource[]) => {
+      let resource = Resource.default();
 
-    resources.forEach(otherResource => {
-      resource = resource.merge(otherResource);
-    });
-    return resource;
-  }) // Init trace provider
-  .then((resource) => {
-    return new NodeTracerProvider({
-      resource: resource,
-    });
-  }) // Init span processors
-  .then((traceProvider) => {
-    if (lumigoToken) {
-      const exporter = new OTLPTraceExporter({
-        url: lumigoEndpoint,
-        headers: {
-          'Authorization': `LumigoToken ${lumigoToken}`
-        }
+      resources.forEach((otherResource) => {
+        resource = resource.merge(otherResource);
       });
-  
-      traceProvider.addSpanProcessor(
-        new BatchSpanProcessor(exporter, {
-          // The maximum queue size. After the size is reached spans are dropped.
-          maxQueueSize: 1000,
-          // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-          maxExportBatchSize: 100,
-        })
-      );
-    } else {
-      logger.warn(
-        "Lumigo token not provided (env var 'LUMIGO_TRACER_TOKEN' not set); no data will be sent to Lumigo"
-      )
-    }
-  
-    const lumigoSpanDumpFile = process.env.LUMIGO_DEBUG_SPANDUMP
-    if (lumigoSpanDumpFile) {
-      traceProvider.addSpanProcessor(new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpFile)));
-    }
+      return resource;
+    }) // Init trace provider
+    .then((resource) => {
+      return new NodeTracerProvider({
+        resource: resource,
+      });
+    }) // Init span processors
+    .then((traceProvider) => {
+      if (lumigoToken) {
+        const exporter = new OTLPTraceExporter({
+          url: lumigoEndpoint,
+          headers: {
+            Authorization: `LumigoToken ${lumigoToken}`,
+          },
+        });
 
-    return traceProvider;
-  }) // Register instrumentations
-  .then((traceProvider) => {
-    registerInstrumentations({
-      instrumentations: [
-        new LumigoHttpInstrumentation(lumigoEndpoint),
-        new LumigoExpressInstrumentation(),
-        ...externalInstrumentations,
-      ],
+        traceProvider.addSpanProcessor(
+          new BatchSpanProcessor(exporter, {
+            // The maximum queue size. After the size is reached spans are dropped.
+            maxQueueSize: 1000,
+            // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+            maxExportBatchSize: 100,
+          })
+        );
+      } else {
+        logger.warn(
+          "Lumigo token not provided (env var 'LUMIGO_TRACER_TOKEN' not set); no data will be sent to Lumigo"
+        );
+      }
+
+      const lumigoSpanDumpFile = process.env.LUMIGO_DEBUG_SPANDUMP;
+      if (lumigoSpanDumpFile) {
+        traceProvider.addSpanProcessor(
+          new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpFile))
+        );
+      }
+
+      return traceProvider;
+    }) // Register instrumentations
+    .then((traceProvider) => {
+      registerInstrumentations({
+        instrumentations: [
+          new LumigoHttpInstrumentation(lumigoEndpoint),
+          new LumigoExpressInstrumentation(),
+          ...externalInstrumentations,
+        ],
+      });
+
+      return traceProvider;
+    }) // Register trace provider and start the collection of spans
+    .then((traceProvider) => {
+      traceProvider.register();
+      logger.debug('Lumigo OpenTelemetry Distro initialized');
+      return true;
+    }) //
+    .catch((exception) => {
+      if (exception instanceof LumigoSwitchedOffError) {
+        logger.info('Lumigo OpenTelemetry Distro is switched off, no telemetry will be collected');
+        return false;
+      } else {
+        logger.error(
+          'Error initializing the Lumigo OpenTelemetry Distro, no telemetry will be collected: ',
+          exception
+        );
+        return Promise.reject(exception);
+      }
     });
-
-    return traceProvider;
-  }) // Register trace provider and start the collection of spans
-  .then((traceProvider) => {
-    traceProvider.register();
-    logger.debug('Lumigo OpenTelemetry Distro initialized');
-    return true;
-  }) //
-  .catch((exception) => {
-    if (exception instanceof LumigoSwitchedOffError) {
-      logger.info('Lumigo OpenTelemetry Distro is switched off, no telemetry will be collected');
-      return false;
-    } else {
-      logger.error('Error initializing the Lumigo OpenTelemetry Distro, no telemetry will be collected: ', exception);
-      return Promise.reject(exception);
-    }
-  });
-}
+};
 
 /*
  * If the SDK has been initialized, this Promise returns `true`; otherwise,
@@ -190,7 +200,7 @@ const init = async (
  */
 export const sdkInit: Promise<boolean | Error> = init(
   process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT,
-  process.env.LUMIGO_TRACER_TOKEN,
+  process.env.LUMIGO_TRACER_TOKEN
 );
 
 module.exports = {

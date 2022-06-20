@@ -7,93 +7,106 @@ import fs from 'fs';
 import tmp from 'tmp';
 
 describe('FileSpanExporter', () => {
-    let provider: BasicTracerProvider;
+  let provider: BasicTracerProvider;
 
-    describe('creating no spans', () => {
+  describe('creating no spans', () => {
+    it('should not write anything to file', () => {
+      const tmpFile = tmp.fileSync({
+        mode: 0o644,
+        prefix: 'test-FileSpanExporter-',
+        postfix: 'json',
+      });
 
-        it('should not write anything to file', () => {
-            const tmpFile = tmp.fileSync({ mode: 0o644, prefix: 'test-FileSpanExporter-', postfix: 'json' });
+      const exporterUnderTest = new FileSpanExporter(tmpFile.name);
+      provider = new BasicTracerProvider();
+      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
 
-            const exporterUnderTest = new FileSpanExporter(tmpFile.name);
-            provider = new BasicTracerProvider();
-            provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+      exporterUnderTest.shutdown();
+      assert.strictEqual(fs.statSync(tmpFile.name).size, 0);
+    });
+  });
 
-            exporterUnderTest.shutdown()
-            assert.strictEqual(fs.statSync(tmpFile.name).size, 0)
-        })
-    })
+  describe('creating one span', () => {
+    it('should write one line of JSON to file', async () => {
+      const tmpFile = tmp.fileSync({
+        mode: 0o644,
+        prefix: 'test-FileSpanExporter-',
+        postfix: 'json',
+      });
 
-    describe('creating one span', () => {
+      const exporterUnderTest = new FileSpanExporter(tmpFile.name);
+      provider = new BasicTracerProvider();
+      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
 
-        it('should write one line of JSON to file', async () => {
-            const tmpFile = tmp.fileSync({ mode: 0o644, prefix: 'test-FileSpanExporter-', postfix: 'json' });
+      const root: Span = provider.getTracer('default').startSpan('root');
+      root.setAttribute('foo', 'bar');
+      root.end();
 
-            const exporterUnderTest = new FileSpanExporter(tmpFile.name);
-            provider = new BasicTracerProvider();
-            provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+      await provider.shutdown();
 
-            const root: Span = provider.getTracer('default').startSpan('root');
-            root.setAttribute('foo', 'bar');
-            root.end();
+      const spans = getSpans(tmpFile.name);
 
-            await provider.shutdown();
+      assert.strictEqual(spans.length, 1);
 
-            const spans = getSpans(tmpFile.name);
+      const span = spans[0];
+      assert.equal(span['name'], 'root');
+      assert.deepEqual(span['attributes'], { foo: 'bar' });
+    });
+  });
 
-            assert.strictEqual(spans.length, 1);
+  describe('creating two spans', () => {
+    it('should write two lines of JSON to file', async () => {
+      const tmpFile = tmp.fileSync({
+        mode: 0o644,
+        prefix: 'test-FileSpanExporter-',
+        postfix: 'json',
+      });
 
-            const span = spans[0]
-            assert.equal(span['name'], 'root')
-            assert.deepEqual(span['attributes'], {'foo': 'bar'})
-        })
-    })
+      const exporterUnderTest = new FileSpanExporter(tmpFile.name);
+      provider = new BasicTracerProvider();
+      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
 
-    describe('creating two spans', () => {
+      const tracer = provider.getTracer('default');
 
-        it('should write two lines of JSON to file', async () => {
-            const tmpFile = tmp.fileSync({ mode: 0o644, prefix: 'test-FileSpanExporter-', postfix: 'json' });
+      const root: Span = tracer.startSpan('root', {
+        kind: SpanKind.SERVER,
+      });
+      root.setAttribute('foo', 'bar');
 
-            const exporterUnderTest = new FileSpanExporter(tmpFile.name);
-            provider = new BasicTracerProvider();
-            provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+      const child: Span = tracer.startSpan('child', {
+        kind: SpanKind.CLIENT,
+      });
+      child.setAttribute('fooz', 'baz');
+      child.end();
 
-            const tracer = provider.getTracer('default');
+      root.end();
 
-            const root: Span = tracer.startSpan('root', {
-                kind: SpanKind.SERVER,                
-            });
-            root.setAttribute('foo', 'bar');
+      await provider.shutdown();
 
-            const child: Span = tracer.startSpan('child', {
-                kind: SpanKind.CLIENT,
-            });
-            child.setAttribute('fooz', 'baz');
-            child.end();
+      const spans = getSpans(tmpFile.name);
 
-            root.end();
+      assert.strictEqual(spans.length, 2);
 
-            await provider.shutdown();
+      // Inverted order because we close child before root
+      const rootSpan = spans[1];
+      assert.equal(rootSpan['name'], 'root');
+      assert.equal(rootSpan['kind'], SpanKind.SERVER);
+      assert.deepEqual(rootSpan['attributes'], { foo: 'bar' });
 
-            const spans = getSpans(tmpFile.name);
-
-            assert.strictEqual(spans.length, 2);
-
-            // Inverted order because we close child before root
-            const rootSpan = spans[1]
-            assert.equal(rootSpan['name'], 'root')
-            assert.equal(rootSpan['kind'], SpanKind.SERVER)
-            assert.deepEqual(rootSpan['attributes'], {'foo': 'bar'})
-
-            const childSpan = spans[0]
-            assert.equal(childSpan['parentId'], root['id'])
-            assert.equal(childSpan['name'], 'child')
-            assert.equal(childSpan['kind'], SpanKind.CLIENT)
-            assert.deepEqual(childSpan['attributes'], {'fooz': 'baz'})
-        })
-    })
-
+      const childSpan = spans[0];
+      assert.equal(childSpan['parentId'], root['id']);
+      assert.equal(childSpan['name'], 'child');
+      assert.equal(childSpan['kind'], SpanKind.CLIENT);
+      assert.deepEqual(childSpan['attributes'], { fooz: 'baz' });
+    });
+  });
 });
 
 function getSpans(filename: string): Object[] {
-    return fs.readFileSync(filename).toString().split('\n').filter(line => line.length > 0).map(line => JSON.parse(line));
+  return fs
+    .readFileSync(filename)
+    .toString()
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line));
 }

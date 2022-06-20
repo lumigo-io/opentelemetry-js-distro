@@ -150,7 +150,7 @@ describe('aws parser', () => {
     const headers = {
       'x-amz-invocation-type': invocationType,
     };
-    const requestData = { path, headers, truncated: false};
+    const requestData = { path, headers, truncated: false };
     const spanId = '1234-abcd-efgh';
     const responseData = { headers: { 'x-amzn-requestid': spanId }, truncated: false };
     const expected = {

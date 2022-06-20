@@ -16,15 +16,8 @@
 
 import fs from 'fs';
 
-import {
-  ExportResult,
-  ExportResultCode,
-  hrTimeToMicroseconds,
-} from '@opentelemetry/core';
-import {
-  ReadableSpan,
-  SpanExporter,
-} from '@opentelemetry/sdk-trace-base';
+import { ExportResult, ExportResultCode, hrTimeToMicroseconds } from '@opentelemetry/core';
+import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
 
 /**
  * This is implementation of {@link SpanExporter} that prints spans to a file.
@@ -34,7 +27,6 @@ import {
 
 /* eslint-disable no-console */
 export class FileSpanExporter implements SpanExporter {
-
   private readonly _fd: number;
   private _shutdownOnce: BindOnceFuture<void>;
 
@@ -50,19 +42,15 @@ export class FileSpanExporter implements SpanExporter {
    * @param spans
    * @param resultCallback
    */
-  export(
-    spans: ReadableSpan[],
-    resultCallback: (result: ExportResult) => void
-  ): void {
+  export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): void {
     return this._sendSpans(spans, resultCallback);
   }
-
 
   /**
    * converts span info into more readable format
    * @param span
    */
-   private _exportInfo(span: ReadableSpan): Object {
+  private _exportInfo(span: ReadableSpan): Object {
     return {
       traceId: span.spanContext().traceId,
       parentId: span.parentSpanId,
@@ -82,17 +70,14 @@ export class FileSpanExporter implements SpanExporter {
    * @param spans
    * @param done
    */
-  private _sendSpans(
-    spans: ReadableSpan[],
-    done?: (result: ExportResult) => void
-  ): void {
+  private _sendSpans(spans: ReadableSpan[], done?: (result: ExportResult) => void): void {
     let json = '';
     for (const span of spans) {
-      json += JSON.stringify(this._exportInfo(span))
-      json += '\n'
+      json += JSON.stringify(this._exportInfo(span));
+      json += '\n';
     }
 
-    fs.appendFile(this._fd, json, function(err) {
+    fs.appendFile(this._fd, json, function (err) {
       if (done) {
         if (err) {
           return done({
@@ -116,7 +101,7 @@ export class FileSpanExporter implements SpanExporter {
   /**
    * Shutdown the exporter.
    */
-   shutdown(): Promise<void> {
+  shutdown(): Promise<void> {
     return this._shutdownOnce.call();
   }
 
@@ -136,18 +121,13 @@ export class FileSpanExporter implements SpanExporter {
   private _flushAll(): Promise<void> {
     return Promise.resolve().then((ignored) => {
       return fs.fdatasyncSync(this._fd);
-    })
+    });
   }
-
 }
 
 // From https://github.com/open-telemetry/opentelemetry-js/blob/d61f7bee0f7f60fed794d956e122decd0ce6748f/packages/opentelemetry-core/src/utils/callback.ts,
 // TODO Replace with the opentelemetry-js SDK version when we upgrade
-class BindOnceFuture<
-  R,
-  This = unknown,
-  T extends (this: This, ...args: unknown[]) => R = () => R
-> {
+class BindOnceFuture<R, This = unknown, T extends (this: This, ...args: unknown[]) => R = () => R> {
   private _isCalled = false;
   private _deferred = new Deferred<R>();
   constructor(private _callback: T, private _that: This) {}
@@ -164,11 +144,10 @@ class BindOnceFuture<
     if (!this._isCalled) {
       this._isCalled = true;
       try {
-        Promise.resolve(this._callback.call(this._that, ...args))
-          .then(
-            val => this._deferred.resolve(val),
-            err => this._deferred.reject(err)
-          );
+        Promise.resolve(this._callback.call(this._that, ...args)).then(
+          (val) => this._deferred.resolve(val),
+          (err) => this._deferred.reject(err)
+        );
       } catch (err) {
         this._deferred.reject(err);
       }
