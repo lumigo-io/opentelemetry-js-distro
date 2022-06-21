@@ -1,7 +1,7 @@
-import { diag, DiagLogger, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagLogger, DiagConsoleLogger, DiagLogLevel, TracerProvider } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { Resource } from '@opentelemetry/resources';
+import { envDetector, processDetector, Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
@@ -11,7 +11,7 @@ import { FileSpanExporter } from './exporters';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 import { isEnvVarTrue } from './utils';
 
-export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
+const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
@@ -87,6 +87,22 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
     }
   })
     .then(() => {
+      const envPromise: Promise<Resource> = envDetector.detect()
+        .catch((exception) => {
+          logger.error(
+            'An error occurred while running detecting the environment-based resource attributes',
+            exception
+          );
+          return Resource.EMPTY;
+        });
+      const processPromise: Promise<Resource> = processDetector.detect()
+        .catch((exception) => {
+          logger.error(
+            'An error occurred while running detecting the Process resource attributes',
+            exception
+          );
+          return Resource.EMPTY;
+        });
       const lumigoDistroPromise: Promise<Resource> = new LumigoDistroDetector(__dirname)
         .detect()
         .catch((exception) => {
@@ -106,12 +122,12 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
 
       return Promise.all([
         lumigoDistroPromise,
+        envPromise,
+        processPromise,
         awsEcsPromise,
         Promise.resolve(
           new Resource({
-            runtime: `node${process.version}`,
             framework: 'express',
-            exporter: 'opentelemetry',
             envs: JSON.stringify(process.env),
           })
         ),
@@ -123,6 +139,7 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
       resources.forEach((otherResource) => {
         resource = resource.merge(otherResource);
       });
+
       return resource;
     }) // Init trace provider
     .then((resource) => {
@@ -176,12 +193,14 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
     .then((traceProvider) => {
       traceProvider.register();
       logger.debug('Lumigo OpenTelemetry Distro initialized');
-      return true;
+      return {
+        traceProvider: traceProvider
+      };
     }) //
     .catch((exception) => {
       if (exception instanceof LumigoSwitchedOffError) {
         logger.info('Lumigo OpenTelemetry Distro is switched off, no telemetry will be collected');
-        return false;
+        return undefined;
       } else {
         logger.error(
           'Error initializing the Lumigo OpenTelemetry Distro, no telemetry will be collected: ',
@@ -192,18 +211,23 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
     });
 };
 
+export class LumigoSdkStatus {
+  readonly traceProvider: NodeTracerProvider
+}
+
 /*
  * If the SDK has been initialized, this Promise returns `true`; otherwise,
  * the SDK has not been initialized because the `LUMIGO_SWITCH_OFF` environment
  * variable is set to true. The Promise is rejected if an initialization error
  * occurs.
  */
-export const sdkInit: Promise<boolean | Error> = init(
+const sdkInit: Promise<LumigoSdkStatus | Error> = init(
   process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT,
   process.env.LUMIGO_TRACER_TOKEN
 );
 
 module.exports = {
+  DEFAULT_LUMIGO_ENDPOINT,
   LumigoHttpInstrumentation,
   LumigoExpressInstrumentation,
   externalInstrumentations,

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 
+export const LUMIGO_DISTRO_VERSION = 'lumigo.distro.version'
+
 /**
  * LumigoDistroDetector provides resource attributes documeting which version of the
  * Lumigo Distro for OpenTelemetry is used.
@@ -19,7 +21,7 @@ export class LumigoDistroDetector implements Detector {
       const { name, version } = require(this._packageRoot + '/../package.json');
       resolve(
         new Resource({
-          lumigoDistroVersion: version,
+          [LUMIGO_DISTRO_VERSION]: version,
         })
       );
     });

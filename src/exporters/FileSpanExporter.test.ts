@@ -27,7 +27,7 @@ describe('FileSpanExporter', () => {
   });
 
   describe('creating one span', () => {
-    it('should write one line of JSON to file', async () => {
+    it('should write one span marshalled as JSON to file', async () => {
       const tmpFile = tmp.fileSync({
         mode: 0o644,
         prefix: 'test-FileSpanExporter-',
@@ -55,7 +55,7 @@ describe('FileSpanExporter', () => {
   });
 
   describe('creating two spans', () => {
-    it('should write two lines of JSON to file', async () => {
+    it('should write two spans marshalled as JSON to file', async () => {
       const tmpFile = tmp.fileSync({
         mode: 0o644,
         prefix: 'test-FileSpanExporter-',

@@ -10,7 +10,6 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
 **Note:** If you are looking for the Lumigo Node.js tracer for Lambda, go to [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer).
 
-
 ## Setup
 
 ### Manual instrumentation
@@ -57,14 +56,16 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 ### Setup for npm package.json start script
 
 ```json
-"scripts": {
-  "start": "LUMIGO_TRACER_TOKEN=<token> node -r @lumigo/opentelemetry app.js"
+{
+    "scripts": {
+    "start": "LUMIGO_TRACER_TOKEN=<token> node -r @lumigo/opentelemetry <main_file>.js"
+    }
 }
 ```
 
 ## Configuration
 
-### OpenTelemetry
+### OpenTelemetry configurations
 
 The Lumigo OpenTelemetry Distro for Node.js is made of several upstream OpenTelemetry packages, together with additional logic and, as such, the environment varoables that work with "vanilla" OpenTelemetry work also with the Lumigo OpenTelemetry Distro for Node.js.
 Specifically supported are:
@@ -72,7 +73,7 @@ Specifically supported are:
 * [General configurations](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#general-sdk-configuration)
 * [Batch span processor configurations](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#batch-span-processor): The Lumigo OpenTelemetry Distro for Node.js uses a batch processor for sending data to Lumigo.
 
-### Lumigo-specific
+### Lumigo-specific configurations
 
 `@lumigo/opentelemetry` additionally supports the following configuration options as environment variables:
 
@@ -81,3 +82,15 @@ Specifically supported are:
 * `LUMIGO_DEBUG_SPANDUMP=<path>`: Log all spans collected to the `<path>` file; this is an option intended only for debugging purposes and should *not* be used in production.
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disable entirely the Lumigo OpenTelemetry Distro; no instrumentation will be injected, no tracing data will be collected.
+
+## Baseline setup
+
+The Lumigo OpenTelemetry Distro will automatically create the following OpenTelemetry constructs provided to a [`NodeTraceProvider`](https://github.com/open-telemetry/opentelemetry-js/blob/f59c5b268bd60778d7a0d185a6044688f9e3dd51/packages/opentelemetry-sdk-trace-node/src/NodeTracerProvider.ts):
+
+* A `Resource` built from the following detectors:
+  * The default OpenTelemetry resource with the `sdk...` attributes
+  * The [`ProcessDetector`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-resources/src/detectors/ProcessDetector.ts)
+  * The [`EnvDetector`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-resources/src/detectors/EnvDetector.ts)
+  * The [`AwsEcsDetector`](./src/resources/detectors/AwsEcsDetector.ts)
+* If the `LUMIGO_TRACER_TOKEN` environment variable is set: a [`BatchSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/BatchSpanProcessorBase.ts), which uses an [`OTLPTraceExporter`]() to push tracing data to Lumigo
+* If the `LUMIGO_DEBUG_SPANDUMP` environment variable is set: a [`SimpleSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/SimpleSpanProcessor.ts), which uses an [`FileSpanExporter`](src/exporters/FileSpanExporter.ts) to save to file the spans collected. **Do not use this in production!**
