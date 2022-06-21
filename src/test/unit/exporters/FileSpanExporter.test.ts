@@ -4,7 +4,7 @@ import { Span, SpanKind } from '@opentelemetry/api';
 import * as assert from 'assert';
 import fs from 'fs';
 import tmp from 'tmp';
-import { FileSpanExporter } from './FileSpanExporter';
+import {FileSpanExporter} from "../../../exporters";
 
 describe('FileSpanExporter', () => {
   let provider: BasicTracerProvider;

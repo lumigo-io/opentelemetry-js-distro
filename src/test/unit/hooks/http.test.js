@@ -1,6 +1,6 @@
 import * as shimmer from 'shimmer';
 
-import { HttpsMocker } from '../../../../testUtils/httpsMocker';
+import { HttpsMocker } from '../../../testUtils/httpsMocker';
 import {
   Http,
   isValidHttpRequestBody,

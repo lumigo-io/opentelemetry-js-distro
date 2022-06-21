@@ -8,10 +8,11 @@ module.exports = {
     '**/src/**/**/**/**.js',
     '**/src/**/**/**/**.ts',
     '!./src/tools/xmlToJson.ts',
+    '!./src/testUtils/**/**.*',
     '!./src/expressAppProgrematically.js',
     '!./src/instrumentros/logsInstrumentation.ts',
   ],
-  setupFilesAfterEnv: ['./testUtils/jest.setup.js'],
+  setupFilesAfterEnv: ['./jest.setup.js'],
   coverageThreshold: {
     global: {
       lines: 100,
