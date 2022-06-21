@@ -3,7 +3,10 @@ import 'jest-chain';
 import fs from 'fs';
 
 import { watchDir } from './helpers/fileListener';
-import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
+import {
+  callContainer,
+  executeNpmScriptWithCallback,
+} from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
@@ -12,24 +15,24 @@ describe('component compatibility tests for all supported versions of express', 
   });
   const supportedVersions = require('./node/package.json').lumigo.supportedDependencies['express'];
   supportedVersions.forEach((expressVersion: string) => {
-    it(`test transactionId truthy on express@${expressVersion || 'latest'} / node@${
+    it(`test happy flow on express@${expressVersion || 'latest'} / node@${
       process.version
     }`, async () => {
       jest.setTimeout(30000);
       let resolver;
-      const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test.json`;
+      const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test-express${expressVersion}.json`;
       if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
         fs.unlinkSync(FILE_EXPORTER_FILE_NAME);
       }
-      const waitForTransactionId = new Promise((resolve) => {
+      const waitForThreeSpans = new Promise((resolve) => {
         resolver = resolve;
       });
-      const foundTransaction = (resolver, value) => resolver(value);
+      const foundThreeSpans = (resolver, value) => resolver(value);
       const spanCreatedHandler = (path) => {
         const allFileContents = fs.readFileSync(path, 'utf-8');
         const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
         if (lines.length >= 3) {
-          foundTransaction(resolver, lines);
+          foundThreeSpans(resolver, lines);
         }
       };
 
@@ -58,11 +61,11 @@ describe('component compatibility tests for all supported versions of express', 
         }
       );
       // @ts-ignore
-      const lines = (await waitForTransactionId).map((text) => JSON.parse(text));
-      expect(lines).toHaveLength(3);
-      const serverSpan = lines.find((l) => l.kind === 0);
-      const internalSpan = lines.find((l) => l.kind === 1);
-      const clientSpan = lines.find((l) => l.kind === 2);
+      const spans = (await waitForThreeSpans).map((text) => JSON.parse(text));
+      expect(spans).toHaveLength(3);
+      const serverSpan = spans.find((span) => span.kind === 0);
+      const internalSpan = spans.find((span) => span.kind === 1);
+      const clientSpan = spans.find((span) => span.kind === 2);
       expect(
         serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
       ).toBeTruthy();
@@ -84,7 +87,7 @@ describe('component compatibility tests for all supported versions of express', 
           'http.request.query': '{}',
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
-          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/),
+          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/i),
           'http.request.body': '{}',
           'http.route': '/invoke-requests',
           'express.route.full': '/invoke-requests',
@@ -151,7 +154,7 @@ describe('component compatibility tests for all supported versions of express', 
           'http.flavor': '1.1',
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
-          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/),
+          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/i),
           lumigoToken: 't_123321',
         },
         status: {
