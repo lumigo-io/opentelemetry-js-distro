@@ -26,7 +26,6 @@ describe('component compatibility tests for all supported versions of express', 
       const spanCreatedHandler = (path) => {
         const allFileContents = fs.readFileSync(path, 'utf-8');
         const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-        console.log('LINES NUMBER: ', lines.length);
         if (lines.length >= 3) {
           foundTransaction(resolver, lines);
         }
