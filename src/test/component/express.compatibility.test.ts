@@ -1,7 +1,9 @@
 import 'jest-chain';
+
 import fs from 'fs';
-import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
+
 import { watchDir } from './helpers/fileListener';
+import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
@@ -64,7 +66,6 @@ describe('component compatibility tests for all supported versions of express', 
       expect(
         serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
       ).toBeTruthy();
-      expect(1).toBeLessThan(4).toBeGreaterThan(0).toEqual(1);
       expect(serverSpan).toMatchObject({
         traceId: expect.any(String),
         parentId: expect.any(String),

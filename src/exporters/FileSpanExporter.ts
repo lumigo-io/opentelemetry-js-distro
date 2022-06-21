@@ -127,7 +127,7 @@ export class FileSpanExporter implements SpanExporter {
   }
 
   private _flushAll(): Promise<void> {
-    return Promise.resolve().then((ignored) => {
+    return Promise.resolve().then(() => {
       return fs.fdatasyncSync(this._fd);
     });
   }

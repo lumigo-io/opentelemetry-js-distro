@@ -9,7 +9,7 @@ export const HttpsScenarioBuilder = (() => {
   let isNextRequestShouldFinish = true;
   let useEmit = false;
 
-  const failForTheNextTimes = times => {
+  const failForTheNextTimes = (times) => {
     failForNext += times;
   };
 
@@ -106,7 +106,7 @@ export const HttpsRequestsForTesting = (() => {
     startedRequests = 0;
   };
 
-  const pushRequest = request => {
+  const pushRequest = (request) => {
     httpRequests.push(request);
   };
 
@@ -115,7 +115,7 @@ export const HttpsRequestsForTesting = (() => {
   };
 
   const getSentSpans = () => {
-    return getRequests().map(req => JSON.parse(req.body)[0]);
+    return getRequests().map((req) => JSON.parse(req.body)[0]);
   };
 
   return {
@@ -128,7 +128,7 @@ export const HttpsRequestsForTesting = (() => {
   };
 })();
 
-const isObject = a => !!a && a.constructor === Object;
+const isObject = (a) => !!a && a.constructor === Object;
 
 export const HttpsMocker = (() => {
   const request = (options, callback) => {
@@ -158,7 +158,7 @@ export const HttpsMocker = (() => {
       }
     }
 
-    responseEmitter.write = body => {
+    responseEmitter.write = (body) => {
       HttpsRequestsForTesting.pushRequest({
         options,
         body,

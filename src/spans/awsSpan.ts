@@ -1,14 +1,15 @@
-import {
-  dynamodbParser,
-  snsParser,
-  lambdaParser,
-  sqsParser,
-  kinesisParser,
-  awsParser,
-  apigwParser,
-  eventBridgeParser,
-} from '../parsers/aws';
 import { Span } from '@opentelemetry/api';
+
+import {
+  apigwParser,
+  awsParser,
+  dynamodbParser,
+  eventBridgeParser,
+  kinesisParser,
+  lambdaParser,
+  snsParser,
+  sqsParser,
+} from '../parsers/aws';
 
 export const EXTERNAL_SERVICE = 'external';
 
@@ -32,6 +33,8 @@ export type AwsServiceData = {
   messageId?: string;
   [key: string]: any;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getAwsServiceData = (requestData, responseData, span: Span): AwsServiceData => {
   const { host } = requestData;
   const awsService = getAwsServiceFromHost(host);

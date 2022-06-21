@@ -1,10 +1,7 @@
 import * as shimmer from 'shimmer';
 
+import { Http, isValidHttpRequestBody } from '../../../hooks/http';
 import { HttpsMocker } from '../../../testUtils/httpsMocker';
-import {
-  Http,
-  isValidHttpRequestBody,
-} from '../../../hooks/http';
 
 describe('http hook', () => {
   process.env['AWS_REGION'] = 'us-east-x';

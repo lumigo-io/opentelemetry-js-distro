@@ -104,3 +104,4 @@ dist
 .tern-port
 
 src/test/component/node/package-lock.json
+src/test/component/node/spans-test.json

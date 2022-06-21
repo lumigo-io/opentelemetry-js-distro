@@ -1,5 +1,7 @@
 import * as crypto from 'crypto';
+
 import { sortify } from './tools/jsonSortify';
+
 ('["secretsmanager.*.amazonaws.com", "ssm.*.amazonaws.com", "kms.*.amazonaws.com", "sts..*amazonaws.com"]');
 
 export function safeExecute<T>(
@@ -74,26 +76,6 @@ export const parseQueryParams = (queryParams) => {
     );
     return obj;
   }, 'Failed to parse query params')();
-};
-
-// eslint-disable-next-line no-unused-vars
-const recursiveGetKeyByDepth = (event, keyToSearch, maxDepth) => {
-  if (maxDepth === 0) {
-    return undefined;
-  }
-  let foundValue = undefined;
-  const examineKey = (k) => {
-    if (k === keyToSearch) {
-      foundValue = event[k];
-      return true;
-    }
-    if (event[k] && typeof event[k] === 'object') {
-      foundValue = recursiveGetKeyByDepth(event[k], keyToSearch, maxDepth - 1);
-      return foundValue !== undefined;
-    }
-  };
-  Object.keys(event).some(examineKey);
-  return foundValue;
 };
 
 export const md5Hash = (item: {}): string | undefined => {
