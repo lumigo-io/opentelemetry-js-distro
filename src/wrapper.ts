@@ -1,4 +1,10 @@
-import { diag, DiagLogger, DiagConsoleLogger, DiagLogLevel, TracerProvider } from '@opentelemetry/api';
+import {
+  diag,
+  DiagLogger,
+  DiagConsoleLogger,
+  DiagLogLevel,
+  TracerProvider,
+} from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { envDetector, processDetector, Resource } from '@opentelemetry/resources';
@@ -87,22 +93,20 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
     }
   })
     .then(() => {
-      const envPromise: Promise<Resource> = envDetector.detect()
-        .catch((exception) => {
-          logger.error(
-            'An error occurred while running detecting the environment-based resource attributes',
-            exception
-          );
-          return Resource.EMPTY;
-        });
-      const processPromise: Promise<Resource> = processDetector.detect()
-        .catch((exception) => {
-          logger.error(
-            'An error occurred while running detecting the Process resource attributes',
-            exception
-          );
-          return Resource.EMPTY;
-        });
+      const envPromise: Promise<Resource> = envDetector.detect().catch((exception) => {
+        logger.error(
+          'An error occurred while running detecting the environment-based resource attributes',
+          exception
+        );
+        return Resource.EMPTY;
+      });
+      const processPromise: Promise<Resource> = processDetector.detect().catch((exception) => {
+        logger.error(
+          'An error occurred while running detecting the Process resource attributes',
+          exception
+        );
+        return Resource.EMPTY;
+      });
       const lumigoDistroPromise: Promise<Resource> = new LumigoDistroDetector(__dirname)
         .detect()
         .catch((exception) => {
@@ -194,7 +198,7 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
       traceProvider.register();
       logger.debug('Lumigo OpenTelemetry Distro initialized');
       return {
-        traceProvider: traceProvider
+        traceProvider: traceProvider,
       };
     }) //
     .catch((exception) => {
@@ -212,7 +216,7 @@ const init = async (lumigoEndpoint: string, lumigoToken: string) => {
 };
 
 export class LumigoSdkStatus {
-  readonly traceProvider: NodeTracerProvider
+  readonly traceProvider: NodeTracerProvider;
 }
 
 /*

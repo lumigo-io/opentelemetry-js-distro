@@ -11,7 +11,7 @@ const TOKEN = 't_10faa5e13e7844aaa1234';
 const ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
 // Do not change this without talking to Product :-)
 // Also, do NOT just import the constant from wrapper, tests should go RED if you change it.
-const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces'
+const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 
 describe('Distro initialization', () => {
   const logger: DiagLogger = {
@@ -117,13 +117,13 @@ describe('Distro initialization', () => {
       beforeEach(() => {
         process.env.LUMIGO_DEBUG_SPANDUMP = 'test.json';
       });
-  
+
       it('should initialize a FileSpanExporter', async () => {
         jest.isolateModules(async () => {
           const wrapper = require('./wrapper');
-  
+
           const sdkInitialized = await wrapper.sdkInit;
-  
+
           expect(sdkInitialized).not.toBeUndefined();
           expect(otlp.OTLPTraceExporter).toBeCalledWith({
             url: DEFAULT_LUMIGO_ENDPOINT,
@@ -172,18 +172,18 @@ describe('Distro initialization', () => {
      */
 
     // SDK base properties
-    expect(resource.attributes).toHaveProperty('telemetry.sdk.name')
-    expect(resource.attributes).toHaveProperty('telemetry.sdk.language')
-    expect(resource.attributes).toHaveProperty('telemetry.sdk.version')
+    expect(resource.attributes).toHaveProperty('telemetry.sdk.name');
+    expect(resource.attributes).toHaveProperty('telemetry.sdk.language');
+    expect(resource.attributes).toHaveProperty('telemetry.sdk.version');
 
     // Lumigo Distro attributes
-    expect(resource.attributes).toHaveProperty('lumigo.distro.version')
+    expect(resource.attributes).toHaveProperty('lumigo.distro.version');
 
     // Process attributes
-    expect(resource.attributes).toHaveProperty('process.pid')
-    expect(resource.attributes).toHaveProperty('process.runtime.description')
-    expect(resource.attributes).toHaveProperty('process.runtime.name')
-    expect(resource.attributes).toHaveProperty('process.runtime.version')
+    expect(resource.attributes).toHaveProperty('process.pid');
+    expect(resource.attributes).toHaveProperty('process.runtime.description');
+    expect(resource.attributes).toHaveProperty('process.runtime.name');
+    expect(resource.attributes).toHaveProperty('process.runtime.version');
   });
 
   describe('with the OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME environment variables set', () => {
@@ -199,15 +199,13 @@ describe('Distro initialization', () => {
 
       expect(sdkInitialized).not.toBeUndefined();
 
-      const resource = sdkInitialized.traceProvider.resource; 
+      const resource = sdkInitialized.traceProvider.resource;
       expect(resource.attributes).toMatchObject({
-        'service.name': 'awesomesauce'
-      })
+        'service.name': 'awesomesauce',
+      });
       expect(resource.attributes).toMatchObject({
-        'foo': 'bar'
-      })
+        foo: 'bar',
+      });
     });
-
   });
-
 });
