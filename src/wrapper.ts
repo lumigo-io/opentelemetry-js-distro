@@ -2,12 +2,12 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
-import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-
 import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
 import { isEnvVarTrue, safeExecute } from './utils';
+import { FileSpanExporter } from './exporters';
 
 let isLumigoSwitchedOffStatusReported = false;
 let isTraced = false;
@@ -69,7 +69,7 @@ const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getTracerInfo = (): { name: string; version: string } => {
+export const getTracerInfo = (): { name: string, version: string } => {
   return safeExecute(
     () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -117,7 +117,10 @@ export const trace = (
       return;
     }
     const exporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
-      ? new ConsoleSpanExporter()
+      ? new FileSpanExporter(
+          process.env.FILE_EXPORTER_FILE_NAME,
+          isEnvVarTrue(LUMIGO_DEBUG) ? 'DEBUG' : 'PROD'
+        )
       : new OTLPTraceExporter({
           url: endpoint,
         });
