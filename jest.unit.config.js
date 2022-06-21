@@ -7,5 +7,14 @@ module.exports = {
   collectCoverageFrom: [
     '**/src/**/**/**/**.js',
     '**/src/**/**/**/**.ts',
+    '!./src/tools/xmlToJson.ts',
+    '!./src/expressAppProgrematically.js',
+    '!./src/instrumentros/logsInstrumentation.ts',
   ],
+  setupFilesAfterEnv: ['./testUtils/jest.setup.js'],
+  coverageThreshold: {
+    global: {
+      lines: 100,
+    },
+  },
 };
