@@ -1,6 +1,5 @@
-import * as fs from "fs";
-import chokidar from "chokidar";
-
+import * as fs from 'fs';
+import chokidar from 'chokidar';
 
 let watcher;
 
@@ -10,13 +9,11 @@ export const stopWatching = async () => {
   }
 };
 export type WatchDirOptions = {
-  onAddFileEvent?: (path)=> void,
-  onChangeFileEvent?: (path)=> void,
-}
-export const watchDir = (
- spansDir: string, options: WatchDirOptions
-) => {
-  const {onAddFileEvent, onChangeFileEvent }  = options;
+  onAddFileEvent?: (path) => void;
+  onChangeFileEvent?: (path) => void;
+};
+export const watchDir = (spansDir: string, options: WatchDirOptions) => {
+  const { onAddFileEvent, onChangeFileEvent } = options;
   if (!fs.existsSync(spansDir)) {
     fs.mkdirSync(spansDir);
   }
@@ -24,11 +21,11 @@ export const watchDir = (
     ignoreInitial: true,
   });
   watcher
-    .on("add", async (path) => {
+    .on('add', async (path) => {
       await onAddFileEvent(path);
     })
-      .on("change", async (path) => {
-        await onChangeFileEvent(path);
-      })
+    .on('change', async (path) => {
+      await onChangeFileEvent(path);
+    });
   return watcher;
 };

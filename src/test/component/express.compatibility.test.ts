@@ -65,7 +65,7 @@ describe('component compatibility tests for all supported versions of express', 
       expect(
         serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
       ).toBeTruthy();
-      expect(1).toBeLessThan(4).toBeGreaterThan(0).toEqual(1)
+      expect(1).toBeLessThan(4).toBeGreaterThan(0).toEqual(1);
       expect(serverSpan).toMatchObject({
         traceId: expect.any(String),
         parentId: expect.any(String),
@@ -105,7 +105,7 @@ describe('component compatibility tests for all supported versions of express', 
         name: 'HTTP GET',
         kind: 1,
         attributes: {
-          'http.url':expect.stringMatching(/http:\/\/localhost:\d+\/invoke-requests/),
+          'http.url': expect.stringMatching(/http:\/\/localhost:\d+\/invoke-requests/),
           'http.host': expect.stringMatching(/localhost:\d+/),
           'net.host.name': 'localhost',
           'http.method': 'GET',
@@ -141,7 +141,9 @@ describe('component compatibility tests for all supported versions of express', 
           'http.target': '/jokes/random',
           'net.peer.name': 'api.chucknorris.io',
           'http.request.body': '""',
-          'net.peer.ip': expect.stringMatching(/\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}\b/),
+          'net.peer.ip': expect.stringMatching(
+            /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}\b/
+          ),
           'net.peer.port': 443,
           'http.host': 'api.chucknorris.io:443',
           'http.status_code': 200,

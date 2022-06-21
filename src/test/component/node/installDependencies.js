@@ -1,11 +1,11 @@
 const fs = require('fs');
-const {spawnSync} = require('child_process');
+const { spawnSync } = require('child_process');
 
 console.log(`Installing supported dependency versions...`);
 
 const supportedDependencies = require('./package.json').lumigo.supportedDependencies;
 spawnSync('npm', ['install']);
-fs.mkdirSync('./node_modules/.tmp', { recursive: true});
+fs.mkdirSync('./node_modules/.tmp', { recursive: true });
 
 for (const dependency in supportedDependencies) {
   // install each dependency version and move it to a holding location
@@ -14,7 +14,7 @@ for (const dependency in supportedDependencies) {
     let holdingPath = `./node_modules/.tmp/${fullName}`;
     try {
       fs.accessSync(holdingPath, fs.constants.F_OK);
-      console.log(`${fullName} installed`)
+      console.log(`${fullName} installed`);
     } catch (err) {
       console.log(`Installing ${fullName}`);
       spawnSync('npm', ['install', fullName]);

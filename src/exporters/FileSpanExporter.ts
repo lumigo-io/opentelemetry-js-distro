@@ -27,166 +27,165 @@ import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
 
 /* eslint-disable no-console */
 export class FileSpanExporter implements SpanExporter {
-    private _fd: number;
-    private readonly mode: "DEBUG" | "PROD";
-    private readonly _file: string;
-    private _shutdownOnce: BindOnceFuture<void>;
+  private _fd: number;
+  private readonly mode: 'DEBUG' | 'PROD';
+  private readonly _file: string;
+  private _shutdownOnce: BindOnceFuture<void>;
 
-    constructor(file: string, mode: "DEBUG" | "PROD" = "PROD") {
-        this.mode = mode;
-        this._file = file;
-        this._fd = fs.openSync(file, 'w');
+  constructor(file: string, mode: 'DEBUG' | 'PROD' = 'PROD') {
+    this.mode = mode;
+    this._file = file;
+    this._fd = fs.openSync(file, 'w');
 
-        this.shutdown = this.shutdown.bind(this);
-        this._shutdownOnce = new BindOnceFuture(this._shutdown, this);
+    this.shutdown = this.shutdown.bind(this);
+    this._shutdownOnce = new BindOnceFuture(this._shutdown, this);
+  }
+
+  /**
+   * Export spans.
+   * @param spans
+   * @param resultCallback
+   */
+  export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): void {
+    return this._sendSpans(spans, resultCallback);
+  }
+
+  /**
+   * converts span info into more readable format
+   * @param span
+   */
+  private _exportInfo(span: ReadableSpan): Object {
+    return {
+      traceId: span.spanContext().traceId,
+      parentId: span.parentSpanId,
+      name: span.name,
+      id: span.spanContext().spanId,
+      kind: span.kind,
+      timestamp: hrTimeToMicroseconds(span.startTime),
+      duration: hrTimeToMicroseconds(span.duration),
+      attributes: span.attributes,
+      status: span.status,
+      events: span.events,
+    };
+  }
+
+  /**
+   * Store spans in file
+   * @param spans
+   * @param done
+   */
+  private _sendSpans(spans: ReadableSpan[], done?: (result: ExportResult) => void): void {
+    let json = '';
+    for (const span of spans) {
+      json += JSON.stringify(this._exportInfo(span));
+      json += '\n';
     }
 
-    /**
-     * Export spans.
-     * @param spans
-     * @param resultCallback
-     */
-    export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): void {
-        return this._sendSpans(spans, resultCallback);
-    }
-
-    /**
-     * converts span info into more readable format
-     * @param span
-     */
-    private _exportInfo(span: ReadableSpan): Object {
-        return {
-            traceId: span.spanContext().traceId,
-            parentId: span.parentSpanId,
-            name: span.name,
-            id: span.spanContext().spanId,
-            kind: span.kind,
-            timestamp: hrTimeToMicroseconds(span.startTime),
-            duration: hrTimeToMicroseconds(span.duration),
-            attributes: span.attributes,
-            status: span.status,
-            events: span.events,
-        };
-    }
-
-    /**
-     * Store spans in file
-     * @param spans
-     * @param done
-     */
-    private _sendSpans(spans: ReadableSpan[], done?: (result: ExportResult) => void): void {
-        let json = '';
-        for (const span of spans) {
-            json += JSON.stringify(this._exportInfo(span));
-            json += '\n';
+    fs.appendFile(this._fd, json, async (err) => {
+      if (done) {
+        if (err) {
+          return done({
+            code: ExportResultCode.FAILED,
+            error: err,
+          });
+        } else {
+          if (this.mode === 'DEBUG') {
+            fs.closeSync(this._fd);
+            this._fd = fs.openSync(this._file, 'a');
+          }
+          return done({ code: ExportResultCode.SUCCESS });
         }
+      }
+    });
+  }
 
-        fs.appendFile(this._fd, json,  async (err) => {
-            if (done) {
-                if (err) {
-                    return done({
-                        code: ExportResultCode.FAILED,
-                        error: err,
-                    });
-                } else {
-                    if (this.mode === "DEBUG"){
-                        fs.closeSync(this._fd);
-                        this._fd = fs.openSync(this._file, 'a');
-                    }
-                    return done({ code: ExportResultCode.SUCCESS });
-                }
-            }
-        });
-
+  forceFlush(): Promise<void> {
+    if (this._shutdownOnce.isCalled) {
+      return this._shutdownOnce.promise;
     }
+    return this._flushAll();
+  }
 
-    forceFlush(): Promise<void> {
-        if (this._shutdownOnce.isCalled) {
-            return this._shutdownOnce.promise;
-        }
+  /**
+   * Shutdown the exporter.
+   */
+  shutdown(): Promise<void> {
+    return this._shutdownOnce.call();
+  }
+
+  /**
+   * Called by _shutdownOnce with BindOnceFuture
+   */
+  private _shutdown(): Promise<void> {
+    return Promise.resolve()
+      .then(() => {
         return this._flushAll();
-    }
+      })
+      .finally(() => {
+        fs.closeSync(this._fd);
+      });
+  }
 
-    /**
-     * Shutdown the exporter.
-     */
-    shutdown(): Promise<void> {
-        return this._shutdownOnce.call();
-    }
-
-    /**
-     * Called by _shutdownOnce with BindOnceFuture
-     */
-    private _shutdown(): Promise<void> {
-        return Promise.resolve()
-            .then(() => {
-                return this._flushAll();
-            })
-            .finally(() => {
-                fs.closeSync(this._fd);
-            });
-    }
-
-    private _flushAll(): Promise<void> {
-        return Promise.resolve().then((ignored) => {
-            return fs.fdatasyncSync(this._fd);
-        });
-    }
+  private _flushAll(): Promise<void> {
+    return Promise.resolve().then((ignored) => {
+      return fs.fdatasyncSync(this._fd);
+    });
+  }
 }
 
 // From https://github.com/open-telemetry/opentelemetry-js/blob/d61f7bee0f7f60fed794d956e122decd0ce6748f/packages/opentelemetry-core/src/utils/callback.ts,
 // TODO Replace with the opentelemetry-js SDK version when we upgrade
 class BindOnceFuture<R, This = unknown, T extends (this: This, ...args: unknown[]) => R = () => R> {
-    private _isCalled = false;
-    private _deferred = new Deferred<R>();
-    constructor(private _callback: T, private _that: This) {}
+  private _isCalled = false;
+  private _deferred = new Deferred<R>();
+  constructor(private _callback: T, private _that: This) {}
 
-    get isCalled() {
-        return this._isCalled;
-    }
+  get isCalled() {
+    return this._isCalled;
+  }
 
-    get promise() {
-        return this._deferred.promise;
-    }
+  get promise() {
+    return this._deferred.promise;
+  }
 
-    call(...args: Parameters<T>): Promise<R> {
-        if (!this._isCalled) {
-            this._isCalled = true;
-            try {
-                Promise.resolve(this._callback.call(this._that, ...args)).then(
-                    (val) => this._deferred.resolve(val),
-                    (err) => this._deferred.reject(err)
-                );
-            } catch (err) {
-                this._deferred.reject(err);
-            }
-        }
-        return this._deferred.promise;
+  call(...args: Parameters<T>): Promise<R> {
+    if (!this._isCalled) {
+      this._isCalled = true;
+      try {
+        Promise.resolve(this._callback.call(this._that, ...args)).then(
+          (val) => this._deferred.resolve(val),
+          (err) => this._deferred.reject(err)
+        );
+      } catch (err) {
+        this._deferred.reject(err);
+      }
     }
+    return this._deferred.promise;
+  }
 }
 
 // From https://github.com/open-telemetry/opentelemetry-js/blob/d61f7bee0f7f60fed794d956e122decd0ce6748f/packages/opentelemetry-core/src/utils/promise.ts,
 // TODO Replace with the opentelemetry-js SDK version when we upgrade
 class Deferred<T> {
-    private _promise: Promise<T>;
-    private _resolve!: (val: T) => void;
-    private _reject!: (error: unknown) => void;
-    constructor() {
-        this._promise = new Promise((resolve, reject) => {
-            this._resolve = resolve;
-            this._reject = reject;
-        });
-    }
+  private _promise: Promise<T>;
+  private _resolve!: (val: T) => void;
+  private _reject!: (error: unknown) => void;
+  constructor() {
+    this._promise = new Promise((resolve, reject) => {
+      this._resolve = resolve;
+      this._reject = reject;
+    });
+  }
 
-    get promise() {
-        return this._promise;
-    }
+  get promise() {
+    return this._promise;
+  }
 
-    resolve(val: T) {
-        this._resolve(val);
-    }
+  resolve(val: T) {
+    this._resolve(val);
+  }
 
-    reject(err: unknown) {
-        this._reject(err);
-    }
+  reject(err: unknown) {
+    this._reject(err);
+  }
 }
