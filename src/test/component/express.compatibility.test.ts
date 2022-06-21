@@ -3,10 +3,7 @@ import 'jest-chain';
 import fs from 'fs';
 
 import { watchDir } from './helpers/fileListener';
-import {
-  callContainer,
-  executeNpmScriptWithCallback,
-} from './helpers/helpers';
+import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
