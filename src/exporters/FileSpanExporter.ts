@@ -31,7 +31,7 @@ export class FileSpanExporter implements SpanExporter {
   private _shutdownOnce: BindOnceFuture<void>;
 
   constructor(file: string) {
-    this._fd = fs.openSync(file, 0o6);
+    this._fd = fs.openSync(file, 'w', 0o6);
 
     this.shutdown = this.shutdown.bind(this);
     this._shutdownOnce = new BindOnceFuture(this._shutdown, this);

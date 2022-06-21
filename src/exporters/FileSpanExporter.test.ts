@@ -27,6 +27,29 @@ describe('FileSpanExporter', () => {
   });
 
   describe('creating one span', () => {
+    it('should work even if the file does not exist yet', () => {
+      const path = '/tmp/test-FileSpanExporter';
+      assert.strictEqual(fs.existsSync(path), false);
+
+      try {
+        const exporterUnderTest = new FileSpanExporter(path);
+        provider = new BasicTracerProvider();
+        provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+
+        const root: Span = provider.getTracer('default').startSpan('root');
+        root.setAttribute('foo', 'bar');
+        root.end();
+
+        exporterUnderTest.shutdown();
+        assert.strictEqual(fs.existsSync(path), true);
+      } catch (e) {
+        console.error(e)
+      } finally {
+        fs.unlinkSync(path);
+        assert.strictEqual(fs.existsSync(path), false);
+      }
+    });
+
     it('should write one span marshalled as JSON to file', async () => {
       const tmpFile = tmp.fileSync({
         mode: 0o644,
