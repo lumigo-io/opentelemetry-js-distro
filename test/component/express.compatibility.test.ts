@@ -92,7 +92,7 @@ describe('component compatibility tests for all supported versions of express', 
           'http.status_code': 200,
         },
         status: {
-          code: 0,
+          code: 1,
         },
         events: [],
       });
