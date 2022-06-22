@@ -1,7 +1,6 @@
 import 'jest-chain';
 
 import fs from 'fs';
-
 import { watchDir } from './helpers/fileListener';
 import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
 
