@@ -61,7 +61,7 @@ const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getTracerInfo = (): { name: string; version: string } => {
+export const getTracerInfo = (): { name: string, version: string } => {
   return safeExecute(
     () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -81,7 +81,7 @@ function requireIfAvailable(names: string[]) {
 
 registerInstrumentations({
   instrumentations: [
-    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, DEFAULT_LUMIGO_ENDPOINT),
+    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, process.env.LUMIGO_ENDPOINT),
     new LumigoExpressInstrumentation(),
     ...externalInstrumentations,
   ],
@@ -174,7 +174,7 @@ if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME) {
   initializationPromise = trace(
     process.env.LUMIGO_TOKEN,
     process.env.LUMIGO_SERVICE_NAME,
-    process.env.DEFAULT_LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT
+    process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT
   );
 }
 export default initializationPromise;
