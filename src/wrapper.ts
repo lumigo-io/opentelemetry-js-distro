@@ -19,17 +19,18 @@ const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 const LUMIGO_DEBUG_SPANDUMP = 'LUMIGO_DEBUG_SPANDUMP';
 
 let logLevel: DiagLogLevel;
+
 if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
   logLevel = DiagLogLevel.INFO;
 } else {
   logLevel = isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.ALL : DiagLogLevel.ERROR;
 }
+
 diag.setLogger(new DiagConsoleLogger(), logLevel);
 
-let promise;
+let initializationPromise = undefined;
 const externalInstrumentations = [];
-
-export const clearIsTraced = () => (promise = undefined);
+export const clearIsTraced = () => (initializationPromise = undefined);
 
 const safeRequire = (libId) => {
   try {
@@ -99,16 +100,15 @@ export const trace = async (
   serviceName = 'service-name',
   endpoint = DEFAULT_LUMIGO_ENDPOINT
 ): Promise<boolean> => {
-  if (!promise) {
-    promise = new Promise((resolve) => {
+  if (!initializationPromise) {
+    initializationPromise = new Promise((resolve) => {
       try {
         if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
           if (!isLumigoSwitchedOffStatusReported) {
             isLumigoSwitchedOffStatusReported = true;
             diag.info('Lumigo is switched off, aborting tracer initialization...');
           }
-          resolve(undefined);
-          return;
+          return resolve(undefined);
         }
         const exporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
           ? new FileSpanExporter(
@@ -145,11 +145,12 @@ export const trace = async (
           );
           traceProvider.register();
           diag.debug(`Lumigo tracer started on ${serviceName}`);
-          resolve(undefined);
+          return resolve(undefined);
         };
+
         fetchMetadataUri()
-          .then((data) => {
-            ecsMetadataHandler(data);
+          .then((res) => {
+            ecsMetadataHandler(res?.data);
           })
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .catch((_) => {
@@ -160,26 +161,28 @@ export const trace = async (
           });
       } catch (err) {
         reportInitError(err);
-        resolve(undefined);
+        return resolve(undefined);
       }
     });
+  } else {
+    diag.debug('Lumigo already traced, aborting tracer initialization...');
   }
-  return promise;
+  return initializationPromise;
 };
 
 if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME) {
-  promise = trace(
+  initializationPromise = trace(
     process.env.LUMIGO_TOKEN,
     process.env.LUMIGO_SERVICE_NAME,
     process.env.DEFAULT_LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT
   );
 }
-export default promise;
+export default initializationPromise;
 module.exports = {
   DEFAULT_LUMIGO_ENDPOINT,
   clearIsTraced,
   trace,
-  promise,
+  promise: initializationPromise,
   LumigoHttpInstrumentation,
   LumigoExpressInstrumentation,
 };
