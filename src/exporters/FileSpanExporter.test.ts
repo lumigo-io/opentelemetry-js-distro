@@ -43,7 +43,7 @@ describe('FileSpanExporter', () => {
         exporterUnderTest.shutdown();
         assert.strictEqual(fs.existsSync(path), true);
       } catch (e) {
-        console.error(e)
+        console.error(e);
       } finally {
         fs.unlinkSync(path);
         assert.strictEqual(fs.existsSync(path), false);
