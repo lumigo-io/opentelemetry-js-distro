@@ -94,3 +94,28 @@ The Lumigo OpenTelemetry Distro will automatically create the following OpenTele
   * The [`AwsEcsDetector`](./src/resources/detectors/AwsEcsDetector.ts)
 * If the `LUMIGO_TRACER_TOKEN` environment variable is set: a [`BatchSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/BatchSpanProcessorBase.ts), which uses an [`OTLPTraceExporter`]() to push tracing data to Lumigo
 * If the `LUMIGO_DEBUG_SPANDUMP` environment variable is set: a [`SimpleSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/SimpleSpanProcessor.ts), which uses an [`FileSpanExporter`](src/exporters/FileSpanExporter.ts) to save to file the spans collected. **Do not use this in production!**
+
+## Advanced use-cases
+
+### Waiting for the initialization of the Lumigo OpenTelemetry Distro
+
+The initialization of the Lumigo OpenTelemetry distro happens asynchronously for the parts that require potentially blocking behavior, like looking up information from the AWS ECS metadata endpoint.
+Due to this usage of `async`, some CLI or batch-like applications that perform their logic on startup without needing requests from the outside may find they miss some tracing data, for example the first span that represents the startup of the application.
+For such a scenario, the Lumigo OpenTelemetry Distro provides a `Promise` you can wait on as follows:
+
+```typescript
+import { sdkInit } from '@lumigo/opentelemetry';
+
+// Some initialization code for your application.
+
+// Using `asynch` as a top-level construct in you main file is supported by Node.js 18+, but
+// most frameworks have a way for you to run asynch init code.
+try {
+  const sdkStatus = await sdkInit;
+} catch (e) {
+   // The sdk initialization failed :-(
+   // Please let us know at support@lumigo.io!
+}
+
+// From here on you are guaranteed that the SDK is initialized.
+```

@@ -219,4 +219,38 @@ describe('Distro initialization', () => {
       expect(resource.attributes['foo']).toEqual('bar');
     });
   });
+
+  describe("on failure to initialize", () => {
+
+    beforeEach(() => {
+      process.env.LUMIGO_TRACER_TOKEN = TOKEN;
+    });
+
+    it("must reject the sdkInit promise", async () => {
+      const expectedError = new Error('Oops');
+
+      let sdkInitializedPromise;
+
+      jest.isolateModules(() => {
+        const sdkTraceNode = jest.requireActual('@opentelemetry/sdk-trace-node');
+
+        jest.spyOn(sdkTraceNode.NodeTracerProvider.prototype, 'addSpanProcessor').mockImplementation(() => {
+          throw expectedError;
+        });
+
+        const wrapper = require('./wrapper');
+
+        sdkInitializedPromise = wrapper.sdkInit;
+      });
+
+      try {
+        await sdkInitializedPromise;
+        throw new Error("This should not happen");
+      } catch (e) {
+        expect(e).toBe(expectedError);
+      }
+    });
+
+  });
+
 });
