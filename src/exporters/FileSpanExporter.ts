@@ -25,7 +25,6 @@ import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
  * exporter in production.
  */
 
-/* eslint-disable no-console */
 export class FileSpanExporter implements SpanExporter {
   private readonly _fd: number;
   private _shutdownOnce: BindOnceFuture<void>;
