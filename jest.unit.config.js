@@ -15,7 +15,7 @@ module.exports = {
   setupFilesAfterEnv: ['./jest.setup.js'],
   coverageThreshold: {
     global: {
-      lines: 100,
+      lines: 50,
     },
   },
 };
