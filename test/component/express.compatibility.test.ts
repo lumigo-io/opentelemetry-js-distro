@@ -41,7 +41,7 @@ describe('component compatibility tests for all supported versions of express', 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       app = await executeNpmScriptWithCallback(
-        './src/test/component/node',
+        './test/component/node',
         (port: number) =>
           callContainer(port, 'invoke-requests', 'get', {
             a: '1',
