@@ -4,8 +4,8 @@ import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/in
 import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import LumigoExpressInstrumentation from './instrumentros/LumigoExpressInstrumentation';
-import LumigoHttpInstrumentation from './instrumentros/LumigoHttpInstrumentation';
+import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
+import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { isEnvVarTrue, safeExecute } from './utils';
 import { FileSpanExporter } from './exporters';
 

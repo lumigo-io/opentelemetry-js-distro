@@ -9,7 +9,7 @@ module.exports = {
     '**/src/**/**/**/**.ts',
     '!./src/tools/xmlToJson.ts',
     '!./src/testUtils/**/**.*',
-    '!./src/instrumentros/logsInstrumentation.ts',
+    '!./src/instrumentors/logsInstrumentation.ts',
   ],
   setupFilesAfterEnv: ['./jest.setup.js'],
   coverageThreshold: {
