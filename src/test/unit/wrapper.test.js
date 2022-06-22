@@ -64,7 +64,7 @@ describe('happy flow', () => {
           exporter: 'opentelemetry',
           framework: 'express',
           tracerVersion: expect.stringMatching(/\d+\.\d+\.\d+/),
-          runtime: 'nodev14.16.0',
+          runtime: expect.stringMatching(/nodev\d+\.\d+\.\d+/),
         },
       },
     });
