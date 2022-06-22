@@ -3,7 +3,6 @@ import {
   DiagLogger,
   DiagConsoleLogger,
   DiagLogLevel,
-  TracerProvider,
 } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
