@@ -2,10 +2,10 @@
   "name": "opentelemetry-js-distro-test",
   "version": "1.0.0",
   "description": "",
-  "main": "target/expressAppProgrematically.js",
+  "main": "target/expressAppProgrammatically.js",
   "scripts": {
-    "start-progrematically": "node target/expressAppProgrematically.js",
-    "local": "node target/expressAppProgrematically.js",
+    "start-programmatically": "node target/expressAppProgrammatically.js",
+    "local": "node target/expressAppProgrammatically.js",
     "start-script": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r @lumigo/opentelemetry expressApp.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "tsc"

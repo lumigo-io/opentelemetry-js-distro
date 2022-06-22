@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-progrematically": "node src/expressAppScript.js",
+    "start-programmatically": "node src/expressAppScript.js",
     "local": "node src/expressAppScript.js",
     "start-script": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r @lumigo/opentelemetry expressApp.js",
     "test": "echo \"Error: no test specified\" && exit 1",

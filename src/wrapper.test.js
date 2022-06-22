@@ -1,19 +1,20 @@
-const wrapper = require('../wrapper');
+import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
 
-jest.mock('@opentelemetry/node');
-jest.mock('@opentelemetry/exporter-collector');
-jest.mock('opentelemetry-instrumentation-aws-sdk');
-jest.mock('@opentelemetry/instrumentation-express');
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+
+const wrapper = require('./wrapper');
+
+jest.mock('@opentelemetry/exporter-trace-otlp-http');
+jest.mock('@opentelemetry/sdk-trace-node');
+jest.mock('opentelemetry-instrumentation-express');
 jest.mock('@opentelemetry/instrumentation-http');
-jest.mock('@opentelemetry/tracing');
+jest.mock('@opentelemetry/sdk-trace-base');
 jest.mock('@opentelemetry/instrumentation');
-const { NodeTracerProvider } = require('@opentelemetry/node');
-const { CollectorTraceExporter } = require('@opentelemetry/exporter-collector');
-const { AwsInstrumentation } = require('opentelemetry-instrumentation-aws-sdk');
-const { ExpressInstrumentation } = require('@opentelemetry/instrumentation-express');
-const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
-const { BatchSpanProcessor } = require('@opentelemetry/tracing');
-const { registerInstrumentations } = require('@opentelemetry/instrumentation');
+jest.mock('@opentelemetry/instrumentation-http');
 
 const TOKEN = 't_10faa5e13e7844aaa1234';
 const ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
@@ -26,25 +27,25 @@ describe('happy flow', () => {
     register: spies.registerMock,
     addSpanProcessor: spies.addSpanProcessorMock,
   }));
-  CollectorTraceExporter.mockImplementation(() => ({}));
+  OTLPTraceExporter.mockImplementation(() => ({}));
   beforeEach(() => {
+    wrapper.clearIsTraced();
     Object.keys(spies).map((x) => spies[x].mockClear());
-    CollectorTraceExporter.mockClear();
+    OTLPTraceExporter.mockClear();
   });
 
   test('NodeTracerProvider should have been called with config', () => {
     wrapper.trace(TOKEN, 'service-1');
     expect(NodeTracerProvider).toHaveBeenCalledWith({
-      plugins: {
-        'aws-sdk': {
-          enabled: false,
-          path: 'opentelemetry-plugin-aws-sdk',
-        },
-      },
       resource: {
         attributes: {
+          envs: expect.any(String),
           lumigoToken: 't_10faa5e13e7844aaa1234',
           'service.name': 'service-1',
+          exporter: 'opentelemetry',
+          framework: 'express',
+          tracerVersion: expect.stringMatching(/\d+\.\d+\.\d+/),
+          runtime: expect.stringMatching(/nodev\d+\.\d+\.\d+/),
         },
       },
     });
@@ -55,33 +56,24 @@ describe('happy flow', () => {
   test('Trim whitespaces in token', () => {
     wrapper.trace(' t_10faa5e13e7844aaa1234   ', 'service-1');
     expect(NodeTracerProvider).toHaveBeenCalledWith({
-      plugins: {
-        'aws-sdk': {
-          enabled: false,
-          path: 'opentelemetry-plugin-aws-sdk',
-        },
-      },
       resource: {
         attributes: {
+          envs: expect.any(String),
           lumigoToken: 't_10faa5e13e7844aaa1234',
           'service.name': 'service-1',
+          exporter: 'opentelemetry',
+          framework: 'express',
+          tracerVersion: expect.stringMatching(/\d+\.\d+\.\d+/),
+          runtime: expect.stringMatching(/nodev\d+\.\d+\.\d+/),
         },
       },
     });
   });
 
-  test('CollectorTraceExporter should have been called with config', () => {
+  test('OTLPTraceExporter should have been called with config', () => {
     wrapper.trace(TOKEN, 'service-1', ENDPOINT);
-    expect(CollectorTraceExporter).toHaveBeenCalledWith({
-      serviceName: 'service-1',
+    expect(OTLPTraceExporter).toHaveBeenCalledWith({
       url: ENDPOINT,
-    });
-  });
-
-  test('AwsInstrumentation should have been called with config', () => {
-    wrapper.trace(TOKEN, 'service-1', ENDPOINT);
-    expect(AwsInstrumentation).toHaveBeenCalledWith({
-      suppressInternalInstrumentation: true,
     });
   });
 
@@ -108,7 +100,7 @@ describe('happy flow', () => {
   test('if LUMIGO_SWITCH_OFF set to TRUE traece should return without instrumentation', () => {
     process.env.LUMIGO_SWITCH_OFF = 'TRUE';
     wrapper.trace(TOKEN, 'service-1', ENDPOINT);
-    expect(CollectorTraceExporter).not.toHaveBeenCalled();
+    expect(OTLPTraceExporter).not.toHaveBeenCalled();
     process.env.LUMIGO_SWITCH_OFF = undefined;
   });
 });

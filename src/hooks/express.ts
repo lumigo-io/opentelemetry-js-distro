@@ -1,8 +1,10 @@
 import type express from 'express';
-import { PatchedRequest } from '@opentelemetry/plugin-express/build/src/types';
-import { InstrumentationIfc } from './hooksIfc';
+
 import { diag, Span } from '@opentelemetry/api';
+import { PatchedRequest } from '@opentelemetry/plugin-express/build/src/types';
+
 import { safeExecute } from '../utils';
+import { InstrumentationIfc } from './hooksIfc';
 
 type ExpressRequestType = { req: PatchedRequest; res: express.Response };
 
@@ -34,6 +36,7 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
       })();
     };
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   responseHook(span: Span, response: any): void {
     diag.debug('opentelemetry-instrumentation-express on responseHook()');
   },

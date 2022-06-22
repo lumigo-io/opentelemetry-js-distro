@@ -2,7 +2,7 @@ const nodeExternals = require('webpack-node-externals');
 const path = require('path');
 
 module.exports = {
-  entry: './src/expressAppProgrematically.ts',
+  entry: './src/expressAppProgrammatically.ts',
   mode: 'production',
   devtool: 'source-map',
   target: 'node',
