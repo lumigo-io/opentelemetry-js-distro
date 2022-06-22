@@ -5,7 +5,7 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import {clearIsTraced} from "./wrapper";
+import { clearIsTraced } from './wrapper';
 
 const wrapper = require('./wrapper');
 
