@@ -149,8 +149,8 @@ export const trace = async (
         };
 
         fetchMetadataUri()
-          .then((res) => {
-            ecsMetadataHandler(res?.data);
+          .then((data) => {
+            ecsMetadataHandler(data);
           })
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .catch((_) => {

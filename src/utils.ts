@@ -1,9 +1,9 @@
 import * as crypto from 'crypto';
 
 import { sortify } from './tools/jsonSortify';
-import axios, { AxiosResponse } from 'axios';
+import * as https from "https";
 
-('["secretsmanager.*.amazonaws.com", "ssm.*.amazonaws.com", "kms.*.amazonaws.com", "sts..*amazonaws.com"]');
+export const DEFAULT_CONNECTION_TIMEOUT = 300;
 
 export function safeExecute<T>(
   callback: Function,
@@ -39,11 +39,43 @@ export const runOneTimeWrapper = (func: Function, context: any = undefined): Fun
   };
 };
 
-export const fetchMetadataUri = async (): Promise<AxiosResponse> => {
+export const getConnectionTimeout = () => {
+  return parseInt(process.env['LUMIGO_CONNECTION_TIMEOUT']) || DEFAULT_CONNECTION_TIMEOUT;
+};
+
+const getUri = async (uri: string): Promise<Object> => {
+  const responseBody = await new Promise((resolve, reject) => {
+    const request = https.get(uri, (response) => {
+      if (response.statusCode >= 400) {
+        reject(`Request to '${uri}' failed with status ${response.statusCode}`);
+      }
+
+      /*
+       * Concatenate the response out of chunks:
+       * https://nodejs.org/api/stream.html#stream_event_data
+       */
+      let responseBody = '';
+      response.on('data', (chunk) => (responseBody += chunk.toString()));
+      // All the data has been read, resolve the Promise
+      response.on('end', () => resolve(responseBody));
+    });
+    // Set an aggressive timeout to prevent lock-ups
+    request.setTimeout(getConnectionTimeout(), () => {
+      request.destroy();
+    });
+    // Connection error, disconnection, etc.
+    request.on('error', reject);
+    request.end();
+  });
+
+  return JSON.parse(responseBody.toString());
+}
+
+export const fetchMetadataUri = async (): Promise<Object> => {
   try {
     const metadataUri = process.env['ECS_CONTAINER_METADATA_URI'];
     if (metadataUri) {
-      return axios.get(metadataUri);
+      return getUri(metadataUri);
     } else {
       console.warn('Missing ECS metadata...');
       return Promise.resolve(undefined);
