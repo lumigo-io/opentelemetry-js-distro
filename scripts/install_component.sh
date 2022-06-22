@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 pwd
-pushd src/test/component/node || exit 1
+pushd test/component/node || exit 1
 echo "clearing..."
 rm -rf node_modules package-lock.json
 echo "installing packages..."

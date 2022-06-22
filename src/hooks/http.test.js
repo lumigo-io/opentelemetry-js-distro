@@ -1,4 +1,4 @@
-import { Http, isValidHttpRequestBody } from '../../../hooks/http';
+import { Http, isValidHttpRequestBody } from './http';
 
 describe('http hook', () => {
   process.env['AWS_REGION'] = 'us-east-x';

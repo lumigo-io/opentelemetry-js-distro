@@ -6,7 +6,7 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
-const wrapper = require('../../wrapper');
+const wrapper = require('./wrapper');
 
 jest.mock('@opentelemetry/exporter-trace-otlp-http');
 jest.mock('@opentelemetry/sdk-trace-node');

@@ -103,5 +103,5 @@ dist
 # TernJS port file
 .tern-port
 
-src/test/component/node/package-lock.json
-src/test/component/node/spans-test*.json
+test/component/node/package-lock.json
+test/component/node/spans-test*.json

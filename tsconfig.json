@@ -9,12 +9,13 @@
     "inlineSources": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "experimentalDecorators": true,
     "noImplicitOverride": true,
     "declaration": true,
     "declarationMap": true,
     "composite": true
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*"],
+  "exclude": ["**/*.test.js", "**/*.test.ts"]
 }
