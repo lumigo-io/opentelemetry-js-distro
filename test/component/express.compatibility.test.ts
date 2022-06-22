@@ -93,7 +93,7 @@ describe('component compatibility tests for all supported versions of express', 
           'http.status_code': 200,
         },
         status: {
-          code: 1,
+          code: 0,
         },
         events: [],
       });
@@ -123,7 +123,7 @@ describe('component compatibility tests for all supported versions of express', 
           lumigoToken: 't_123321',
         },
         status: {
-          code: 1,
+          code: 0,
         },
         events: [],
       });
@@ -155,7 +155,7 @@ describe('component compatibility tests for all supported versions of express', 
           lumigoToken: 't_123321',
         },
         status: {
-          code: 1,
+          code: 0,
         },
         events: [],
       });
