@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 
 import { sortify } from './tools/jsonSortify';
-import * as https from "https";
+import * as https from 'https';
 
 export const DEFAULT_CONNECTION_TIMEOUT = 300;
 
@@ -69,7 +69,7 @@ const getUri = async (uri: string): Promise<Object> => {
   });
 
   return JSON.parse(responseBody.toString());
-}
+};
 
 export const fetchMetadataUri = async (): Promise<Object> => {
   try {
