@@ -171,19 +171,21 @@ describe('Distro initialization', () => {
      * values change, we must notice to account for it in the backend.
      */
 
+    const attributes = Object.keys(resource.attributes);
+
     // SDK base properties
-    expect(resource.attributes).toHaveProperty('telemetry.sdk.name');
-    expect(resource.attributes).toHaveProperty('telemetry.sdk.language');
-    expect(resource.attributes).toHaveProperty('telemetry.sdk.version');
+    expect(attributes).toContain('telemetry.sdk.name');
+    expect(attributes).toContain('telemetry.sdk.language');
+    expect(attributes).toContain('telemetry.sdk.version');
 
     // Lumigo Distro attributes
-    expect(resource.attributes).toHaveProperty('lumigo.distro.version');
+    expect(attributes).toContain('lumigo.distro.version');
 
     // Process attributes
-    expect(resource.attributes).toHaveProperty('process.pid');
-    expect(resource.attributes).toHaveProperty('process.runtime.description');
-    expect(resource.attributes).toHaveProperty('process.runtime.name');
-    expect(resource.attributes).toHaveProperty('process.runtime.version');
+    expect(attributes).toContain('process.pid');
+    expect(attributes).toContain('process.runtime.description');
+    expect(attributes).toContain('process.runtime.name');
+    expect(attributes).toContain('process.runtime.version');
   });
 
   describe('with the OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME environment variables set', () => {
@@ -193,19 +195,28 @@ describe('Distro initialization', () => {
     });
 
     it('should create additional attributes in the resource', async () => {
-      const wrapper = require('./wrapper');
+      let sdkInitializedPromise;
 
-      const sdkInitialized = await wrapper.sdkInit;
+      /*
+       * This one is tricky. The lookup of the OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES
+       * env vars in '@opentelemetry/resources'.envDetector is done at import time of
+       * @opentelemetry/resources, which has already occurred due to other tests well before we
+       * update the env vars in the beforeEach. So, we ask jest to isolate the import of the
+       * wrapper, which in turn will require the "fresh" import of '@opentelemetry/resources',
+       * and that will indeed correctly simulate the behavior at runtime.
+       */
+      jest.isolateModules(() => {
+        const wrapper = require('./wrapper');
 
+        sdkInitializedPromise = wrapper.sdkInit;
+      });
+
+      const sdkInitialized = await sdkInitializedPromise;
       expect(sdkInitialized).not.toBeUndefined();
 
       const resource = sdkInitialized.traceProvider.resource;
-      expect(resource.attributes).toMatchObject({
-        'service.name': 'awesomesauce',
-      });
-      expect(resource.attributes).toMatchObject({
-        foo: 'bar',
-      });
+      expect(resource.attributes['service.name']).toEqual('awesomesauce');
+      expect(resource.attributes['foo']).toEqual('bar');
     });
   });
 });
