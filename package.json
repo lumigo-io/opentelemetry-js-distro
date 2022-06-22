@@ -7,7 +7,7 @@
   "types": "dist/src/wrapper.d.ts",
   "scripts": {
     "build": "rm -rf dist wrapper.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" wrapper.tgz",
-    "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test:unit && npm run test:component:express",
+    "prepublishOnly": "npm ci && npm run prettier:fix && npm run lint && npm run test:unit && npm run test:component:express",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "install-component": "scripts/install_component.sh",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
@@ -22,10 +22,10 @@
   "dependencies": {
     "@lumigo/node-core": "^1.12.0",
     "@opentelemetry/api": "1.0.4",
-    "@opentelemetry/core": "^1.0.1",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.27.0",
-    "@opentelemetry/instrumentation": "^0.27.0",
-    "@opentelemetry/instrumentation-http": "^0.27.0",
+    "@opentelemetry/core": "1.1.1",
+    "@opentelemetry/exporter-trace-otlp-http": "0.28.0",
+    "@opentelemetry/instrumentation": "0.27.0",
+    "@opentelemetry/instrumentation-http": "0.27.0",
     "@opentelemetry/resources": "^1.1.0",
     "@opentelemetry/sdk-trace-base": "1.0.1",
     "@opentelemetry/sdk-trace-node": "^1.0.0",
