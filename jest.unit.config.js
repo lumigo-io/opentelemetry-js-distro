@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/**/*.test.ts','**/**/*.test.js'],
-  roots: ['.'],
+  roots: ['./src'],
   coverageDirectory: './coverage/',
   collectCoverage: true,
   collectCoverageFrom: [
@@ -9,7 +9,6 @@ module.exports = {
     '**/src/**/**/**/**.ts',
     '!./src/tools/xmlToJson.ts',
     '!./src/testUtils/**/**.*',
-    '!./src/expressAppProgrematically.js',
     '!./src/instrumentros/logsInstrumentation.ts',
   ],
   setupFilesAfterEnv: ['./jest.setup.js'],
