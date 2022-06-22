@@ -6,7 +6,7 @@ import { fetchMetadataUri } from '../utils';
 
 let metadata;
 
-fetchMetadataUri().then((res) => metadata = res);
+fetchMetadataUri().then((res) => (metadata = res));
 
 export default class LumigoHttpInstrumentation {
   constructor(lumigoToken = '', endPoint = DEFAULT_LUMIGO_ENDPOINT) {
