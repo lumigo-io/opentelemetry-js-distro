@@ -182,7 +182,5 @@ module.exports = {
   DEFAULT_LUMIGO_ENDPOINT,
   clearIsTraced,
   trace,
-  promise: initializationPromise,
-  LumigoHttpInstrumentation,
-  LumigoExpressInstrumentation,
+  initializationPromise,
 };
