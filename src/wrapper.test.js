@@ -5,6 +5,7 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import {clearIsTraced} from "./wrapper";
 
 const wrapper = require('./wrapper');
 
@@ -29,13 +30,13 @@ describe('happy flow', () => {
   }));
   OTLPTraceExporter.mockImplementation(() => ({}));
   beforeEach(() => {
-    initializationPromise.clearIsTraced();
+    clearIsTraced();
     Object.keys(spies).map((x) => spies[x].mockClear());
     OTLPTraceExporter.mockClear();
   });
 
   test('NodeTracerProvider should have been called with config', async () => {
-    await initializationPromise.trace(TOKEN, 'service-1');
+    await wrapper.trace(TOKEN, 'service-1');
     expect(NodeTracerProvider).toHaveBeenCalledWith({
       resource: {
         attributes: {
@@ -54,7 +55,7 @@ describe('happy flow', () => {
   });
 
   test('Trim whitespaces in token', () => {
-    initializationPromise.trace(' t_10faa5e13e7844aaa1234   ', 'service-1');
+    wrapper.trace(' t_10faa5e13e7844aaa1234   ', 'service-1');
     expect(NodeTracerProvider).toHaveBeenCalledWith({
       resource: {
         attributes: {
@@ -71,7 +72,7 @@ describe('happy flow', () => {
   });
 
   test('OTLPTraceExporter should have been called with config', () => {
-    initializationPromise.trace(TOKEN, 'service-1', ENDPOINT);
+    wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(OTLPTraceExporter).toHaveBeenCalledWith({
       headers: {
         Authorization: 'LumigoToken t_10faa5e13e7844aaa1234',
@@ -81,28 +82,28 @@ describe('happy flow', () => {
   });
 
   test('ExpressInstrumentation should have been called', () => {
-    initializationPromise.trace(TOKEN, 'service-1', ENDPOINT);
+    wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(ExpressInstrumentation).toHaveBeenCalled();
   });
 
   test('HttpInstrumentation should have been called', () => {
-    initializationPromise.trace(TOKEN, 'service-1', ENDPOINT);
+    wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(HttpInstrumentation).toHaveBeenCalled();
   });
 
   test('BatchSpanProcessor should have been called', () => {
-    initializationPromise.trace(TOKEN, 'service-1', ENDPOINT);
+    wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(BatchSpanProcessor).toHaveBeenCalled();
   });
 
   test('registerInstrumentations should have been called', () => {
-    initializationPromise.trace(TOKEN, 'service-1', ENDPOINT);
+    wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(registerInstrumentations).toHaveBeenCalled();
   });
 
   test('if LUMIGO_SWITCH_OFF set to TRUE traece should return without instrumentation', () => {
     process.env.LUMIGO_SWITCH_OFF = 'TRUE';
-    initializationPromise.trace(TOKEN, 'service-1', ENDPOINT);
+    wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(OTLPTraceExporter).not.toHaveBeenCalled();
     process.env.LUMIGO_SWITCH_OFF = undefined;
   });
