@@ -1,18 +1,19 @@
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
-import { isEnvVarTrue, safeExecute } from './utils';
 import { FileSpanExporter } from './exporters';
+import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
 
 let isLumigoSwitchedOffStatusReported = false;
 let isTraced = false;
 
-export const LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/api/spans';
+export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
@@ -29,18 +30,6 @@ diag.setLogger(new DiagConsoleLogger(), logLevel);
 const externalInstrumentations = [];
 
 export const clearIsTraced = () => (isTraced = false);
-
-export const addInstrumentation = (instrumentation: InstrumentationBase) => {
-  if (isTraced) {
-    console.warn(
-      `Lumigo already traced, Try first adding your instrumentation and then calling trace()`
-    );
-  } else if (instrumentation instanceof InstrumentationBase) {
-    externalInstrumentations.push(instrumentation);
-  } else {
-    console.warn(`"instrumentation" is not an instance of InstrumentationBase`);
-  }
-};
 
 const safeRequire = (libId) => {
   try {
@@ -91,7 +80,7 @@ function requireIfAvailable(names: string[]) {
 
 registerInstrumentations({
   instrumentations: [
-    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, LUMIGO_ENDPOINT),
+    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, DEFAULT_LUMIGO_ENDPOINT),
     new LumigoExpressInstrumentation(),
     ...externalInstrumentations,
   ],
@@ -101,10 +90,10 @@ requireIfAvailable([
   ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
 ]);
 
-export const trace = (
+export const trace = async (
   lumigoToken = '',
   serviceName = 'service-name',
-  endpoint = LUMIGO_ENDPOINT
+  endpoint = DEFAULT_LUMIGO_ENDPOINT
 ) => {
   try {
     if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
@@ -125,7 +114,11 @@ export const trace = (
         )
       : new OTLPTraceExporter({
           url: endpoint,
+          headers: {
+            Authorization: `LumigoToken ${lumigoToken.trim()}`,
+          },
         });
+    const ecsMetadata = (await fetchMetadataUri())?.data;
     const config = {
       resource: new Resource({
         lumigoToken: lumigoToken.trim(),
@@ -135,6 +128,7 @@ export const trace = (
         framework: 'express',
         exporter: 'opentelemetry',
         envs: JSON.stringify(process.env),
+        metadata: ecsMetadata,
       }),
     };
     const traceProvider = new NodeTracerProvider(config);
@@ -162,17 +156,14 @@ if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME && !isTraced) {
   trace(
     process.env.LUMIGO_TOKEN,
     process.env.LUMIGO_SERVICE_NAME,
-    process.env.LUMIGO_ENDPOINT || LUMIGO_ENDPOINT
+    process.env.DEFAULT_LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT
   );
 }
 
 module.exports = {
+  DEFAULT_LUMIGO_ENDPOINT,
   clearIsTraced,
   trace,
   LumigoHttpInstrumentation,
   LumigoExpressInstrumentation,
-  LumigoInstrumentations: (lumigoToken?: string) => [
-    new LumigoHttpInstrumentation(lumigoToken),
-    new LumigoExpressInstrumentation(),
-  ],
 };

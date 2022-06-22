@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 
 import { sortify } from './tools/jsonSortify';
+import axios, { AxiosResponse } from 'axios';
 
 ('["secretsmanager.*.amazonaws.com", "ssm.*.amazonaws.com", "kms.*.amazonaws.com", "sts..*amazonaws.com"]');
 
@@ -36,6 +37,20 @@ export const runOneTimeWrapper = (func: Function, context: any = undefined): Fun
       return result;
     }
   };
+};
+
+export const fetchMetadataUri = async (): Promise<AxiosResponse> => {
+  try {
+    const metadataUri = process.env['ECS_CONTAINER_METADATA_URI'];
+    if (metadataUri) {
+      return axios.get(metadataUri);
+    } else {
+      console.warn('Missing ECS metadata...');
+      return Promise.resolve(undefined);
+    }
+  } catch (e) {
+    return undefined;
+  }
 };
 
 export const safeGet = (obj, arr, dflt = null) => {

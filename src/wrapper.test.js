@@ -34,8 +34,8 @@ describe('happy flow', () => {
     OTLPTraceExporter.mockClear();
   });
 
-  test('NodeTracerProvider should have been called with config', () => {
-    wrapper.trace(TOKEN, 'service-1');
+  test('NodeTracerProvider should have been called with config', async () => {
+    await wrapper.trace(TOKEN, 'service-1');
     expect(NodeTracerProvider).toHaveBeenCalledWith({
       resource: {
         attributes: {
@@ -73,6 +73,9 @@ describe('happy flow', () => {
   test('OTLPTraceExporter should have been called with config', () => {
     wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(OTLPTraceExporter).toHaveBeenCalledWith({
+      headers: {
+        Authorization: 'LumigoToken t_10faa5e13e7844aaa1234',
+      },
       url: ENDPOINT,
     });
   });
