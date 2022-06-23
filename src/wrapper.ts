@@ -120,7 +120,7 @@ export const trace = async (
                 Authorization: `LumigoToken ${lumigoToken.trim()}`,
               },
             });
-        const ecsMetadataHandler = (data) => {
+        const ecsMetadataHandler = (metadata) => {
           const resourceAttributes = {
             lumigoToken: lumigoToken.trim(),
             'service.name': serviceName,
@@ -130,7 +130,7 @@ export const trace = async (
             exporter: 'opentelemetry',
             envs: JSON.stringify(process.env),
           };
-          if (data) Object.assign(resourceAttributes, { metadata: data });
+          if (metadata) Object.assign(resourceAttributes, { metadata });
           const config = {
             resource: new Resource(resourceAttributes),
           };
