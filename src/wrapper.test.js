@@ -5,6 +5,7 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { clearIsTraced } from './wrapper';
 
 const wrapper = require('./wrapper');
 
@@ -29,13 +30,13 @@ describe('happy flow', () => {
   }));
   OTLPTraceExporter.mockImplementation(() => ({}));
   beforeEach(() => {
-    wrapper.clearIsTraced();
+    clearIsTraced();
     Object.keys(spies).map((x) => spies[x].mockClear());
     OTLPTraceExporter.mockClear();
   });
 
-  test('NodeTracerProvider should have been called with config', () => {
-    wrapper.trace(TOKEN, 'service-1');
+  test('NodeTracerProvider should have been called with config', async () => {
+    await wrapper.trace(TOKEN, 'service-1');
     expect(NodeTracerProvider).toHaveBeenCalledWith({
       resource: {
         attributes: {
@@ -73,6 +74,9 @@ describe('happy flow', () => {
   test('OTLPTraceExporter should have been called with config', () => {
     wrapper.trace(TOKEN, 'service-1', ENDPOINT);
     expect(OTLPTraceExporter).toHaveBeenCalledWith({
+      headers: {
+        Authorization: 'LumigoToken t_10faa5e13e7844aaa1234',
+      },
       url: ENDPOINT,
     });
   });

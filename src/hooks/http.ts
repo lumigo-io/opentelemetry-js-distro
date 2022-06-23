@@ -129,9 +129,7 @@ export class Http {
       span.setAttribute('http.response.body', scrubed);
       try {
         if (isAwsService(requestRawData.request.host, requestRawData.response)) {
-          span.setAttributes(
-            getAwsServiceData(requestRawData.request, requestRawData.response, span)
-          );
+          span.setAttributes(getAwsServiceData(requestRawData.request, requestRawData.response));
           span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
         }
       } catch (e) {

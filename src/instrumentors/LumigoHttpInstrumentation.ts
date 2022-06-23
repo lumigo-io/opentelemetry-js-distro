@@ -1,34 +1,19 @@
 import { HttpHooks } from '../hooks/http';
 
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import axios, { AxiosResponse } from 'axios';
-import { LUMIGO_ENDPOINT } from '../wrapper';
+import { DEFAULT_LUMIGO_ENDPOINT } from '../wrapper';
+import { fetchMetadataUri } from '../utils';
 
 let metadata;
 
-const fetchMetadataUri = async (): Promise<AxiosResponse> => {
-  try {
-    const metadataUri = process.env['ECS_CONTAINER_METADATA_URI'];
-    if (metadataUri) {
-      return axios.get(metadataUri);
-    } else {
-      console.warn('Missing ECS metadata...');
-      return Promise.resolve(undefined);
-    }
-  } catch (e) {
-    return undefined;
-  }
-};
-fetchMetadataUri().then((res) => {
-  metadata = res?.data;
-});
+fetchMetadataUri().then((res) => (metadata = res));
 
 export default class LumigoHttpInstrumentation {
-  constructor(lumigoToken = '', endPoint = LUMIGO_ENDPOINT) {
+  constructor(lumigoToken = '', endPoint = DEFAULT_LUMIGO_ENDPOINT) {
     return new HttpInstrumentation({
       ignoreOutgoingUrls: process.env['ECS_CONTAINER_METADATA_URI']
-        ? [process.env['ECS_CONTAINER_METADATA_URI'], endPoint, LUMIGO_ENDPOINT]
-        : [endPoint, LUMIGO_ENDPOINT],
+        ? [process.env['ECS_CONTAINER_METADATA_URI'], endPoint, DEFAULT_LUMIGO_ENDPOINT]
+        : [endPoint, DEFAULT_LUMIGO_ENDPOINT],
       applyCustomAttributesOnSpan: (span) => {
         if (metadata) span.setAttribute('metadata', JSON.stringify(metadata));
         if (lumigoToken) span.setAttribute('lumigoToken', lumigoToken);

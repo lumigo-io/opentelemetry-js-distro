@@ -1,5 +1,3 @@
-import { Span } from '@opentelemetry/api';
-
 import {
   apigwParser,
   awsParser,
@@ -35,7 +33,7 @@ export type AwsServiceData = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getAwsServiceData = (requestData, responseData, span: Span): AwsServiceData => {
+export const getAwsServiceData = (requestData, responseData): AwsServiceData => {
   const { host } = requestData;
   const awsService = getAwsServiceFromHost(host);
 

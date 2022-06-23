@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 
 const init = () => {
   app.get('/invoke-requests', async (req, res) => {
-    const response = await axios.get('https://api.chucknorris.io/jokes/random', {
+    const response = await axios.get('https://api.chucknorris.io/jokes/categories', {
       headers: {
         header: 'a',
       },

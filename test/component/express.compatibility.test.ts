@@ -3,7 +3,10 @@ import 'jest-chain';
 import fs from 'fs';
 
 import { watchDir } from './helpers/fileListener';
-import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
+import {
+  callContainer,
+  executeNpmScriptWithCallback,
+} from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
@@ -50,11 +53,10 @@ describe('component compatibility tests for all supported versions of express', 
         'start:injected',
         {
           LUMIGO_TOKEN: 't_123321',
-          LUMIGO_DEBUG_SPANDUMP: 'true',
+          LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
           LUMIGO_SERVICE_NAME: 'express-js',
           LUMIGO_DEBUG: true,
           EXPRESS_VERSION: '',
-          FILE_EXPORTER_FILE_NAME,
         }
       );
       // @ts-ignore
@@ -84,7 +86,9 @@ describe('component compatibility tests for all supported versions of express', 
           'http.request.query': '{}',
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
-          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/i),
+          'http.response.body': expect.stringMatching(
+            /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
+          ),
           'http.request.body': '{}',
           'http.route': '/invoke-requests',
           'express.route.full': '/invoke-requests',
@@ -97,6 +101,7 @@ describe('component compatibility tests for all supported versions of express', 
         },
         events: [],
       });
+
       expect(internalSpan).toMatchObject({
         traceId: expect.any(String),
         id: expect.any(String),
@@ -123,7 +128,7 @@ describe('component compatibility tests for all supported versions of express', 
           lumigoToken: 't_123321',
         },
         status: {
-          code: 1,
+          code: 0,
         },
         events: [],
       });
@@ -136,9 +141,9 @@ describe('component compatibility tests for all supported versions of express', 
         name: 'HTTPS GET',
         kind: 2,
         attributes: {
-          'http.url': 'https://api.chucknorris.io/jokes/random',
+          'http.url': 'https://api.chucknorris.io/jokes/categories',
           'http.method': 'GET',
-          'http.target': '/jokes/random',
+          'http.target': '/jokes/categories',
           'net.peer.name': 'api.chucknorris.io',
           'http.request.body': '""',
           'net.peer.ip': expect.stringMatching(
@@ -151,11 +156,13 @@ describe('component compatibility tests for all supported versions of express', 
           'http.flavor': '1.1',
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
-          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/i),
+          'http.response.body': expect.stringMatching(
+              /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
+          ),
           lumigoToken: 't_123321',
         },
         status: {
-          code: 1,
+          code: 0,
         },
         events: [],
       });
