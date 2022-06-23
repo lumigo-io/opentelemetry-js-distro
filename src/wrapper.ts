@@ -121,17 +121,18 @@ export const trace = async (
               },
             });
         const ecsMetadataHandler = (data) => {
+          const resourceAttributes = {
+            lumigoToken: lumigoToken.trim(),
+            'service.name': serviceName,
+            runtime: `node${process.version}`,
+            tracerVersion: getTracerInfo().version,
+            framework: 'express',
+            exporter: 'opentelemetry',
+            envs: JSON.stringify(process.env),
+          };
+          if (data) Object.assign(resourceAttributes, { metadata: data });
           const config = {
-            resource: new Resource({
-              lumigoToken: lumigoToken.trim(),
-              'service.name': serviceName,
-              runtime: `node${process.version}`,
-              tracerVersion: getTracerInfo().version,
-              framework: 'express',
-              exporter: 'opentelemetry',
-              envs: JSON.stringify(process.env),
-              metadata: data,
-            }),
+            resource: new Resource(resourceAttributes),
           };
           const traceProvider = new NodeTracerProvider(config);
           traceProvider.addSpanProcessor(
