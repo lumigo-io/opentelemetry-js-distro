@@ -1,8 +1,8 @@
-import { HttpHooks } from '../hooks/http';
-
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { DEFAULT_LUMIGO_ENDPOINT } from '../wrapper';
+
+import { HttpHooks } from '../hooks/http';
 import { fetchMetadataUri } from '../utils';
+import { DEFAULT_LUMIGO_ENDPOINT } from '../wrapper';
 
 let metadata;
 

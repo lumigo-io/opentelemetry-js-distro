@@ -52,9 +52,9 @@ describe('component compatibility tests for all supported versions of express', 
         () => {},
         'start:injected',
         {
-          LUMIGO_TOKEN: 't_123321',
+          LUMIGO_TRACER_TOKEN: 't_123321',
           LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
-          LUMIGO_SERVICE_NAME: 'express-js',
+          OTEL_SERVICE_NAME: 'express-js',
           LUMIGO_DEBUG: true,
           EXPRESS_VERSION: '',
         }

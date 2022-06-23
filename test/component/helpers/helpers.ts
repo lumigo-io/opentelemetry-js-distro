@@ -32,11 +32,6 @@ export async function executeNpmScriptWithCallback(
         fail(error);
       }
     });
-    expressApp.on('exit', (code, signal) => {
-      if (code) console.log(`Process exit with code: ${code}`);
-      if (signal) console.log(`Process killed with signal: ${signal}`);
-      console.log('Done ✅');
-    });
     let port = 0;
     await new Promise<void>((resolve, reject) => {
       if (expressApp) {

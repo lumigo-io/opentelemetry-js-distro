@@ -12,6 +12,15 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
 ## Setup
 
+For both manual and no-code instrumentation, configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `OTEL_SERVICE_NAME` environment variable with the service name:
+
+   ```sh
+   # Replace `<token>` below with the token generated for you by the Lumigo platform
+   export LUMIGO_TRACER_TOKEN=<token>
+   # Replace `<service name> with the desired name of the service`
+   export OTEL_SERVICE_NAME=<service name>
+   ```
+
 ### Manual instrumentation
 
 1. Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
@@ -38,13 +47,7 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
    import * as lumigo from "@lumigo/opentelemetry";
    ```
 
-3. Call the `tracer` method with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the service name:
-
-   ```typescript
-   lumigo.trace(lumigoToken, serviceName);
-   ```
-
-   (See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting-for-the-initialization-of-the-lumigo-opentelemetry-distro) regarding initialization behaviour)
+See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting-for-the-initialization-of-the-lumigo-opentelemetry-distro) regarding initialization behavior.
 
 ### No-code instrumentation
 
@@ -62,21 +65,12 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
    (The line above avoids overriding any other settings you may have passed via the `NODE_OPTIONS` environment variable.)
 
-3. Configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `LUMIGO_SERVICE_NAME` environment variable with the service name:
-
-   ```sh
-   # Replace `<token>` below with the token generated for you by the Lumigo platform
-   export LUMIGO_TRACER_TOKEN=<token>
-   # Replace `<service name> with the desired name of the service`
-   export LUMIGO_SERVICE_NAME=<service name>
-   ```
-
 ### Setup for npm package.json start script
 
 ```json
 {
     "scripts": {
-        "start": "LUMIGO_TRACER_TOKEN=<token> LUMIGO_SERVICE_NAME=<service name> node -r @lumigo/opentelemetry <main_file>.js"
+        "start": "LUMIGO_TRACER_TOKEN=<token> OTEL_SERVICE_NAME=<service name> node -r @lumigo/opentelemetry <main_file>.js"
     }
 }
 ```

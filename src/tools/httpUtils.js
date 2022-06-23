@@ -9,9 +9,26 @@ export const extractBodyFromEmitSocketEvent = (socketEventArgs) => {
       const httpMessage = socketEventArgs._httpMessage;
       let lines = [];
       if (httpMessage.hasOwnProperty('outputData')) {
-        lines = httpMessage.outputData[0].data.split('\n');
+        if (
+          Array.isArray(httpMessage.outputData) &&
+          httpMessage.outputData.length > 0 &&
+          httpMessage.outputData[0].hasOwnProperty('data') &&
+          typeof httpMessage.outputData[0].data === 'string'
+        ) {
+          lines = httpMessage.outputData[0].data.split('\n');
+        } else {
+          console.warn('Unexpected httpMessage.outputData value:', httpMessage.outputData);
+        }
       } else if (httpMessage.hasOwnProperty('output')) {
-        lines = httpMessage.output[0].split('\n');
+        if (
+          Array.isArray(httpMessage.output) &&
+          httpMessage.output.length > 0 &&
+          typeof httpMessage.output[0] === 'string'
+        ) {
+          lines = httpMessage.output[0].split('\n');
+        } else {
+          console.warn('Unexpected httpMessage.output value:', httpMessage.output);
+        }
       }
       if (lines.length > 0) {
         return lines[lines.length - 1];

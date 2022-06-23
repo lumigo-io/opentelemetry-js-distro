@@ -28,8 +28,8 @@ if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
 diag.setLogger(new DiagConsoleLogger(), logLevel);
 
 let initializationPromise = undefined;
+export const init = initializationPromise;
 const externalInstrumentations = [];
-export const clearIsTraced = () => (initializationPromise = undefined);
 
 const safeRequire = (libId) => {
   try {
@@ -80,7 +80,7 @@ function requireIfAvailable(names: string[]) {
 
 registerInstrumentations({
   instrumentations: [
-    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, process.env.LUMIGO_ENDPOINT),
+    new LumigoHttpInstrumentation(process.env.LUMIGO_TRACER_TOKEN, process.env.LUMIGO_ENDPOINT),
     new LumigoExpressInstrumentation(),
     ...externalInstrumentations,
   ],
@@ -94,7 +94,7 @@ function reportInitError(err) {
   diag.error('Error initializing Lumigo tracer: ', err);
 }
 
-export const trace = async (
+const trace = async (
   lumigoToken = '',
   serviceName = 'service-name',
   endpoint = DEFAULT_LUMIGO_ENDPOINT
@@ -127,7 +127,6 @@ export const trace = async (
             runtime: `node${process.version}`,
             tracerVersion: getTracerInfo().version,
             framework: 'express',
-            exporter: 'opentelemetry',
             envs: JSON.stringify(process.env),
           };
           if (metadata) Object.assign(resourceAttributes, { metadata });
@@ -170,17 +169,10 @@ export const trace = async (
   return initializationPromise;
 };
 
-if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME) {
+if (process.env.LUMIGO_TRACER_TOKEN && process.env.OTEL_SERVICE_NAME) {
   initializationPromise = trace(
-    process.env.LUMIGO_TOKEN,
-    process.env.LUMIGO_SERVICE_NAME,
+    process.env.LUMIGO_TRACER_TOKEN,
+    process.env.OTEL_SERVICE_NAME,
     process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT
   );
 }
-export default initializationPromise;
-module.exports = {
-  DEFAULT_LUMIGO_ENDPOINT,
-  clearIsTraced,
-  trace,
-  initializationPromise,
-};
