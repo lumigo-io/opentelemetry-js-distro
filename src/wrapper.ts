@@ -76,7 +76,7 @@ const urlsToIgnore = [
 
 registerInstrumentations({
   instrumentations: [
-    new LumigoHttpInstrumentation(process.env.LUMIGO_TRACER_TOKEN, urlsToIgnore),
+    new LumigoHttpInstrumentation(urlsToIgnore),
     new LumigoExpressInstrumentation(),
     ...externalInstrumentations,
   ],

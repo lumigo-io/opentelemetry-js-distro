@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
+import * as https from 'https';
 
 import { sortify } from './tools/jsonSortify';
-import * as https from 'https';
 
 export const DEFAULT_CONNECTION_TIMEOUT = 300;
 
@@ -77,7 +77,9 @@ export const fetchMetadataUri = async (): Promise<Object> => {
     if (metadataUri) {
       return getUri(metadataUri);
     } else {
-      console.warn('Missing ECS metadata...');
+      console.warn(
+        'Unable to retrieve the ECS metadata, "ECS_CONTAINER_METADATA_URI" environment variable not configured.'
+      );
       return Promise.resolve(undefined);
     }
   } catch (e) {

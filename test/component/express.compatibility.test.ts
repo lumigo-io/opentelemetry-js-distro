@@ -125,7 +125,6 @@ describe('component compatibility tests for all supported versions of express', 
           'http.status_code': 200,
           'http.status_text': 'OK',
           'http.route': '/invoke-requests',
-          lumigoToken: 't_123321',
         },
         status: {
           code: 0,
@@ -159,7 +158,6 @@ describe('component compatibility tests for all supported versions of express', 
           'http.response.body': expect.stringMatching(
               /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
           ),
-          lumigoToken: 't_123321',
         },
         status: {
           code: 0,
