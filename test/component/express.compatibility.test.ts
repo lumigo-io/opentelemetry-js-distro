@@ -96,6 +96,7 @@ describe('component compatibility tests for all supported versions of express', 
         },
         events: [],
       });
+
       expect(internalSpan).toMatchObject({
         traceId: expect.any(String),
         id: expect.any(String),
