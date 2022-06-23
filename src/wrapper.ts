@@ -1,4 +1,4 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagConsoleLogger } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
@@ -10,22 +10,12 @@ import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumen
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
 
-let isLumigoSwitchedOffStatusReported = false;
-
-export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
+const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
-let logLevel: DiagLogLevel;
-
-if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
-  logLevel = DiagLogLevel.INFO;
-} else {
-  logLevel = isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.ALL : DiagLogLevel.ERROR;
-}
-
-diag.setLogger(new DiagConsoleLogger(), logLevel);
+diag.setLogger(new DiagConsoleLogger());
 
 let initializationPromise = undefined;
 export const init = initializationPromise;
@@ -78,9 +68,15 @@ function requireIfAvailable(names: string[]) {
   names.forEach((name) => safeRequire(name));
 }
 
+const urlsToIgnore = [
+  DEFAULT_LUMIGO_ENDPOINT,
+  ...(process.env.LUMIGO_ENDPOINT ? [process.env.LUMIGO_ENDPOINT] : []),
+  ...(process.env.ECS_CONTAINER_METADATA_URI ? [process.env.ECS_CONTAINER_METADATA_URI] : []),
+];
+
 registerInstrumentations({
   instrumentations: [
-    new LumigoHttpInstrumentation(process.env.LUMIGO_TRACER_TOKEN, process.env.LUMIGO_ENDPOINT),
+    new LumigoHttpInstrumentation(process.env.LUMIGO_TRACER_TOKEN, urlsToIgnore),
     new LumigoExpressInstrumentation(),
     ...externalInstrumentations,
   ],
@@ -91,24 +87,38 @@ requireIfAvailable([
 ]);
 
 function reportInitError(err) {
-  diag.error('Error initializing Lumigo tracer: ', err);
+  diag.error(
+    'An error occurred while initializing the Lumigo OpenTelemetry Distro: no telemetry will be collected and sent to Lumigo.',
+    err
+  );
 }
 
-const trace = async (
-  lumigoToken = '',
-  serviceName = 'service-name',
-  endpoint = DEFAULT_LUMIGO_ENDPOINT
-): Promise<boolean> => {
+const trace = async (): Promise<boolean> => {
   if (!initializationPromise) {
     initializationPromise = new Promise((resolve) => {
       try {
         if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
-          if (!isLumigoSwitchedOffStatusReported) {
-            isLumigoSwitchedOffStatusReported = true;
-            diag.info('Lumigo is switched off, aborting tracer initialization...');
-          }
+          diag.info(
+            'The Lumigo OpenTelemetry Distro is switched off ("LUMIGO_SWITCH_OFF" is set): no telemetry will be collected and sent to Lumigo.'
+          );
           return resolve(undefined);
         }
+
+        // if the required environment variables aren't available and the tracing is not being redirected to file
+        if (
+          !process.env.LUMIGO_DEBUG_SPANDUMP &&
+          !(process.env.LUMIGO_TRACER_TOKEN && process.env.OTEL_SERVICE_NAME)
+        ) {
+          diag.warn(
+            'The Lumigo OpenTelemetry Distro tracer token and service name are not available ("LUMIGO_TRACER_TOKEN" and / or "OTEL_SERVICE_NAME" are not set): no telemetry will be collected and sent to Lumigo.'
+          );
+          return resolve(undefined);
+        }
+
+        const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
+        const serviceName = process.env.OTEL_SERVICE_NAME;
+        const endpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
+
         const exporter = process.env.LUMIGO_DEBUG_SPANDUMP
           ? new FileSpanExporter(
               process.env.LUMIGO_DEBUG_SPANDUMP,
@@ -143,7 +153,7 @@ const trace = async (
             })
           );
           traceProvider.register();
-          diag.debug(`Lumigo tracer started on ${serviceName}`);
+          diag.info(`Lumigo tracer started on "${serviceName}".`);
           return resolve(undefined);
         };
 
@@ -164,15 +174,11 @@ const trace = async (
       }
     });
   } else {
-    diag.debug('Lumigo already traced, aborting tracer initialization...');
+    diag.debug(
+      'The Lumigo OpenTelemetry Distro is already initialized: additional attempt to initialize has been ignored.'
+    );
   }
   return initializationPromise;
 };
 
-if (process.env.LUMIGO_TRACER_TOKEN && process.env.OTEL_SERVICE_NAME) {
-  initializationPromise = trace(
-    process.env.LUMIGO_TRACER_TOKEN,
-    process.env.OTEL_SERVICE_NAME,
-    process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT
-  );
-}
+initializationPromise = trace();
