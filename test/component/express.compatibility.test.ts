@@ -83,7 +83,9 @@ describe('component compatibility tests for all supported versions of express', 
           'http.request.query': '{}',
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
-          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/i),
+          'http.response.body': expect.stringMatching(
+            /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
+          ),
           'http.request.body': '{}',
           'http.route': '/invoke-requests',
           'express.route.full': '/invoke-requests',
@@ -136,9 +138,9 @@ describe('component compatibility tests for all supported versions of express', 
         name: 'HTTPS GET',
         kind: 2,
         attributes: {
-          'http.url': 'https://api.chucknorris.io/jokes/random',
+          'http.url': 'https://api.chucknorris.io/jokes/categories',
           'http.method': 'GET',
-          'http.target': '/jokes/random',
+          'http.target': '/jokes/categories',
           'net.peer.name': 'api.chucknorris.io',
           'http.request.body': '""',
           'net.peer.ip': expect.stringMatching(
@@ -151,7 +153,9 @@ describe('component compatibility tests for all supported versions of express', 
           'http.flavor': '1.1',
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
-          'http.response.body': expect.stringMatching(/\{.*\"value\":\".*Chuck Norris.*\}/i),
+          'http.response.body': expect.stringMatching(
+              /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
+          ),
           lumigoToken: 't_123321',
         },
         status: {
