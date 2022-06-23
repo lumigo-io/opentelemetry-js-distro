@@ -5,9 +5,9 @@ import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
+import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
-import { FileSpanExporter } from './exporters';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
 
 let isLumigoSwitchedOffStatusReported = false;
@@ -16,7 +16,6 @@ export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golum
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
-const LUMIGO_DEBUG_SPANDUMP = 'LUMIGO_DEBUG_SPANDUMP';
 
 let logLevel: DiagLogLevel;
 
@@ -110,9 +109,9 @@ export const trace = async (
           }
           return resolve(undefined);
         }
-        const exporter = isEnvVarTrue(LUMIGO_DEBUG_SPANDUMP)
+        const exporter = process.env.LUMIGO_DEBUG_SPANDUMP
           ? new FileSpanExporter(
-              process.env.FILE_EXPORTER_FILE_NAME,
+              process.env.LUMIGO_DEBUG_SPANDUMP,
               isEnvVarTrue(LUMIGO_DEBUG) ? 'DEBUG' : 'PROD'
             )
           : new OTLPTraceExporter({

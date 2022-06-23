@@ -1,8 +1,12 @@
 import 'jest-chain';
 
 import fs from 'fs';
+
 import { watchDir } from './helpers/fileListener';
-import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
+import {
+  callContainer,
+  executeNpmScriptWithCallback,
+} from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
@@ -49,11 +53,10 @@ describe('component compatibility tests for all supported versions of express', 
         'start:injected',
         {
           LUMIGO_TOKEN: 't_123321',
-          LUMIGO_DEBUG_SPANDUMP: 'true',
+          LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
           LUMIGO_SERVICE_NAME: 'express-js',
           LUMIGO_DEBUG: true,
           EXPRESS_VERSION: '',
-          FILE_EXPORTER_FILE_NAME,
         }
       );
       // @ts-ignore
