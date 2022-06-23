@@ -1,5 +1,8 @@
 import axios from 'axios';
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import {
+  ChildProcessWithoutNullStreams,
+  spawn,
+} from 'child_process';
 
 export const callContainer = async (port: number, path: string, method = 'get', body = {}) => {
   const httpResponse = await axios[method](`http://localhost:${port}/${path}`, body);
@@ -15,7 +18,7 @@ export async function executeNpmScriptWithCallback(
   environmentVariables: any,
   shouldFail = false
 ) {
-  let expressApp: ChildProcessWithoutNullStreams;
+  let expressApp: ChildProcessWithoutNullStreams | undefined;
   try {
     expressApp = spawn(`cd ${path} && npm`, ['run', scriptName], {
       env: { ...process.env, ...environmentVariables },
@@ -34,27 +37,29 @@ export async function executeNpmScriptWithCallback(
       if (signal) console.log(`Process killed with signal: ${signal}`);
       console.log('Done ✅');
     });
-    let port: number = undefined;
+    let port = 0;
     await new Promise<void>((resolve, reject) => {
-      expressApp.stdout.on('data', (data) => {
-        onData(data);
-        console.log('stdout: ', data.toString());
-        if (!port) {
-          const dataStr = data.toString();
-          const portRegex = new RegExp('.*(PORT):([0-9]*)', 'g');
+      if (expressApp) {
+        expressApp.stdout.on('data', (data) => {
+          onData(data);
+          console.log('stdout: ', data.toString());
+          if (port === 0) {
+            const dataStr = data.toString();
+            const portRegex = new RegExp('.*(PORT):([0-9]*)', 'g');
 
-          const portRegexMatch = portRegex.exec(dataStr);
+            const portRegexMatch = portRegex.exec(dataStr);
 
-          if (portRegexMatch && portRegexMatch.length >= 3) {
-            try {
-              port = parseInt(portRegexMatch[2]);
-              resolve();
-            } catch (exception) {
-              reject(exception);
+            if (portRegexMatch && portRegexMatch.length >= 3) {
+              try {
+                port = parseInt(portRegexMatch[2]);
+                resolve();
+              } catch (exception) {
+                reject(exception);
+              }
             }
           }
-        }
-      });
+        });
+      }
     });
     await onAppReady(port);
     return expressApp;
@@ -63,6 +68,8 @@ export async function executeNpmScriptWithCallback(
       fail(exception);
     }
   } finally {
-    expressApp.kill(0);
+    if (expressApp) {
+      expressApp.kill(0);
+    }
   }
 }

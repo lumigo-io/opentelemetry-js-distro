@@ -24,10 +24,10 @@ export const watchDir = (spansDir: string, options: WatchDirOptions) => {
   });
   watcher
     .on('add', async (path) => {
-      await onAddFileEvent(path);
+      if (onAddFileEvent) await onAddFileEvent(path);
     })
     .on('change', async (path) => {
-      await onChangeFileEvent(path);
+      if (onChangeFileEvent) await onChangeFileEvent(path);
     });
   return watcher;
 };
