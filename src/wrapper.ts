@@ -15,10 +15,11 @@ const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
-diag.setLogger(
-  new DiagConsoleLogger(),
-  isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.DEBUG : undefined
-);
+if (isEnvVarTrue(LUMIGO_DEBUG)) {
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+} else {
+  diag.setLogger(new DiagConsoleLogger());
+}
 
 let initializationPromise = undefined;
 export const init = initializationPromise;
