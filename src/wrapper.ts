@@ -1,4 +1,4 @@
-import { diag, DiagConsoleLogger } from '@opentelemetry/api';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
@@ -15,7 +15,10 @@ const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
-diag.setLogger(new DiagConsoleLogger());
+diag.setLogger(
+  new DiagConsoleLogger(),
+  isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.DEBUG : undefined
+);
 
 let initializationPromise = undefined;
 export const init = initializationPromise;
