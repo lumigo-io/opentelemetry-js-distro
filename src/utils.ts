@@ -73,12 +73,13 @@ const getUri = async (uri: string): Promise<Object> => {
 
 export const fetchMetadataUri = async (): Promise<Object> => {
   try {
-    const metadataUri = process.env['ECS_CONTAINER_METADATA_URI'];
+    const metadataUri =
+      process.env['ECS_CONTAINER_METADATA_URI_V4'] || process.env['ECS_CONTAINER_METADATA_URI'];
     if (metadataUri) {
       return getUri(metadataUri);
     } else {
       console.warn(
-        'Unable to retrieve the ECS metadata, "ECS_CONTAINER_METADATA_URI" environment variable not configured.'
+        'Unable to retrieve the ECS metadata, "ECS_CONTAINER_METADATA_URI" / "ECS_CONTAINER_METADATA_URI_V4" environment variable not available.'
       );
       return Promise.resolve(undefined);
     }

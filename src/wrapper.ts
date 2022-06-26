@@ -72,6 +72,7 @@ const urlsToIgnore = [
   DEFAULT_LUMIGO_ENDPOINT,
   ...(process.env.LUMIGO_ENDPOINT ? [process.env.LUMIGO_ENDPOINT] : []),
   ...(process.env.ECS_CONTAINER_METADATA_URI ? [process.env.ECS_CONTAINER_METADATA_URI] : []),
+  ...(process.env.ECS_CONTAINER_METADATA_URI_V4 ? [process.env.ECS_CONTAINER_METADATA_URI_V4] : []),
 ];
 
 registerInstrumentations({
