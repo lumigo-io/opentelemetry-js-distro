@@ -1,4 +1,4 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagConsoleLogger, DiagLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
@@ -20,6 +20,10 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
 } else {
   diag.setLogger(new DiagConsoleLogger());
 }
+
+const logger: DiagLogger = diag.createComponentLogger({
+  namespace: '@lumigo/opentelemetry:',
+});
 
 let initializationPromise = undefined;
 export const init = initializationPromise;
@@ -44,7 +48,7 @@ const safeRequire = (libId) => {
       return customReq(path);
     } catch (e) {
       if (e.code !== 'MODULE_NOT_FOUND') {
-        diag.warn('Unable to load module', {
+        logger.warn('Unable to load module', {
           error: e,
           libId: libId,
         });
@@ -92,7 +96,7 @@ requireIfAvailable([
 ]);
 
 function reportInitError(err) {
-  diag.error(
+  logger.error(
     'An error occurred while initializing the Lumigo OpenTelemetry Distro: no telemetry will be collected and sent to Lumigo.',
     err
   );
@@ -103,7 +107,7 @@ const trace = async (): Promise<boolean> => {
     initializationPromise = new Promise((resolve) => {
       try {
         if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
-          diag.info(
+          logger.info(
             'The Lumigo OpenTelemetry Distro is switched off ("LUMIGO_SWITCH_OFF" is set): no telemetry will be collected and sent to Lumigo.'
           );
           return resolve(undefined);
@@ -114,7 +118,7 @@ const trace = async (): Promise<boolean> => {
           !process.env.LUMIGO_DEBUG_SPANDUMP &&
           !(process.env.LUMIGO_TRACER_TOKEN && process.env.OTEL_SERVICE_NAME)
         ) {
-          diag.warn(
+          logger.warn(
             'The Lumigo OpenTelemetry Distro tracer token and service name are not available ("LUMIGO_TRACER_TOKEN" and / or "OTEL_SERVICE_NAME" are not set): no telemetry will be collected and sent to Lumigo.'
           );
           return resolve(undefined);
@@ -158,7 +162,7 @@ const trace = async (): Promise<boolean> => {
             })
           );
           traceProvider.register();
-          diag.info(`Lumigo tracer started on "${serviceName}".`);
+          logger.info(`Lumigo tracer started on "${serviceName}".`);
           return resolve(undefined);
         };
 
@@ -179,7 +183,7 @@ const trace = async (): Promise<boolean> => {
       }
     });
   } else {
-    diag.debug(
+    logger.debug(
       'The Lumigo OpenTelemetry Distro is already initialized: additional attempt to initialize has been ignored.'
     );
   }

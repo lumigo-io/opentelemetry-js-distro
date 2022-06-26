@@ -10,20 +10,9 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
 **Note:** If you are looking for the Lumigo Node.js tracer for Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is where you want to be :)
 
-## Setup
+## Installation
 
-For both manual and no-code instrumentation, configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `OTEL_SERVICE_NAME` environment variable with the service name:
-
-   ```sh
-   # Replace `<token>` below with the token generated for you by the Lumigo platform
-   export LUMIGO_TRACER_TOKEN=<token>
-   # Replace `<service name> with the desired name of the service`
-   export OTEL_SERVICE_NAME=<service name>
-   ```
-
-### Manual instrumentation
-
-1. Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
+Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
 
    ```sh
    > npm install @lumigo/opentelemetry
@@ -35,35 +24,44 @@ For both manual and no-code instrumentation, configure the `LUMIGO_TRACER_TOKEN`
    > yarn add @lumigo/opentelemetry
    ```
 
-2. Import `@lumigo/opentelemetry` in the first row of your main file
+## Setup / Required Configuration
 
-   ```js
-   // javascript
-   const lumigo = require("@lumigo/opentelemetry");
-   ```
+For both manual and no-code instrumentation, you will need to configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `OTEL_SERVICE_NAME` environment variable with the service name you've chosen:
 
-   ```typescript
-   // typescript
-   import * as lumigo from "@lumigo/opentelemetry";
-   ```
+```sh
+# Replace `<token>` below with the token generated for you by the Lumigo platform
+export LUMIGO_TRACER_TOKEN=<token>
+# Replace `<service name> with the desired name of the service`
+export OTEL_SERVICE_NAME=<service name>
+```
 
-See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting-for-the-initialization-of-the-lumigo-opentelemetry-distro) regarding initialization behavior.
+## Instrumentation
 
 ### No-code instrumentation
 
-1. Add `@lumigo/opentelemetry` as a dependency by using your preferred package manager:
+Set the following environment variable for your Node.js process:
 
-   ```sh
-   > npm install @lumigo/opentelemetry
-   ```
+```sh
+export NODE_OPTIONS="${NODE_OPTIONS} -r '@lumigo/opentelemetry'"
+```
 
-2. Set the following environment variable for your Node.js process:
+The line above avoids overriding any other settings you may have passed via the `NODE_OPTIONS` environment variable.
 
-   ```sh
-   export NODE_OPTIONS="${NODE_OPTIONS} -r '@lumigo/opentelemetry'"
-   ```
+### Manual instrumentation
 
-   (The line above avoids overriding any other settings you may have passed via the `NODE_OPTIONS` environment variable.)
+Import `@lumigo/opentelemetry` in the first row of your main file
+
+```js
+// javascript
+const lumigo = require("@lumigo/opentelemetry");
+```
+
+```typescript
+// typescript
+import * as lumigo from "@lumigo/opentelemetry";
+```
+
+See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting-for-the-initialization-of-the-lumigo-opentelemetry-distro) regarding initialization behavior.
 
 ### Setup for npm package.json start script
 
@@ -75,11 +73,11 @@ See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting
 }
 ```
 
-## Configuration
+## Optional Configurations
 
 ### OpenTelemetry configurations
 
-The Lumigo OpenTelemetry Distro for Node.js is made of several upstream OpenTelemetry packages, together with additional logic and, as such, the environment varoables that work with "vanilla" OpenTelemetry work also with the Lumigo OpenTelemetry Distro for Node.js.
+The Lumigo OpenTelemetry Distro for Node.js is made of several upstream OpenTelemetry packages as well as some additional logic and, as such, the environment variables that work with "vanilla" OpenTelemetry work also with the Lumigo OpenTelemetry Distro for Node.js.
 Specifically supported are:
 
 * [General configurations](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#general-sdk-configuration)
