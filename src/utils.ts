@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import * as http from 'http';
 import * as https from 'https';
 
 import { sortify } from './tools/jsonSortify';
@@ -43,9 +44,13 @@ export const getConnectionTimeout = () => {
   return parseInt(process.env['LUMIGO_CONNECTION_TIMEOUT']) || DEFAULT_CONNECTION_TIMEOUT;
 };
 
+export const getProtocolModuleForUri = (uri: string) => {
+  return uri.indexOf('https') === 0 ? https : http;
+};
+
 const getUri = async (uri: string): Promise<Object> => {
   const responseBody = await new Promise((resolve, reject) => {
-    const request = https.get(uri, (response) => {
+    const request = getProtocolModuleForUri(uri).get(uri, (response) => {
       if (response.statusCode >= 400) {
         reject(`Request to '${uri}' failed with status ${response.statusCode}`);
       }

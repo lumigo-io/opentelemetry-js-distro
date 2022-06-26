@@ -92,6 +92,8 @@ Specifically supported are:
 * `LUMIGO_DEBUG_SPANDUMP=<path>`: Log all spans collected to the `<path>` file; this is an option intended only for debugging purposes and should *not* be used in production.
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
+* `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions. All regular expressions are case-insensitive. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`.
+* `LUMIGO_DOMAINS_SCRUBBER='[".*secret.*"]'`: Prevents Lumigo from collecting both request and response details from a list of domains. This accepts a comma-separated list of regular expressions that is JSON-formatted. By default, the tracer uses `["secretsmanager\..*\.amazonaws\.com", "ssm\..*\.amazonaws\.com", "kms\..*\.amazonaws\.com"]`. **Note** - These defaults are overridden when you define a different list of regular expressions.
 
 ## Baseline setup
 
@@ -109,7 +111,7 @@ The initialization of the Lumigo OpenTelemetry Distro is performed asynchronousl
 
 Due to the asynchronous nature of this initialization logic, some CLI or batch-like applications that perform their logic on startup without needing to wait on external request responses may find that they are missing some of the trace data, for example the first span that represents the startup of the application.
 
-For scenarios in which each and every span is required, the Lumigo OpenTelemetry Distro provides a `Promise` that you can wait on as follows:
+For scenarios in which each and every span is required, the Lumigo OpenTelemetry Distro provides a `Promise` called `init` that you can wait on as follows:
 
 #### Node.js prior to v18
 
@@ -119,7 +121,7 @@ import * as lumigo from '@lumigo/opentelemetry';
 
 // Some initialization code for your application.
 
-lumigo.trace(lumigoToken, serviceName)
+lumigo.init
 .then(()=>{
     // From this point on you are guaranteed that the SDK is initialized.
 })
@@ -138,7 +140,7 @@ import * as lumigo from '@lumigo/opentelemetry';
 // Some initialization code for your application.
 
 try {
-  await lumigo.initializationPromise;
+  await lumigo.init;
 } catch (err) {
    // The sdk initialization failed :-(
    // Please let us know at support@lumigo.io!

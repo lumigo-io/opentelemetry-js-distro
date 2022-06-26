@@ -43,23 +43,23 @@ describe('happy flow', () => {
       process.env.LUMIGO_TRACER_TOKEN = TOKEN;
       process.env.OTEL_SERVICE_NAME = 'service-1';
       const wrapper = jest.requireActual('./wrapper');
-      await wrapper.init;
-
-      expect(NodeTracerProvider).toHaveBeenCalledWith({
-        resource: {
-          attributes: {
-            envs: expect.any(String),
-            lumigoToken: 't_10faa5e13e7844aaa1234',
-            'service.name': 'service-1',
-            exporter: 'opentelemetry',
-            framework: 'express',
-            tracerVersion: expect.stringMatching(/\d+\.\d+\.\d+/),
-            runtime: expect.stringMatching(/nodev\d+\.\d+\.\d+/),
+      wrapper.init.then(() => {
+        expect(NodeTracerProvider).toHaveBeenCalledWith({
+          resource: {
+            attributes: {
+              envs: expect.any(String),
+              lumigoToken: 't_10faa5e13e7844aaa1234',
+              'service.name': 'service-1',
+              exporter: 'opentelemetry',
+              framework: 'express',
+              tracerVersion: expect.stringMatching(/\d+\.\d+\.\d+/),
+              runtime: expect.stringMatching(/nodev\d+\.\d+\.\d+/),
+            },
           },
-        },
+        });
+        expect(spies.registerMock).toHaveBeenCalled();
+        expect(spies.addSpanProcessorMock).toHaveBeenCalled();
       });
-      expect(spies.registerMock).toHaveBeenCalled();
-      expect(spies.addSpanProcessorMock).toHaveBeenCalled();
     });
   });
 
