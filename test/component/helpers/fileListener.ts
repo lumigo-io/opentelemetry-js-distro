@@ -10,8 +10,8 @@ export const stopWatching = async () => {
 };
 
 export type WatchDirOptions = {
-  onAddFileEvent?: (path) => void;
-  onChangeFileEvent?: (path) => void;
+  onAddFileEvent?: (path: string) => void;
+  onChangeFileEvent?: (path: string) => void;
 };
 
 export const watchDir = (spansDir: string, options: WatchDirOptions) => {
@@ -23,11 +23,11 @@ export const watchDir = (spansDir: string, options: WatchDirOptions) => {
     ignoreInitial: true,
   });
   watcher
-    .on('add', async (path) => {
-      if (onAddFileEvent) await onAddFileEvent(path);
+    .on('add', async (path: string) => {
+      if (onAddFileEvent) {onAddFileEvent(path)}
     })
-    .on('change', async (path) => {
-      if (onChangeFileEvent) await onChangeFileEvent(path);
+    .on('change', async (path: string) => {
+      if (onChangeFileEvent) {onChangeFileEvent(path)}
     });
   return watcher;
 };
