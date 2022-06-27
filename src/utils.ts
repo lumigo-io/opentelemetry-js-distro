@@ -49,7 +49,6 @@ const getUri = async (uri: string): Promise<Object> => {
       if (response.statusCode >= 400) {
         reject(`Request to '${uri}' failed with status ${response.statusCode}`);
       }
-
       /*
        * Concatenate the response out of chunks:
        * https://nodejs.org/api/stream.html#stream_event_data
