@@ -86,8 +86,8 @@ export const HttpHooks: InstrumentationIfc<
           headers: {},
         },
       };
-      const scrubedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
-      span.setAttribute('http.request.headers', scrubedHeaders);
+      const scrubbedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
+      span.setAttribute('http.request.headers', scrubbedHeaders);
       const emitWrapper = Http.httpRequestEmitBeforeHookWrapper(requestData, span);
 
       const writeWrapper = Http.httpRequestWriteBeforeHookWrapper(requestData, span);
@@ -97,8 +97,8 @@ export const HttpHooks: InstrumentationIfc<
           if (isEmptyString(requestData.request.body)) {
             const body = Http.extractBodyFromWriteOrEndFunc(args);
             requestData.request.body += body;
-            const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-            span.setAttribute('http.request.body', scrubed);
+            const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
+            span.setAttribute('http.request.body', scrubbed);
           }
         };
       };
@@ -110,9 +110,9 @@ export const HttpHooks: InstrumentationIfc<
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
     diag.debug('@opentelemetry/instrumentation-http on responseHook()');
-    const scrubedHeaders = CommonUtils.payloadStringify(response.headers);
+    const scrubbedHeaders = CommonUtils.payloadStringify(response.headers);
     if (response.headers) {
-      span.setAttribute('http.response.headers', scrubedHeaders);
+      span.setAttribute('http.response.headers', scrubbedHeaders);
     }
   },
 };
@@ -125,8 +125,8 @@ export class Http {
       requestRawData.response.headers = headers;
       requestRawData.response.statusCode = statusCode;
       requestRawData.response.truncated = truncated;
-      const scrubed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
-      span.setAttribute('http.response.body', scrubed);
+      const scrubbed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
+      span.setAttribute('http.response.body', scrubbed);
       try {
         if (isAwsService(requestRawData.request.host, requestRawData.response)) {
           span.setAttributes(getAwsServiceData(requestRawData.request, requestRawData.response));
@@ -224,8 +224,8 @@ export class Http {
       if (isEmptyString(requestData.request.body)) {
         const body = Http.extractBodyFromWriteOrEndFunc(args);
         requestData.request.body += body;
-        const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-        span.setAttribute('http.request.body', scrubed);
+        const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
+        span.setAttribute('http.request.body', scrubbed);
       }
     };
   }
@@ -286,8 +286,8 @@ export class Http {
         if (isEmptyString(requestData.request.body)) {
           const body = Http.extractBodyFromEmitSocketEvent(args[1]);
           requestData.request.body += body;
-          const scrubed = CommonUtils.scrubRequestDataPayload(requestData.request);
-          span.setAttribute('http.request.body', scrubed);
+          const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
+          span.setAttribute('http.request.body', scrubbed);
         }
       }
     };

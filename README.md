@@ -10,11 +10,9 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
 **Note:** If you are looking for the Lumigo Node.js tracer for Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is where you want to be :)
 
-## Setup
+## Installation
 
-### Manual instrumentation
-
-1. Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
+Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
 
    ```sh
    > npm install @lumigo/opentelemetry
@@ -26,66 +24,60 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
    > yarn add @lumigo/opentelemetry
    ```
 
-2. Import `@lumigo/opentelemetry` in the first row of your main file
+## Setup / Required Configuration
 
-   ```js
-   // javascript
-   const lumigo = require("@lumigo/opentelemetry");
-   ```
+For both manual and no-code instrumentation, you will need to configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `OTEL_SERVICE_NAME` environment variable with the service name you've chosen:
 
-   ```typescript
-   // typescript
-   import * as lumigo from "@lumigo/opentelemetry";
-   ```
+```sh
+# Replace `<token>` below with the token generated for you by the Lumigo platform
+export LUMIGO_TRACER_TOKEN=<token>
+# Replace `<service name> with the desired name of the service`
+export OTEL_SERVICE_NAME=<service name>
+```
 
-3. Call the `tracer` method with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the service name:
-
-   ```typescript
-   lumigo.trace(lumigoToken, serviceName);
-   ```
-
-   (See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting-for-the-initialization-of-the-lumigo-opentelemetry-distro) regarding initialization behaviour)
+## Instrumentation
 
 ### No-code instrumentation
 
-1. Add `@lumigo/opentelemetry` as a dependency by using your preferred package manager:
+Set the following environment variable for your Node.js process:
 
-   ```sh
-   > npm install @lumigo/opentelemetry
-   ```
+```sh
+export NODE_OPTIONS="${NODE_OPTIONS} -r '@lumigo/opentelemetry'"
+```
 
-2. Set the following environment variable for your Node.js process:
+The line above avoids overriding any other settings you may have passed via the `NODE_OPTIONS` environment variable.
 
-   ```sh
-   export NODE_OPTIONS="${NODE_OPTIONS} -r '@lumigo/opentelemetry'"
-   ```
+### Manual instrumentation
 
-   (The line above avoids overriding any other settings you may have passed via the `NODE_OPTIONS` environment variable.)
+Import `@lumigo/opentelemetry` in the first row of your main file
 
-3. Configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `LUMIGO_SERVICE_NAME` environment variable with the service name:
+```js
+// javascript
+const lumigo = require("@lumigo/opentelemetry");
+```
 
-   ```sh
-   # Replace `<token>` below with the token generated for you by the Lumigo platform
-   export LUMIGO_TRACER_TOKEN=<token>
-   # Replace `<service name> with the desired name of the service`
-   export LUMIGO_SERVICE_NAME=<service name>
-   ```
+```typescript
+// typescript
+import * as lumigo from "@lumigo/opentelemetry";
+```
+
+See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting-for-the-initialization-of-the-lumigo-opentelemetry-distro) regarding initialization behavior.
 
 ### Setup for npm package.json start script
 
 ```json
 {
     "scripts": {
-        "start": "LUMIGO_TRACER_TOKEN=<token> LUMIGO_SERVICE_NAME=<service name> node -r @lumigo/opentelemetry <main_file>.js"
+        "start": "LUMIGO_TRACER_TOKEN=<token> OTEL_SERVICE_NAME=<service name> node -r @lumigo/opentelemetry <main_file>.js"
     }
 }
 ```
 
-## Configuration
+## Optional Configurations
 
 ### OpenTelemetry configurations
 
-The Lumigo OpenTelemetry Distro for Node.js is made of several upstream OpenTelemetry packages, together with additional logic and, as such, the environment varoables that work with "vanilla" OpenTelemetry work also with the Lumigo OpenTelemetry Distro for Node.js.
+The Lumigo OpenTelemetry Distro for Node.js is made of several upstream OpenTelemetry packages as well as some additional logic and, as such, the environment variables that work with "vanilla" OpenTelemetry work also with the Lumigo OpenTelemetry Distro for Node.js.
 Specifically supported are:
 
 * [General configurations](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#general-sdk-configuration)
@@ -100,6 +92,8 @@ Specifically supported are:
 * `LUMIGO_DEBUG_SPANDUMP=<path>`: Log all spans collected to the `<path>` file; this is an option intended only for debugging purposes and should *not* be used in production.
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
+* `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions. All regular expressions are case-insensitive. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`.
+* `LUMIGO_DOMAINS_SCRUBBER='[".*secret.*"]'`: Prevents Lumigo from collecting both request and response details from a list of domains. This accepts a comma-separated list of regular expressions that is JSON-formatted. By default, the tracer uses `["secretsmanager\..*\.amazonaws\.com", "ssm\..*\.amazonaws\.com", "kms\..*\.amazonaws\.com"]`. **Note** - These defaults are overridden when you define a different list of regular expressions.
 
 ## Baseline setup
 
@@ -117,7 +111,7 @@ The initialization of the Lumigo OpenTelemetry Distro is performed asynchronousl
 
 Due to the asynchronous nature of this initialization logic, some CLI or batch-like applications that perform their logic on startup without needing to wait on external request responses may find that they are missing some of the trace data, for example the first span that represents the startup of the application.
 
-For scenarios in which each and every span is required, the Lumigo OpenTelemetry Distro provides a `Promise` that you can wait on as follows:
+For scenarios in which each and every span is required, the Lumigo OpenTelemetry Distro provides a `Promise` called `init` that you can wait on as follows:
 
 #### Node.js prior to v18
 
@@ -127,7 +121,7 @@ import * as lumigo from '@lumigo/opentelemetry';
 
 // Some initialization code for your application.
 
-lumigo.trace(lumigoToken, serviceName)
+lumigo.init
 .then(()=>{
     // From this point on you are guaranteed that the SDK is initialized.
 })
@@ -146,7 +140,7 @@ import * as lumigo from '@lumigo/opentelemetry';
 // Some initialization code for your application.
 
 try {
-  await lumigo.initializationPromise;
+  await lumigo.init;
 } catch (err) {
    // The sdk initialization failed :-(
    // Please let us know at support@lumigo.io!

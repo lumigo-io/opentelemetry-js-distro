@@ -6,7 +6,7 @@
   "scripts": {
     "start-programmatically": "node target/expressAppProgrammatically.js",
     "local": "node target/expressAppProgrammatically.js",
-    "start-script": "export LUMIGO_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r @lumigo/opentelemetry expressApp.js",
+    "start-script": "export LUMIGO_TRACER_TOKEN=XXXX && export LUMIGO_SERVICE_NAME=service-name && export LUMIGO_DEBUG=true && babel-node -r @lumigo/opentelemetry expressApp.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "tsc"
   },

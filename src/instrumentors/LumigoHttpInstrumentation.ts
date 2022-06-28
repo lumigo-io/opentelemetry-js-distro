@@ -1,7 +1,6 @@
-import { HttpHooks } from '../hooks/http';
-
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { DEFAULT_LUMIGO_ENDPOINT } from '../wrapper';
+
+import { HttpHooks } from '../hooks/http';
 import { fetchMetadataUri } from '../utils';
 
 let metadata;
@@ -9,14 +8,11 @@ let metadata;
 fetchMetadataUri().then((res) => (metadata = res));
 
 export default class LumigoHttpInstrumentation {
-  constructor(lumigoToken = '', endPoint = DEFAULT_LUMIGO_ENDPOINT) {
+  constructor(urlsToIgnore: string[]) {
     return new HttpInstrumentation({
-      ignoreOutgoingUrls: process.env['ECS_CONTAINER_METADATA_URI']
-        ? [process.env['ECS_CONTAINER_METADATA_URI'], endPoint, DEFAULT_LUMIGO_ENDPOINT]
-        : [endPoint, DEFAULT_LUMIGO_ENDPOINT],
+      ignoreOutgoingUrls: urlsToIgnore,
       applyCustomAttributesOnSpan: (span) => {
         if (metadata) span.setAttribute('metadata', JSON.stringify(metadata));
-        if (lumigoToken) span.setAttribute('lumigoToken', lumigoToken);
       },
       requestHook: HttpHooks.requestHook,
       responseHook: HttpHooks.responseHook,

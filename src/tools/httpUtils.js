@@ -9,9 +9,9 @@ export const extractBodyFromEmitSocketEvent = (socketEventArgs) => {
       const httpMessage = socketEventArgs._httpMessage;
       let lines = [];
       if (httpMessage.hasOwnProperty('outputData')) {
-        lines = httpMessage.outputData[0].data.split('\n');
+        lines = httpMessage.outputData?.[0]?.data?.split('\n');
       } else if (httpMessage.hasOwnProperty('output')) {
-        lines = httpMessage.output[0].split('\n');
+        lines = httpMessage.output?.[0]?.split('\n');
       }
       if (lines.length > 0) {
         return lines[lines.length - 1];

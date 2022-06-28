@@ -1,4 +1,4 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagConsoleLogger, DiagLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
@@ -10,26 +10,27 @@ import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumen
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
 
-let isLumigoSwitchedOffStatusReported = false;
-
-export const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
+const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
-let logLevel: DiagLogLevel;
-
-if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
-  logLevel = DiagLogLevel.INFO;
+if (isEnvVarTrue(LUMIGO_DEBUG)) {
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 } else {
-  logLevel = isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.ALL : DiagLogLevel.ERROR;
+  diag.setLogger(new DiagConsoleLogger());
 }
 
-diag.setLogger(new DiagConsoleLogger(), logLevel);
+const logger: DiagLogger = diag.createComponentLogger({
+  namespace: '@lumigo/opentelemetry:',
+});
 
-let initializationPromise = undefined;
+let isTraceInitialized = false;
+let initializationResolve: (value: unknown) => void;
+export const init = new Promise((resolve) => {
+  initializationResolve = resolve;
+});
 const externalInstrumentations = [];
-export const clearIsTraced = () => (initializationPromise = undefined);
 
 const safeRequire = (libId) => {
   try {
@@ -50,7 +51,7 @@ const safeRequire = (libId) => {
       return customReq(path);
     } catch (e) {
       if (e.code !== 'MODULE_NOT_FOUND') {
-        diag.warn('Unable to load module', {
+        logger.warn('Unable to load module', {
           error: e,
           libId: libId,
         });
@@ -64,7 +65,7 @@ export const getTracerInfo = (): { name: string; version: string } => {
   return safeExecute(
     () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const pkg = require('../package.json');
+      const pkg = require('../../package.json');
       const { name, version } = pkg;
       return { name, version };
     },
@@ -78,9 +79,16 @@ function requireIfAvailable(names: string[]) {
   names.forEach((name) => safeRequire(name));
 }
 
+const urlsToIgnore = [
+  DEFAULT_LUMIGO_ENDPOINT,
+  ...(process.env.LUMIGO_ENDPOINT ? [process.env.LUMIGO_ENDPOINT] : []),
+  ...(process.env.ECS_CONTAINER_METADATA_URI ? [process.env.ECS_CONTAINER_METADATA_URI] : []),
+  ...(process.env.ECS_CONTAINER_METADATA_URI_V4 ? [process.env.ECS_CONTAINER_METADATA_URI_V4] : []),
+];
+
 registerInstrumentations({
   instrumentations: [
-    new LumigoHttpInstrumentation(process.env.LUMIGO_TOKEN, process.env.LUMIGO_ENDPOINT),
+    new LumigoHttpInstrumentation(urlsToIgnore),
     new LumigoExpressInstrumentation(),
     ...externalInstrumentations,
   ],
@@ -91,96 +99,95 @@ requireIfAvailable([
 ]);
 
 function reportInitError(err) {
-  diag.error('Error initializing Lumigo tracer: ', err);
-}
-
-export const trace = async (
-  lumigoToken = '',
-  serviceName = 'service-name',
-  endpoint = DEFAULT_LUMIGO_ENDPOINT
-): Promise<boolean> => {
-  if (!initializationPromise) {
-    initializationPromise = new Promise((resolve) => {
-      try {
-        if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
-          if (!isLumigoSwitchedOffStatusReported) {
-            isLumigoSwitchedOffStatusReported = true;
-            diag.info('Lumigo is switched off, aborting tracer initialization...');
-          }
-          return resolve(undefined);
-        }
-        const exporter = process.env.LUMIGO_DEBUG_SPANDUMP
-          ? new FileSpanExporter(
-              process.env.LUMIGO_DEBUG_SPANDUMP,
-              isEnvVarTrue(LUMIGO_DEBUG) ? 'DEBUG' : 'PROD'
-            )
-          : new OTLPTraceExporter({
-              url: endpoint,
-              headers: {
-                Authorization: `LumigoToken ${lumigoToken.trim()}`,
-              },
-            });
-        const ecsMetadataHandler = (metadata) => {
-          const resourceAttributes = {
-            lumigoToken: lumigoToken.trim(),
-            'service.name': serviceName,
-            runtime: `node${process.version}`,
-            tracerVersion: getTracerInfo().version,
-            framework: 'express',
-            exporter: 'opentelemetry',
-            envs: JSON.stringify(process.env),
-          };
-          if (metadata) Object.assign(resourceAttributes, { metadata });
-          const config = {
-            resource: new Resource(resourceAttributes),
-          };
-          const traceProvider = new NodeTracerProvider(config);
-          traceProvider.addSpanProcessor(
-            new BatchSpanProcessor(exporter, {
-              // The maximum queue size. After the size is reached spans are dropped.
-              maxQueueSize: 1000,
-              // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-              maxExportBatchSize: 100,
-            })
-          );
-          traceProvider.register();
-          diag.debug(`Lumigo tracer started on ${serviceName}`);
-          return resolve(undefined);
-        };
-
-        fetchMetadataUri()
-          .then((data) => {
-            ecsMetadataHandler(data);
-          })
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          .catch((_) => {
-            ecsMetadataHandler(undefined);
-          })
-          .catch((err) => {
-            reportInitError(err);
-          });
-      } catch (err) {
-        reportInitError(err);
-        return resolve(undefined);
-      }
-    });
-  } else {
-    diag.debug('Lumigo already traced, aborting tracer initialization...');
-  }
-  return initializationPromise;
-};
-
-if (process.env.LUMIGO_TOKEN && process.env.LUMIGO_SERVICE_NAME) {
-  initializationPromise = trace(
-    process.env.LUMIGO_TOKEN,
-    process.env.LUMIGO_SERVICE_NAME,
-    process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT
+  logger.error(
+    'An error occurred while initializing the Lumigo OpenTelemetry Distro: no telemetry will be collected and sent to Lumigo.',
+    err
   );
 }
-export default initializationPromise;
-module.exports = {
-  DEFAULT_LUMIGO_ENDPOINT,
-  clearIsTraced,
-  trace,
-  initializationPromise,
+
+const trace = async (): Promise<void> => {
+  if (!isTraceInitialized) {
+    isTraceInitialized = true;
+    try {
+      if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
+        logger.info(
+          'The Lumigo OpenTelemetry Distro is switched off ("LUMIGO_SWITCH_OFF" is set): no telemetry will be collected and sent to Lumigo.'
+        );
+        return initializationResolve(undefined);
+      }
+
+      // if the required environment variables aren't available and the tracing is not being redirected to file
+      if (
+        !process.env.LUMIGO_DEBUG_SPANDUMP &&
+        !(process.env.LUMIGO_TRACER_TOKEN && process.env.OTEL_SERVICE_NAME)
+      ) {
+        logger.warn(
+          'The Lumigo OpenTelemetry Distro tracer token and service name are not available ("LUMIGO_TRACER_TOKEN" and / or "OTEL_SERVICE_NAME" are not set): no telemetry will be collected and sent to Lumigo.'
+        );
+        return initializationResolve(undefined);
+      }
+
+      const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
+      const serviceName = process.env.OTEL_SERVICE_NAME;
+      const endpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
+
+      const exporter = process.env.LUMIGO_DEBUG_SPANDUMP
+        ? new FileSpanExporter(
+            process.env.LUMIGO_DEBUG_SPANDUMP,
+            isEnvVarTrue(LUMIGO_DEBUG) ? 'DEBUG' : 'PROD'
+          )
+        : new OTLPTraceExporter({
+            url: endpoint,
+            headers: {
+              Authorization: `LumigoToken ${lumigoToken.trim()}`,
+            },
+          });
+      const ecsMetadataHandler = (metadata) => {
+        const resourceAttributes = {
+          lumigoToken: lumigoToken.trim(),
+          'service.name': serviceName,
+          runtime: `node${process.version}`,
+          tracerVersion: getTracerInfo().version,
+          framework: 'express',
+          envs: JSON.stringify(process.env),
+        };
+        if (metadata) Object.assign(resourceAttributes, { metadata });
+        const config = {
+          resource: new Resource(resourceAttributes),
+        };
+        const traceProvider = new NodeTracerProvider(config);
+        traceProvider.addSpanProcessor(
+          new BatchSpanProcessor(exporter, {
+            // The maximum queue size. After the size is reached spans are dropped.
+            maxQueueSize: 1000,
+            // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+            maxExportBatchSize: 100,
+          })
+        );
+        traceProvider.register();
+        logger.info(`Lumigo tracer started on "${serviceName}".`);
+        return initializationResolve(undefined);
+      };
+
+      fetchMetadataUri()
+        .then((data) => {
+          ecsMetadataHandler(data);
+        })
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .catch((_) => {
+          ecsMetadataHandler(undefined);
+        })
+        .catch((err) => {
+          reportInitError(err);
+        });
+    } catch (err) {
+      reportInitError(err);
+      return initializationResolve(undefined);
+    }
+  } else {
+    logger.debug(
+      'The Lumigo OpenTelemetry Distro is already initialized: additional attempt to initialize has been ignored.'
+    );
+  }
 };
+trace();

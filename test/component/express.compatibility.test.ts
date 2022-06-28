@@ -19,7 +19,7 @@ describe('component compatibility tests for all supported versions of express', 
       process.version
     }`, async () => {
       jest.setTimeout(30000);
-      let resolver;
+      let resolver: (value: unknown) => void;
       const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test-express${expressVersion}.json`;
       if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
         fs.unlinkSync(FILE_EXPORTER_FILE_NAME);
@@ -27,8 +27,8 @@ describe('component compatibility tests for all supported versions of express', 
       const waitForThreeSpans = new Promise((resolve) => {
         resolver = resolve;
       });
-      const foundThreeSpans = (resolver, value) => resolver(value);
-      const spanCreatedHandler = (path) => {
+      const foundThreeSpans = (resolver: (value: unknown) => void, value: any) => resolver(value);
+      const spanCreatedHandler = (path: string) => {
         const allFileContents = fs.readFileSync(path, 'utf-8');
         const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
         if (lines.length >= 3) {
@@ -41,6 +41,7 @@ describe('component compatibility tests for all supported versions of express', 
         onChangeFileEvent: spanCreatedHandler,
       });
 
+      // sleep before running the container to make sure the watcher picks up all the changes
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       app = await executeNpmScriptWithCallback(
@@ -52,9 +53,9 @@ describe('component compatibility tests for all supported versions of express', 
         () => {},
         'start:injected',
         {
-          LUMIGO_TOKEN: 't_123321',
+          LUMIGO_TRACER_TOKEN: 't_123321',
           LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
-          LUMIGO_SERVICE_NAME: 'express-js',
+          OTEL_SERVICE_NAME: 'express-js',
           LUMIGO_DEBUG: true,
           EXPRESS_VERSION: '',
         }
@@ -125,7 +126,6 @@ describe('component compatibility tests for all supported versions of express', 
           'http.status_code': 200,
           'http.status_text': 'OK',
           'http.route': '/invoke-requests',
-          lumigoToken: 't_123321',
         },
         status: {
           code: 0,
@@ -159,7 +159,6 @@ describe('component compatibility tests for all supported versions of express', 
           'http.response.body': expect.stringMatching(
               /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
           ),
-          lumigoToken: 't_123321',
         },
         status: {
           code: 0,

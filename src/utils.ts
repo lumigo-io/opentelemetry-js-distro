@@ -1,7 +1,8 @@
 import * as crypto from 'crypto';
+import * as http from 'http';
+import * as https from 'https';
 
 import { sortify } from './tools/jsonSortify';
-import * as https from 'https';
 
 export const DEFAULT_CONNECTION_TIMEOUT = 300;
 
@@ -43,13 +44,16 @@ export const getConnectionTimeout = () => {
   return parseInt(process.env['LUMIGO_CONNECTION_TIMEOUT']) || DEFAULT_CONNECTION_TIMEOUT;
 };
 
+export const getProtocolModuleForUri = (uri: string) => {
+  return uri.indexOf('https') === 0 ? https : http;
+};
+
 const getUri = async (uri: string): Promise<Object> => {
   const responseBody = await new Promise((resolve, reject) => {
-    const request = https.get(uri, (response) => {
+    const request = getProtocolModuleForUri(uri).get(uri, (response) => {
       if (response.statusCode >= 400) {
         reject(`Request to '${uri}' failed with status ${response.statusCode}`);
       }
-
       /*
        * Concatenate the response out of chunks:
        * https://nodejs.org/api/stream.html#stream_event_data
@@ -73,11 +77,14 @@ const getUri = async (uri: string): Promise<Object> => {
 
 export const fetchMetadataUri = async (): Promise<Object> => {
   try {
-    const metadataUri = process.env['ECS_CONTAINER_METADATA_URI'];
+    const metadataUri =
+      process.env['ECS_CONTAINER_METADATA_URI_V4'] || process.env['ECS_CONTAINER_METADATA_URI'];
     if (metadataUri) {
       return getUri(metadataUri);
     } else {
-      console.warn('Missing ECS metadata...');
+      console.warn(
+        'Unable to retrieve the ECS metadata, "ECS_CONTAINER_METADATA_URI" / "ECS_CONTAINER_METADATA_URI_V4" environment variable not available.'
+      );
       return Promise.resolve(undefined);
     }
   } catch (e) {
