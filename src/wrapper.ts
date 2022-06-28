@@ -190,5 +190,4 @@ const trace = async (): Promise<void> => {
     );
   }
 };
-
 trace();
