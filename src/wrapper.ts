@@ -97,6 +97,7 @@ registerInstrumentations({
     ...externalInstrumentations,
   ],
 });
+
 requireIfAvailable([
   ...MODULES_TO_INSTRUMENT,
   ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
