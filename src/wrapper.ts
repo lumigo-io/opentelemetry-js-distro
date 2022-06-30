@@ -61,7 +61,7 @@ const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getTracerInfo = (): { name: string, version: string } => {
+export const getTracerInfo = (): { name: string; version: string } => {
   return safeExecute(
     () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -88,7 +88,7 @@ const ignoreConfig = [
     ]
       .filter(Boolean)
       .some((v) => url.includes(v)),
-      /169\.254\.\d+\.\d+.*/gm
+  /169\.254\.\d+\.\d+.*/gm,
 ];
 
 registerInstrumentations({
