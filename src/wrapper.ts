@@ -82,13 +82,13 @@ function requireIfAvailable(names: string[]) {
 const ignoreConfig = [
   (url: string) =>
     [
-      '169.254.170.2',
       process.env.LUMIGO_ENDPOINT,
       process.env.ECS_CONTAINER_METADATA_URI,
       process.env.ECS_CONTAINER_METADATA_URI_V4,
     ]
       .filter(Boolean)
       .some((v) => url.includes(v)),
+      /169\.254\.\d+\.\d+.*/gm
 ];
 
 registerInstrumentations({
