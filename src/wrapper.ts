@@ -79,16 +79,20 @@ function requireIfAvailable(names: string[]) {
   names.forEach((name) => safeRequire(name));
 }
 
-const urlsToIgnore = [
-  DEFAULT_LUMIGO_ENDPOINT,
-  ...(process.env.LUMIGO_ENDPOINT ? [process.env.LUMIGO_ENDPOINT] : []),
-  ...(process.env.ECS_CONTAINER_METADATA_URI ? [process.env.ECS_CONTAINER_METADATA_URI] : []),
-  ...(process.env.ECS_CONTAINER_METADATA_URI_V4 ? [process.env.ECS_CONTAINER_METADATA_URI_V4] : []),
+const ignoreConfig = [
+  (url: string) =>
+    [
+      process.env.LUMIGO_ENDPOINT,
+      process.env.ECS_CONTAINER_METADATA_URI,
+      process.env.ECS_CONTAINER_METADATA_URI_V4,
+    ]
+      .filter(Boolean)
+      .some((v) => url.includes(v)),
 ];
 
 registerInstrumentations({
   instrumentations: [
-    new LumigoHttpInstrumentation(urlsToIgnore),
+    new LumigoHttpInstrumentation(ignoreConfig),
     new LumigoExpressInstrumentation(),
     ...externalInstrumentations,
   ],
