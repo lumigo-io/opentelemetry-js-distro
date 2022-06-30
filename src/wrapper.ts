@@ -61,7 +61,7 @@ const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getTracerInfo = (): { name: string; version: string } => {
+export const getTracerInfo = (): { name: string, version: string } => {
   return safeExecute(
     () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -82,6 +82,7 @@ function requireIfAvailable(names: string[]) {
 const ignoreConfig = [
   (url: string) =>
     [
+      '169.254.170.2',
       process.env.LUMIGO_ENDPOINT,
       process.env.ECS_CONTAINER_METADATA_URI,
       process.env.ECS_CONTAINER_METADATA_URI_V4,
