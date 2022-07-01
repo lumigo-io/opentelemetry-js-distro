@@ -8,7 +8,7 @@ This is the source repository of [`@lumigo/opentelemetry`](https://npm.io/packag
 The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream OpenTelemetry packaged, additional automated quality-assurance and customizations that **optimize for no-code injection**, meaning that you should need to update exactly zero lines of code in your application in order to make use of the Lumigo OpenTelemetry Distribution.
 (See the [No-code instrumentation](#no-code-instrumentation) section for auto-instrumentation instructions)
 
-**Note:** If you are looking for the Lumigo Python tracer for AWS Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is the package you should use instead.
+**Note:** If you are looking for the Lumigo Node.js tracer for AWS Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is the package you should use instead.
 
 ## Setup
 
