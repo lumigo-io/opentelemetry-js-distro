@@ -8,23 +8,25 @@ This is the source repository of [`@lumigo/opentelemetry`](https://npm.io/packag
 The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream OpenTelemetry packaged, additional automated quality-assurance and customizations that **optimize for no-code injection**, meaning that you should need to update exactly zero lines of code in your application in order to make use of the Lumigo OpenTelemetry Distribution.
 (See the [No-code instrumentation](#no-code-instrumentation) section for auto-instrumentation instructions)
 
-**Note:** If you are looking for the Lumigo Node.js tracer for Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is where you want to be :)
+**Note:** If you are looking for the Lumigo Node.js tracer for AWS Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is the package you should use instead.
 
-## Installation
+## Setup
+
+### Add @lumigo/opentelemetry as dependency
 
 Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
 
-   ```sh
-   > npm install @lumigo/opentelemetry
-   ```
+```sh
+npm install @lumigo/opentelemetry
+```
 
-   OR
+or:
 
-   ```sh
-   > yarn add @lumigo/opentelemetry
-   ```
+```sh
+yarn add @lumigo/opentelemetry
+```
 
-## Setup / Required Configuration
+### Environment-based configuration
 
 For both manual and no-code instrumentation, you will need to configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `OTEL_SERVICE_NAME` environment variable with the service name you've chosen:
 
@@ -35,9 +37,14 @@ export LUMIGO_TRACER_TOKEN=<token>
 export OTEL_SERVICE_NAME=<service name>
 ```
 
-## Instrumentation
+### Tracer activation
 
-### No-code instrumentation
+There are two ways to activate the `@lumigo/opentelemetry` package: one based on importing the package in code (manual activation), and the other via the environment (no-code activation).
+The [no-code activation](#no-code-activation) approach is the preferred one.
+
+#### No-code activation
+
+**Note:** The instructions in this section are mutually exclusive with those provided in the [Manual instrumentation](#manual-activation) section.
 
 Set the following environment variable for your Node.js process:
 
@@ -47,9 +54,11 @@ export NODE_OPTIONS="${NODE_OPTIONS} -r '@lumigo/opentelemetry'"
 
 The line above avoids overriding any other settings you may have passed via the `NODE_OPTIONS` environment variable.
 
-### Manual instrumentation
+#### Manual activation
 
-Import `@lumigo/opentelemetry` in the first row of your main file
+**Note:** The instructions in this section are mutually exclusive with those provided in the [No-code activation](#no-code-activation) section.
+
+Import `@lumigo/opentelemetry` at the beginning of your main file:
 
 ```js
 // javascript
@@ -73,7 +82,7 @@ See [Waiting for the initialization of the Lumigo OpenTelemetry Distro](#waiting
 }
 ```
 
-## Optional Configurations
+## Configuration
 
 ### OpenTelemetry configurations
 
