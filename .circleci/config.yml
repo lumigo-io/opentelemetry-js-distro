@@ -1,0 +1,135 @@
+version: 2.1
+defaults: &defaults
+  working_directory: ~/opentelemetry-js-distro
+  docker:
+    - image: lumigo/ci:latest
+      auth:
+        username: lumigo
+        password: $DOCKERHUB_PASSWORD
+
+orbs:
+  lumigo-orb: lumigo/lumigo-orb@volatile
+
+workflows:
+  test-deploy:
+    jobs:
+    - test-component-js:
+        matrix:
+          parameters:
+            node_cimg_tag: [ "12.13", "14.19", "16.15" ]
+            test_category: [ "express" ]
+        filters:
+          branches:
+            ignore: main
+    - test:
+        filters:
+          branches:
+            ignore: main
+    - lumigo-orb/be-deploy:
+        filters:
+          branches:
+            ignore: main
+        requires:
+          - test
+    - lumigo-orb/integration-test:
+        deploy_spec: default
+        tests_spec: testNormal
+        filters:
+          branches:
+            ignore: main
+        requires:
+          - lumigo-orb/be-deploy
+    - deploy:
+        filters:
+          branches:
+            only: main
+  version: 2
+
+
+jobs:
+  test:
+    working_directory: ~/opentelemetry-js-distro
+    docker:
+      - image: lumigo/ci:latest
+        auth:
+          username: lumigo
+          password: $DOCKERHUB_PASSWORD
+    environment:
+      - TZ: Asia/Jerusalem
+      - NODE_OPTIONS: --max_old_space_size=1500
+    resource_class: medium+
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: install-npm-wee
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+      - run:
+          name: prettier
+          command: npm run prettier:ci
+      - run:
+          name: test
+          command: npm run test:unit
+      - run:
+          name: eslint
+          command: npm run lint
+      - run:
+          name: code-coverage
+          command: npm test --coverage && codecov
+      - store_artifacts:
+          path: coverage
+          prefix: coverage
+  test-component-js:
+    working_directory: ~/opentelemetry-js-distro
+    parameters:
+      node_cimg_tag:
+        type: string
+      test_category:
+        type: string
+    docker:
+      - image: cimg/node:<< parameters.node_cimg_tag >>
+    steps:
+      - checkout
+      - run: npm ci
+      - run: npm run build
+      - run: npm run install-component
+      - run: npm run test:component:<< parameters.test_category>>
+  deploy:
+    working_directory: ~/opentelemetry-js-distro
+    docker:
+      - image: lumigo/ci:latest
+        auth:
+          username: lumigo
+          password: $DOCKERHUB_PASSWORD
+    environment:
+      - TZ: Asia/Jerusalem
+    resource_class: medium+
+    steps:
+      - run:
+          command: |
+            mkdir ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+            cd ..
+            git clone git@github.com:lumigo-io/common-resources.git
+      - run:
+          command: |
+            cd ..
+            git clone git@github.com:lumigo-io/utils.git
+      - checkout
+      - run:
+          name: Check if tagged
+          command: |
+            tags=$(git tag -l --points-at HEAD)
+            echo "Tags $tags"
+            if [[ ! -z "$tags" ]]
+            then
+              echo "A tagged commit, skip..."
+              circleci step halt
+            fi
+      - run:
+          name: deploy to npm
+          command: ./scripts/bd_to_prod.sh
