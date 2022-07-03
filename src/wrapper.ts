@@ -26,10 +26,7 @@ const logger: DiagLogger = diag.createComponentLogger({
 });
 
 let isTraceInitialized = false;
-let initializationResolve: (value: unknown) => void;
-export const init = new Promise((resolve) => {
-  initializationResolve = resolve;
-});
+
 const externalInstrumentations = [];
 
 const safeRequire = (libId) => {
@@ -119,9 +116,8 @@ const trace = async (): Promise<void> => {
         logger.info(
           'The Lumigo OpenTelemetry Distro is switched off ("LUMIGO_SWITCH_OFF" is set): no telemetry will be collected and sent to Lumigo.'
         );
-        return initializationResolve(undefined);
+        return;
       }
-
       // if the required environment variables aren't available and the tracing is not being redirected to file
       if (
         !process.env.LUMIGO_DEBUG_SPANDUMP &&
@@ -130,7 +126,7 @@ const trace = async (): Promise<void> => {
         logger.warn(
           'The Lumigo OpenTelemetry Distro tracer token and service name are not available ("LUMIGO_TRACER_TOKEN" and / or "OTEL_SERVICE_NAME" are not set): no telemetry will be collected and sent to Lumigo.'
         );
-        return initializationResolve(undefined);
+        return;
       }
 
       const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
@@ -172,7 +168,7 @@ const trace = async (): Promise<void> => {
         );
         traceProvider.register();
         logger.info(`Lumigo tracer started on "${serviceName}".`);
-        return initializationResolve(undefined);
+        return;
       };
 
       fetchMetadataUri()
@@ -188,7 +184,7 @@ const trace = async (): Promise<void> => {
         });
     } catch (err) {
       reportInitError(err);
-      return initializationResolve(undefined);
+      return;
     }
   } else {
     logger.debug(
@@ -196,4 +192,4 @@ const trace = async (): Promise<void> => {
     );
   }
 };
-trace();
+export const init = trace();
