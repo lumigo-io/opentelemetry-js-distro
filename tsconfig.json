@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "allowJs": true,
+    "target": "es6",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "inlineSources": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "rootDir": ".",
+    "experimentalDecorators": true,
+    "noImplicitOverride": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["**/*.test.js", "**/*.test.ts"]
+}
