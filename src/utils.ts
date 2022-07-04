@@ -48,7 +48,7 @@ export const getProtocolModuleForUri = (uri: string) => {
   return uri.indexOf('https') === 0 ? https : http;
 };
 
-const getUri = async (uri: string): Promise<Object> => {
+export const getUri = async (uri: string): Promise<Object> => {
   const responseBody = await new Promise((resolve, reject) => {
     const request = getProtocolModuleForUri(uri).get(uri, (response) => {
       if (response.statusCode >= 400) {

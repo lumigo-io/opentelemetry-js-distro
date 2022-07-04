@@ -1,7 +1,7 @@
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
-import * as https from 'https';
 import { logger } from '../../wrapper';
+import {getUri} from "../../utils";
 
 /**
  * AwsEcsDetector detects the resources related with AWS ECS (EC2 and Fargate).
@@ -19,8 +19,8 @@ class AwsEcsDetector implements Detector {
 
     // Returns https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v4.html#task-metadata-endpoint-v4-response
     return Promise.all([
-      this.getUri(metadataUriV4 || metadataUri),
-      this.getUri(`${metadataUriV4 || metadataUri}/task`),
+      getUri(metadataUriV4 || metadataUri),
+      getUri(`${metadataUriV4 || metadataUri}/task`),
     ]).then((responses) => {
       const [responseContainer, responseTask] = responses;
 
@@ -46,34 +46,6 @@ class AwsEcsDetector implements Detector {
       logger.debug('AwsEcsDetector failed with error: ', e);
       return Promise.resolve(Resource.EMPTY);
     });
-  }
-
-  async getUri(uri: string): Promise<Object> {
-    const responseBody = await new Promise((resolve, reject) => {
-      const request = https.get(uri, (response) => {
-        if (response.statusCode >= 400) {
-          reject(`Request to '${uri}' failed with status ${response.statusCode}`);
-        }
-
-        /*
-         * Concatenate the response out of chunks:
-         * https://nodejs.org/api/stream.html#stream_event_data
-         */
-        let responseBody = '';
-        response.on('data', (chunk) => (responseBody += chunk.toString()));
-        // All the data has been read, resolve the Promise
-        response.on('end', () => resolve(responseBody));
-      });
-      // Set an aggressive timeout to prevent lock-ups
-      request.setTimeout(5, () => {
-        request.destroy();
-      });
-      // Connection error, disconnection, etc.
-      request.on('error', reject);
-      request.end();
-    });
-
-    return JSON.parse(responseBody.toString());
   }
 }
 
