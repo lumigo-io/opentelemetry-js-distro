@@ -1,7 +1,6 @@
 import { diag, DiagConsoleLogger, DiagLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { detectResources } from '@opentelemetry/resources';
-import { awsEcsDetector } from '@opentelemetry/resource-detector-aws';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
@@ -12,6 +11,7 @@ import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumen
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
 import util from 'util';
+import {awsEcsDetector} from "./resources/detectors/AwsEcsDetector";
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];

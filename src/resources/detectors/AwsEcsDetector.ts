@@ -5,7 +5,7 @@ import * as https from 'https';
 /**
  * AwsEcsDetector detects the resources related with AWS ECS (EC2 and Fargate).
  */
-export class AwsEcsDetector implements Detector {
+class AwsEcsDetector implements Detector {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
     const metadataUriV4 = process.env['ECS_CONTAINER_METADATA_URI_V4'];
@@ -69,3 +69,5 @@ export class AwsEcsDetector implements Detector {
     return JSON.parse(responseBody.toString());
   }
 }
+
+export const awsEcsDetector = new AwsEcsDetector();
