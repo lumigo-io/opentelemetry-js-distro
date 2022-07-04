@@ -11,7 +11,7 @@ import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumen
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
 import util from 'util';
-import {awsEcsDetector} from "./resources/detectors";
+import { AwsEcsDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
@@ -148,21 +148,20 @@ const trace = async (): Promise<void> => {
             },
           });
       const resource = await detectResources({
-        detectors: [awsEcsDetector],
+        detectors: [new AwsEcsDetector()],
       });
 
       logger.info(
         `metadata resource:: `,
         util.inspect(resource, { showHidden: false, depth: null, colors: true })
       );
-      const metadata = await fetchMetadataUri()
+      const metadata = await fetchMetadataUri();
       const resourceAttributes = {
         'service.name': serviceName,
         runtime: `node${process.version}`,
         tracerVersion: getTracerInfo().version,
         framework: 'express',
         envs: JSON.stringify(process.env),
-
       };
       if (metadata) Object.assign(resourceAttributes, { metadata });
       const config = {

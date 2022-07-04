@@ -1,12 +1,12 @@
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 import { logger } from '../../wrapper';
-import {getUri} from "../../utils";
+import { getUri } from '../../utils';
 
 /**
  * AwsEcsDetector detects the resources related with AWS ECS (EC2 and Fargate).
  */
-class AwsEcsDetector implements Detector {
+export class AwsEcsDetector implements Detector {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
     const metadataUriV4 = process.env['ECS_CONTAINER_METADATA_URI_V4'];
@@ -21,32 +21,32 @@ class AwsEcsDetector implements Detector {
     return Promise.all([
       getUri(metadataUriV4 || metadataUri),
       getUri(`${metadataUriV4 || metadataUri}/task`),
-    ]).then((responses) => {
-      const [responseContainer, responseTask] = responses;
+    ])
+      .then((responses) => {
+        const [responseContainer, responseTask] = responses;
 
-      const taskArn: string = responseTask['TaskARN'];
+        const taskArn: string = responseTask['TaskARN'];
 
-      const baseArn: string = taskArn.substring(0, taskArn.lastIndexOf(':'));
-      const cluster: string = responseTask['Cluster'];
+        const baseArn: string = taskArn.substring(0, taskArn.lastIndexOf(':'));
+        const cluster: string = responseTask['Cluster'];
 
-      const clusterArn = cluster.indexOf('arn:') == 0 ? cluster : `${baseArn}:cluster/${cluster}`;
+        const clusterArn = cluster.indexOf('arn:') == 0 ? cluster : `${baseArn}:cluster/${cluster}`;
 
-      const containerArn: string = responseContainer['ContainerARN'];
+        const containerArn: string = responseContainer['ContainerARN'];
 
-      // https://github.com/open-telemetry/opentelemetry-specification/blob/main/semantic_conventions/resource/cloud_provider/aws/ecs.yaml
-      return new Resource({
-        [SemanticResourceAttributes.AWS_ECS_CONTAINER_ARN]: containerArn,
-        [SemanticResourceAttributes.AWS_ECS_CLUSTER_ARN]: clusterArn,
-        [SemanticResourceAttributes.AWS_ECS_LAUNCHTYPE]: responseTask['LaunchType'],
-        [SemanticResourceAttributes.AWS_ECS_TASK_ARN]: taskArn,
-        [SemanticResourceAttributes.AWS_ECS_TASK_FAMILY]: responseTask['Family'],
-        [SemanticResourceAttributes.AWS_ECS_TASK_REVISION]: responseTask['Revision'],
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/semantic_conventions/resource/cloud_provider/aws/ecs.yaml
+        return new Resource({
+          [SemanticResourceAttributes.AWS_ECS_CONTAINER_ARN]: containerArn,
+          [SemanticResourceAttributes.AWS_ECS_CLUSTER_ARN]: clusterArn,
+          [SemanticResourceAttributes.AWS_ECS_LAUNCHTYPE]: responseTask['LaunchType'],
+          [SemanticResourceAttributes.AWS_ECS_TASK_ARN]: taskArn,
+          [SemanticResourceAttributes.AWS_ECS_TASK_FAMILY]: responseTask['Family'],
+          [SemanticResourceAttributes.AWS_ECS_TASK_REVISION]: responseTask['Revision'],
+        });
+      })
+      .catch((e) => {
+        logger.debug('AwsEcsDetector failed with error: ', e);
+        return Promise.resolve(Resource.EMPTY);
       });
-    }).catch(e => {
-      logger.debug('AwsEcsDetector failed with error: ', e);
-      return Promise.resolve(Resource.EMPTY);
-    });
   }
 }
-
-export const awsEcsDetector = new AwsEcsDetector();

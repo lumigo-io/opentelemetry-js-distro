@@ -1,6 +1,7 @@
 import { AwsEcsDetector } from './AwsEcsDetector';
 
 import * as fs from 'fs';
+import * as utils from '../../utils';
 
 describe('AwsEcsDetector', () => {
   const OLD_ENV = process.env;
@@ -20,7 +21,7 @@ describe('AwsEcsDetector', () => {
     });
 
     it('detects resource attributes correctly', async () => {
-      jest.spyOn(AwsEcsDetector.prototype, 'getUri').mockImplementation((url: string) => {
+      jest.spyOn(utils, 'getUri').mockImplementation((url: string) => {
         let responseRaw: Buffer;
         switch (url) {
           case 'test_url':
