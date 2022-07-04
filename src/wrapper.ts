@@ -11,7 +11,7 @@ import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumen
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
 import util from 'util';
-import {awsEcsDetector} from "./resources/detectors/AwsEcsDetector";
+import {awsEcsDetector} from "./resources/detectors";
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
@@ -24,7 +24,7 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
   diag.setLogger(new DiagConsoleLogger());
 }
 
-const logger: DiagLogger = diag.createComponentLogger({
+export const logger: DiagLogger = diag.createComponentLogger({
   namespace: '@lumigo/opentelemetry:',
 });
 
