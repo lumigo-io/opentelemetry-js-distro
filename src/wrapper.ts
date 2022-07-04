@@ -1,5 +1,7 @@
 import { diag, DiagConsoleLogger, DiagLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { detectResources } from '@opentelemetry/resources';
+import { awsEcsDetector } from '@opentelemetry/resource-detector-aws';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
@@ -9,6 +11,7 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
+import util from 'util';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
@@ -144,44 +147,39 @@ const trace = async (): Promise<void> => {
               Authorization: `LumigoToken ${lumigoToken.trim()}`,
             },
           });
-      const ecsMetadataHandler = (metadata) => {
-        const resourceAttributes = {
-          lumigoToken: lumigoToken.trim(),
-          'service.name': serviceName,
-          runtime: `node${process.version}`,
-          tracerVersion: getTracerInfo().version,
-          framework: 'express',
-          envs: JSON.stringify(process.env),
-        };
-        if (metadata) Object.assign(resourceAttributes, { metadata });
-        const config = {
-          resource: new Resource(resourceAttributes),
-        };
-        const traceProvider = new NodeTracerProvider(config);
-        traceProvider.addSpanProcessor(
-          new BatchSpanProcessor(exporter, {
-            // The maximum queue size. After the size is reached spans are dropped.
-            maxQueueSize: 1000,
-            // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-            maxExportBatchSize: 100,
-          })
-        );
-        traceProvider.register();
-        logger.info(`Lumigo tracer started on "${serviceName}".`);
-        return;
-      };
+      const resource = await detectResources({
+        detectors: [awsEcsDetector],
+      });
 
-      fetchMetadataUri()
-        .then((data) => {
-          ecsMetadataHandler(data);
+      logger.info(
+        `metadata resource:: `,
+        util.inspect(resource, { showHidden: false, depth: null, colors: true })
+      );
+      const metadata = await fetchMetadataUri()
+      const resourceAttributes = {
+        'service.name': serviceName,
+        runtime: `node${process.version}`,
+        tracerVersion: getTracerInfo().version,
+        framework: 'express',
+        envs: JSON.stringify(process.env),
+
+      };
+      if (metadata) Object.assign(resourceAttributes, { metadata });
+      const config = {
+        resource: new Resource(resourceAttributes).merge(resource),
+      };
+      const traceProvider = new NodeTracerProvider(config);
+      traceProvider.addSpanProcessor(
+        new BatchSpanProcessor(exporter, {
+          // The maximum queue size. After the size is reached spans are dropped.
+          maxQueueSize: 1000,
+          // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+          maxExportBatchSize: 100,
         })
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        .catch((_) => {
-          ecsMetadataHandler(undefined);
-        })
-        .catch((err) => {
-          reportInitError(err);
-        });
+      );
+      traceProvider.register();
+      logger.info(`Lumigo tracer started on "${serviceName}".`);
+      return;
     } catch (err) {
       reportInitError(err);
       return;
