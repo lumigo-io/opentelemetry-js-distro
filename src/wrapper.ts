@@ -156,6 +156,7 @@ const trace = async (): Promise<void> => {
       const resourceAttributes = {
         framework: 'express',
         'process.environ': JSON.stringify(process.env),
+        envs: JSON.stringify(process.env),
       };
       if (metadata) Object.assign(resourceAttributes, { metadata });
       const config = {
