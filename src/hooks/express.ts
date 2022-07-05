@@ -3,9 +3,8 @@ import type express from 'express';
 import { Span } from '@opentelemetry/api';
 import { PatchedRequest } from '@opentelemetry/instrumentation-express/build/src/types';
 
-import { safeExecute } from '../utils';
+import { safeExecute, logger } from '../utils';
 import { InstrumentationIfc } from './hooksIfc';
-import { logger } from '../wrapper';
 
 type ExpressRequestType = { req: PatchedRequest; res: express.Response };
 

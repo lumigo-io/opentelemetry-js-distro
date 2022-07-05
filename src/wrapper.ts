@@ -1,4 +1,4 @@
-import { diag, DiagConsoleLogger, DiagLogger, DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { detectResources } from '@opentelemetry/resources';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
@@ -9,7 +9,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
-import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
+import { fetchMetadataUri, isEnvVarTrue, logger, safeExecute } from './utils';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
@@ -22,10 +22,6 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
 } else {
   diag.setLogger(new DiagConsoleLogger());
 }
-
-export const logger: DiagLogger = diag.createComponentLogger({
-  namespace: '@lumigo/opentelemetry:',
-});
 
 let isTraceInitialized = false;
 

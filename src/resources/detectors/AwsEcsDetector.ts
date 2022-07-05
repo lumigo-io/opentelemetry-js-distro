@@ -1,7 +1,6 @@
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
-import { logger } from '../../wrapper';
-import { getUri } from '../../utils';
+import { getUri, logger } from '../../utils';
 
 /**
  * AwsEcsDetector detects the resources related with AWS ECS (EC2 and Fargate).
