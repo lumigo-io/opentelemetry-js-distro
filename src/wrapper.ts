@@ -151,7 +151,6 @@ const trace = async (): Promise<void> => {
           new LumigoDistroDetector(__dirname),
         ],
       });
-      logger.info("THE RESOUCE IS: ", resource);
       const metadata = await fetchMetadataUri();
       const resourceAttributes = {
         framework: 'express',
