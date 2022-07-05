@@ -10,8 +10,7 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
-import util from 'util';
-import {AwsEcsDetector, LumigoDistroDetector} from './resources/detectors';
+import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
