@@ -3,10 +3,7 @@ import 'jest-chain';
 import fs from 'fs';
 
 import { watchDir } from './helpers/fileListener';
-import {
-  callContainer,
-  executeNpmScriptWithCallback,
-} from './helpers/helpers';
+import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
@@ -18,7 +15,7 @@ describe('component compatibility tests for all supported versions of express', 
     it(`test happy flow on express@${expressVersion || 'latest'} / node@${
       process.version
     }`, async () => {
-      jest.setTimeout(30000);
+      jest.setTimeout(300000);
       let resolver: (value: unknown) => void;
       const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test-express${expressVersion}.json`;
       if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
@@ -77,6 +74,19 @@ describe('component compatibility tests for all supported versions of express', 
         kind: 0,
         timestamp: expect.any(Number),
         duration: expect.any(Number),
+        resource: {
+          attributes: {
+            'service.name': 'express-js',
+            'telemetry.sdk.language': 'nodejs',
+            'telemetry.sdk.name': 'opentelemetry',
+            'telemetry.sdk.version': '1.1.1',
+            runtime: expect.stringMatching(/nodev\d+\.\d+\.\d+/),
+            tracerVersion: expect.stringMatching(/1\.\d+\.\d+/),
+            framework: 'express',
+            envs: expect.stringMatching(/\{.*\}/),
+            'lumigo.distro.version': '1.0.0',
+          },
+        },
         attributes: {
           'http.method': 'GET',
           'http.target': '/invoke-requests',
@@ -157,7 +167,7 @@ describe('component compatibility tests for all supported versions of express', 
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
           'http.response.body': expect.stringMatching(
-              /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
+            /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
           ),
         },
         status: {

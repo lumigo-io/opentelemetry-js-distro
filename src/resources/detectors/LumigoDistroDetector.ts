@@ -18,7 +18,7 @@ export class LumigoDistroDetector implements Detector {
     return new Promise((resolve, reject) => {
       console.log(this._packageRoot);
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { name, version } = require(this._packageRoot + '/../package.json');
+      const { name, version } = require(this._packageRoot + '/../../package.json');
       resolve(
         new Resource({
           [LUMIGO_DISTRO_VERSION]: version,
