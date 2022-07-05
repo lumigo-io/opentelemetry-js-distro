@@ -4,11 +4,12 @@ import { URL } from 'url';
 
 import { CommonUtils } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
-import { diag, Span } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/api';
 
 import { getAwsServiceData } from '../spans/awsSpan';
 import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
 import { InstrumentationIfc } from './hooksIfc';
+import {logger} from "../wrapper";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
@@ -70,7 +71,7 @@ export const HttpHooks: InstrumentationIfc<
   IncomingMessage | ServerResponse
 > = {
   requestHook(span: Span & { attributes: Record<string, string> }, request: RequestType) {
-    diag.debug('@opentelemetry/instrumentation-http on requestHook()');
+    logger.debug('@opentelemetry/instrumentation-http on requestHook()');
     safeExecute(() => {
       const requestData: RequestRawData = {
         request: {
@@ -109,7 +110,7 @@ export const HttpHooks: InstrumentationIfc<
     })();
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
-    diag.debug('@opentelemetry/instrumentation-http on responseHook()');
+    logger.debug('@opentelemetry/instrumentation-http on responseHook()');
     const scrubbedHeaders = CommonUtils.payloadStringify(response.headers);
     if (response.headers) {
       span.setAttribute('http.response.headers', scrubbedHeaders);
