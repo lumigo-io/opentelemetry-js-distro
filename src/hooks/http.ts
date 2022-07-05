@@ -9,7 +9,7 @@ import { Span } from '@opentelemetry/api';
 import { getAwsServiceData } from '../spans/awsSpan';
 import { isAwsService, runOneTimeWrapper, safeExecute } from '../utils';
 import { InstrumentationIfc } from './hooksIfc';
-import {logger} from "../wrapper";
+import { logger } from '../wrapper';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};

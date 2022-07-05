@@ -5,7 +5,7 @@ import { PatchedRequest } from '@opentelemetry/instrumentation-express/build/src
 
 import { safeExecute } from '../utils';
 import { InstrumentationIfc } from './hooksIfc';
-import {logger} from "../wrapper";
+import { logger } from '../wrapper';
 
 type ExpressRequestType = { req: PatchedRequest; res: express.Response };
 
