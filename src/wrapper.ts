@@ -2,7 +2,7 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { detectResources } from '@opentelemetry/resources';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { Resource } from '@opentelemetry/resources';
+import { envDetector, processDetector, Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
@@ -10,6 +10,7 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
 import { fetchMetadataUri, isEnvVarTrue, logger, safeExecute } from './utils';
+import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
@@ -128,7 +129,6 @@ const trace = async (): Promise<void> => {
       }
 
       const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
-      const serviceName = process.env.OTEL_SERVICE_NAME;
       const endpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
       const exporter = process.env.LUMIGO_DEBUG_SPANDUMP
@@ -143,16 +143,19 @@ const trace = async (): Promise<void> => {
             },
           });
       const resource = await detectResources({
-        detectors: [new AwsEcsDetector(), new LumigoDistroDetector(__dirname)],
+        detectors: [
+          envDetector,
+          processDetector,
+          awsResourceDetectors.awsEcsDetector,
+          new AwsEcsDetector(),
+          new LumigoDistroDetector(__dirname),
+        ],
       });
-
+      logger.info("THE RESOUCE IS: ", resource);
       const metadata = await fetchMetadataUri();
       const resourceAttributes = {
-        'service.name': serviceName,
-        runtime: `node${process.version}`,
-        tracerVersion: getTracerInfo().version,
         framework: 'express',
-        envs: JSON.stringify(process.env),
+        'process.environ': JSON.stringify(process.env),
       };
       if (metadata) Object.assign(resourceAttributes, { metadata });
       const config = {
@@ -168,7 +171,7 @@ const trace = async (): Promise<void> => {
         })
       );
       traceProvider.register();
-      logger.info(`Lumigo tracer started on "${serviceName}".`);
+      logger.info(`Lumigo tracer started.`);
       return;
     } catch (err) {
       reportInitError(err);
