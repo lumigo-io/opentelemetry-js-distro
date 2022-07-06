@@ -7,8 +7,11 @@ import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
-  afterEach(() => {
+  let watcher;
+  afterEach(async () => {
     if (app) app.kill();
+    rimraf.sync(`${__dirname}/node/spans`);
+    await watcher.close()
   });
   const supportedVersions =
     require('./node/package.json').lumigo.supportedDependencies['express'].versions;
@@ -17,9 +20,11 @@ describe('component compatibility tests for all supported versions of express', 
       process.version
     }`, async () => {
       jest.setTimeout(30000);
+
       console.log(`test happy flow on express@${expressVersion || 'latest'} / node@${
           process.version
       }`)
+
       if (expressVersion !== '') {
         rimraf.sync(`${__dirname}/node/node_modules/express`);
         fs.renameSync(
@@ -28,8 +33,12 @@ describe('component compatibility tests for all supported versions of express', 
         );
       }
 
+      if (!fs.existsSync(`${__dirname}/node/spans`)){
+        fs.mkdirSync(`${__dirname}/node/spans`);
+      }
+
       let resolver: (value: unknown) => void;
-      const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test-express${expressVersion}.json`;
+      const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans/spans-test-express${expressVersion}.json`;
       if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
         fs.unlinkSync(FILE_EXPORTER_FILE_NAME);
       }
@@ -50,7 +59,7 @@ describe('component compatibility tests for all supported versions of express', 
         }
       };
 
-      watchDir(`${__dirname}/node`, {
+      watcher = watchDir(`${__dirname}/node/spans`, {
         onAddFileEvent: spanCreatedHandler,
         onChangeFileEvent: spanCreatedHandler,
       });
