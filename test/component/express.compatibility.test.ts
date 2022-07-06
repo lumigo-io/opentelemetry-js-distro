@@ -1,6 +1,6 @@
 import 'jest-chain';
-
 import fs from 'fs';
+const rimraf = require("rimraf");
 
 import { watchDir } from './helpers/fileListener';
 import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
@@ -18,7 +18,7 @@ describe('component compatibility tests for all supported versions of express', 
     }`, async () => {
       jest.setTimeout(30000);
       if (expressVersion !== '') {
-        fs.rmSync(`${__dirname}/node/node_modules/express`, { recursive: true, force: true });
+        rimraf.sync(`${__dirname}/node/node_modules/express`);
         fs.renameSync(
           `${__dirname}/node/node_modules/express@${expressVersion}`,
           `${__dirname}/node/node_modules/express`
