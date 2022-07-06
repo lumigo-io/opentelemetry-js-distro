@@ -150,7 +150,6 @@ const trace = async (): Promise<void> => {
           });
       const ecsMetadataHandler = (metadata) => {
         const resourceAttributes = {
-          lumigoToken: lumigoToken.trim(),
           'service.name': serviceName,
           runtime: `node${process.version}`,
           tracerVersion: getTracerInfo().version,
