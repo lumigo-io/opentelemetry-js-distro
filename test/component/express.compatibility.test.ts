@@ -10,12 +10,21 @@ describe('component compatibility tests for all supported versions of express', 
   afterEach(() => {
     if (app) app.kill();
   });
-  const supportedVersions = require('./node/package.json').lumigo.supportedDependencies['express'];
+  const supportedVersions =
+    require('./node/package.json').lumigo.supportedDependencies['express'].versions;
   supportedVersions.forEach((expressVersion: string) => {
     it(`test happy flow on express@${expressVersion || 'latest'} / node@${
       process.version
     }`, async () => {
-      jest.setTimeout(300000);
+      jest.setTimeout(30000);
+      if (expressVersion !== '') {
+        fs.rmSync(`${__dirname}/node/node_modules/express`, { recursive: true, force: true });
+        fs.renameSync(
+          `${__dirname}/node/node_modules/express@${expressVersion}`,
+          `${__dirname}/node/node_modules/express`
+        );
+      }
+
       let resolver: (value: unknown) => void;
       const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test-express${expressVersion}.json`;
       if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
@@ -28,7 +37,12 @@ describe('component compatibility tests for all supported versions of express', 
       const spanCreatedHandler = (path: string) => {
         const allFileContents = fs.readFileSync(path, 'utf-8');
         const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-        if (lines.length >= 3) {
+        if (
+          lines.length === 3 &&
+          lines[0].startsWith('{"traceId"') &&
+          lines[1].startsWith('{"traceId"') &&
+          lines[2].startsWith('{"traceId"')
+        ) {
           foundThreeSpans(resolver, lines);
         }
       };
@@ -54,7 +68,6 @@ describe('component compatibility tests for all supported versions of express', 
           LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
           OTEL_SERVICE_NAME: 'express-js',
           LUMIGO_DEBUG: true,
-          EXPRESS_VERSION: '',
         }
       );
       // @ts-ignore

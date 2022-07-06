@@ -9,7 +9,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
-import { fetchMetadataUri, isEnvVarTrue, logger, safeExecute } from './utils';
+import { fetchMetadataUri, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
@@ -55,20 +55,6 @@ const safeRequire = (libId) => {
     }
   }
   return undefined;
-};
-
-export const getTracerInfo = (): { name: string; version: string } => {
-  return safeExecute(
-    () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const pkg = require('../../package.json');
-      const { name, version } = pkg;
-      return { name, version };
-    },
-    'Failed to determine wrapper version',
-    'warn',
-    { name: '@lumigo/opentelemetry', version: '0.0.0' }
-  )();
 };
 
 function requireIfAvailable(names: string[]) {
