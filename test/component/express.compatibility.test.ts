@@ -17,6 +17,9 @@ describe('component compatibility tests for all supported versions of express', 
       process.version
     }`, async () => {
       jest.setTimeout(30000);
+      console.log(`test happy flow on express@${expressVersion || 'latest'} / node@${
+          process.version
+      }`)
       if (expressVersion !== '') {
         rimraf.sync(`${__dirname}/node/node_modules/express`);
         fs.renameSync(
