@@ -8,10 +8,9 @@ let packageJson = require('./package.json');
 let { supportedDependencies } = packageJson.lumigo;
 for (let dependency in supportedDependencies) {
   execSync(`npm view ${dependency} versions --json > ${dependency}_versions.json`);
-  let dependencyVersions = require(`./${dependency}_versions.json`).filter((v) =>
-    semver.satisfies(v, '^4.9.0')
+  supportedDependencies[dependency].versions = require(`./${dependency}_versions.json`).filter((v) =>
+    semver.satisfies(v, supportedDependencies[dependency].satisfies)
   );
-  supportedDependencies[dependency].versions = ['', ...dependencyVersions];
 }
 fs.writeFileSync('./package.json', JSON.stringify(packageJson, null, 2));
 spawnSync('npm', ['install']);
