@@ -91,6 +91,7 @@ describe('component compatibility tests for all supported versions of express', 
       expect(
         serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
       ).toBeTruthy();
+
       expect(serverSpan).toMatchObject({
         traceId: expect.any(String),
         parentId: expect.any(String),
