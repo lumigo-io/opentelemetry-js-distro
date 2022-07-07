@@ -18,12 +18,8 @@
   "lumigo": {
     "supportedDependencies": {
       "express": {
-        "minVersion": "4.0.0",
         "satisfies": "^4.9.0",
-        "versions": [
-          "4.18.0",
-          "4.18.1"
-        ]
+        "versions": []
       }
     }
   }

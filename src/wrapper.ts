@@ -1,8 +1,7 @@
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { detectResources } from '@opentelemetry/resources';
+import { detectResources, envDetector, processDetector, Resource } from '@opentelemetry/resources';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { envDetector, processDetector, Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 

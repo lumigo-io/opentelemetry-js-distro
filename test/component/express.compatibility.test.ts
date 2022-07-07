@@ -4,6 +4,7 @@ const rimraf = require('rimraf');
 
 import { watchDir } from './helpers/fileListener';
 import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
+import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
@@ -12,9 +13,7 @@ describe('component compatibility tests for all supported versions of express', 
     failed: true,
     version: '',
   };
-  const failedVersions = [];
-
-  const supportedVersions =
+  const versionsToTest =
     require('./node/package.json').lumigo.supportedDependencies['express'].versions;
 
   afterEach(async () => {
@@ -22,7 +21,9 @@ describe('component compatibility tests for all supported versions of express', 
     rimraf.sync(`${__dirname}/node/spans`);
     await watcher.close();
     if (lastTest.failed === true) {
-      failedVersions.push(lastTest.version);
+      instrumentationsVersionManager.addPackageUnsupportedVersion('express', lastTest.version);
+    } else {
+      instrumentationsVersionManager.addPackageSupportedVersion('express', lastTest.version);
     }
     lastTest = {
       failed: true,
@@ -30,36 +31,13 @@ describe('component compatibility tests for all supported versions of express', 
     };
   });
 
-  afterAll(() => {
-
-    // updated supported versions file
-    if (!fs.existsSync(`${__dirname}/../../instrumentations/express`)) {
-      fs.mkdirSync(`${__dirname}/../../instrumentations/express`);
-    }
-
-    fs.writeFileSync(
-      `${__dirname}/../../instrumentations/express/supported.json`,
-      JSON.stringify(
-        supportedVersions.filter((d) => !failedVersions.includes(d)),
-        null,
-        2
-      )
-    );
-
-    // updated un supported versions file
-    fs.writeFileSync(
-      `${__dirname}/../../instrumentations/express/unsupported.json`,
-      JSON.stringify(failedVersions, null, 2)
-    );
-  });
-
-  supportedVersions.forEach((expressVersion: string) => {
+  versionsToTest.forEach((expressVersion: string) => {
     it(`test happy flow on express@${expressVersion || 'latest'} / node@${
       process.version
     }`, async () => {
       jest.setTimeout(30000);
 
-      lastTest.version = expressVersion || 'latest';
+      lastTest.version = expressVersion;
       console.log(
         `test happy flow on express@${expressVersion || 'latest'} / node@${process.version}`
       );
