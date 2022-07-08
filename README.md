@@ -12,6 +12,12 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
 ## Setup
 
+Adding the Lumigo OpenTelemetry Distro for Node.js to your application is a three-step process:
+
+1. [Add the Lumigo OpenTelemetry Distro for Node.js as dependency](#add-lumigoopentelemetry-as-dependency)
+2. [Provide configurations through environment variables](#environment-based-configuration)
+3. [Activate the tracer](#tracer-activation), which can also be achieved through environment variables
+
 ### Add @lumigo/opentelemetry as dependency
 
 Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
@@ -41,6 +47,8 @@ OTEL_SERVICE_NAME=<service name>
 ```
 
 Replace `<service name> with the desired name of the service`.
+
+**Note:** While you are providing environment variables for configuration, consider also providing the one needed for [no-code tracer activation](#no-code-activation) :-)
 
 ### Tracer activation
 
