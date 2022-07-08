@@ -16,13 +16,13 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
 Add `@lumigo/opentelemetry` as a dependency using your preferred package manager:
 
-```sh
+```console
 npm install @lumigo/opentelemetry
 ```
 
 or:
 
-```sh
+```console
 yarn add @lumigo/opentelemetry
 ```
 
@@ -30,12 +30,17 @@ yarn add @lumigo/opentelemetry
 
 For both manual and no-code instrumentation, you will need to configure the `LUMIGO_TRACER_TOKEN` environment variable with the token value generated for you by the Lumigo platform, under `Settings --> Tracing --> Manual tracing`, and the `OTEL_SERVICE_NAME` environment variable with the service name you've chosen:
 
-```sh
-# Replace `<token>` below with the token generated for you by the Lumigo platform
-export LUMIGO_TRACER_TOKEN=<token>
-# Replace `<service name> with the desired name of the service`
-export OTEL_SERVICE_NAME=<service name>
+```console
+LUMIGO_TRACER_TOKEN=<token>
 ```
+
+Replace `<token>` below with the token generated for you by the Lumigo platform.
+
+```console
+OTEL_SERVICE_NAME=<service name>
+```
+
+Replace `<service name> with the desired name of the service`.
 
 ### Tracer activation
 
@@ -47,6 +52,12 @@ The [no-code activation](#no-code-activation) approach is the preferred one.
 **Note:** The instructions in this section are mutually exclusive with those provided in the [Manual instrumentation](#manual-activation) section.
 
 Set the following environment variable for your Node.js process:
+
+```console
+NODE_OPTIONS="-r '@lumigo/opentelemetry'"
+```
+
+**Note:** If you already use the `NODE_OPTIONS` environment variable in a shell script to pass other configurations, you likely want to use something like the following instead:
 
 ```sh
 export NODE_OPTIONS="${NODE_OPTIONS} -r '@lumigo/opentelemetry'"
