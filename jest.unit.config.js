@@ -11,7 +11,7 @@ module.exports = {
     '!./src/testUtils/**/**.*',
     '!./src/instrumentors/logsInstrumentation.ts',
   ],
-  setupFilesAfterEnv: ['./jest.unit.setup.js'],
+  setupFilesAfterEnv: ['./jest.setup.js'],
   coverageThreshold: {
     global: {
       lines: 50,

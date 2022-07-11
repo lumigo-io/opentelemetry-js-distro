@@ -1,59 +1,26 @@
 import 'jest-chain';
+
 import fs from 'fs';
-const rimraf = require('rimraf');
 
 import { watchDir } from './helpers/fileListener';
-import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
-import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
+import {
+  callContainer,
+  executeNpmScriptWithCallback,
+} from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
-  let watcher;
-  let lastTest = {
-    failed: true,
-    version: '',
-  };
-  const versionsToTest =
-    require('./node/package.json').lumigo.supportedDependencies['express'].versions;
-
-  afterEach(async () => {
+  afterEach(() => {
     if (app) app.kill();
-    rimraf.sync(`${__dirname}/node/spans`);
-    await watcher.close();
-    if (lastTest.failed === true) {
-      instrumentationsVersionManager.addPackageUnsupportedVersion('express', lastTest.version);
-    } else {
-      instrumentationsVersionManager.addPackageSupportedVersion('express', lastTest.version);
-    }
-    lastTest = {
-      failed: true,
-      version: undefined,
-    };
   });
-
-  versionsToTest.forEach((expressVersion: string) => {
-    it(`test happy flow on express@${expressVersion} / node@${process.version}`, async () => {
+  const supportedVersions = require('./node/package.json').lumigo.supportedDependencies['express'];
+  supportedVersions.forEach((expressVersion: string) => {
+    it(`test happy flow on express@${expressVersion || 'latest'} / node@${
+      process.version
+    }`, async () => {
       jest.setTimeout(30000);
-
-      lastTest.version = expressVersion;
-      console.log(
-        `test happy flow on express@${expressVersion || 'latest'} / node@${process.version}`
-      );
-
-      if (expressVersion !== '') {
-        rimraf.sync(`${__dirname}/node/node_modules/express`);
-        fs.renameSync(
-          `${__dirname}/node/node_modules/express@${expressVersion}`,
-          `${__dirname}/node/node_modules/express`
-        );
-      }
-
-      if (!fs.existsSync(`${__dirname}/node/spans`)) {
-        fs.mkdirSync(`${__dirname}/node/spans`);
-      }
-
       let resolver: (value: unknown) => void;
-      const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans/spans-test-express${expressVersion}.json`;
+      const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test-express${expressVersion}.json`;
       if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
         fs.unlinkSync(FILE_EXPORTER_FILE_NAME);
       }
@@ -64,17 +31,12 @@ describe('component compatibility tests for all supported versions of express', 
       const spanCreatedHandler = (path: string) => {
         const allFileContents = fs.readFileSync(path, 'utf-8');
         const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-        if (
-          lines.length === 3 &&
-          lines[0].startsWith('{"traceId"') &&
-          lines[1].startsWith('{"traceId"') &&
-          lines[2].startsWith('{"traceId"')
-        ) {
+        if (lines.length >= 3) {
           foundThreeSpans(resolver, lines);
         }
       };
 
-      watcher = watchDir(`${__dirname}/node/spans`, {
+      watchDir(`${__dirname}/node`, {
         onAddFileEvent: spanCreatedHandler,
         onChangeFileEvent: spanCreatedHandler,
       });
@@ -95,6 +57,7 @@ describe('component compatibility tests for all supported versions of express', 
           LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
           OTEL_SERVICE_NAME: 'express-js',
           LUMIGO_DEBUG: true,
+          EXPRESS_VERSION: '',
         }
       );
       // @ts-ignore
@@ -106,7 +69,6 @@ describe('component compatibility tests for all supported versions of express', 
       expect(
         serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
       ).toBeTruthy();
-
       expect(serverSpan).toMatchObject({
         traceId: expect.any(String),
         parentId: expect.any(String),
@@ -115,21 +77,6 @@ describe('component compatibility tests for all supported versions of express', 
         kind: 0,
         timestamp: expect.any(Number),
         duration: expect.any(Number),
-        resource: {
-          attributes: {
-            'service.name': 'express-js',
-            'telemetry.sdk.language': 'nodejs',
-            'telemetry.sdk.name': 'opentelemetry',
-            'telemetry.sdk.version': '1.1.1',
-            framework: 'express',
-            'process.environ': expect.stringMatching(/\{.*\}/),
-            'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
-            'process.pid': expect.any(Number),
-            'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-            'process.runtime.name': 'nodejs',
-            'process.executable.name': 'node',
-          },
-        },
         attributes: {
           'http.method': 'GET',
           'http.target': '/invoke-requests',
@@ -210,7 +157,7 @@ describe('component compatibility tests for all supported versions of express', 
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
           'http.response.body': expect.stringMatching(
-            /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
+              /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
           ),
         },
         status: {
@@ -218,7 +165,6 @@ describe('component compatibility tests for all supported versions of express', 
         },
         events: [],
       });
-      lastTest.failed = false;
     });
   });
 });
