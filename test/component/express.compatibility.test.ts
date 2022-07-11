@@ -32,9 +32,7 @@ describe('component compatibility tests for all supported versions of express', 
   });
 
   versionsToTest.forEach((expressVersion: string) => {
-    it(`test happy flow on express@${expressVersion || 'latest'} / node@${
-      process.version
-    }`, async () => {
+    it(`test happy flow on express@${expressVersion} / node@${process.version}`, async () => {
       jest.setTimeout(30000);
 
       lastTest.version = expressVersion;
