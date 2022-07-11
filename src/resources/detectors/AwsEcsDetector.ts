@@ -29,7 +29,7 @@ export class AwsEcsDetector implements Detector {
         const baseArn: string = taskArn.substring(0, taskArn.lastIndexOf(':'));
         const cluster: string = responseTask['Cluster'];
 
-        const clusterArn = cluster.indexOf('arn:') == 0 ? cluster : `${baseArn}:cluster/${cluster}`;
+        const clusterArn = cluster.indexOf('arn:') === 0 ? cluster : `${baseArn}:cluster/${cluster}`;
 
         const containerArn: string = responseContainer['ContainerARN'];
 
