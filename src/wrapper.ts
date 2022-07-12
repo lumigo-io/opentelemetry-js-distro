@@ -1,14 +1,16 @@
-import { diag, DiagConsoleLogger, DiagLogger, DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { detectResources, envDetector, processDetector, Resource } from '@opentelemetry/resources';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
-import { fetchMetadataUri, isEnvVarTrue, safeExecute } from './utils';
+import { fetchMetadataUri, isEnvVarTrue, logger } from './utils';
+import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
+import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
@@ -21,15 +23,8 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
   diag.setLogger(new DiagConsoleLogger());
 }
 
-const logger: DiagLogger = diag.createComponentLogger({
-  namespace: '@lumigo/opentelemetry:',
-});
-
 let isTraceInitialized = false;
-let initializationResolve: (value: unknown) => void;
-export const init = new Promise((resolve) => {
-  initializationResolve = resolve;
-});
+
 const externalInstrumentations = [];
 
 const safeRequire = (libId) => {
@@ -59,20 +54,6 @@ const safeRequire = (libId) => {
     }
   }
   return undefined;
-};
-
-export const getTracerInfo = (): { name: string; version: string } => {
-  return safeExecute(
-    () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const pkg = require('../../package.json');
-      const { name, version } = pkg;
-      return { name, version };
-    },
-    'Failed to determine wrapper version',
-    'warn',
-    { name: '@lumigo/opentelemetry', version: '0.0.0' }
-  )();
 };
 
 function requireIfAvailable(names: string[]) {
@@ -119,9 +100,8 @@ const trace = async (): Promise<void> => {
         logger.info(
           'The Lumigo OpenTelemetry Distro is switched off ("LUMIGO_SWITCH_OFF" is set): no telemetry will be collected and sent to Lumigo.'
         );
-        return initializationResolve(undefined);
+        return;
       }
-
       // if the required environment variables aren't available and the tracing is not being redirected to file
       if (
         !process.env.LUMIGO_DEBUG_SPANDUMP &&
@@ -130,11 +110,10 @@ const trace = async (): Promise<void> => {
         logger.warn(
           'The Lumigo OpenTelemetry Distro tracer token and service name are not available ("LUMIGO_TRACER_TOKEN" and / or "OTEL_SERVICE_NAME" are not set): no telemetry will be collected and sent to Lumigo.'
         );
-        return initializationResolve(undefined);
+        return;
       }
 
       const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
-      const serviceName = process.env.OTEL_SERVICE_NAME;
       const endpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
       const exporter = process.env.LUMIGO_DEBUG_SPANDUMP
@@ -148,47 +127,39 @@ const trace = async (): Promise<void> => {
               Authorization: `LumigoToken ${lumigoToken.trim()}`,
             },
           });
-      const ecsMetadataHandler = (metadata) => {
-        const resourceAttributes = {
-          lumigoToken: lumigoToken.trim(),
-          'service.name': serviceName,
-          runtime: `node${process.version}`,
-          tracerVersion: getTracerInfo().version,
-          framework: 'express',
-          envs: JSON.stringify(process.env),
-        };
-        if (metadata) Object.assign(resourceAttributes, { metadata });
-        const config = {
-          resource: new Resource(resourceAttributes),
-        };
-        const traceProvider = new NodeTracerProvider(config);
-        traceProvider.addSpanProcessor(
-          new BatchSpanProcessor(exporter, {
-            // The maximum queue size. After the size is reached spans are dropped.
-            maxQueueSize: 1000,
-            // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-            maxExportBatchSize: 100,
-          })
-        );
-        traceProvider.register();
-        logger.info(`Lumigo tracer started on "${serviceName}".`);
-        return initializationResolve(undefined);
+      const resource = await detectResources({
+        detectors: [
+          envDetector,
+          processDetector,
+          awsResourceDetectors.awsEcsDetector,
+          new AwsEcsDetector(),
+          new LumigoDistroDetector(__dirname),
+        ],
+      });
+      const metadata = await fetchMetadataUri();
+      const resourceAttributes = {
+        framework: 'express',
+        'process.environ': JSON.stringify(process.env),
       };
-
-      fetchMetadataUri()
-        .then((data) => {
-          ecsMetadataHandler(data);
+      if (metadata) Object.assign(resourceAttributes, { metadata });
+      const config = {
+        resource: new Resource(resourceAttributes).merge(resource),
+      };
+      const traceProvider = new NodeTracerProvider(config);
+      traceProvider.addSpanProcessor(
+        new BatchSpanProcessor(exporter, {
+          // The maximum queue size. After the size is reached spans are dropped.
+          maxQueueSize: 1000,
+          // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+          maxExportBatchSize: 100,
         })
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        .catch((_) => {
-          ecsMetadataHandler(undefined);
-        })
-        .catch((err) => {
-          reportInitError(err);
-        });
+      );
+      traceProvider.register();
+      logger.info(`Lumigo tracer started.`);
+      return;
     } catch (err) {
       reportInitError(err);
-      return initializationResolve(undefined);
+      return;
     }
   } else {
     logger.debug(
@@ -196,4 +167,4 @@ const trace = async (): Promise<void> => {
     );
   }
 };
-trace();
+export const init = trace();

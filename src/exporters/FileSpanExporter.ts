@@ -66,6 +66,7 @@ export class FileSpanExporter implements SpanExporter {
       attributes: span.attributes,
       status: span.status,
       events: span.events,
+      resource: span.resource,
     };
   }
 
