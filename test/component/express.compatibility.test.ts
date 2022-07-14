@@ -11,8 +11,8 @@ describe("'All Instrumentation's tests'", () => {
     const versions = instrumentationsVersionManager.getInstrumantaionsVersions();
     Object.keys(versions).forEach((lib) => {
       // updated supported versions file
-      if (!fs.existsSync(`${__dirname}/instrumentations/${lib}/tested_versions`)) {
-        fs.mkdirSync(`${__dirname}/instrumentations/${lib}/tested_versions`);
+      if (!fs.existsSync(`${__dirname}/../../instrumentations/${lib}/tested_versions`)) {
+        fs.mkdirSync(`${__dirname}/../../instrumentations/${lib}/tested_versions`);
       }
       const versionStrings = versions[lib].unsupported
         .map((v) => `${v}!`)
@@ -21,7 +21,7 @@ describe("'All Instrumentation's tests'", () => {
         .toString()
         .replace(/,/g, '\n');
       fs.writeFileSync(
-        `${__dirname}/instrumentations/${lib}/tested_versions/${lib}`,
+        `${__dirname}/../../instrumentations/${lib}/tested_versions/${lib}`,
         versionStrings
       );
     });
@@ -29,7 +29,7 @@ describe("'All Instrumentation's tests'", () => {
 
   const instrumentationsToTest = require('./node/package.json').lumigo.supportedDependencies;
   for (let dependency in instrumentationsToTest) {
-    describe(`component compatibility tests for all supported versions of ${dependency}`, function () {
+    describe(`component compatibility tests for all supported versions of ${dependency}`, async function () {
       let app;
       let watcher;
       let lastTest = {
@@ -48,41 +48,31 @@ describe("'All Instrumentation's tests'", () => {
         } else {
           instrumentationsVersionManager.addPackageSupportedVersion(dependency, lastTest.version);
         }
+      });
+
+      beforeEach(() => {
         lastTest = {
           failed: true,
           version: undefined,
         };
-      });
-
-      beforeEach(() => {
         if (!fs.existsSync(`${__dirname}/node/spans`)) {
           fs.mkdirSync(`${__dirname}/node/spans`);
         }
       });
-
-      versionsToTest.forEach((version: string) => {
+      for (let version of versionsToTest) {
         it(`test happy flow on ${dependency}@${version} / node@${process.version}`, async () => {
-          jest.setTimeout(30000);
-
           lastTest.version = version;
-          console.log(
-            `test happy flow on ${dependency}@${version || 'latest'} / node@${process.version}`
+          jest.setTimeout(30000);
+          console.log(`test happy flow on ${dependency}@${version} / node@${process.version}`);
+          console.log(`in version [${version}]`);
+          rimraf.sync(`${__dirname}/node/node_modules/${dependency}`);
+          fs.renameSync(
+            `${__dirname}/node/node_modules/${dependency}@${version}`,
+            `${__dirname}/node/node_modules/${dependency}`
           );
-
-          if (version !== '') {
-            rimraf.sync(`${__dirname}/node/node_modules/${dependency}`);
-            fs.renameSync(
-              `${__dirname}/node/node_modules/${dependency}@${version}`,
-              `${__dirname}/node/node_modules/${dependency}`
-            );
-          }
-
           let resolver: (value: unknown) => void;
           const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans/spans-test-${dependency}${version}.json`;
-          if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
-            fs.unlinkSync(FILE_EXPORTER_FILE_NAME);
-          }
-          const waitForThreeSpans = new Promise((resolve) => {
+          const waitForDependencySpans = new Promise((resolve) => {
             resolver = resolve;
           });
           const foundThreeSpans = (resolver: (value: unknown) => void, value: any) =>
@@ -124,7 +114,7 @@ describe("'All Instrumentation's tests'", () => {
             }
           );
           // @ts-ignore
-          const spans = (await waitForThreeSpans).map((text) => JSON.parse(text));
+          const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));
           expect(spans).toHaveLength(3);
           const serverSpan = spans.find((span) => span.kind === 0);
           const internalSpan = spans.find((span) => span.kind === 1);
@@ -246,7 +236,7 @@ describe("'All Instrumentation's tests'", () => {
           });
           lastTest.failed = false;
         });
-      });
+      }
     });
   }
 });
