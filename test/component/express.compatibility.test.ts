@@ -175,8 +175,10 @@ describe("'All Instrumentation's tests'", () => {
         failed: true,
         version: '',
       };
+      let resolver: (value: unknown) => void;
       const versionsToTest =
         require('./node/package.json').lumigo.supportedDependencies[dependency].versions;
+      let waitForDependencySpans;
 
       afterEach(async () => {
         if (app) app.kill();
@@ -187,6 +189,7 @@ describe("'All Instrumentation's tests'", () => {
         } else {
           instrumentationsVersionManager.addPackageSupportedVersion(dependency, lastTest.version);
         }
+        rimraf.sync(`${__dirname}/node/node_modules/${dependency}`);
       });
 
       beforeEach(() => {
@@ -197,32 +200,23 @@ describe("'All Instrumentation's tests'", () => {
         if (!fs.existsSync(`${__dirname}/node/spans`)) {
           fs.mkdirSync(`${__dirname}/node/spans`);
         }
+        watcher = watchDir(`${__dirname}/node/spans`, {
+          onAddFileEvent: (path) => spansResolvers[dependency](path, resolver),
+          onChangeFileEvent: (path) => spansResolvers[dependency](path, resolver),
+        });
+        waitForDependencySpans = new Promise((resolve) => {
+          resolver = resolve;
+        });
       });
       for (let version of versionsToTest) {
         it(`test happy flow on ${dependency}@${version} / node@${process.version}`, async () => {
-          lastTest.version = version;
           jest.setTimeout(30000);
-          console.log(`test happy flow on ${dependency}@${version} / node@${process.version}`);
-          console.log(`in version [${version}]`);
-          rimraf.sync(`${__dirname}/node/node_modules/${dependency}`);
+          lastTest.version = version;
           fs.renameSync(
             `${__dirname}/node/node_modules/${dependency}@${version}`,
             `${__dirname}/node/node_modules/${dependency}`
           );
-          let resolver: (value: unknown) => void;
           const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans/spans-test-${dependency}${version}.json`;
-          const waitForDependencySpans = new Promise((resolve) => {
-            resolver = resolve;
-          });
-
-          watcher = watchDir(`${__dirname}/node/spans`, {
-            onAddFileEvent: (path) => spansResolvers[dependency](path, resolver),
-            onChangeFileEvent: (path) => spansResolvers[dependency](path, resolver),
-          });
-
-          // sleep before running the container to make sure the watcher picks up all the changes
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
           app = await executeNpmScriptWithCallback(
             './test/component/node',
             (port: number) =>
