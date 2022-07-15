@@ -25,6 +25,7 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
 }
 
 let isTraceInitialized = false;
+let _resource: Resource;
 
 const externalInstrumentations = [];
 
@@ -124,48 +125,58 @@ const trace = async (): Promise<void> => {
         );
       }
 
+      const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
       const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
-      const endpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
+      const lumigoSpanDumpPath = process.env.LUMIGO_DEBUG_SPANDUMP;
 
-      const resource = await detectResources({
+      const detectedResource = await detectResources({
         detectors: [
           envDetector,
           processDetector,
           awsResourceDetectors.awsEcsDetector,
           new AwsEcsDetector(),
-          new LumigoDistroDetector(__dirname),
+          new LumigoDistroDetector(),
         ],
       });
-      const resourceAttributes = {
+
+      _resource = new Resource({
         framework: 'express',
         'process.environ': JSON.stringify(process.env)
-      };
+      }).merge(detectedResource).merge(Resource.default());
+
       const config = {
-        resource: new Resource(resourceAttributes).merge(resource),
+        resource: _resource,
       };
       const traceProvider = new NodeTracerProvider(config);
-      if (process.env.LUMIGO_DEBUG_SPANDUMP) {
+
+      if (lumigoSpanDumpPath) {
         traceProvider.addSpanProcessor(
           new SimpleSpanProcessor(
-            new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP)
+            new FileSpanExporter(lumigoSpanDumpPath)
           )
         );
       };
-      const otlpExporter = new OTLPTraceExporter({
-        url: endpoint,
-        headers: {
-          Authorization: `LumigoToken ${lumigoToken.trim()}`,
-        },
-      });
-      traceProvider.addSpanProcessor(
-        new BatchSpanProcessor(otlpExporter, {
-          // The maximum queue size. After the size is reached spans are dropped.
-          maxQueueSize: 1000,
-          // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-          maxExportBatchSize: 100,
-        })
-      );
+
+      if (lumigoToken) {
+        const otlpExporter = new OTLPTraceExporter({
+          url: lumigoEndpoint,
+          headers: {
+            Authorization: `LumigoToken ${lumigoToken.trim()}`,
+          },
+        });
+
+        traceProvider.addSpanProcessor(
+          new BatchSpanProcessor(otlpExporter, {
+            // The maximum queue size. After the size is reached spans are dropped.
+            maxQueueSize: 1000,
+            // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+            maxExportBatchSize: 100,
+          })
+        );
+      }
+
       traceProvider.register();
+
       logger.info(`Lumigo tracer started.`);
       return;
     } catch (err) {
@@ -178,4 +189,6 @@ const trace = async (): Promise<void> => {
     );
   }
 };
+
 export const init = trace();
+export const resource = init.then(() => _resource);

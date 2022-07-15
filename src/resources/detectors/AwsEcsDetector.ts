@@ -9,17 +9,16 @@ export class AwsEcsDetector implements Detector {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
     const metadataUriV4 = process.env['ECS_CONTAINER_METADATA_URI_V4'];
-    const metadataUri = process.env['ECS_CONTAINER_METADATA_URI'];
 
-    if (!metadataUriV4 && !metadataUri) {
-      logger.debug('AwsEcsDetector failed: Process is not on ECS');
+    if (!metadataUriV4) {
+      logger.debug('AwsEcsDetector failed: Metadata endpoint v4 not found');
       return Promise.resolve(Resource.EMPTY);
     }
 
     // Returns https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v4.html#task-metadata-endpoint-v4-response
     return Promise.all([
-      getUri(metadataUriV4 || metadataUri),
-      getUri(`${metadataUriV4 || metadataUri}/task`),
+      getUri(metadataUriV4),
+      getUri(`${metadataUriV4}/task`),
     ])
       .then((responses) => {
         const [responseContainer, responseTask] = responses;

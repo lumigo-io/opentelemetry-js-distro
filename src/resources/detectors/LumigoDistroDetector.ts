@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { diag } from '@opentelemetry/api';
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 
 export const LUMIGO_DISTRO_VERSION = 'lumigo.distro.version';
@@ -8,20 +9,21 @@ export const LUMIGO_DISTRO_VERSION = 'lumigo.distro.version';
  * Lumigo Distro for OpenTelemetry is used.
  */
 export class LumigoDistroDetector implements Detector {
-  private _packageRoot: string;
-
-  constructor(packageRoot: string) {
-    this._packageRoot = packageRoot;
-  }
 
   async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
     return new Promise((resolve, reject) => {
-      console.log(this._packageRoot);
+      let distroVersion = 'unknown';
+      try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { name, version } = require(this._packageRoot + '/../../package.json');
+      const { name, version } = require(__dirname + '/../../package.json');
+        distroVersion = version;
+      } catch (e) {
+        diag.debug('Cannot look up Lumigo distro version');
+      }
+
       resolve(
         new Resource({
-          [LUMIGO_DISTRO_VERSION]: version,
+          [LUMIGO_DISTRO_VERSION]: distroVersion,
         })
       );
     });
