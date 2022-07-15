@@ -3,7 +3,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { detectResources } from '@opentelemetry/resources';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { envDetector, processDetector, Resource } from '@opentelemetry/resources';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import { FileSpanExporter } from './exporters';
@@ -113,35 +113,20 @@ const trace = async (): Promise<void> => {
     try {
       if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
         logger.info(
-          'The Lumigo OpenTelemetry Distro is switched off ("LUMIGO_SWITCH_OFF" is set): no telemetry will be collected and sent to Lumigo.'
+          'The Lumigo OpenTelemetry Distro is switched off (the "LUMIGO_SWITCH_OFF" environment variable is set): no telemetry will be sent to Lumigo.'
         );
         return;
       }
-      // if the required environment variables aren't available and the tracing is not being redirected to file
-      if (
-        !process.env.LUMIGO_DEBUG_SPANDUMP &&
-        !(process.env.LUMIGO_TRACER_TOKEN && process.env.OTEL_SERVICE_NAME)
-      ) {
+
+      if (!process.env.LUMIGO_TRACER_TOKEN) {
         logger.warn(
-          'The Lumigo OpenTelemetry Distro tracer token and service name are not available ("LUMIGO_TRACER_TOKEN" and / or "OTEL_SERVICE_NAME" are not set): no telemetry will be collected and sent to Lumigo.'
+          'The Lumigo token is not available (the "LUMIGO_TRACER_TOKEN" environment variable is not set): no telemetry will sent to Lumigo.'
         );
-        return;
       }
 
       const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
       const endpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
-      const exporter = process.env.LUMIGO_DEBUG_SPANDUMP
-        ? new FileSpanExporter(
-            process.env.LUMIGO_DEBUG_SPANDUMP,
-            isEnvVarTrue(LUMIGO_DEBUG) ? 'DEBUG' : 'PROD'
-          )
-        : new OTLPTraceExporter({
-            url: endpoint,
-            headers: {
-              Authorization: `LumigoToken ${lumigoToken.trim()}`,
-            },
-          });
       const resource = await detectResources({
         detectors: [
           envDetector,
@@ -159,8 +144,21 @@ const trace = async (): Promise<void> => {
         resource: new Resource(resourceAttributes).merge(resource),
       };
       const traceProvider = new NodeTracerProvider(config);
+      if (process.env.LUMIGO_DEBUG_SPANDUMP) {
+        traceProvider.addSpanProcessor(
+          new SimpleSpanProcessor(
+            new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP)
+          )
+        );
+      };
+      const otlpExporter = new OTLPTraceExporter({
+        url: endpoint,
+        headers: {
+          Authorization: `LumigoToken ${lumigoToken.trim()}`,
+        },
+      });
       traceProvider.addSpanProcessor(
-        new BatchSpanProcessor(exporter, {
+        new BatchSpanProcessor(otlpExporter, {
           // The maximum queue size. After the size is reached spans are dropped.
           maxQueueSize: 1000,
           // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
