@@ -53,7 +53,6 @@ describe('Distro initialization', () => {
   });
 
   describe('with the LUMIGO_TRACER_TOKEN environment variable set', () => {
-
     beforeEach(() => {
       process.env.LUMIGO_ENDPOINT = LUMIGO_ENDPOINT;
       process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
@@ -74,11 +73,10 @@ describe('Distro initialization', () => {
     });
 
     describe('with the LUMIGO_DEBUG_SPANDUMP variable set', () => {
-
       beforeEach(() => {
         process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
       });
-  
+
       test('should initialize the FileSpanExporter', () => {
         jest.isolateModules(async () => {
           const wrapper = jest.requireActual('./wrapper');
@@ -87,13 +85,10 @@ describe('Distro initialization', () => {
           });
         });
       });
-  
     });
-  
   });
 
   describe('without the LUMIGO_TRACER_TOKEN environment variable set', () => {
-
     test('should not initialize the OTLPTraceExporter', () => {
       jest.isolateModules(async () => {
         const wrapper = jest.requireActual('./wrapper');
@@ -104,11 +99,10 @@ describe('Distro initialization', () => {
     });
 
     describe('with the LUMIGO_DEBUG_SPANDUMP variable set', () => {
-
       beforeEach(() => {
         process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
       });
-  
+
       test('should initialize the FileSpanExporter', () => {
         jest.isolateModules(async () => {
           const wrapper = jest.requireActual('./wrapper');
@@ -117,13 +111,10 @@ describe('Distro initialization', () => {
           });
         });
       });
-  
     });
-  
   });
 
   describe('outside of a computing platform for which we have detectors', () => {
-
     test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
       jest.isolateModules(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
@@ -131,24 +122,21 @@ describe('Distro initialization', () => {
         const wrapper = jest.requireActual('./wrapper');
         await wrapper.init
           .then(() => wrapper.resource)
-          .then(resource => {
+          .then((resource) => {
             expect(resource.attributes).toHaveProperty('framework', 'express');
 
             checkBasicResourceAttributes(resource);
           });
       });
     });
-
   });
 
   describe('On Amazon ECS', () => {
-
     beforeEach(() => {
       process.env.ECS_CONTAINER_METADATA_URI = ECS_CONTAINER_METADATA_URI;
     });
 
     describe('without the Task Metadata V4 endpoint', () => {
-
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
         jest.isolateModules(async () => {
           process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
@@ -157,7 +145,7 @@ describe('Distro initialization', () => {
           const wrapper = jest.requireActual('./wrapper');
           await wrapper.init
             .then(() => wrapper.resource)
-            .then(resource => {
+            .then((resource) => {
               checkBasicResourceAttributes(resource);
 
               const resourceAttributeKeys = Object.keys(resource.attributes);
@@ -169,14 +157,12 @@ describe('Distro initialization', () => {
               // These properties may left be blank in the test env
               expect(resourceAttributeKeys).toContain('container.id');
               expect(resourceAttributeKeys).toContain('container.name');
-          });
+            });
         });
       });
-     
     });
 
     describe('with the Task Metadata V4 endpoint', () => {
-
       beforeEach(() => {
         process.env.ECS_CONTAINER_METADATA_URI_V4 = ECS_CONTAINER_METADATA_URI_V4;
 
@@ -196,10 +182,10 @@ describe('Distro initialization', () => {
             default:
               throw new Error(`Unexpected url '${url}`);
           }
-    
+
           return Promise.resolve(JSON.parse(responseRaw.toString()));
         });
-      })
+      });
 
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
         jest.isolateModules(async () => {
@@ -209,7 +195,7 @@ describe('Distro initialization', () => {
           const wrapper = jest.requireActual('./wrapper');
           await wrapper.init
             .then(() => wrapper.resource)
-            .then(resource => {
+            .then((resource) => {
               checkBasicResourceAttributes(resource);
 
               const resourceAttributeKeys = Object.keys(resource.attributes);
@@ -222,20 +208,23 @@ describe('Distro initialization', () => {
               expect(resourceAttributeKeys).toContain('container.id');
               expect(resourceAttributeKeys).toContain('container.name');
 
-              expect(resource.attributes['aws.ecs.container.arn']).toBe('arn:aws:ecs:us-west-2:111122223333:container/0206b271-b33f-47ab-86c6-a0ba208a70a9');
-              expect(resource.attributes['aws.ecs.cluster.arn']).toBe('arn:aws:ecs:us-west-2:111122223333:cluster/default');
+              expect(resource.attributes['aws.ecs.container.arn']).toBe(
+                'arn:aws:ecs:us-west-2:111122223333:container/0206b271-b33f-47ab-86c6-a0ba208a70a9'
+              );
+              expect(resource.attributes['aws.ecs.cluster.arn']).toBe(
+                'arn:aws:ecs:us-west-2:111122223333:cluster/default'
+              );
               expect(resource.attributes['aws.ecs.launchtype']).toBe('EC2');
-              expect(resource.attributes['aws.ecs.task.arn']).toBe('arn:aws:ecs:us-west-2:111122223333:task/default/158d1c8083dd49d6b527399fd6414f5c');
+              expect(resource.attributes['aws.ecs.task.arn']).toBe(
+                'arn:aws:ecs:us-west-2:111122223333:task/default/158d1c8083dd49d6b527399fd6414f5c'
+              );
               expect(resource.attributes['aws.ecs.task.family']).toBe('curltest');
               expect(resource.attributes['aws.ecs.task.revision']).toBe('26');
-          });
+            });
         });
       });
- 
     });
-
   });
-  
 });
 
 function checkBasicResourceAttributes(resource) {

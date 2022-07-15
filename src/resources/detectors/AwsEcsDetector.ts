@@ -16,10 +16,7 @@ export class AwsEcsDetector implements Detector {
     }
 
     // Returns https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v4.html#task-metadata-endpoint-v4-response
-    return Promise.all([
-      getUri(metadataUriV4),
-      getUri(`${metadataUriV4}/task`),
-    ])
+    return Promise.all([getUri(metadataUriV4), getUri(`${metadataUriV4}/task`)])
       .then((responses) => {
         const [responseContainer, responseTask] = responses;
 

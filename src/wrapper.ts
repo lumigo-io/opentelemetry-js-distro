@@ -126,8 +126,10 @@ const trace = async (): Promise<void> => {
 
       _resource = new Resource({
         framework: 'express',
-        'process.environ': JSON.stringify(process.env)
-      }).merge(detectedResource).merge(Resource.default());
+        'process.environ': JSON.stringify(process.env),
+      })
+        .merge(detectedResource)
+        .merge(Resource.default());
 
       const config = {
         resource: _resource,
@@ -136,11 +138,9 @@ const trace = async (): Promise<void> => {
 
       if (lumigoSpanDumpPath) {
         traceProvider.addSpanProcessor(
-          new SimpleSpanProcessor(
-            new FileSpanExporter(lumigoSpanDumpPath)
-          )
+          new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpPath))
         );
-      };
+      }
 
       if (lumigoToken) {
         const otlpExporter = new OTLPTraceExporter({
