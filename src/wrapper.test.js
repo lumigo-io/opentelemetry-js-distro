@@ -123,7 +123,8 @@ describe('Distro initialization', () => {
         await wrapper.init
           .then(() => wrapper.resource)
           .then((resource) => {
-            expect(resource.attributes).toHaveProperty('framework', 'express');
+            expect(resource.attributes['framework']).toBe('express');
+            expect(resource.attributes['service.name']).toBe('service-1');
 
             checkBasicResourceAttributes(resource);
           });

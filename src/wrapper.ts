@@ -124,12 +124,14 @@ const trace = async (): Promise<void> => {
         ],
       });
 
-      _resource = new Resource({
-        framework: 'express',
-        'process.environ': JSON.stringify(process.env),
-      })
-        .merge(detectedResource)
-        .merge(Resource.default());
+      _resource = Resource.default()
+        .merge(
+          new Resource({
+            framework: 'express',
+            'process.environ': JSON.stringify(process.env),
+          })
+        )
+        .merge(detectedResource);
 
       const config = {
         resource: _resource,
