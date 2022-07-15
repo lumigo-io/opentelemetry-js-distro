@@ -76,23 +76,6 @@ export const getUri = async (uri: string): Promise<Object> => {
   return JSON.parse(responseBody.toString());
 };
 
-export const fetchMetadataUri = async (): Promise<Object> => {
-  try {
-    const metadataUri =
-      process.env['ECS_CONTAINER_METADATA_URI_V4'] || process.env['ECS_CONTAINER_METADATA_URI'];
-    if (metadataUri) {
-      return getUri(metadataUri);
-    } else {
-      console.warn(
-        'Unable to retrieve the ECS metadata, "ECS_CONTAINER_METADATA_URI" / "ECS_CONTAINER_METADATA_URI_V4" environment variable not available.'
-      );
-      return Promise.resolve(undefined);
-    }
-  } catch (e) {
-    return undefined;
-  }
-};
-
 export const safeGet = (obj, arr, dflt = null) => {
   let current = obj;
   for (const i in arr) {

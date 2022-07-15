@@ -9,7 +9,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
-import { fetchMetadataUri, isEnvVarTrue, logger, safeExecute } from './utils';
+import { isEnvVarTrue, logger, safeExecute } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
@@ -151,13 +151,11 @@ const trace = async (): Promise<void> => {
           new LumigoDistroDetector(__dirname),
         ],
       });
-      const metadata = await fetchMetadataUri();
       const resourceAttributes = {
         framework: 'express',
         'process.environ': JSON.stringify(process.env),
         envs: JSON.stringify(process.env),
       };
-      if (metadata) Object.assign(resourceAttributes, { metadata });
       const config = {
         resource: new Resource(resourceAttributes).merge(resource),
       };
