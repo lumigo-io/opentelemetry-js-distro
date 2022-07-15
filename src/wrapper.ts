@@ -153,8 +153,7 @@ const trace = async (): Promise<void> => {
       });
       const resourceAttributes = {
         framework: 'express',
-        'process.environ': JSON.stringify(process.env),
-        envs: JSON.stringify(process.env),
+        'process.environ': JSON.stringify(process.env)
       };
       const config = {
         resource: new Resource(resourceAttributes).merge(resource),
