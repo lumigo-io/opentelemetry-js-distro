@@ -154,7 +154,7 @@ describe("'All Instrumentation's tests'", () => {
         fs.mkdirSync(`${__dirname}/../../instrumentations/${lib}/tested_versions`);
       }
       const versionStrings = versions[lib].unsupported
-        .map((v) => `${v}!`)
+        .map((v) => `!${v}`)
         .concat(versions[lib].supported)
         .sort((v1, v2) => semver.compare(v1.replace('!', ''), v2.replace('!', '')))
         .toString()
