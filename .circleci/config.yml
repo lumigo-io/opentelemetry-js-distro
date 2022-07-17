@@ -13,14 +13,6 @@ orbs:
 workflows:
   test-deploy:
     jobs:
-    - test-component-js:
-        matrix:
-          parameters:
-            node_cimg_tag: [ "12.13", "14.19", "16.15" ]
-            test_category: [ "express" ]
-        filters:
-          branches:
-            ignore: main
     - test:
         filters:
           branches:
@@ -28,7 +20,9 @@ workflows:
     - lumigo-orb/be-deploy:
         filters:
           branches:
-            ignore: main
+            ignore:
+              - main
+              - /version-testing-\d+/
         requires:
           - test
     - lumigo-orb/integration-test:
@@ -36,7 +30,9 @@ workflows:
         tests_spec: testNormal
         filters:
           branches:
-            ignore: main
+            ignore:
+              - main
+              - /version-testing-\d+/
         requires:
           - lumigo-orb/be-deploy
     - deploy:
@@ -84,21 +80,6 @@ jobs:
       - store_artifacts:
           path: coverage
           prefix: coverage
-  test-component-js:
-    working_directory: ~/opentelemetry-js-distro
-    parameters:
-      node_cimg_tag:
-        type: string
-      test_category:
-        type: string
-    docker:
-      - image: cimg/node:<< parameters.node_cimg_tag >>
-    steps:
-      - checkout
-      - run: npm ci
-      - run: npm run build
-      - run: npm run install-component
-      - run: npm run test:component:<< parameters.test_category>>
   deploy:
     working_directory: ~/opentelemetry-js-distro
     docker:
