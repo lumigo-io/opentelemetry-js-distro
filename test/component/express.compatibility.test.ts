@@ -161,7 +161,7 @@ describe("'All Instrumentation's tests'", () => {
         .replace(/,/g, '\n');
       fs.writeFileSync(
         `${__dirname}/../../instrumentations/${lib}/tested_versions/${lib}`,
-        versionStrings
+        versionStrings + '\n'
       );
     });
   });
