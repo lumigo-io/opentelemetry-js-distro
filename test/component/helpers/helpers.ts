@@ -12,59 +12,40 @@ export const callContainer = async (port: number, path: string, method = 'get', 
 
 export async function executeNpmScriptWithCallback(
   path: string,
-  onAppReady: (port: number) => Promise<void>,
-  onData: (data: string | Buffer | any) => void,
+  onAppReady: (data: any) => Promise<void>,
+  onData: (data: string | Buffer | any, resolve, reject) => void,
   scriptName: string,
   environmentVariables: any,
   shouldFail = false
 ) {
-  let expressApp: ChildProcessWithoutNullStreams | undefined;
+  let nodeChildApp: ChildProcessWithoutNullStreams | undefined;
   try {
-    expressApp = spawn(`cd ${path} && npm`, ['run', scriptName], {
+    nodeChildApp = spawn(`cd ${path} && npm`, ['run', scriptName], {
       env: { ...process.env, ...environmentVariables },
       shell: true,
     });
-    expressApp.stderr.on('data', (data) => {
+    nodeChildApp.stderr.on('data', (data) => {
       console.log('stderr: ', data.toString());
     });
-    expressApp.on('error', (error) => {
+    nodeChildApp.on('error', (error) => {
       if (!shouldFail) {
         fail(error);
       }
     });
-    let port = 0;
-    await new Promise<void>((resolve, reject) => {
-      if (expressApp) {
-        expressApp.stdout.on('data', (data) => {
-          onData(data);
-          console.log('stdout: ', data.toString());
-          if (port === 0) {
-            const dataStr = data.toString();
-            const portRegex = new RegExp('.*(PORT):([0-9]*)', 'g');
-
-            const portRegexMatch = portRegex.exec(dataStr);
-
-            if (portRegexMatch && portRegexMatch.length >= 3) {
-              try {
-                port = parseInt(portRegexMatch[2]);
-                resolve();
-              } catch (exception) {
-                reject(exception);
-              }
-            }
-          }
-        });
-      }
+    const data = await new Promise<void>((resolve, reject) => {
+      nodeChildApp.stdout.on('data', (data) => {
+        onData(data, resolve, reject);
+      });
     });
-    await onAppReady(port);
-    return expressApp;
+    await onAppReady(data);
+    return nodeChildApp;
   } catch (exception) {
     if (!shouldFail) {
       fail(exception);
     }
   } finally {
-    if (expressApp) {
-      expressApp.kill(0);
+    if (nodeChildApp) {
+      nodeChildApp.kill(0);
     }
   }
 }
