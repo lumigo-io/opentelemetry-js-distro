@@ -75,7 +75,7 @@ class TestedVersions:
     def get_file_path(directory: str, dependency_name: str) -> str:
         return (
             os.path.dirname(os.path.dirname(__file__))
-            + f"/test/integration/{directory}/tested_versions/{dependency_name}"
+            + f"/instrumentations/{directory}/tested_versions/{dependency_name}"
         )
 
     @staticmethod
