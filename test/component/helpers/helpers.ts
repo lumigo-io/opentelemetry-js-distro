@@ -10,10 +10,10 @@ export const callContainer = async (port: number, path: string, method = 'get', 
   expect(httpResponse.status).toBeLessThan(300);
 };
 
-export async function executeNpmScriptWithCallback(
+export async function waitForChildProcess(
   path: string,
   onAppReady: (data: any) => Promise<void>,
-  onData: (data: string | Buffer | any, resolve, reject) => void,
+  isChildProcessReadyPredicate: (data: string | Buffer | any, resolve, reject) => void,
   scriptName: string,
   environmentVariables: any,
   shouldFail = false
@@ -34,7 +34,7 @@ export async function executeNpmScriptWithCallback(
     });
     const data = await new Promise<void>((resolve, reject) => {
       nodeChildApp.stdout.on('data', (data) => {
-        onData(data, resolve, reject);
+        isChildProcessReadyPredicate(data, resolve, reject);
       });
     });
     await onAppReady(data);

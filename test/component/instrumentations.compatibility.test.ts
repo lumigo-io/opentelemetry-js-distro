@@ -3,7 +3,7 @@ import fs from 'fs';
 const rimraf = require('rimraf');
 const semver = require('semver');
 import { watchDir } from './helpers/fileListener';
-import { executeNpmScriptWithCallback } from './helpers/helpers';
+import { waitForChildProcess } from './helpers/helpers';
 import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 import { InstrumentationTest } from './instrumentations/InstrumentationTest';
 
@@ -30,12 +30,11 @@ describe("'All Instrumentation's tests'", () => {
 
   const instrumentationsToTest = require('./node/package.json').lumigo.supportedDependencies;
   for (let dependency in instrumentationsToTest) {
-    describe(`component compatibility tests for all supported versions of ${dependency}`, async function () {
+    describe(`component compatibility tests for all supported versions of ${dependency}`, () => {
       let app;
       let watcher;
       let resolver: (value: unknown) => void;
-      const versionsToTest =
-        require('./node/package.json').lumigo.supportedDependencies[dependency].versions;
+      const versionsToTest = require(`./node/${dependency}_versions.json`);
       let waitForDependencySpans;
       let dependencyTest: InstrumentationTest;
       afterEach(async () => {
@@ -67,10 +66,10 @@ describe("'All Instrumentation's tests'", () => {
               `${__dirname}/node/node_modules/${dependency}`
             );
             const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans/spans-test-${dependency}${version}.json`;
-            app = await executeNpmScriptWithCallback(
+            app = await waitForChildProcess(
               './test/component/node',
               dependencyTest.onChildProcessReady,
-              dependencyTest.onChildProcessData,
+              dependencyTest.isChildProcessReadyPredicate,
               `start:${dependency}:injected`,
               {
                 LUMIGO_TRACER_TOKEN: 't_123321',

@@ -3,7 +3,7 @@ import { callContainer } from '../helpers/helpers';
 import fs from 'fs';
 
 class ExpressInstrumentationTest implements InstrumentationTest {
-  onChildProcessData(data: any, resolve, reject): void {
+  isChildProcessReadyPredicate(data: any, resolve, reject): void {
     const dataStr = data.toString();
     const portRegex = new RegExp('.*(PORT):([0-9]*)', 'g');
 

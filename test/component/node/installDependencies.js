@@ -8,11 +8,15 @@ let packageJson = require('./package.json');
 let { supportedDependencies } = packageJson.lumigo;
 for (let dependency in supportedDependencies) {
   execSync(`npm view ${dependency} versions --json > ${dependency}_versions.json`);
-  supportedDependencies[dependency].versions = require(`./${dependency}_versions.json`).filter((v) =>
-    semver.satisfies(v, supportedDependencies[dependency].satisfies)
+  supportedDependencies[dependency].versions = require(`./${dependency}_versions.json`).filter(
+    (v) => semver.satisfies(v, supportedDependencies[dependency].satisfies)
+  );
+  fs.writeFileSync(
+    `./${dependency}_versions.json`,
+    JSON.stringify(supportedDependencies[dependency].versions, null, 2)
   );
 }
-fs.writeFileSync('./package.json', JSON.stringify(packageJson, null, 2));
+
 spawnSync('npm', ['install']);
 
 fs.mkdirSync('./node_modules/.tmp', { recursive: true });
@@ -27,7 +31,7 @@ for (const dependency in supportedDependencies) {
       console.log(`${fullName} installed`);
     } catch (err) {
       console.log(`Installing ${fullName}`);
-      spawnSync('npm', ['install', fullName]);
+      spawnSync('npm', ['install', fullName, '--no-save']);
       spawnSync('mv', [`./node_modules/${dependency}`, holdingPath]);
     }
   });
