@@ -17,7 +17,6 @@ jobs:
       - run: npm run build
       - run: npm run install-component
       - run: npm run test:components
-      - run: git restore test/component/node/package.json
       - run: git --no-pager diff
       - run: mkdir versions_artifact
       - run: for path in `git diff --name-only`; do cp "$path" versions_artifact; done
