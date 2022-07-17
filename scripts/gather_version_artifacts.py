@@ -11,20 +11,20 @@ ARTIFACT_DIR_NAME = "versions_artifacts"
 # Before this script runs, the job downloads the artifacts into files with the following example structure:
 #
 #   versions_artifacts/
-#       3.7/
-#           boto3: (next lines are the data inside the file)
-#               1.0.0
-#               !2.0.0
-#           fastapi:
-#               5.1.0
-#               5.2.0
-#       3.8/
-#           boto3:
-#               1.0.0
-#               2.0.0
-#           fastapi:
-#               5.1.0
-#               5.2.0
+#       12/
+#           express: (next lines are the data inside the file)
+#               4.17.2
+#               !4.17.3
+#           mongoose:
+#               6.4.4
+#               3.9.7
+#       14/
+#           express:
+#               4.17.2
+#               !4.17.3
+#           mongoose:
+#               3.9.7
+#               6.4.4
 #
 # Each file contains the original supported versions and the results from the tests in the previous job.
 
