@@ -5,9 +5,6 @@ from typing import List, Dict, Tuple
 from contextlib import contextmanager
 from dataclasses import dataclass
 
-from src.ci.tested_versions_utils import TestedVersions
-
-
 ARTIFACT_DIR_NAME = "versions_artifacts"
 
 
