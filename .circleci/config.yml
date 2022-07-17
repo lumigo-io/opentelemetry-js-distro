@@ -20,9 +20,7 @@ workflows:
     - lumigo-orb/be-deploy:
         filters:
           branches:
-            ignore:
-              - main
-              - /version-testing-\d+/
+            ignore: main
         requires:
           - test
     - lumigo-orb/integration-test:
@@ -30,9 +28,7 @@ workflows:
         tests_spec: testNormal
         filters:
           branches:
-            ignore:
-              - main
-              - /version-testing-\d+/
+            ignore: main
         requires:
           - lumigo-orb/be-deploy
     - deploy:
