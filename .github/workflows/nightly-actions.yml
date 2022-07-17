@@ -13,12 +13,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_cimg_tag }}
-      - run: git fetch
       - run: npm ci
       - run: npm run build
       - run: npm run install-component
       - run: npm run test:components
-      - run: git restore head test/component/node/package.json
+      - run: git restore HEAD test/component/node/package.json
       - run: git --no-pager diff
       - run: mkdir versions_artifact
       - run: for path in `git diff --name-only`; do cp "$path" versions_artifact; done
