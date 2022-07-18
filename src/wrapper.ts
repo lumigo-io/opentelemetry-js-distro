@@ -2,7 +2,11 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { detectResources, envDetector, processDetector, Resource } from '@opentelemetry/resources';
-import { BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import {
+  BasicTracerProvider,
+  BatchSpanProcessor,
+  SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import { FileSpanExporter } from './exporters';
@@ -24,7 +28,6 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
 }
 
 let isTraceInitialized = false;
-let _resource: Resource;
 
 const externalInstrumentations = [];
 
@@ -93,7 +96,11 @@ function reportInitError(err) {
   );
 }
 
-const trace = async (): Promise<void> => {
+export interface LumigoSdkInitialization {
+  readonly tracerProvider: BasicTracerProvider;
+}
+
+const trace = async (): Promise<LumigoSdkInitialization> => {
   if (!isTraceInitialized) {
     isTraceInitialized = true;
     try {
@@ -124,22 +131,19 @@ const trace = async (): Promise<void> => {
         ],
       });
 
-      _resource = Resource.default()
-        .merge(
-          new Resource({
-            framework: 'express',
-            'process.environ': JSON.stringify(process.env),
-          })
-        )
-        .merge(detectedResource);
-
-      const config = {
-        resource: _resource,
-      };
-      const traceProvider = new NodeTracerProvider(config);
+      const tracerProvider = new NodeTracerProvider({
+        resource: Resource.default()
+          .merge(
+            new Resource({
+              framework: 'express',
+              'process.environ': JSON.stringify(process.env),
+            })
+          )
+          .merge(detectedResource),
+      });
 
       if (lumigoSpanDumpPath) {
-        traceProvider.addSpanProcessor(
+        tracerProvider.addSpanProcessor(
           new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpPath))
         );
       }
@@ -152,7 +156,7 @@ const trace = async (): Promise<void> => {
           },
         });
 
-        traceProvider.addSpanProcessor(
+        tracerProvider.addSpanProcessor(
           new BatchSpanProcessor(otlpExporter, {
             // The maximum queue size. After the size is reached spans are dropped.
             maxQueueSize: 1000,
@@ -162,13 +166,15 @@ const trace = async (): Promise<void> => {
         );
       }
 
-      traceProvider.register();
+      tracerProvider.register();
 
       logger.info(`Lumigo tracer started.`);
-      return;
+      return Promise.resolve({
+        tracerProvider: tracerProvider,
+      });
     } catch (err) {
       reportInitError(err);
-      return;
+      return Promise.reject(err);
     }
   } else {
     logger.debug(
@@ -178,4 +184,3 @@ const trace = async (): Promise<void> => {
 };
 
 export const init = trace();
-export const resource = init.then(() => _resource);

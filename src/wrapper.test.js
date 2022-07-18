@@ -43,6 +43,24 @@ describe('Distro initialization', () => {
     });
   });
 
+  describe('with an initialization failure', () => {
+    beforeEach(() => {
+      process.env.LUMIGO_ENDPOINT = LUMIGO_ENDPOINT;
+      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+    });
+
+    test('should reject the init promise', () => {
+      jest.isolateModules(async () => {
+        const error = new Error('Oh, the humanity!');
+        OTLPTraceExporter.mockImplementation(() => {
+          throw error;
+        });
+        const wrapper = jest.requireActual('./wrapper');
+        expect(wrapper.init).rejects.toThrowError(error);
+      });
+    });
+  });
+
   test('should initialize instrumentation', () => {
     jest.isolateModules(async () => {
       const wrapper = jest.requireActual('./wrapper');
@@ -121,7 +139,7 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         const wrapper = jest.requireActual('./wrapper');
         await wrapper.init
-          .then(() => wrapper.resource)
+          .then((initStatus) => initStatus.tracerProvider.resource)
           .then((resource) => {
             expect(resource.attributes['framework']).toBe('express');
             expect(resource.attributes['service.name']).toBe('service-1');
@@ -145,7 +163,7 @@ describe('Distro initialization', () => {
 
           const wrapper = jest.requireActual('./wrapper');
           await wrapper.init
-            .then(() => wrapper.resource)
+            .then((initStatus) => initStatus.tracerProvider.resource)
             .then((resource) => {
               checkBasicResourceAttributes(resource);
 
@@ -195,7 +213,7 @@ describe('Distro initialization', () => {
 
           const wrapper = jest.requireActual('./wrapper');
           await wrapper.init
-            .then(() => wrapper.resource)
+            .then((initStatus) => initStatus.tracerProvider.resource)
             .then((resource) => {
               checkBasicResourceAttributes(resource);
 
