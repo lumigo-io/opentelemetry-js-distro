@@ -1,29 +1,64 @@
 import 'jest-chain';
+
 import fs from 'fs';
-const rimraf = require('rimraf');
-const semver = require('semver');
+
 import { watchDir } from './helpers/fileListener';
 import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
-import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 
-describe("'All Instrumentation's tests'", () => {
-  const spansResolvers = {
-    express: (path: string, resolver) => {
-      const allFileContents = fs.readFileSync(path, 'utf-8');
-      const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-      if (
-        lines.length === 3 &&
-        lines[0].startsWith('{"traceId"') &&
-        lines[1].startsWith('{"traceId"') &&
-        lines[2].startsWith('{"traceId"')
-      ) {
-        resolver(lines);
+describe('component compatibility tests for all supported versions of express', function () {
+  let app;
+  afterEach(() => {
+    if (app) app.kill();
+  });
+  const supportedVersions = require('./node/package.json').lumigo.supportedDependencies['express'];
+  supportedVersions.forEach((expressVersion: string) => {
+    it(`test happy flow on express@${expressVersion || 'latest'} / node@${
+      process.version
+    }`, async () => {
+      jest.setTimeout(30000);
+      let resolver: (value: unknown) => void;
+      const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans-test-express${expressVersion}.json`;
+      if (fs.existsSync(FILE_EXPORTER_FILE_NAME)) {
+        fs.unlinkSync(FILE_EXPORTER_FILE_NAME);
       }
-    },
-  };
+      const waitForThreeSpans = new Promise((resolve) => {
+        resolver = resolve;
+      });
+      const foundThreeSpans = (resolver: (value: unknown) => void, value: any) => resolver(value);
+      const spanCreatedHandler = (path: string) => {
+        const allFileContents = fs.readFileSync(path, 'utf-8');
+        const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
+        if (lines.length >= 3) {
+          foundThreeSpans(resolver, lines);
+        }
+      };
 
-  const tests = {
-    express: (spans: any[]) => {
+      watchDir(`${__dirname}/node`, {
+        onAddFileEvent: spanCreatedHandler,
+        onChangeFileEvent: spanCreatedHandler,
+      });
+
+      // sleep before running the container to make sure the watcher picks up all the changes
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      app = await executeNpmScriptWithCallback(
+        './test/component/node',
+        (port: number) =>
+          callContainer(port, 'invoke-requests', 'get', {
+            a: '1',
+          }),
+        () => {},
+        'start:injected',
+        {
+          LUMIGO_TRACER_TOKEN: 't_123321',
+          LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
+          OTEL_SERVICE_NAME: 'express-js',
+          LUMIGO_DEBUG: true,
+          EXPRESS_VERSION: '',
+        }
+      );
+      // @ts-ignore
+      const spans = (await waitForThreeSpans).map((text) => JSON.parse(text));
       expect(spans).toHaveLength(3);
       const serverSpan = spans.find((span) => span.kind === 0);
       const internalSpan = spans.find((span) => span.kind === 1);
@@ -31,7 +66,6 @@ describe("'All Instrumentation's tests'", () => {
       expect(
         serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
       ).toBeTruthy();
-
       expect(serverSpan).toMatchObject({
         traceId: expect.any(String),
         parentId: expect.any(String),
@@ -48,7 +82,7 @@ describe("'All Instrumentation's tests'", () => {
             'telemetry.sdk.version': '1.1.1',
             framework: 'express',
             'process.environ': expect.stringMatching(/\{.*\}/),
-            'lumigo.distro.version': expect.any(String),
+            'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
             'process.pid': expect.any(Number),
             'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
             'process.runtime.name': 'nodejs',
@@ -143,101 +177,6 @@ describe("'All Instrumentation's tests'", () => {
         },
         events: [],
       });
-    },
-  };
-
-  afterAll(() => {
-    const versions = instrumentationsVersionManager.getInstrumantaionsVersions();
-    Object.keys(versions).forEach((lib) => {
-      // updated supported versions file
-      if (!fs.existsSync(`${__dirname}/../../instrumentations/${lib}/tested_versions`)) {
-        fs.mkdirSync(`${__dirname}/../../instrumentations/${lib}/tested_versions`);
-      }
-      const versionStrings = versions[lib].unsupported
-        .map((v) => `!${v}`)
-        .concat(versions[lib].supported)
-        .sort((v1, v2) => semver.compare(v1.replace('!', ''), v2.replace('!', '')))
-        .toString()
-        .replace(/,/g, '\n');
-      fs.writeFileSync(
-        `${__dirname}/../../instrumentations/${lib}/tested_versions/${lib}`,
-        versionStrings + '\n'
-      );
     });
   });
-
-  const instrumentationsToTest = require('./node/package.json').lumigo.supportedDependencies;
-  for (let dependency in instrumentationsToTest) {
-    describe(`component compatibility tests for all supported versions of ${dependency}`, async function () {
-      let app;
-      let watcher;
-      let lastTest = {
-        failed: true,
-        version: '',
-      };
-      let resolver: (value: unknown) => void;
-      const versionsToTest =
-        require('./node/package.json').lumigo.supportedDependencies[dependency].versions;
-      let waitForDependencySpans;
-
-      afterEach(async () => {
-        if (app) app.kill();
-        rimraf.sync(`${__dirname}/node/spans`);
-        await watcher.close();
-        if (lastTest.failed === true) {
-          instrumentationsVersionManager.addPackageUnsupportedVersion(dependency, lastTest.version);
-        } else {
-          instrumentationsVersionManager.addPackageSupportedVersion(dependency, lastTest.version);
-        }
-        rimraf.sync(`${__dirname}/node/node_modules/${dependency}`);
-      });
-
-      beforeEach(() => {
-        lastTest = {
-          failed: true,
-          version: undefined,
-        };
-        if (!fs.existsSync(`${__dirname}/node/spans`)) {
-          fs.mkdirSync(`${__dirname}/node/spans`);
-        }
-        watcher = watchDir(`${__dirname}/node/spans`, {
-          onAddFileEvent: (path) => spansResolvers[dependency](path, resolver),
-          onChangeFileEvent: (path) => spansResolvers[dependency](path, resolver),
-        });
-        waitForDependencySpans = new Promise((resolve) => {
-          resolver = resolve;
-        });
-      });
-      for (let version of versionsToTest) {
-        it(`test happy flow on ${dependency}@${version} / node@${process.version}`, async () => {
-          jest.setTimeout(30000);
-          lastTest.version = version;
-          fs.renameSync(
-            `${__dirname}/node/node_modules/${dependency}@${version}`,
-            `${__dirname}/node/node_modules/${dependency}`
-          );
-          const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans/spans-test-${dependency}${version}.json`;
-          app = await executeNpmScriptWithCallback(
-            './test/component/node',
-            (port: number) =>
-              callContainer(port, 'invoke-requests', 'get', {
-                a: '1',
-              }),
-            () => {},
-            `start:${dependency}:injected`,
-            {
-              LUMIGO_TRACER_TOKEN: 't_123321',
-              LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
-              OTEL_SERVICE_NAME: 'express-js',
-              LUMIGO_DEBUG: true,
-            }
-          );
-          // @ts-ignore
-          const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));
-          tests[dependency](spans);
-          lastTest.failed = false;
-        });
-      }
-    });
-  }
 });
