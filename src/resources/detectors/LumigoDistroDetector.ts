@@ -14,7 +14,7 @@ export class LumigoDistroDetector implements Detector {
       let distroVersion = 'unknown';
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { name, version } = require(__dirname + '../../../../package.json');
+        const { name, version } = require('../../../../package.json');
         distroVersion = version;
       } catch (e) {
         diag.debug('Cannot look up Lumigo distro version');
