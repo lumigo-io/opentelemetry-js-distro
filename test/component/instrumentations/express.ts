@@ -25,16 +25,14 @@ class ExpressInstrumentationTest implements InstrumentationTest {
     });
   }
 
-  resolveSpans(path: string, resolver): void {
-    const allFileContents = fs.readFileSync(path, 'utf-8');
-    const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
+  spansReadyCondition(lines: string[], resolve): void {
     if (
       lines.length === 3 &&
       lines[0].startsWith('{"traceId"') &&
       lines[1].startsWith('{"traceId"') &&
       lines[2].startsWith('{"traceId"')
     ) {
-      resolver(lines);
+      resolve(lines);
     }
   }
 

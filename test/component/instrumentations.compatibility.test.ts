@@ -7,20 +7,30 @@ import { waitForChildProcess } from './helpers/helpers';
 import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 import { InstrumentationTest } from './instrumentations/InstrumentationTest';
 
+function determineIfSpansAreReady(
+  dependencyTest: InstrumentationTest,
+  path: string,
+  resolve: (value: unknown) => void
+) {
+  const allFileContents = fs.readFileSync(path, 'utf-8');
+  const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
+  dependencyTest.spansReadyCondition(lines, resolve);
+}
+
 describe("'All Instrumentation's tests'", () => {
   afterAll(() => {
     const versions = instrumentationsVersionManager.getInstrumantaionsVersions();
     Object.keys(versions).forEach((lib) => {
       // updated supported versions file
-      if (!fs.existsSync(`${__dirname}/../../instrumentations/${lib}/tested_versions`)) {
-        fs.mkdirSync(`${__dirname}/../../instrumentations/${lib}/tested_versions`);
+      const TESTED_VERSIONS_PATH = `${__dirname}/../../instrumentations/${lib}/tested_versions`;
+      if (!fs.existsSync(TESTED_VERSIONS_PATH)) {
+        fs.mkdirSync(TESTED_VERSIONS_PATH);
       }
       const versionStrings = versions[lib].unsupported
         .map((v) => `!${v}`)
         .concat(versions[lib].supported)
         .sort((v1, v2) => semver.compare(v1.replace('!', ''), v2.replace('!', '')))
-        .toString()
-        .replace(/,/g, '\n');
+        .join('\n');
       fs.writeFileSync(
         `${__dirname}/../../instrumentations/${lib}/tested_versions/${lib}`,
         versionStrings + '\n'
@@ -50,8 +60,8 @@ describe("'All Instrumentation's tests'", () => {
           fs.mkdirSync(`${__dirname}/node/spans`);
         }
         watcher = watchDir(`${__dirname}/node/spans`, {
-          onAddFileEvent: (path) => dependencyTest.resolveSpans(path, resolver),
-          onChangeFileEvent: (path) => dependencyTest.resolveSpans(path, resolver),
+          onAddFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
+          onChangeFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
         });
         waitForDependencySpans = new Promise((resolve) => {
           resolver = resolve;
@@ -60,7 +70,7 @@ describe("'All Instrumentation's tests'", () => {
       for (let version of versionsToTest) {
         it(`test happy flow on ${dependency}@${version} / node@${process.version}`, async () => {
           try {
-            jest.setTimeout(30000);
+            jest.setTimeout(30000); // component test might take several seconds to run since we need to start a process call it wait for response and validate it
             fs.renameSync(
               `${__dirname}/node/node_modules/${dependency}@${version}`,
               `${__dirname}/node/node_modules/${dependency}`
