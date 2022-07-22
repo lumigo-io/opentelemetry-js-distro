@@ -21,7 +21,7 @@ describe('LumigoDistroDetector', () => {
       const resource = await new LumigoDistroDetector(`${__dirname}/../`).detect();
 
       expect(resource.attributes).toEqual({
-        'lumigo.distro.version': expect.stringMatching(/\d+\.\d+\.\d+/),
+        'lumigo.distro.version': 'unknown',
       });
     });
   });

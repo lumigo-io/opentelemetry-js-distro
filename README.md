@@ -157,3 +157,38 @@ try {
 
 // From this point on you are guaranteed that the SDK is initialized.
 ```
+
+### Access to the TracerProvider
+
+The Lumigo OpenTelemetry Distro provides access to the `TracerProvider` it configures (see the [Baseline setup](#baseline_setup) section for more information) through the resolution of the `init` promise:
+
+```typescript
+import * as lumigo from '@lumigo/opentelemetry';
+import { Resource } from '@opentelemetry/resources';
+import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
+
+const tracerProvider: BasicTracerProvider = await lumigo.init.tracerProvider;
+// Now you may want to add additional exporters using `tracerProvider.addSpanProcessor(spanProcessor: SpanProcessor)`
+
+// The TracerProvider also provides access to the underpinning resource
+const resource: Resource = tracerProvider.resource;
+```
+
+### Ensure spans are flushed to Lumigo before shutdown
+
+For short-running processes, the `BatchProcessor` configured by the Lumigo OpenTelemetry Distro may not ensure that the tracing data are sent to Lumigo (see the [Baseline setup](#baseline_setup) section for more information).
+Through the access to the `tracerProvider`, however, it is possible to ensure that all spans are flushed to Lumigo as follows:
+
+```typescript
+import * as lumigo from '@lumigo/opentelemetry';
+import { Resource } from '@opentelemetry/resources';
+import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
+
+const tracerProvider: BasicTracerProvider = await lumigo.init.tracerProvider;
+
+// Do some quick logic
+
+await tracerProvider.forceFlush();
+
+// Now the Node.js process can terminate, with all the spans closed so far sent to Lumigo
+```

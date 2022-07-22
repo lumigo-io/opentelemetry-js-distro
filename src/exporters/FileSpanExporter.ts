@@ -28,12 +28,10 @@ import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
 /* eslint-disable no-console */
 export class FileSpanExporter implements SpanExporter {
   private _fd: number;
-  private readonly mode: 'DEBUG' | 'PROD';
   private readonly _file: string;
   private _shutdownOnce: BindOnceFuture<void>;
 
-  constructor(file: string, mode: 'DEBUG' | 'PROD' = 'PROD') {
-    this.mode = mode;
+  constructor(file: string) {
     this._file = file;
     this._fd = fs.openSync(file, 'w');
 
@@ -90,10 +88,8 @@ export class FileSpanExporter implements SpanExporter {
             error: err,
           });
         } else {
-          if (this.mode === 'DEBUG') {
-            fs.closeSync(this._fd);
-            this._fd = fs.openSync(this._file, 'a');
-          }
+          fs.closeSync(this._fd);
+          this._fd = fs.openSync(this._file, 'a');
           return done({ code: ExportResultCode.SUCCESS });
         }
       }
