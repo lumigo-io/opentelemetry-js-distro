@@ -2,7 +2,7 @@ import 'jest-chain';
 import fs from 'fs';
 const rimraf = require('rimraf');
 const semver = require('semver');
-import { watchDir } from './helpers/fileListener';
+import { watchDir, stopWatching } from './helpers/fileListener';
 import { waitForChildProcess } from './helpers/helpers';
 import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 import { InstrumentationTest } from './instrumentations/InstrumentationTest';
@@ -39,7 +39,6 @@ describe("'All Instrumentation's tests'", () => {
   for (let dependency in instrumentationsToTest) {
     describe(`component compatibility tests for all supported versions of ${dependency}`, () => {
       let app;
-      let watcher;
       let resolver: (value: unknown) => void;
       const versionsToTest = require(`./node/${dependency}_versions.json`);
       let waitForDependencySpans;
@@ -47,7 +46,7 @@ describe("'All Instrumentation's tests'", () => {
       afterEach(async () => {
         if (app) app.kill();
         rimraf.sync(`${__dirname}/node/spans`);
-        await watcher.close();
+        await stopWatching();
         rimraf.sync(`${__dirname}/node/node_modules/${dependency}`);
       });
 
@@ -56,7 +55,7 @@ describe("'All Instrumentation's tests'", () => {
         if (!fs.existsSync(`${__dirname}/node/spans`)) {
           fs.mkdirSync(`${__dirname}/node/spans`);
         }
-        watcher = watchDir(`${__dirname}/node/spans`, {
+        watchDir(`${__dirname}/node/spans`, {
           onAddFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
           onChangeFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
         });
