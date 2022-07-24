@@ -26,7 +26,7 @@ class ExpressInstrumentationTest implements InstrumentationTest {
   }
 
   spansReadyCondition(lines: string[], resolve): void {
-    console.log('Checking the lines:');
+    console.log(`Checking [${lines.length}] lines:`);
     lines.forEach((l) => console.log(l.substring(0, 50)));
     if (
       lines.length === 3 &&

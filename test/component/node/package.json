@@ -18,7 +18,7 @@
   "lumigo": {
     "supportedDependencies": {
       "express": {
-        "satisfies": "^4.9.0"
+        "satisfies": "^4.16.0"
       }
     }
   }
