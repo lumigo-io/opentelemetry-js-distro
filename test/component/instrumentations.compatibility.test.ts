@@ -31,10 +31,7 @@ describe("'All Instrumentation's tests'", () => {
         .concat(versions[lib].supported)
         .sort((v1, v2) => semver.compare(v1.replace('!', ''), v2.replace('!', '')))
         .join('\n');
-      fs.writeFileSync(
-        `${__dirname}/../../instrumentations/${lib}/tested_versions/${lib}`,
-        versionStrings + '\n'
-      );
+      fs.writeFileSync(`${TESTED_VERSIONS_PATH}/${lib}`, versionStrings);
     });
   });
 
@@ -70,7 +67,7 @@ describe("'All Instrumentation's tests'", () => {
       for (let version of versionsToTest) {
         it(`test happy flow on ${dependency}@${version} / node@${process.version}`, async () => {
           try {
-            jest.setTimeout(30000); // component test might take several seconds to run since we need to start a process call it wait for response and validate it
+            jest.setTimeout(20000); // component test might take several seconds to run since we need to start a process call it wait for response and validate it
             fs.renameSync(
               `${__dirname}/node/node_modules/${dependency}@${version}`,
               `${__dirname}/node/node_modules/${dependency}`
@@ -93,8 +90,8 @@ describe("'All Instrumentation's tests'", () => {
             dependencyTest.runTests(spans);
             instrumentationsVersionManager.addPackageSupportedVersion(dependency, version);
           } catch (e) {
+            console.error(`${dependency}@${version} / node@${process.version} failed!`, e);
             instrumentationsVersionManager.addPackageUnsupportedVersion(dependency, version);
-            throw e;
           }
         });
       }
