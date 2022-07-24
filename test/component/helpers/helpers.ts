@@ -25,7 +25,7 @@ export async function waitForChildProcess(
       shell: true,
     });
     nodeChildApp.stderr.on('data', (data) => {
-      console.log('stderr: ', data.toString());
+      // console.log('stderr: ', data.toString());
     });
     nodeChildApp.on('error', (error) => {
       if (!shouldFail) {
@@ -34,7 +34,7 @@ export async function waitForChildProcess(
     });
     const data = await new Promise<void>((resolve, reject) => {
       nodeChildApp.stdout.on('data', (data) => {
-        console.log("express log: ", data.toString())
+        // console.log("express log: ", data.toString())
         isChildProcessReadyPredicate(data, resolve, reject);
       });
     });
