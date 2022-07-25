@@ -1,9 +1,8 @@
-from __future__ import annotations
 import os
 from glob import glob
 from typing import List, Dict, Tuple
-from contextlib import contextmanager
-from dataclasses import dataclass
+
+from src.ci.tested_versions_utils import TestedVersions
 
 ARTIFACT_DIR_NAME = "versions_artifacts"
 
@@ -29,76 +28,6 @@ ARTIFACT_DIR_NAME = "versions_artifacts"
 # Each file contains the original supported versions and the results from the tests in the previous job.
 
 
-
-
-@dataclass(frozen=True)
-class TestedVersions:
-    success: Tuple[str, ...]
-    failed: Tuple[str, ...]
-
-    @staticmethod
-    def _add_version_to_file(
-        directory: str, dependency_name: str, dependency_version: str, success: bool
-    ):
-        dependency_file_path = TestedVersions.get_file_path(directory, dependency_name)
-        TestedVersions.add_version_to_file(
-            dependency_file_path, dependency_version, success
-        )
-
-    @staticmethod
-    def add_version_to_file(path: str, version: str, success: bool):
-        new_line = f"{'' if success else '!'}{version}\n"
-        print(f"Adding the following line to {path}: {new_line}")
-        with open(path, "a") as f:
-            f.write(new_line)
-
-    @staticmethod
-    @contextmanager
-    def save_tests_result(
-        directory: str, dependency_name: str, dependency_version: str
-    ):
-        if should_add_new_versions():
-            try:
-                yield
-            except Exception:
-                TestedVersions._add_version_to_file(
-                    directory, dependency_name, dependency_version, False
-                )
-                raise
-            TestedVersions._add_version_to_file(
-                directory, dependency_name, dependency_version, True
-            )
-        else:
-            yield
-
-    @staticmethod
-    def get_file_path(directory: str, dependency_name: str) -> str:
-        return (
-            os.path.dirname(os.path.dirname(__file__))
-            + f"/instrumentations/{directory}/tested_versions/{dependency_name}"
-        )
-
-    @staticmethod
-    def from_file(path: str) -> TestedVersions:
-        success = []
-        failed = []
-        with open(path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("!"):
-                    failed.append(line[1:])
-                else:
-                    success.append(line)
-        return TestedVersions(success=tuple(success), failed=tuple(failed))
-
-    def get_all_versions(self) -> Tuple[str, ...]:
-        return self.success + self.failed
-
-
-def should_add_new_versions() -> bool:
-    return os.getenv("ADD_NEW_VERSIONS", "").lower() == "true"
-
-
 def main() -> None:
     runtime_to_files = {
         python_runtime: sorted(
@@ -114,7 +43,7 @@ def main() -> None:
     if any([files != files_names for files in runtime_to_files.values()]):
         raise Exception("Got different files from different runtimes")
     origin_tested_files = glob(
-        "instrumentations/*/tested_versions/*"
+        "src/lumigo_opentelemetry/instrumentations/*/tested_versions/*"
     )
     for instrumentation_name in files_names:
         handle_dependency(
@@ -131,32 +60,21 @@ def handle_dependency(
         for path in origin_tested_files
         if path.endswith(f"tested_versions/{instrumentation_name}")
     )
+
     runtime_to_tested_versions = calculate_runtime_to_tested_versions_dict(
         instrumentation_name, runtimes
     )
-    version_to_success = calculate_version_to_success_dict(
-        origin_path, runtime_to_tested_versions
-    )
-    for version, success in version_to_success.items():
-        TestedVersions.add_version_to_file(origin_path, version, success)
 
+    for version in list(runtime_to_tested_versions.values())[0].all_versions:
+        supported = all(
+            [
+                # A version is supported only if it works in all runtimes
+                (version in runtime_to_tested_versions[runtime].supported_versions)
+                for runtime in runtimes
+            ]
+        )
 
-def calculate_version_to_success_dict(
-    origin_path: str,
-    runtime_to_tested_versions: Dict[str, TestedVersions],
-) -> Dict[str, bool]:
-    version_to_success = {}
-    origin_versions = set(TestedVersions.from_file(origin_path).get_all_versions())
-    for runtime, tested_versions in runtime_to_tested_versions.items():
-        for version in tested_versions.success:
-            if version not in origin_versions and version not in version_to_success:
-                version_to_success[version] = True
-        for version in tested_versions.failed:
-            if version not in origin_versions:
-                version_to_success[version] = False
-    if not version_to_success:
-        print("no new versions found, not writing to file")
-    return version_to_success
+        TestedVersions.add_version_to_file(origin_path, version, supported)
 
 
 def calculate_runtime_to_tested_versions_dict(
@@ -169,12 +87,12 @@ def calculate_runtime_to_tested_versions_dict(
         for runtime in runtimes
     }
     print("runtime_to_tested_versions:", runtime_to_tested_versions)
-    all_versions = sorted(
-        list(runtime_to_tested_versions.values())[0].get_all_versions()
-    )
+
+    # Sanity check that we tested the same versions in all runtimes
+    all_versions = set(list(runtime_to_tested_versions.values())[0].all_versions)
     if any(
         [
-            sorted(tested_versions.get_all_versions()) != all_versions
+            set(tested_versions.all_versions) != all_versions
             for tested_versions in runtime_to_tested_versions.values()
         ]
     ):
