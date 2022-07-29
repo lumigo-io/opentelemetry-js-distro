@@ -3,10 +3,7 @@ import 'jest-chain';
 import fs from 'fs';
 
 import { watchDir } from './helpers/fileListener';
-import {
-  callContainer,
-  executeNpmScriptWithCallback,
-} from './helpers/helpers';
+import { callContainer, executeNpmScriptWithCallback } from './helpers/helpers';
 
 describe('component compatibility tests for all supported versions of express', function () {
   let app;
@@ -77,6 +74,21 @@ describe('component compatibility tests for all supported versions of express', 
         kind: 0,
         timestamp: expect.any(Number),
         duration: expect.any(Number),
+        resource: {
+          attributes: {
+            'service.name': 'express-js',
+            'telemetry.sdk.language': 'nodejs',
+            'telemetry.sdk.name': 'opentelemetry',
+            'telemetry.sdk.version': '1.1.1',
+            framework: 'express',
+            'process.environ': expect.stringMatching(/\{.*\}/),
+            'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
+            'process.pid': expect.any(Number),
+            'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
+            'process.runtime.name': 'nodejs',
+            'process.executable.name': 'node',
+          },
+        },
         attributes: {
           'http.method': 'GET',
           'http.target': '/invoke-requests',
@@ -157,7 +169,7 @@ describe('component compatibility tests for all supported versions of express', 
           'http.request.headers': expect.stringMatching(/\{.*\}/),
           'http.response.headers': expect.stringMatching(/\{.*\}/),
           'http.response.body': expect.stringMatching(
-              /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
+            /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
           ),
         },
         status: {

@@ -3,6 +3,7 @@ import * as http from 'http';
 import * as https from 'https';
 
 import { sortify } from './tools/jsonSortify';
+import { diag, DiagLogger } from '@opentelemetry/api';
 
 export const DEFAULT_CONNECTION_TIMEOUT = 300;
 
@@ -48,7 +49,7 @@ export const getProtocolModuleForUri = (uri: string) => {
   return uri.indexOf('https') === 0 ? https : http;
 };
 
-const getUri = async (uri: string): Promise<Object> => {
+export const getUri = async (uri: string): Promise<Object> => {
   const responseBody = await new Promise((resolve, reject) => {
     const request = getProtocolModuleForUri(uri).get(uri, (response) => {
       if (response.statusCode >= 400) {
@@ -73,23 +74,6 @@ const getUri = async (uri: string): Promise<Object> => {
   });
 
   return JSON.parse(responseBody.toString());
-};
-
-export const fetchMetadataUri = async (): Promise<Object> => {
-  try {
-    const metadataUri =
-      process.env['ECS_CONTAINER_METADATA_URI_V4'] || process.env['ECS_CONTAINER_METADATA_URI'];
-    if (metadataUri) {
-      return getUri(metadataUri);
-    } else {
-      console.warn(
-        'Unable to retrieve the ECS metadata, "ECS_CONTAINER_METADATA_URI" / "ECS_CONTAINER_METADATA_URI_V4" environment variable not available.'
-      );
-      return Promise.resolve(undefined);
-    }
-  } catch (e) {
-    return undefined;
-  }
 };
 
 export const safeGet = (obj, arr, dflt = null) => {
@@ -145,3 +129,7 @@ export const md5Hash = (item: {}): string | undefined => {
 
 // @ts-ignore
 export const removeDuplicates = (arr) => Array.from(new Set(arr));
+
+export const logger: DiagLogger = diag.createComponentLogger({
+  namespace: '@lumigo/opentelemetry:',
+});
