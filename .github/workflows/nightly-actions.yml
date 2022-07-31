@@ -51,6 +51,7 @@ jobs:
         with:
           name: 16
           path: versions_artifacts/16
+      - run: python3 -m pip install attrs==21.4.0
       - run: python3 -m scripts.gather_version_artifacts
       - run: git --no-pager diff
       - run: rm -rf versions_artifacts  # the artifacts shouldn't be committed
