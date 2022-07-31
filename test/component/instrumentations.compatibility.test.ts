@@ -84,7 +84,8 @@ describe("'All Instrumentation's tests'", () => {
                 LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
                 OTEL_SERVICE_NAME: 'express-js',
                 LUMIGO_DEBUG: true,
-              }
+              },
+              10000
             );
             // @ts-ignore
             const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));

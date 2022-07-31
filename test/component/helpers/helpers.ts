@@ -16,8 +16,10 @@ export async function waitForChildProcess(
   isChildProcessReadyPredicate: (data: string | Buffer | any, resolve, reject) => void,
   scriptName: string,
   environmentVariables: any,
+  timeout: number,
   shouldFail = false
 ) {
+  let timeoutHandle: NodeJS.Timeout;
   let nodeChildApp: ChildProcessWithoutNullStreams | undefined;
   try {
     nodeChildApp = spawn(`cd ${path} && npm`, ['run', scriptName], {
@@ -37,7 +39,13 @@ export async function waitForChildProcess(
         isChildProcessReadyPredicate(data, resolve, reject);
       });
     });
-    await onAppReady(data);
+    const timeoutPromise = new Promise((resolve, reject) => {
+      timeoutHandle = setTimeout(() => reject(), timeout);
+    });
+    await Promise.race([onAppReady(data),timeoutPromise]).then(result => {
+      clearTimeout(timeoutHandle)
+      return result;
+    });
     return nodeChildApp;
   } catch (exception) {
     if (!shouldFail) {
