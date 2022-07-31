@@ -192,3 +192,4 @@ await tracerProvider.forceFlush();
 
 // Now the Node.js process can terminate, with all the spans closed so far sent to Lumigo
 ```
+
