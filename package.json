@@ -12,7 +12,7 @@
     "install-component": "scripts/install_component.sh",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
-    "semantic-release": "semantic-release",
+    "semantic-release": "semantic-release --branches main",
     "test:unit": "npm run build && jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit",
     "test:components": "npm run build && npm run install-component && jest -c jest.component.config.js --detectOpenHandles --runInBand --forceExit",
     "tsc": "tsc"
@@ -76,9 +76,6 @@
     "webpack-cli": "^3.3.4"
   },
   "release": {
-    "branches": {
-      "name": "main"
-    },
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
