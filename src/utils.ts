@@ -54,9 +54,9 @@ export const extractEnvVars = () => {
   const res = {};
   let length = 0;
   Object.entries(process.env).forEach(([key, value]) => {
-    length += value.length;
-    if (length <= MAX_SIZE) {
+    if (length + value.length <= MAX_SIZE) {
       res[key] = value;
+      length += value.length;
     }
   });
   return res;

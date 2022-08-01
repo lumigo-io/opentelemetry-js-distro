@@ -7,21 +7,22 @@ describe('utils tests', () => {
         a: '2',
       };
       const env = extractEnvVars();
-      expect(process.env).toEqual(env);
+      expect(env).toEqual(process.env);
     });
   });
 
   describe('when evn vars are more then max size', () => {
-    it('extractEnvVars should filter exes data', () => {
+    it('extractEnvVars should filter exceeds data', () => {
       process.env = {
-        a: '1',
-        b: '2',
-        c: '3'.repeat(5000),
+        a: '3'.repeat(5000),
+        b: '1',
+        c: '2',
+        d: '2'.repeat(5000),
       };
       const env = extractEnvVars();
       expect({
-        a: '1',
-        b: '2',
+        b: '1',
+        c: '2',
       }).toEqual(env);
     });
   });
