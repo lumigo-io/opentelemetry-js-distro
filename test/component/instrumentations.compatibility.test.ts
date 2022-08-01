@@ -94,6 +94,7 @@ describe("'All Instrumentation's tests'", () => {
           } catch (e) {
             console.error(`${dependency}@${version} / node@${process.version} failed!`, e);
             instrumentationsVersionManager.addPackageUnsupportedVersion(dependency, version);
+            throw e;
           }
         });
       }
