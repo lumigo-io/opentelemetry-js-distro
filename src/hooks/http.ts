@@ -7,7 +7,7 @@ import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
 import { getAwsServiceData } from '../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, logger } from '../utils';
+import { isAwsService, runOneTimeWrapper, safeExecute, logger, MAX_SIZE } from '../utils';
 import { InstrumentationIfc } from './hooksIfc';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -40,8 +40,6 @@ const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer)
     console.warn(`Wrapping of function ${funcName} failed`, options);
   }
 };
-
-const MAX_SIZE = 4084;
 
 type OnRequestEndOptionsType = {
   body: string;

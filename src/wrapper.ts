@@ -12,7 +12,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
-import { isEnvVarTrue, logger } from './utils';
+import { extractEnvVars, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
@@ -136,7 +136,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           .merge(
             new Resource({
               framework: 'express',
-              'process.environ': JSON.stringify(process.env),
+              'process.environ': JSON.stringify(extractEnvVars()),
             })
           )
           .merge(detectedResource),
