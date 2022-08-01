@@ -6,6 +6,7 @@ import { sortify } from './tools/jsonSortify';
 import { diag, DiagLogger } from '@opentelemetry/api';
 
 export const DEFAULT_CONNECTION_TIMEOUT = 300;
+export const MAX_SIZE = 4084;
 
 export function safeExecute<T>(
   callback: Function,
@@ -47,6 +48,18 @@ export const getConnectionTimeout = () => {
 
 export const getProtocolModuleForUri = (uri: string) => {
   return uri.indexOf('https') === 0 ? https : http;
+};
+
+export const extractEnvVars = () => {
+  const res = {};
+  let length = 0;
+  Object.entries(process.env).forEach(([key, value]) => {
+    length += value.length;
+    if (length <= MAX_SIZE) {
+      res[key] = value;
+    }
+  });
+  return res;
 };
 
 export const getUri = async (uri: string): Promise<Object> => {
