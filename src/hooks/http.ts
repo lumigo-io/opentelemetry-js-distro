@@ -68,43 +68,45 @@ export const HttpHooks: InstrumentationIfc<
   IncomingMessage | ServerResponse
 > = {
   requestHook(span: Span & { attributes: Record<string, string> }, request: RequestType) {
-    logger.debug('@opentelemetry/instrumentation-http on requestHook()');
-    safeExecute(() => {
-      const requestData: RequestRawData = {
-        request: {
-          path: span.attributes?.['http.target'],
-          host: span.attributes?.['http.host'] || span.attributes?.['net.peer.name'],
-          truncated: false,
-          body: '',
-          headers: Http.getRequestHeaders(request),
-        },
-        response: {
-          truncated: false,
-          body: '',
-          headers: {},
-        },
-      };
-      const scrubbedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
-      span.setAttribute('http.request.headers', scrubbedHeaders);
-      const emitWrapper = Http.httpRequestEmitBeforeHookWrapper(requestData, span);
-
-      const writeWrapper = Http.httpRequestWriteBeforeHookWrapper(requestData, span);
-
-      const endWrapper = (requestData: RequestRawData, span: Span) => {
-        return function (args) {
-          if (isEmptyString(requestData.request.body)) {
-            const body = Http.extractBodyFromWriteOrEndFunc(args);
-            requestData.request.body += body;
-            const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
-            span.setAttribute('http.request.body', scrubbed);
-          }
+    if (request instanceof ClientRequest) {
+      logger.debug('@opentelemetry/instrumentation-http on requestHook()');
+      safeExecute(() => {
+        const requestData: RequestRawData = {
+          request: {
+            path: span.attributes?.['http.target'],
+            host: span.attributes?.['http.host'] || span.attributes?.['net.peer.name'],
+            truncated: false,
+            body: '',
+            headers: Http.getRequestHeaders(request),
+          },
+          response: {
+            truncated: false,
+            body: '',
+            headers: {},
+          },
         };
-      };
+        const scrubbedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
+        span.setAttribute('http.request.headers', scrubbedHeaders);
+        const emitWrapper = Http.httpRequestEmitBeforeHookWrapper(requestData, span);
 
-      hook(request, 'end', { beforeHook: endWrapper });
-      hook(request, 'emit', { beforeHook: emitWrapper });
-      hook(request, 'write', { beforeHook: writeWrapper });
-    })();
+        const writeWrapper = Http.httpRequestWriteBeforeHookWrapper(requestData, span);
+
+        const endWrapper = (requestData: RequestRawData, span: Span) => {
+          return function (args) {
+            if (isEmptyString(requestData.request.body)) {
+              const body = Http.extractBodyFromWriteOrEndFunc(args);
+              requestData.request.body += body;
+              const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
+              span.setAttribute('http.request.body', scrubbed);
+            }
+          };
+        };
+
+        hook(request, 'end', { beforeHook: endWrapper });
+        hook(request, 'emit', { beforeHook: emitWrapper });
+        hook(request, 'write', { beforeHook: writeWrapper });
+      })();
+    }
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
     logger.debug('@opentelemetry/instrumentation-http on responseHook()');

@@ -87,7 +87,7 @@ describe("'All Instrumentation's tests'", () => {
               },
               10000
             );
-            // @ts-ignore
+
             const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));
             dependencyTest.runTests(spans);
             instrumentationsVersionManager.addPackageSupportedVersion(dependency, version);
