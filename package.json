@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/wrapper.js",
   "private": false,
@@ -12,8 +12,8 @@
     "install-component": "scripts/install_component.sh",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
-    "semantic-release": "semantic-release --branches main",
-    "test:unit": "npm run build && jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit",
+    "semantic-release": "semantic-release",
+    "test:unit": "npm run build && jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
     "test:components": "npm run build && npm run install-component && jest -c jest.component.config.js --detectOpenHandles --runInBand --forceExit",
     "tsc": "tsc"
   },
@@ -46,9 +46,9 @@
     "@opentelemetry/exporter-zipkin": "^1.0.1",
     "@opentelemetry/plugin-express": "^0.15.0",
     "@opentelemetry/plugin-http": "^0.18.2",
-    "@semantic-release/changelog": "^6.0.1",
-    "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^8.0.2",
+    "@semantic-release/changelog": "^3.0.6",
+    "@semantic-release/git": "^7.0.18",
+    "@semantic-release/github": "^7.2.3",
     "@types/express": "^4.17.8",
     "@types/jest": "^27.4.0",
     "@types/node": "^17.0.23",
@@ -67,7 +67,7 @@
     "jest-chain": "^1.1.5",
     "prettier": "^2.2.1",
     "rimraf": "^3.0.2",
-    "semantic-release": "^19.0.3",
+    "semantic-release": "^19.0.2",
     "semver": "^7.3.7",
     "tmp": "^0.2.1",
     "ts-node": "^9.1.1",
@@ -76,6 +76,9 @@
     "webpack-cli": "^3.3.4"
   },
   "release": {
+    "branches": {
+      "name": "main"
+    },
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
