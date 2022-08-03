@@ -22,7 +22,7 @@ describe("'All Instrumentation's tests'", () => {
     const versions = instrumentationsVersionManager.getInstrumantaionsVersions();
     Object.keys(versions).forEach((lib) => {
       // updated supported versions file
-      const TESTED_VERSIONS_PATH = `${__dirname}/../../src/lumigo_opentelemetry/instrumentations/${lib}/tested_versions`;
+      const TESTED_VERSIONS_PATH = `${__dirname}/../../src/instrumentations/${lib}/tested_versions`;
       if (!fs.existsSync(TESTED_VERSIONS_PATH)) {
         fs.mkdirSync(TESTED_VERSIONS_PATH);
       }

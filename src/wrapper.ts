@@ -10,8 +10,8 @@ import {
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import { FileSpanExporter } from './exporters';
-import LumigoExpressInstrumentation from './instrumentors/LumigoExpressInstrumentation';
-import LumigoHttpInstrumentation from './instrumentors/LumigoHttpInstrumentation';
+import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
+import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import { extractEnvVars, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';

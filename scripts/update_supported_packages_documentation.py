@@ -25,7 +25,7 @@ updated_readme_content = readme_content[: supported_packages_start_index + 1]
 updated_readme_content += ["\n"]
 updated_readme_content += [
     line + "\n" for line in generate_support_matrix_markdown(
-        os.path.join(project_root, "src/lumigo_opentelemetry"),
+        os.path.join(project_root, "src/instrumentations"),
         "https://www.npmjs.com/package/{}"
     )
 ]
