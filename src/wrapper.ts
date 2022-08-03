@@ -184,4 +184,3 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
 };
 
 export const init = trace();
-
