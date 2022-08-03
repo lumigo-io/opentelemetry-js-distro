@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/wrapper.js",
   "private": false,
@@ -76,7 +76,9 @@
     "webpack-cli": "^4.10.0"
   },
   "release": {
-    "branches": ["main"],
+    "branches": [
+      "main"
+    ],
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
