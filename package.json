@@ -1,20 +1,20 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.0.2",
+  "version": "1.0.6",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/wrapper.js",
   "private": false,
   "types": "dist/src/wrapper.d.ts",
   "scripts": {
     "build": "rm -rf dist wrapper.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" wrapper.tgz",
-    "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test:unit && npm run test:component:express",
+    "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test:unit",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "install-component": "scripts/install_component.sh",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
     "semantic-release": "semantic-release",
-    "test:unit": "npm run build && jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit",
-    "test:component:express": "npm run build && npm run install-component && jest -c jest.express.component.config.js --detectOpenHandles --runInBand --forceExit",
+    "test:unit": "npm run build && jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
+    "test:components": "npm run build && npm run install-component && jest -c jest.component.config.js --detectOpenHandles --runInBand --forceExit",
     "tsc": "tsc"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
@@ -48,7 +48,7 @@
     "@opentelemetry/plugin-http": "^0.18.2",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^8.0.2",
+    "@semantic-release/github": "^8.0.5",
     "@types/express": "^4.17.8",
     "@types/jest": "^27.4.0",
     "@types/node": "^17.0.23",
@@ -66,12 +66,14 @@
     "jest": "^26.6.3",
     "jest-chain": "^1.1.5",
     "prettier": "^2.2.1",
-    "semantic-release": "^19.0.3",
+    "rimraf": "^3.0.2",
+    "semantic-release": "^19.0.2",
+    "semver": "^7.3.7",
     "tmp": "^0.2.1",
     "ts-node": "^9.1.1",
     "typescript": "^4.3.4",
     "webpack": "^5.72.1",
-    "webpack-cli": "^3.3.4"
+    "webpack-cli": "^4.10.0"
   },
   "release": {
     "branches": [

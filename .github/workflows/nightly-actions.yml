@@ -1,0 +1,76 @@
+name: Version Testing
+on:
+  schedule:
+    - cron: "0 7 * * *"
+jobs:
+  check-new-versions-of-instrumented-packages:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node_cimg_tag: [ 12, 14, 16 ]
+    name: check-new-versions-of-instrumented-packages
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_cimg_tag }}
+      - run: npm ci
+      - run: npm run build
+      - run: npm run install-component
+      - run: npm run test:components
+        continue-on-error: true
+      - run: git --no-pager diff
+      - run: mkdir versions_artifact
+      - run: for path in `git diff --name-only`; do cp "$path" versions_artifact; done
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.node_cimg_tag }}
+          path: versions_artifact
+
+  push-branch:
+    runs-on: ubuntu-latest
+    name: push-branch
+    needs: check-new-versions-of-instrumented-packages
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - run: mkdir versions_artifacts
+      - uses: actions/download-artifact@v2
+        continue-on-error: true  # when there aren't changes the artifact won't be uploaded and this step will fail
+        with:
+          name: 12
+          path: versions_artifacts/12
+      - uses: actions/download-artifact@v2
+        continue-on-error: true
+        with:
+          name: 14
+          path: versions_artifacts/14
+      - uses: actions/download-artifact@v2
+        continue-on-error: true
+        with:
+          name: 16
+          path: versions_artifacts/16
+      - run: python3 -m pip install attrs==21.4.0
+      - run: python3 -m scripts.gather_version_artifacts
+      - run: git --no-pager diff
+      - run: rm -rf versions_artifacts  # the artifacts shouldn't be committed
+      - run: echo "::set-output name=branch_name::$(date +version-testing-%Y%m%d)"
+        id: branch_name
+      - run: |  # need to set an env var in order to support multi-lines output https://trstringer.com/github-actions-multiline-strings/
+          new_versions="$(./scripts/describe_supported_versions_diff.sh)"
+          echo "new_versions<<EOF" >> $GITHUB_ENV
+          echo "$new_versions" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: ${{steps.branch_name.outputs.branch_name}}
+          branch: ${{steps.branch_name.outputs.branch_name}}
+          commit-message: ${{ env.new_versions }}
+          body: ${{ env.new_versions }}
+          base: main
+          reviewers: OrrLumigo,GuyMoses

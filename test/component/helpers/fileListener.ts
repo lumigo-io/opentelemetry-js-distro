@@ -10,8 +10,8 @@ export const stopWatching = async () => {
 };
 
 export type WatchDirOptions = {
-  onAddFileEvent?: (path: string) => void;
-  onChangeFileEvent?: (path: string) => void;
+  onAddFileEvent?: (path: string) => void,
+  onChangeFileEvent?: (path: string) => void,
 };
 
 export const watchDir = (spansDir: string, options: WatchDirOptions) => {
@@ -21,13 +21,21 @@ export const watchDir = (spansDir: string, options: WatchDirOptions) => {
   }
   watcher = chokidar.watch(spansDir, {
     ignoreInitial: true,
+    awaitWriteFinish: {
+      stabilityThreshold: 20,
+      pollInterval: 10,
+    },
   });
   watcher
     .on('add', async (path: string) => {
-      if (onAddFileEvent) {onAddFileEvent(path)}
+      if (onAddFileEvent) {
+        onAddFileEvent(path);
+      }
     })
     .on('change', async (path: string) => {
-      if (onChangeFileEvent) {onChangeFileEvent(path)}
+      if (onChangeFileEvent) {
+        onChangeFileEvent(path);
+      }
     });
   return watcher;
 };
