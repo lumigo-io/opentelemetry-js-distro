@@ -146,3 +146,32 @@ export const removeDuplicates = (arr) => Array.from(new Set(arr));
 export const logger: DiagLogger = diag.createComponentLogger({
   namespace: '@lumigo/opentelemetry:',
 });
+
+export const safeRequire = (libId) => {
+  try {
+    const customReq =
+      // eslint-disable-next-line no-undef,camelcase
+      // @ts-ignore __non_webpack_require__ not available at compile time
+      typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+    return customReq(libId);
+  } catch (e) {
+    try {
+      const customReq =
+        // eslint-disable-next-line no-undef,camelcase
+        // @ts-ignore __non_webpack_require__ not available at compile time
+        typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+      const path = customReq.resolve(libId, {
+        paths: (process.env.NODE_PATH || '').split(':'),
+      });
+      return customReq(path);
+    } catch (e) {
+      if (e.code !== 'MODULE_NOT_FOUND') {
+        logger.warn('Unable to load module', {
+          error: e,
+          libId: libId,
+        });
+      }
+    }
+  }
+  return undefined;
+};
