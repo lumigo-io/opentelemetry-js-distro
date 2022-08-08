@@ -161,7 +161,7 @@ export const safeRequire = (libId) => {
         // @ts-ignore __non_webpack_require__ not available at compile time
         typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
       const path = customReq.resolve(libId, {
-        paths: [...(process.env.NODE_PATH || '').split(':')],
+        paths: (process.env.NODE_PATH || '').split(':'),
       });
       return customReq(path);
     } catch (e) {
