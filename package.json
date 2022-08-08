@@ -13,7 +13,7 @@
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
     "semantic-release": "semantic-release",
-    "test:unit": "NODE_OPTIONS=--unhandled-rejections=warn jest -c jest.unit.config.js --detectOpenHandles --runInBand",
+    "test:unit": "NODE_OPTIONS=--unhandled-rejections=warn jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
     "test:components": "npm run build && npm run install-component && jest -c jest.component.config.js --detectOpenHandles --runInBand --forceExit",
     "tsc": "tsc"
   },
