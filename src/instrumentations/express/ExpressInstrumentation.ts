@@ -1,4 +1,4 @@
-import { ExpressHooks } from '../hooks/express';
+import { ExpressHooks } from './express';
 import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
 
 export default class LumigoExpressInstrumentation {

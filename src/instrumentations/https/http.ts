@@ -6,9 +6,9 @@ import { CommonUtils } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
-import { getAwsServiceData } from '../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, logger, MAX_SIZE } from '../utils';
-import { InstrumentationIfc } from './hooksIfc';
+import { getAwsServiceData } from '../../spans/awsSpan';
+import { isAwsService, runOneTimeWrapper, safeExecute, logger, MAX_SIZE } from '../../utils';
+import { InstrumentationIfc } from '../hooksIfc';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};

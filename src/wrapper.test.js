@@ -21,11 +21,11 @@ describe('Distro initialization', () => {
 
   beforeEach(() => {
     process.env = { ...ORIGINAL_PROCESS_ENV };
-    OTLPTraceExporter.mockClear();
   });
 
   afterEach(() => {
     process.env = ORIGINAL_PROCESS_ENV;
+    OTLPTraceExporter.mockClear();
   });
 
   describe("with the 'LUMIGO_SWITCH_OFF' environment variable set to 'true'", () => {

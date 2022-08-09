@@ -453,7 +453,7 @@ def main() -> None:
     if any([files != files_names for files in runtime_to_files.values()]):
         raise Exception("Got different files from different runtimes")
     origin_tested_files = glob(
-        "src/lumigo_opentelemetry/instrumentations/*/tested_versions/*"
+        "src/instrumentations/*/tested_versions/*"
     )
     for instrumentation_name in files_names:
         handle_dependency(
