@@ -1,7 +1,5 @@
 name: Version Testing
-on:
-  schedule:
-    - cron: "0 7 * * *"
+on: [push]
 jobs:
   check-new-versions-of-instrumented-packages:
     runs-on: ubuntu-latest
