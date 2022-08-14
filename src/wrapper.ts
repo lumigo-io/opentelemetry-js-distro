@@ -18,6 +18,7 @@ import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
+const INSTRUMENTED_MODULES = new Set<string>();
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
@@ -31,8 +32,12 @@ let isTraceInitialized = false;
 
 const externalInstrumentations = [];
 
-function requireIfAvailable(names: string[]) {
-  names.forEach((name) => safeRequire(name));
+function requireIfAvailable(names: string[], instrumentedModules: Set<string>) {
+  names.forEach((name) => {
+    const required = safeRequire(name);
+    if (required) instrumentedModules.add(name);
+    return required;
+  });
 }
 
 const ignoreConfig = [
@@ -55,10 +60,10 @@ registerInstrumentations({
   ],
 });
 
-requireIfAvailable([
-  ...MODULES_TO_INSTRUMENT,
-  ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
-]);
+requireIfAvailable(
+  [...MODULES_TO_INSTRUMENT, ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]')],
+  INSTRUMENTED_MODULES
+);
 
 function reportInitError(err) {
   logger.error(
@@ -69,6 +74,14 @@ function reportInitError(err) {
 
 export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
+}
+
+function getFramework(): string {
+  if (INSTRUMENTED_MODULES.has('express')) {
+    return 'express';
+  } else {
+    return 'nodejs';
+  }
 }
 
 const trace = async (): Promise<LumigoSdkInitialization> => {
@@ -106,7 +119,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         resource: Resource.default()
           .merge(
             new Resource({
-              framework: 'express',
+              framework: getFramework(),
               'process.environ': JSON.stringify(extractEnvVars()),
             })
           )
