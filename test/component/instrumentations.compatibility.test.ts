@@ -6,17 +6,9 @@ import { watchDir, stopWatching } from './helpers/fileListener';
 import { waitForChildProcess } from './helpers/helpers';
 import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 import { InstrumentationTest } from './instrumentations/InstrumentationTest';
+import {determineIfSpansAreReady} from "../testUtils/utils";
 
-function determineIfSpansAreReady(
-  dependencyTest: InstrumentationTest,
-  path: string,
-  resolve: (value: unknown) => void
-) {
-  const allFileContents = fs.readFileSync(path, 'utf-8');
-  const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-  dependencyTest.spansReadyCondition(lines, resolve);
-}
-
+const SPANS_DIR = `/node/instrumentations/spans`;
 describe("'All Instrumentation's tests'", () => {
   afterAll(() => {
     const versions = instrumentationsVersionManager.getInstrumantaionsVersions();
@@ -35,27 +27,27 @@ describe("'All Instrumentation's tests'", () => {
     });
   });
 
-  const instrumentationsToTest = require('./node/package.json').lumigo.supportedDependencies;
+  const instrumentationsToTest = require('./node/instrumentations/package.json').lumigo.supportedDependencies;
   for (let dependency in instrumentationsToTest) {
     describe(`component compatibility tests for all supported versions of ${dependency}`, () => {
       let app;
       let resolver: (value: unknown) => void;
-      const versionsToTest = require(`./node/${dependency}_versions.json`);
+      const versionsToTest = require(`./node/instrumentations/${dependency}_versions.json`);
       let waitForDependencySpans;
       let dependencyTest: InstrumentationTest;
       afterEach(async () => {
         if (app) app.kill();
-        rimraf.sync(`${__dirname}/node/spans`);
+        rimraf.sync(`${__dirname}/node/instrumentations/spans`);
         await stopWatching();
-        rimraf.sync(`${__dirname}/node/node_modules/${dependency}`);
+        rimraf.sync(`${__dirname}/node/instrumentations/node_modules/${dependency}`);
       });
 
       beforeEach(async () => {
         dependencyTest = (await import(`./instrumentations/${dependency}`)).default;
-        if (!fs.existsSync(`${__dirname}/node/spans`)) {
-          fs.mkdirSync(`${__dirname}/node/spans`);
+        if (!fs.existsSync(`${__dirname}${SPANS_DIR}`)) {
+          fs.mkdirSync(`${__dirname}${SPANS_DIR}`);
         }
-        watchDir(`${__dirname}/node/spans`, {
+        watchDir(`${__dirname}${SPANS_DIR}`, {
           onAddFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
           onChangeFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
         });
@@ -67,15 +59,14 @@ describe("'All Instrumentation's tests'", () => {
         const testMessage = `test happy flow on ${dependency}@${version} / node@${process.version}`;
         it(testMessage, async () => {
           try {
-            jest.setTimeout(20000); // component test might take several seconds to run since we need to start a process call it wait for response and validate it
             console.log(testMessage);
             fs.renameSync(
-              `${__dirname}/node/node_modules/${dependency}@${version}`,
-              `${__dirname}/node/node_modules/${dependency}`
+              `${__dirname}/node/instrumentations/node_modules/${dependency}@${version}`,
+              `${__dirname}/node/instrumentations/node_modules/${dependency}`
             );
-            const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/spans/spans-test-${dependency}${version}.json`;
+            const FILE_EXPORTER_FILE_NAME = `${__dirname}${SPANS_DIR}/spans-test-${dependency}${version}.json`;
             app = await waitForChildProcess(
-              './test/component/node',
+              `./test/component/node/instrumentations`,
               dependencyTest.onChildProcessReady,
               dependencyTest.isChildProcessReadyPredicate,
               `start:${dependency}:injected`,
@@ -96,7 +87,7 @@ describe("'All Instrumentation's tests'", () => {
             instrumentationsVersionManager.addPackageUnsupportedVersion(dependency, version);
             throw e;
           }
-        });
+        },20000);
       }
     });
   }
