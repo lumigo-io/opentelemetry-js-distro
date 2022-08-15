@@ -55,13 +55,13 @@ jobs:
           name: 16
           path: versions_artifacts/16
       - run: python3 -m pip install -r ./requirements-ci.txt
-      - run: python3 -m scripts.gather_version_artifacts
+      - run: PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m gather_version_artifacts
       - run: git --no-pager diff
       - run: rm -rf versions_artifacts  # the artifacts shouldn't be committed
       - run: echo "::set-output name=branch_name::$(date +version-testing-%Y%m%d)"
         id: branch_name
       - run: |  # update 'Supported packages' section in README.md
-          python3 -m scripts.update_supported_packages_documentation
+          PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m update_supported_packages_documentation
       - run: |  # need to set an env var in order to support multi-lines output https://trstringer.com/github-actions-multiline-strings/
           new_versions="$(./scripts/describe_supported_versions_diff.sh)"
           echo "new_versions<<EOF" >> $GITHUB_ENV
