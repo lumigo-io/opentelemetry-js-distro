@@ -1,6 +1,6 @@
 import { HttpInstrumentation, IgnoreMatcher } from '@opentelemetry/instrumentation-http';
 
-import { HttpHooks } from '../hooks/http';
+import { HttpHooks } from './http';
 
 export default class LumigoHttpInstrumentation {
   constructor(urlsToIgnore: IgnoreMatcher[]) {
