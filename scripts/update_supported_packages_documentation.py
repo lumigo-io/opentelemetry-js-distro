@@ -1,5 +1,5 @@
 import os
-from gather_version_artifacts import generate_support_matrix_markdown
+from tested_versions_utils import generate_support_matrix_markdown
 
 project_root = os.path.dirname(os.path.dirname(__file__))
 
