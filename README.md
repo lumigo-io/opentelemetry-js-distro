@@ -112,7 +112,7 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 
 | Instrumentation | Package | Supported Versions |
 | --- | --- | --- |
-| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.17.3 |
+| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.1 |
 
 ## Baseline setup
 
