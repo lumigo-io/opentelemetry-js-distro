@@ -2,7 +2,7 @@ import { InstrumentationTest } from './InstrumentationTest';
 import { callContainer } from '../helpers/helpers';
 import {ChildProcess} from "child_process";
 
-class ExpressInstrumentationTest implements InstrumentationTest {
+class HttpInstrumentationTest implements InstrumentationTest {
   isChildProcessReadyPredicate(data: any, nodeChildApp: ChildProcess, resolve, reject): void {
     const dataStr = data.toString();
     if(dataStr.includes("Server is running on http://localhost:8000")){
@@ -110,4 +110,4 @@ class ExpressInstrumentationTest implements InstrumentationTest {
   }
 }
 
-export default new ExpressInstrumentationTest();
+export default new HttpInstrumentationTest();
