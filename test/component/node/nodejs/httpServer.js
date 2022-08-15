@@ -13,7 +13,7 @@ const requestListener =async function (req, res) {
   });
   res.setHeader("Content-Type", "application/json");
   res.writeHead(200);
-  res.end("");
+  res.end(JSON.stringify(result.data));
 };
 
 const server = http.createServer(requestListener);
