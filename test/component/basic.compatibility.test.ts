@@ -16,6 +16,7 @@ function determineIfSpansAreReady(
   InstrumentationNode.spansReadyCondition(lines, resolve);
 }
 
+const SPANS_DIR = `${__dirname}/node/nodejs/spans`;
 describe('When express isnt installed', () => {
   let app;
   let resolver: (value: unknown) => void;
@@ -30,10 +31,10 @@ describe('When express isnt installed', () => {
   process.on('SIGTERM', cleanExit); // catch kill
 
   beforeEach(async () => {
-    if (!fs.existsSync(`${__dirname}/node/nodejs/spans`)) {
-      fs.mkdirSync(`${__dirname}/node/nodejs/spans`);
+    if (!fs.existsSync(SPANS_DIR)) {
+      fs.mkdirSync(SPANS_DIR);
     }
-    watchDir(`${__dirname}/node/nodejs/spans`, {
+    watchDir(SPANS_DIR, {
       onAddFileEvent: (path) => determineIfSpansAreReady(InstrumentationNode, path, resolver),
       onChangeFileEvent: (path) => determineIfSpansAreReady(InstrumentationNode, path, resolver),
     });
@@ -45,7 +46,7 @@ describe('When express isnt installed', () => {
 
   afterEach(async () => {
     if (app) app.kill('SIGINT');
-    rimraf.sync(`${__dirname}/node/nodejs/spans`);
+    rimraf.sync(SPANS_DIR);
     await stopWatching();
   });
 
