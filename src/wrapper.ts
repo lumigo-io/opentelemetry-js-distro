@@ -80,7 +80,7 @@ function getFramework(): string {
   if (INSTRUMENTED_MODULES.has('express')) {
     return 'express';
   } else {
-    return 'nodejs';
+    return 'component';
   }
 }
 

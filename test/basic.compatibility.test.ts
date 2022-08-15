@@ -2,21 +2,11 @@ import fs from 'fs';
 const rimraf = require('rimraf');
 import { watchDir, stopWatching } from './helpers/fileListener';
 import { waitForChildProcess } from './helpers/helpers';
-import { InstrumentationTest } from './instrumentations/InstrumentationTest';
-import InstrumentationNode from './instrumentations/nodejs';
-import * as path from "path";
+import InstrumentationNode from './instrumentationsTests/http';
+import {determineIfSpansAreReady} from "./testUtils/utils";
 
-function determineIfSpansAreReady(
-  dependencyTest: InstrumentationTest,
-  path: string,
-  resolve: (value: unknown) => void
-) {
-  const allFileContents = fs.readFileSync(path, 'utf-8');
-  const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-  InstrumentationNode.spansReadyCondition(lines, resolve);
-}
 
-const SPANS_DIR = `${__dirname}/node/nodejs/spans`;
+const SPANS_DIR = `${__dirname}/component/http/spans`;
 describe('When express isnt installed', () => {
   let app;
   let resolver: (value: unknown) => void;
@@ -41,7 +31,6 @@ describe('When express isnt installed', () => {
     waitForDependencySpans = new Promise((resolve) => {
       resolver = resolve;
     });
-    if (app) app.kill('SIGINT');
   });
 
   afterEach(async () => {
@@ -50,15 +39,14 @@ describe('When express isnt installed', () => {
     await stopWatching();
   });
 
-  it('should set framework to nodejs', async () => {
-    const FILE_EXPORTER_FILE_NAME = `${__dirname}/node/nodejs/spans/spans-test-nodejs.json`;
+  it('should set framework to component', async () => {
+    const FILE_EXPORTER_FILE_NAME = `${SPANS_DIR}/spans-test-nodejs.json`;
     app = await waitForChildProcess(
-      './test/component/node/nodejs',
+      './test/component/http',
       InstrumentationNode.onChildProcessReady,
       InstrumentationNode.isChildProcessReadyPredicate,
       `start:nodejs:injected`,
       {
-        NODE_PATH: path.resolve(`${__dirname}/node/nodejs`),
         LUMIGO_TRACER_TOKEN: 't_123321',
         LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
         OTEL_SERVICE_NAME: 'express-js',

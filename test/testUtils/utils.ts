@@ -1,5 +1,5 @@
-import {InstrumentationTest} from "../component/instrumentations/InstrumentationTest";
 import fs from "fs";
+import {InstrumentationTest} from "../instrumentationsTests/InstrumentationTest";
 
 export function determineIfSpansAreReady(
     dependencyTest: InstrumentationTest,
@@ -10,3 +10,9 @@ export function determineIfSpansAreReady(
     const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
     dependencyTest.spansReadyCondition(lines, resolve);
 }
+
+
+export const getDirectories = source =>
+    fs.readdirSync(source, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)

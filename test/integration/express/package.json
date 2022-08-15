@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start:express:injected": "node -r @lumigo/opentelemetry expressApp.js",
+    "start:express:injected": "node -r @lumigo/opentelemetry app.js",
     "install-dependencies": "node installDependencies.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@lumigo/opentelemetry": "file:../../../../wrapper.tgz",
+    "@lumigo/opentelemetry": "file:../../../wrapper.tgz",
     "body-parser": "^1.19.1",
     "chokidar": "^3.5.1",
     "semver": "^7.3.7"
@@ -17,7 +17,7 @@
   "lumigo": {
     "supportedDependencies": {
       "express": {
-        "satisfies": "^4.9.0"
+        "satisfies": "^4.18.0"
       }
     }
   }
