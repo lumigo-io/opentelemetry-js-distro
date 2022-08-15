@@ -59,7 +59,7 @@ class ExpressInstrumentationTest implements InstrumentationTest {
       resource: {
         attributes: {
           'service.name': 'express-js',
-          'telemetry.sdk.language': 'component',
+          'telemetry.sdk.language': 'nodejs',
           'telemetry.sdk.name': 'opentelemetry',
           'telemetry.sdk.version': '1.1.1',
           framework: 'express',
@@ -67,7 +67,7 @@ class ExpressInstrumentationTest implements InstrumentationTest {
           'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
           'process.pid': expect.any(Number),
           'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-          'process.runtime.name': 'component',
+          'process.runtime.name': 'nodejs',
           'process.executable.name': 'node',
         },
       },

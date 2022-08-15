@@ -41,10 +41,10 @@ class HttpInstrumentationTest implements InstrumentationTest {
       resource: {
         attributes: {
           "service.name": "express-js",
-          "telemetry.sdk.language": "component",
+          "telemetry.sdk.language": "nodejs",
           "telemetry.sdk.name": "opentelemetry",
           "telemetry.sdk.version": "1.1.1",
-          "framework": "component",
+          "framework": "nodejs",
           'process.environ': expect.stringMatching(/\{.*\}/),
           'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
           'process.pid': expect.any(Number),
