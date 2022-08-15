@@ -50,7 +50,7 @@ class HttpInstrumentationTest implements InstrumentationTest {
           'process.pid': expect.any(Number),
           "process.executable.name": "node",
           'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-          "process.runtime.name": "component",
+          "process.runtime.name": "nodejs",
           "process.runtime.description": "Node.js",
         }
       },
