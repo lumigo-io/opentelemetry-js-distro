@@ -1,4 +1,4 @@
-import { extractEnvVars, logger, safeRequire } from './utils';
+import { extractEnvVars, getMaxSize, logger, safeRequire } from './utils';
 import http from 'http';
 
 describe('utils tests', () => {
@@ -63,5 +63,31 @@ describe('utils tests', () => {
         c: '2',
       }).toEqual(env);
     });
+  });
+});
+
+describe('get max size value according to env. vars', () => {
+  it('get max size when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', () => {
+    process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
+    const size = getMaxSize();
+    expect(size).toEqual(1);
+  });
+
+  it('get max size when OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', () => {
+    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
+    const size = getMaxSize();
+    expect(size).toEqual(50);
+  });
+
+  it('get max size when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT and OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT are set', () => {
+    process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
+    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
+    const size = getMaxSize();
+    expect(size).toEqual(1);
+  });
+
+  it('get max size when no env. vars are set, get default value', () => {
+    const size = getMaxSize();
+    expect(size).toEqual(2048);
   });
 });
