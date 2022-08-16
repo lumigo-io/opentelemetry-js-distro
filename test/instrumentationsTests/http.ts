@@ -40,7 +40,7 @@ class HttpInstrumentationTest implements InstrumentationTest {
       kind: 1,
       resource: {
         attributes: {
-          "service.name": "express-js",
+          "service.name": "http-js",
           "telemetry.sdk.language": "nodejs",
           "telemetry.sdk.name": "opentelemetry",
           "telemetry.sdk.version": "1.1.1",
