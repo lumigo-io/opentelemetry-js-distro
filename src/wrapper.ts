@@ -18,7 +18,6 @@ import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
-const INSTRUMENTED_MODULES = new Set<string>();
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
@@ -33,10 +32,12 @@ let isTraceInitialized = false;
 const externalInstrumentations = [];
 
 function requireIfAvailable(names: string[]) {
+  const instrumentedValues = new Set<string>();
   names.forEach((name) => {
     const required = safeRequire(name);
-    if (required) INSTRUMENTED_MODULES.add(name);
+    if (required) instrumentedValues.add(name);
   });
+  return instrumentedValues;
 }
 
 const ignoreConfig = [
@@ -59,7 +60,7 @@ registerInstrumentations({
   ],
 });
 
-requireIfAvailable(MODULES_TO_INSTRUMENT);
+const INSTRUMENTED_MODULES = requireIfAvailable(MODULES_TO_INSTRUMENT);
 
 function reportInitError(err) {
   logger.error(
