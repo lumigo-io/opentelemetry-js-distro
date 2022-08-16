@@ -44,7 +44,7 @@ class HttpInstrumentationTest implements InstrumentationTest {
           "telemetry.sdk.language": "nodejs",
           "telemetry.sdk.name": "opentelemetry",
           "telemetry.sdk.version": "1.1.1",
-          "framework": "nodejs",
+          "framework": "node",
           'process.environ': expect.stringMatching(/\{.*\}/),
           'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
           'process.pid': expect.any(Number),

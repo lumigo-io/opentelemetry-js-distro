@@ -32,11 +32,10 @@ let isTraceInitialized = false;
 
 const externalInstrumentations = [];
 
-function requireIfAvailable(names: string[], instrumentedModules: Set<string>) {
+function requireIfAvailable(names: string[]) {
   names.forEach((name) => {
     const required = safeRequire(name);
-    if (required) instrumentedModules.add(name);
-    return required;
+    if (required) INSTRUMENTED_MODULES.add(name);
   });
 }
 
@@ -60,10 +59,7 @@ registerInstrumentations({
   ],
 });
 
-requireIfAvailable(
-  [...MODULES_TO_INSTRUMENT, ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]')],
-  INSTRUMENTED_MODULES
-);
+requireIfAvailable(MODULES_TO_INSTRUMENT);
 
 function reportInitError(err) {
   logger.error(
@@ -80,7 +76,7 @@ function getFramework(): string {
   if (INSTRUMENTED_MODULES.has('express')) {
     return 'express';
   } else {
-    return 'nodejs';
+    return 'node';
   }
 }
 
