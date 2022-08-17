@@ -9,7 +9,7 @@ const components = getDirectories(`${__dirname}/component`);
 for (let component of components) {
   describe(`Testing component with ${component}`, () => {
     let dependencyTest: InstrumentationTest;
-    const SPANS_DIR = `${__dirname}/component/${component}/app/spans`;
+    const SPANS_DIR = `${__dirname}/component/${component}/spans`;
     let app;
     let resolver: (value: unknown) => void;
     let waitForDependencySpans;
@@ -55,9 +55,9 @@ for (let component of components) {
           OTEL_SERVICE_NAME: 'http-js',
           LUMIGO_DEBUG: true,
         },
-        10000
+        5000
       );
       await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 5000);
-    }, 20000);
+    }, 10000);
   });
 }

@@ -30,24 +30,29 @@ describe("'All Instrumentation's tests'", () => {
     const instrumentationsToTest = require(`./integration/${integration}/app/package.json`).lumigo.supportedDependencies;
     for (let dependency in instrumentationsToTest) {
       describe(`component compatibility tests for all supported versions of ${dependency}`, () => {
-        const SPANS_DIR = `${__dirname}/integration/${integration}/app/spans`;
+        const SPANS_DIR = `${__dirname}/integration/${integration}/spans`;
+
         let app;
         let resolver: (value: unknown) => void;
         const versionsToTest = require(`./integration/${integration}/app/${dependency}_versions.json`);
         let waitForDependencySpans;
         let dependencyTest: InstrumentationTest;
+
+        beforeAll(()=>{
+          if (!fs.existsSync(SPANS_DIR)) {
+            fs.mkdirSync(SPANS_DIR);
+          }
+        })
+
         afterEach(async () => {
-          if (app) app.kill();
-          rimraf.sync(SPANS_DIR);
+          if (app) app.kill('SIGINT');
           await stopWatching();
           rimraf.sync(`${__dirname}/integration/${integration}/app/node_modules/${dependency}`);
         });
 
         beforeEach(async () => {
           dependencyTest = (await import(`./integration/${integration}/${dependency}Test`)).default;
-          if (!fs.existsSync(SPANS_DIR)) {
-            fs.mkdirSync(SPANS_DIR);
-          }
+
           watchDir(SPANS_DIR, {
             onAddFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
             onChangeFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
