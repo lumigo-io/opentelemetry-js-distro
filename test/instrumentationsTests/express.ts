@@ -63,7 +63,11 @@ class ExpressInstrumentationTest implements InstrumentationTest {
           'telemetry.sdk.name': 'opentelemetry',
           'telemetry.sdk.version': '1.1.1',
           framework: 'express',
-          'process.environ': expect.stringMatching(/\{.*\}/),
+          'process.environ': expect.jsonMatching(
+              expect.objectContaining({
+                "OTEL_SERVICE_NAME": "express-js",
+                "LUMIGO_TRACER_TOKEN": "t_123321",
+              })),
           'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
           'process.pid': expect.any(Number),
           'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
@@ -81,9 +85,7 @@ class ExpressInstrumentationTest implements InstrumentationTest {
         'http.request.query': '{}',
         'http.request.headers': expect.stringMatching(/\{.*\}/),
         'http.response.headers': expect.stringMatching(/\{.*\}/),
-        'http.response.body': expect.stringMatching(
-          /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
-        ),
+        'http.response.body': expect.jsonMatching(["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"]),
         'http.request.body': '{}',
         'http.route': '/invoke-requests',
         'express.route.full': '/invoke-requests',

@@ -45,7 +45,11 @@ class HttpInstrumentationTest implements InstrumentationTest {
           "telemetry.sdk.name": "opentelemetry",
           "telemetry.sdk.version": "1.1.1",
           "framework": "node",
-          'process.environ': expect.stringMatching(/\{.*\}/),
+          'process.environ': expect.jsonMatching(
+              expect.objectContaining({
+            "OTEL_SERVICE_NAME": "http-js",
+            "LUMIGO_TRACER_TOKEN": "t_123321",
+          })),
           'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
           'process.pid': expect.any(Number),
           "process.executable.name": "node",
@@ -98,9 +102,7 @@ class HttpInstrumentationTest implements InstrumentationTest {
         'http.flavor': '1.1',
         'http.request.headers': expect.stringMatching(/\{.*\}/),
         'http.response.headers': expect.stringMatching(/\{.*\}/),
-        'http.response.body': expect.stringMatching(
-          /\["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"\]/
-        ),
+        'http.response.body': expect.jsonMatching(["animal","career","celebrity","dev","explicit","fashion","food","history","money","movie","music","political","religion","science","sport","travel"]),
       },
       status: {
         code: 0,
