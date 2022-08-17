@@ -7,7 +7,7 @@ function install_dependencies {
   echo "done installing"
 }
 
-for dir in test/component/http test/integration/express
+for dir in test/component/http/app test/integration/express/app
 do
   (cd "$dir" && install_dependencies)
 done

@@ -1,6 +1,6 @@
-import { InstrumentationTest } from './InstrumentationTest';
-import { callContainer } from '../helpers/helpers';
 import {ChildProcess} from "child_process";
+import {InstrumentationTest} from "../../helpers/InstrumentationTest";
+import {callContainer} from "../../helpers/helpers";
 
 class ExpressInstrumentationTest implements InstrumentationTest {
   isChildProcessReadyPredicate(data: any, nodeChildApp: ChildProcess, resolve, reject): void {

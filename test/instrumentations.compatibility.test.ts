@@ -27,7 +27,7 @@ describe("'All Instrumentation's tests'", () => {
 
   const integrations = getDirectories(`${__dirname}/integration`)
   for (let integration of integrations) {
-    const instrumentationsToTest = require(`./integration/${integration}/package.json`).lumigo.supportedDependencies;
+    const instrumentationsToTest = require(`./integration/${integration}/app/package.json`).lumigo.supportedDependencies;
     for (let dependency in instrumentationsToTest) {
       describe(`component compatibility tests for all supported versions of ${dependency}`, () => {
         const SPANS_DIR = `${__dirname}/integration/${integration}/spans`;
@@ -44,7 +44,7 @@ describe("'All Instrumentation's tests'", () => {
         });
 
         beforeEach(async () => {
-          dependencyTest = (await import(`./instrumentationsTests/${dependency}`)).default;
+          dependencyTest = (await import(`./integration/${integration}/${dependency}Test`)).default;
           if (!fs.existsSync(SPANS_DIR)) {
             fs.mkdirSync(SPANS_DIR);
           }
@@ -67,7 +67,7 @@ describe("'All Instrumentation's tests'", () => {
               );
               const FILE_EXPORTER_FILE_NAME = `${SPANS_DIR}/spans-test-${dependency}${version}.json`;
               app = await waitForChildProcess(
-                  `./test/integration/${integration}`,
+                  `./test/integration/${integration}/app`,
                   dependencyTest.onChildProcessReady,
                   dependencyTest.isChildProcessReadyPredicate,
                   `start:${dependency}:injected`,

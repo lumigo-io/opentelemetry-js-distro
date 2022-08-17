@@ -1,5 +1,5 @@
 import fs from "fs";
-import {InstrumentationTest} from "../instrumentationsTests/InstrumentationTest";
+import {InstrumentationTest} from "../helpers/InstrumentationTest";
 
 export function determineIfSpansAreReady(
     dependencyTest: InstrumentationTest,
