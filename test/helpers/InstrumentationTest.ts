@@ -5,4 +5,5 @@ export interface InstrumentationTest {
   isChildProcessReadyPredicate: (data: any, nodeChildApp: ChildProcess, resolve, reject) => void;
   onChildProcessReady: (data: any, nodeChildApp: ChildProcess) => Promise<void>;
   runTests: (spans: any[]) => void;
+  getName:() => string;
 }

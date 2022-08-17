@@ -12,17 +12,16 @@ export function determineIfSpansAreReady(
 }
 
 
-export const waitAndRunSpansAssertions = async (waitForDependencySpans : Promise<void>, dependencyTest, timeout: number)=>{
-    let timeoutHandle: NodeJS.Timeout;
-    const timeoutPromise = new Promise((resolve, reject) => {
-        timeoutHandle = setTimeout(() => reject("Timed out on waiting for spans to be written to file"), timeout);
-    });
-    Promise.race([waitForDependencySpans,timeoutPromise]).then(result => {
-        clearTimeout(timeoutHandle)
-        return result;
-    }).then((spans: string[]) => {
-        dependencyTest.runTests(spans.map((text) => JSON.parse(text)));
-    }).finally(() => clearTimeout(timeoutHandle));
+export const waitAndRunSpansAssertions = async (waitForDependencySpans : Promise<string[]>, dependencyTest, ms: number, version = "None")=>{
+    const timeout = new Promise((resolve, reject) => {
+        const timeoutHandle = setTimeout(() => {
+            clearTimeout(timeoutHandle);
+            reject(`[${dependencyTest.getName()}@${version}] Timed out waiting for spans in ${ms} ms.`)
+        }, ms)
+    })
+    // @ts-ignore
+    const spans: string[] = await Promise.race([waitForDependencySpans, timeout]).finally(()=>clearTimeout(timeout))
+    dependencyTest.runTests(spans.map((text) => JSON.parse(text)));
 }
 
 
