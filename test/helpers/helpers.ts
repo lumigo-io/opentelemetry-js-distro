@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {
+  ChildProcess,
   ChildProcessWithoutNullStreams,
   spawn,
 } from 'child_process';
@@ -12,8 +13,8 @@ export const callContainer = async (port: number, path: string, method = 'get', 
 
 export async function waitForChildProcess(
   path: string,
-  onAppReady: (data: any) => Promise<void>,
-  isChildProcessReadyPredicate: (data: string | Buffer | any, resolve, reject) => void,
+  onAppReady: (data: any, nodeChildApp: ChildProcess) => Promise<void>,
+  isChildProcessReadyPredicate: (data: string | Buffer | any, nodeChildApp: ChildProcess,  resolve, reject) => void,
   scriptName: string,
   environmentVariables: any,
   timeout: number,
@@ -31,25 +32,25 @@ export async function waitForChildProcess(
     });
     nodeChildApp.on('error', (error) => {
       if (!shouldFail) {
-        fail(error);
+        throw new Error(error.message)
       }
     });
     const data = await new Promise<void>((resolve, reject) => {
       nodeChildApp.stdout.on('data', (data) => {
-        isChildProcessReadyPredicate(data, resolve, reject);
+        isChildProcessReadyPredicate(data, nodeChildApp, resolve, reject);
       });
     });
     const timeoutPromise = new Promise((resolve, reject) => {
       timeoutHandle = setTimeout(() => reject(), timeout);
     });
-    await Promise.race([onAppReady(data),timeoutPromise]).then(result => {
+    await Promise.race([onAppReady(data, nodeChildApp),timeoutPromise]).then(result => {
       clearTimeout(timeoutHandle)
       return result;
     });
     return nodeChildApp;
   } catch (exception) {
     if (!shouldFail) {
-      fail(exception);
+     throw exception;
     }
   } finally {
     if (nodeChildApp) {

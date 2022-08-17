@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-pwd
-pushd test/component/node || exit 1
-echo "clearing..."
-rm -rf node_modules package-lock.json
-echo "installing packages..."
-npm i
-echo "done installing..."
-npm run install-dependencies
-popd || exit 1
+function install_dependencies {
+  echo "clearing..."
+  rm -rf node_modules package-lock.json
+  echo "installing packages..."
+  npm run install-dependencies
+  echo "done installing"
+}
+
+for dir in test/component/http test/integration/express
+do
+  (cd "$dir" && install_dependencies)
+done
+

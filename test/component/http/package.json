@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-http-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start:nodejs:injected": "node -r @lumigo/opentelemetry httpServer.js",
+    "install-dependencies": "node installDependencies.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../wrapper.tgz"
+  }
+}
