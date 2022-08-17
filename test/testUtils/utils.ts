@@ -20,9 +20,9 @@ export const waitAndRunSpansAssertions = async (waitForDependencySpans : Promise
     Promise.race([waitForDependencySpans,timeoutPromise]).then(result => {
         clearTimeout(timeoutHandle)
         return result;
-    }).then((spans: any[]) => {
-        spans.map((text) => JSON.parse(text))
-    });
+    }).then((spans: string[]) => {
+        dependencyTest.runTests(spans.map((text) => JSON.parse(text)));
+    }).finally(() => clearTimeout(timeoutHandle));
 }
 
 
