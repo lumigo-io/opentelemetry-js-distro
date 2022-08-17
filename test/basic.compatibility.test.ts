@@ -2,7 +2,7 @@ import fs from 'fs';
 const rimraf = require('rimraf');
 import { watchDir, stopWatching } from './helpers/fileListener';
 import { waitForChildProcess } from './helpers/helpers';
-import { determineIfSpansAreReady, getDirectories } from './testUtils/utils';
+import {determineIfSpansAreReady, getDirectories, waitAndRunSpansAssertions} from './testUtils/utils';
 import { InstrumentationTest } from './instrumentationsTests/InstrumentationTest';
 
 const integrations = getDirectories(`${__dirname}/component`);
@@ -57,9 +57,7 @@ for (let integration of integrations) {
         },
         10000
       );
-
-      const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));
-      dependencyTest.runTests(spans);
+      await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 5000);
     }, 20000);
   });
 }

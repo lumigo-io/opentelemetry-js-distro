@@ -5,7 +5,7 @@ import { watchDir, stopWatching } from './helpers/fileListener';
 import { waitForChildProcess } from './helpers/helpers';
 import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 import { InstrumentationTest } from './integration/InstrumentationTest';
-import {determineIfSpansAreReady, getDirectories} from "./testUtils/utils";
+import {determineIfSpansAreReady, getDirectories, waitAndRunSpansAssertions} from "./testUtils/utils";
 
 describe("'All Instrumentation's tests'", () => {
   afterAll(() => {
@@ -80,8 +80,7 @@ describe("'All Instrumentation's tests'", () => {
                   10000
               );
 
-              const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));
-              dependencyTest.runTests(spans);
+              await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 5000);
               instrumentationsVersionManager.addPackageSupportedVersion(dependency, version);
             } catch (e) {
               console.error(`${dependency}@${version} / node@${process.version} failed!`, e);
