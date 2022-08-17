@@ -85,7 +85,7 @@ describe("'All Instrumentation's tests'", () => {
                   10000
               );
 
-              await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 5000);
+              await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 10000);
               instrumentationsVersionManager.addPackageSupportedVersion(dependency, version);
             } catch (e) {
               console.error(`${dependency}@${version} / node@${process.version} failed!`, e);

@@ -57,7 +57,7 @@ for (let component of components) {
         },
         5000
       );
-      await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 5000);
+      await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 10000);
     }, 10000);
   });
 }
