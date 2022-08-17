@@ -32,7 +32,12 @@ let isTraceInitialized = false;
 const externalInstrumentations = [];
 
 function requireIfAvailable(names: string[]) {
-  names.forEach((name) => safeRequire(name));
+  const instrumentedValues = new Set<string>();
+  names.forEach((name) => {
+    const required = safeRequire(name);
+    if (required) instrumentedValues.add(name);
+  });
+  return instrumentedValues;
 }
 
 const ignoreConfig = [
@@ -55,10 +60,7 @@ registerInstrumentations({
   ],
 });
 
-requireIfAvailable([
-  ...MODULES_TO_INSTRUMENT,
-  ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
-]);
+const INSTRUMENTED_MODULES = requireIfAvailable(MODULES_TO_INSTRUMENT);
 
 function reportInitError(err) {
   logger.error(
@@ -69,6 +71,14 @@ function reportInitError(err) {
 
 export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
+}
+
+function getFramework(): string {
+  if (INSTRUMENTED_MODULES.has('express')) {
+    return 'express';
+  } else {
+    return 'node';
+  }
 }
 
 const trace = async (): Promise<LumigoSdkInitialization> => {
@@ -106,7 +116,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         resource: Resource.default()
           .merge(
             new Resource({
-              framework: 'express',
+              framework: getFramework(),
               'process.environ': JSON.stringify(extractEnvVars()),
             })
           )
