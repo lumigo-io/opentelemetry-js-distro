@@ -179,8 +179,6 @@ export const safeRequire = (libId) => {
 
 export const getMaxSize = () => {
   return parseInt(process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT)
-    ? parseInt(process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT)
-    : parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT)
-    ? parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT)
-    : DEFAULT_MAX_ENTRY_SIZE;
+    || parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT)
+    || DEFAULT_MAX_ENTRY_SIZE;
 };
