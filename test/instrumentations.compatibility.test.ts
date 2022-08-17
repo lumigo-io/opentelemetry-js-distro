@@ -30,17 +30,17 @@ describe("'All Instrumentation's tests'", () => {
     const instrumentationsToTest = require(`./integration/${integration}/app/package.json`).lumigo.supportedDependencies;
     for (let dependency in instrumentationsToTest) {
       describe(`component compatibility tests for all supported versions of ${dependency}`, () => {
-        const SPANS_DIR = `${__dirname}/integration/${integration}/spans`;
+        const SPANS_DIR = `${__dirname}/integration/${integration}/app/spans`;
         let app;
         let resolver: (value: unknown) => void;
-        const versionsToTest = require(`./integration/${integration}/${dependency}_versions.json`);
+        const versionsToTest = require(`./integration/${integration}/app/${dependency}_versions.json`);
         let waitForDependencySpans;
         let dependencyTest: InstrumentationTest;
         afterEach(async () => {
           if (app) app.kill();
           rimraf.sync(SPANS_DIR);
           await stopWatching();
-          rimraf.sync(`${__dirname}/integration/${integration}/node_modules/${dependency}`);
+          rimraf.sync(`${__dirname}/integration/${integration}/app/node_modules/${dependency}`);
         });
 
         beforeEach(async () => {
@@ -62,8 +62,8 @@ describe("'All Instrumentation's tests'", () => {
             try {
               console.log(testMessage);
               fs.renameSync(
-                  `${__dirname}/integration/${integration}/node_modules/${dependency}@${version}`,
-                  `${__dirname}/integration/${integration}/node_modules/${dependency}`
+                  `${__dirname}/integration/${integration}/app/node_modules/${dependency}@${version}`,
+                  `${__dirname}/integration/${integration}/app/node_modules/${dependency}`
               );
               const FILE_EXPORTER_FILE_NAME = `${SPANS_DIR}/spans-test-${dependency}${version}.json`;
               app = await waitForChildProcess(

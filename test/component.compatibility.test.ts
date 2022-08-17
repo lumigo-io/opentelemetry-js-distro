@@ -9,7 +9,7 @@ const components = getDirectories(`${__dirname}/component`);
 for (let component of components) {
   describe(`Testing component with ${component}`, () => {
     let dependencyTest: InstrumentationTest;
-    const SPANS_DIR = `${__dirname}/component/${component}/spans`;
+    const SPANS_DIR = `${__dirname}/component/${component}/app/spans`;
     let app;
     let resolver: (value: unknown) => void;
     let waitForDependencySpans;
