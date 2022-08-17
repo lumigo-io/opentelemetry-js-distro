@@ -4,7 +4,7 @@ function install_dependencies {
   rm -rf node_modules package-lock.json
   echo "installing packages..."
   npm run install-dependencies
-  echo "done installing..."
+  echo "done installing"
 }
 
 for dir in test/component/http test/integration/express
