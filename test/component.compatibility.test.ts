@@ -2,14 +2,14 @@ import fs from 'fs';
 const rimraf = require('rimraf');
 import { watchDir, stopWatching } from './helpers/fileListener';
 import { waitForChildProcess } from './helpers/helpers';
-import { determineIfSpansAreReady, getDirectories } from './testUtils/utils';
-import { InstrumentationTest } from './instrumentationsTests/InstrumentationTest';
+import {determineIfSpansAreReady, getDirectories, waitAndRunSpansAssertions} from './testUtils/utils';
+import { InstrumentationTest } from './helpers/InstrumentationTest';
 
-const integrations = getDirectories(`${__dirname}/component`);
-for (let integration of integrations) {
-  describe(`Testing component with ${integration}`, () => {
+const components = getDirectories(`${__dirname}/component`);
+for (let component of components) {
+  describe(`Testing component with ${component}`, () => {
     let dependencyTest: InstrumentationTest;
-    const SPANS_DIR = `${__dirname}/component/${integration}/spans`;
+    const SPANS_DIR = `${__dirname}/component/${component}/spans`;
     let app;
     let resolver: (value: unknown) => void;
     let waitForDependencySpans;
@@ -23,7 +23,7 @@ for (let integration of integrations) {
     process.on('SIGTERM', cleanExit); // catch kill
 
     beforeEach(async () => {
-      dependencyTest = (await import(`./instrumentationsTests/${integration}`)).default;
+      dependencyTest = (await import(`./component/${component}/${component}Test`)).default;
       if (!fs.existsSync(SPANS_DIR)) {
         fs.mkdirSync(SPANS_DIR);
       }
@@ -45,7 +45,7 @@ for (let integration of integrations) {
     it('should set framework to component', async () => {
       const FILE_EXPORTER_FILE_NAME = `${SPANS_DIR}/spans-test-nodejs.json`;
       app = await waitForChildProcess(
-        `./test/component/${integration}`,
+        `./test/component/${component}/app`,
         dependencyTest.onChildProcessReady,
         dependencyTest.isChildProcessReadyPredicate,
         `start:nodejs:injected`,
@@ -55,11 +55,9 @@ for (let integration of integrations) {
           OTEL_SERVICE_NAME: 'http-js',
           LUMIGO_DEBUG: true,
         },
-        10000
+        5000
       );
-
-      const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));
-      dependencyTest.runTests(spans);
-    }, 20000);
+      await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 10000);
+    }, 10000);
   });
 }

@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@lumigo/opentelemetry": "file:../../../wrapper.tgz",
+    "@lumigo/opentelemetry": "file:../../../../wrapper.tgz",
     "body-parser": "^1.19.1",
     "chokidar": "^3.5.1",
     "semver": "^7.3.7"

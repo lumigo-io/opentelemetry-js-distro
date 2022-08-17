@@ -1,6 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
-  testMatch: ['**/**/*.test.ts', '**/**/*.test.js'],
+  testMatch: ['**/**/instrumentations.compatibility.test.ts'],
   roots: ['./test'],
   setupFilesAfterEnv: ['./jest.component.setup.js'],
 };

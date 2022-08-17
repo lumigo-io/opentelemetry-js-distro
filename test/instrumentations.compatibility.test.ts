@@ -5,7 +5,7 @@ import { watchDir, stopWatching } from './helpers/fileListener';
 import { waitForChildProcess } from './helpers/helpers';
 import { instrumentationsVersionManager } from './helpers/InstrumentationsVersionManager';
 import { InstrumentationTest } from './integration/InstrumentationTest';
-import {determineIfSpansAreReady, getDirectories} from "./testUtils/utils";
+import {determineIfSpansAreReady, getDirectories, waitAndRunSpansAssertions} from "./testUtils/utils";
 
 describe("'All Instrumentation's tests'", () => {
   afterAll(() => {
@@ -27,27 +27,32 @@ describe("'All Instrumentation's tests'", () => {
 
   const integrations = getDirectories(`${__dirname}/integration`)
   for (let integration of integrations) {
-    const instrumentationsToTest = require(`./integration/${integration}/package.json`).lumigo.supportedDependencies;
+    const instrumentationsToTest = require(`./integration/${integration}/app/package.json`).lumigo.supportedDependencies;
     for (let dependency in instrumentationsToTest) {
       describe(`component compatibility tests for all supported versions of ${dependency}`, () => {
         const SPANS_DIR = `${__dirname}/integration/${integration}/spans`;
+
         let app;
         let resolver: (value: unknown) => void;
-        const versionsToTest = require(`./integration/${integration}/${dependency}_versions.json`);
+        const versionsToTest = require(`./integration/${integration}/app/${dependency}_versions.json`);
         let waitForDependencySpans;
         let dependencyTest: InstrumentationTest;
-        afterEach(async () => {
-          if (app) app.kill();
-          rimraf.sync(SPANS_DIR);
-          await stopWatching();
-          rimraf.sync(`${__dirname}/integration/${integration}/node_modules/${dependency}`);
-        });
 
-        beforeEach(async () => {
-          dependencyTest = (await import(`./instrumentationsTests/${dependency}`)).default;
+        beforeAll(()=>{
           if (!fs.existsSync(SPANS_DIR)) {
             fs.mkdirSync(SPANS_DIR);
           }
+        })
+
+        afterEach(async () => {
+          if (app) app.kill('SIGINT');
+          await stopWatching();
+          rimraf.sync(`${__dirname}/integration/${integration}/app/node_modules/${dependency}`);
+        });
+
+        beforeEach(async () => {
+          dependencyTest = (await import(`./integration/${integration}/${dependency}Test`)).default;
+
           watchDir(SPANS_DIR, {
             onAddFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
             onChangeFileEvent: (path) => determineIfSpansAreReady(dependencyTest, path, resolver),
@@ -62,12 +67,12 @@ describe("'All Instrumentation's tests'", () => {
             try {
               console.log(testMessage);
               fs.renameSync(
-                  `${__dirname}/integration/${integration}/node_modules/${dependency}@${version}`,
-                  `${__dirname}/integration/${integration}/node_modules/${dependency}`
+                  `${__dirname}/integration/${integration}/app/node_modules/${dependency}@${version}`,
+                  `${__dirname}/integration/${integration}/app/node_modules/${dependency}`
               );
               const FILE_EXPORTER_FILE_NAME = `${SPANS_DIR}/spans-test-${dependency}${version}.json`;
               app = await waitForChildProcess(
-                  `./test/integration/${integration}`,
+                  `./test/integration/${integration}/app`,
                   dependencyTest.onChildProcessReady,
                   dependencyTest.isChildProcessReadyPredicate,
                   `start:${dependency}:injected`,
@@ -80,8 +85,7 @@ describe("'All Instrumentation's tests'", () => {
                   10000
               );
 
-              const spans = (await waitForDependencySpans).map((text) => JSON.parse(text));
-              dependencyTest.runTests(spans);
+              await waitAndRunSpansAssertions(waitForDependencySpans, dependencyTest, 10000);
               instrumentationsVersionManager.addPackageSupportedVersion(dependency, version);
             } catch (e) {
               console.error(`${dependency}@${version} / node@${process.version} failed!`, e);
