@@ -12,15 +12,15 @@ export function determineIfSpansAreReady(
 }
 
 
-export const waitAndRunSpansAssertions = async (waitForDependencySpans : Promise<string[]>, dependencyTest, ms: number)=>{
+export const waitAndRunSpansAssertions = async (waitForDependencySpans : Promise<string[]>, dependencyTest, ms: number, version = "None")=>{
     const timeout = new Promise((resolve, reject) => {
         const timeoutHandle = setTimeout(() => {
             clearTimeout(timeoutHandle);
-            reject('Timed out waiting for spans in '+ ms + 'ms.')
+            reject(`[${dependencyTest.getName()}@${version}] Timed out waiting for spans in ${ms} ms.`)
         }, ms)
     })
     // @ts-ignore
-    const spans: string[] = await Promise.race([waitForDependencySpans, timeout])
+    const spans: string[] = await Promise.race([waitForDependencySpans, timeout]).finally(()=>clearTimeout(timeout))
     dependencyTest.runTests(spans.map((text) => JSON.parse(text)));
 }
 

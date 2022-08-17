@@ -27,6 +27,10 @@ class HttpInstrumentationTest implements InstrumentationTest {
     }
   }
 
+  getName(){
+    return "http"
+  }
+
   runTests(spans: any[]): void {
     expect(spans).toHaveLength(2);
     const internalSpan = spans.find((span) => span.kind === 1);
