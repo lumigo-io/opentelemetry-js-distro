@@ -168,4 +168,6 @@ class ExpressInstrumentationTest implements InstrumentationTest {
   }
 }
 
-export default new ExpressInstrumentationTest();
+const expressInstrumentationTest = new ExpressInstrumentationTest();
+export default expressInstrumentationTest;
+export const expressInstrumentationTests = [expressInstrumentationTest];

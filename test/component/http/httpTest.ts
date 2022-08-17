@@ -116,4 +116,8 @@ class HttpInstrumentationTest implements InstrumentationTest {
   }
 }
 
-export default new HttpInstrumentationTest();
+const httpInstrumentationTest = new HttpInstrumentationTest();
+export default httpInstrumentationTest;
+
+
+export const httpComponentTests = [httpInstrumentationTest];
