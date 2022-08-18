@@ -7,14 +7,12 @@ export const getReadyServer = (data: any, resolve) => {
 }
 
 export const getReadySpans = (lines: string[], resolve) => {
-    console.log(`Checking [${lines.length}] lines:`);
     lines.forEach((l) => console.log(l.substring(0, 50)));
     if (
         lines.length === 2 &&
         lines[0].startsWith('{"traceId"') &&
         lines[1].startsWith('{"traceId"')
     ) {
-        console.log('Spans are ready!');
         resolve(lines);
     }
 }
