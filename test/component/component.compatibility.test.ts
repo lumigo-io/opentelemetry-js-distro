@@ -1,4 +1,6 @@
 import fs from 'fs';
+var kill  = require('tree-kill');
+
 
 import { watchDir, stopWatching } from '../helpers/fileListener';
 import { waitForChildProcess } from '../helpers/helpers';
@@ -40,7 +42,10 @@ for (let component of components) {
     });
 
     afterEach(async () => {
-      if (app) app.kill('SIGINT');
+      if (app) {
+        // app.kill('SIGINT');
+         kill(app.pid);
+      }
       await stopWatching();
     });
     for (let componentTest of componentTests){
@@ -54,7 +59,7 @@ for (let component of components) {
             `./test/component/${component}/app`,
             componentTest.onChildProcessReady,
             componentTest.isChildProcessReadyPredicate,
-            `start:nodejs:injected`,
+            `start:${componentTest.getName()}:injected`,
             {
               LUMIGO_TRACER_TOKEN: 't_123321',
               LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
