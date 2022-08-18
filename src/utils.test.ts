@@ -67,10 +67,10 @@ describe('utils tests', () => {
 });
 
 describe('get max size value according to env. vars', () => {
-    beforeEach(() => {
-        jest.resetModules();
-        process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined
-        process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined
+  beforeEach(() => {
+    jest.resetModules();
+    process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined;
+    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined;
   });
 
   it('get max size when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', () => {
