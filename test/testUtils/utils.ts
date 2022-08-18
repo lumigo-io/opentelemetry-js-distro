@@ -12,7 +12,7 @@ export function determineIfSpansAreReady(
 }
 
 
-export const waitAndRunSpansAssertions = async (waitForDependencySpans : Promise<string[]>, dependencyTest, ms: number, version = "None")=>{
+export const waitAndRunSpansAssertions = async (waitForDependencySpans : Promise<string[]>, dependencyTest, ms: number, version = "")=>{
     const timeout = new Promise((resolve, reject) => {
         const timeoutHandle = setTimeout(() => {
             clearTimeout(timeoutHandle);
