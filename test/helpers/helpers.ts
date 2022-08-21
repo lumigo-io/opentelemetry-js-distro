@@ -28,7 +28,7 @@ export async function waitForChildProcess(
       shell: true,
     });
     nodeChildApp.stderr.on('data', (data) => {
-      console.log('stderr: ', data.toString());
+      // console.log('stderr: ', data.toString());
     });
     nodeChildApp.on('error', (error) => {
       if (!shouldFail) {

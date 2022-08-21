@@ -65,6 +65,7 @@ for (let component of components) {
               LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
               OTEL_SERVICE_NAME: 'http-js',
               LUMIGO_DEBUG: true,
+              ...componentTest.getEnvVars()
             },
             5000
         );

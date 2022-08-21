@@ -4,9 +4,6 @@
   "description": "",
   "scripts": {
     "start:http:injected": "node -r @lumigo/opentelemetry app.js",
-    "start:spanAttrLength:injected": "OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT=1 node -r @lumigo/opentelemetry app.js",
-    "start:attrLength:injected": "OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT=3 node -r @lumigo/opentelemetry app.js",
-    "start:defaultAttrLength:injected": "node -r @lumigo/opentelemetry app.js",
     "install-dependencies": "node installDependencies.js"
   },
   "author": "",

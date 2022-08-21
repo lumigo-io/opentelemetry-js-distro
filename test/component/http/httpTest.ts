@@ -9,6 +9,10 @@ class HttpInstrumentationTest implements InstrumentationTest {
         getReadyServer(data, resolve);
     }
 
+    getEnvVars(){
+        return {}
+    }
+
     onChildProcessReady(): Promise<void> {
         return callContainer(8000, 'test', 'get');
     }
@@ -119,8 +123,14 @@ class HttpSpanAttrLengthTest implements InstrumentationTest {
         getReadySpans(lines, resolve);
     }
 
+    getEnvVars(){
+        return {
+            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "1"
+        }
+    }
+
     getName() {
-        return "spanAttrLength"
+        return "http"
     }
 
     runTests(spans: any[]): void {
@@ -175,12 +185,18 @@ class HttpAttrLengthTest implements InstrumentationTest {
         return callContainer(8000, 'large-response', 'get');
     }
 
+    getEnvVars(){
+        return {
+            OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: "3"
+        }
+    }
+
     spansReadyCondition(lines: string[], resolve): void {
         getReadySpans(lines, resolve);
     }
 
     getName() {
-        return "attrLength"
+        return "http"
     }
 
     runTests(spans: any[]): void {
@@ -241,8 +257,12 @@ class HttpDefaultAttrLengthTest implements InstrumentationTest {
         getReadySpans(lines, resolve);
     }
 
+    getEnvVars(){
+        return {}
+    }
+
     getName() {
-        return "defaultAttrLength"
+        return "http"
     }
 
     runTests(spans: any[]): void {

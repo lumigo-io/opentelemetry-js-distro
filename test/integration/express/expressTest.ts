@@ -23,6 +23,10 @@ class ExpressInstrumentationTest implements InstrumentationTest {
     return "express"
   }
 
+  getEnvVars(){
+    return {}
+  }
+
   onChildProcessReady(data: any,  nodeChildApp: ChildProcess): Promise<void> {
     return callContainer(data, 'invoke-requests', 'get', {
       a: '1',

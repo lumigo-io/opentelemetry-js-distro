@@ -6,4 +6,5 @@ export interface InstrumentationTest {
   onChildProcessReady: (data: any, nodeChildApp: ChildProcess) => Promise<void>;
   runTests: (spans: any[]) => void;
   getName:() => string;
+  getEnvVars: ()=> {[key: string]: string}
 }
