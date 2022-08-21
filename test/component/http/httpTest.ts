@@ -137,7 +137,7 @@ class HttpSpanAttrLengthTest implements InstrumentationTest {
         expect(spans).toHaveLength(2);
         const internalSpan = spans.find((span) => span.kind === 1);
         const clientSpan = spans.find((span) => span.kind === 2);
-        expect(internalSpan.resource.attributes["process.environ"]).toContain("\"OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT\":\"1\"");
+        expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(1);
         expect(internalSpan.attributes).toMatchObject(
             {
                 'http.host': "l",
