@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start:nodejs:injected": "node -r @lumigo/opentelemetry app.js",
+    "start:http:injected": "node -r @lumigo/opentelemetry app.js",
     "install-dependencies": "node installDependencies.js"
   },
   "author": "",

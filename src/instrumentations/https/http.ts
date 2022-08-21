@@ -7,7 +7,7 @@ import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
 import { getAwsServiceData } from '../../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, logger, MAX_SIZE } from '../../utils';
+import { isAwsService, runOneTimeWrapper, safeExecute, logger, getMaxSize } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -236,7 +236,7 @@ export class Http {
     onRequestEnd: (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => void
   ) {
     let body = '';
-    const maxPayloadSize = MAX_SIZE;
+    const maxPayloadSize = getMaxSize();
     return function (args) {
       let truncated = false;
       const { headers, statusCode } = response;
