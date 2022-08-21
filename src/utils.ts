@@ -50,6 +50,10 @@ export const getProtocolModuleForUri = (uri: string) => {
   return uri.indexOf('https') === 0 ? https : http;
 };
 
+/**
+ * This function return the environment variables by total max size of the values of each environment variable key.
+ * For example: if max size=2, environment variables ={"key_1": "value1", "key_2": "value_2"}, return {"key_1": "value1"}.
+ */
 export const extractEnvVars = () => {
   const res = {};
   const maxSize = getMaxSize();

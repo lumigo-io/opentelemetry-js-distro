@@ -4,8 +4,6 @@ const http = require("http");
 const host = 'localhost';
 const port = 8000;
 
-console.log("env. vars component tests:")
-console.log(process.env)
 
 const requestListener = async function (req, res) {
     console.log("in request");
