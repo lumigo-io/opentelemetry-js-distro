@@ -34,15 +34,12 @@ class ExpressInstrumentationTest implements InstrumentationTest {
   }
 
   spansReadyCondition(lines: string[], resolve): void {
-    console.log(`Checking [${lines.length}] lines:`);
-    lines.forEach((l) => console.log(l.substring(0, 50)));
     if (
       lines.length === 3 &&
       lines[0].startsWith('{"traceId"') &&
       lines[1].startsWith('{"traceId"') &&
       lines[2].startsWith('{"traceId"')
     ) {
-      console.log('Spans are ready!');
       resolve(lines);
     }
   }
