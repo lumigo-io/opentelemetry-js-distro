@@ -19,7 +19,6 @@ import { Instrumentor } from './instrumentations/instrumentor';
 import LumigoHttpsInstrumentation from './instrumentations/https/HttpsInstrumentation';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
-// const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
@@ -30,17 +29,8 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
 }
 
 let isTraceInitialized = false;
-
 const externalInstrumentations = [];
-
-// function requireIfAvailable(names: string[]) {
-//   const instrumentedValues = new Set<string>();
-//   names.forEach((name) => {
-//     const required = safeRequire(name);
-//     if (required) instrumentedValues.add(name);
-//   });
-//   return instrumentedValues;
-// }
+const INSTRUMENTED_MODULES = new Set<string>();
 
 const ignoreConfig = [
   (url: string) =>
@@ -60,13 +50,6 @@ const lumigoInstrumentationList: Instrumentor[] = [
   new LumigoHttpsInstrumentation(),
 ];
 
-// let instrumentationList: InstrumentationBase[] = [
-//     lumigoHttpInstrumentation.getInstrumentation(ignoreConfig),
-//     lumigoHttpsInstrumentation.getInstrumentation(ignoreConfig),
-//     lumigoExpressInstrumentation.getInstrumentation(),
-//     ...externalInstrumentations,
-// ];
-
 const instrumentationList: InstrumentationBase[] = lumigoInstrumentationList.map((i) =>
   i instanceof LumigoHttpsInstrumentation
     ? i.getInstrumentation(ignoreConfig)
@@ -77,11 +60,11 @@ registerInstrumentations({
   instrumentations: [instrumentationList, ...externalInstrumentations],
 });
 
-// const INSTRUMENTED_MODULES = requireIfAvailable(MODULES_TO_INSTRUMENT);
-const INSTRUMENTED_MODULES = new Set<string>();
 lumigoInstrumentationList.forEach((instrumentation) => {
   const required = instrumentation.requireIfAvailable();
-  if (required) INSTRUMENTED_MODULES.add(instrumentation.getInstrumentationId());
+  if (required) {
+    INSTRUMENTED_MODULES.add(instrumentation.getInstrumentationId());
+  }
 });
 
 function reportInitError(err) {
