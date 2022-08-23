@@ -4,7 +4,6 @@ const http = require("http");
 const host = 'localhost';
 const port = 8000;
 
-
 const requestListener = async function (req, res) {
     console.log("in request");
 
