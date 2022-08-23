@@ -51,7 +51,7 @@ describe('LumigoHttpInstrumentation', () => {
         },
       ],
       _spanNotEnded: {},
-      _version: '12.9.0',
+      _version: expect.any(String),
       _headerCapture: {
         client: {},
         server: {},

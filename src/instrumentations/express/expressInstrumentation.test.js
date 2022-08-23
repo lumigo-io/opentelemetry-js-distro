@@ -1,5 +1,4 @@
 import LumigoExpressInstrumentation from './ExpressInstrumentation';
-const express = require('express');
 
 describe('LumigoExpressInstrumentation', () => {
   let lumigoExpressInstrumentation = new LumigoExpressInstrumentation();
@@ -35,10 +34,10 @@ describe('LumigoExpressInstrumentation', () => {
       _modules: [
         {
           name: 'express',
-          supportedVersions: ['^4.9.0'],
+          supportedVersions: expect.any(Array),
           files: [
             {
-              supportedVersions: ['^4.9.0'],
+              supportedVersions: expect.any(Array),
               name: 'express/lib/router/layer.js',
             },
           ],
@@ -48,7 +47,11 @@ describe('LumigoExpressInstrumentation', () => {
   });
 
   test('requireIfAvailable should return required name', () => {
+    const child_process = require('child_process');
+    child_process.execSync('npm install express');
     const express = require('express');
+
     expect(lumigoExpressInstrumentation.requireIfAvailable()).toEqual(express);
+    child_process.execSync('npm uninstall express');
   });
 });

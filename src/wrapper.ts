@@ -16,7 +16,6 @@ import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 import { Instrumentor } from './instrumentations/instrumentor';
-import LumigoHttpsInstrumentation from './instrumentations/https/HttpsInstrumentation';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
@@ -47,11 +46,10 @@ const ignoreConfig = [
 const lumigoInstrumentationList: Instrumentor[] = [
   new LumigoExpressInstrumentation(),
   new LumigoHttpInstrumentation(),
-  new LumigoHttpsInstrumentation(),
 ];
 
 const instrumentationList: InstrumentationBase[] = lumigoInstrumentationList.map((i) =>
-  i instanceof LumigoHttpsInstrumentation
+  i instanceof LumigoHttpInstrumentation
     ? i.getInstrumentation(ignoreConfig)
     : i.getInstrumentation()
 );
