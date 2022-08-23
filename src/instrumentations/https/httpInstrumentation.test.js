@@ -9,14 +9,15 @@ describe('LumigoHttpInstrumentation', () => {
   });
 
   test('getInstrumentation should return HttpInstrumentation object', () => {
-    const ignoreConfig = ['169.254.123.45:5000/request'];
-    expect(lumigoHttpInstrumentation.getInstrumentation(ignoreConfig)).toMatchObject({
+    const ignoreConfig = [/169\.254\.\d+\.\d+.*/gm];
+
+    expect(lumigoHttpInstrumentation.getInstrumentation()).toMatchObject({
       instrumentationName: '@opentelemetry/instrumentation-http',
       instrumentationVersion: '0.28.0',
       _config: {
         enabled: true,
-        ignoreOutgoingUrls: ignoreConfig,
-        ignoreIncomingPaths: ignoreConfig,
+        ignoreOutgoingUrls: expect.arrayContaining(ignoreConfig),
+        ignoreIncomingPaths: expect.arrayContaining(ignoreConfig),
       },
       _diag: {
         _namespace: '@opentelemetry/instrumentation-http',

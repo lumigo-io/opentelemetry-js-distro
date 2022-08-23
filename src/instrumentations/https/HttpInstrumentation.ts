@@ -8,12 +8,26 @@ export default class LumigoHttpInstrumentation extends Instrumentor {
     return 'http';
   }
 
-  getInstrumentation(urlsToIgnore: IgnoreMatcher[]) {
+  getInstrumentation() {
     return new HttpInstrumentation({
-      ignoreOutgoingUrls: urlsToIgnore,
-      ignoreIncomingPaths: urlsToIgnore,
+      ignoreOutgoingUrls: this.getIgnoreConfig(),
+      ignoreIncomingPaths: this.getIgnoreConfig(),
       requestHook: HttpHooks.requestHook,
       responseHook: HttpHooks.responseHook,
     });
+  }
+
+  private getIgnoreConfig(): IgnoreMatcher[] {
+    return [
+      (url: string) =>
+        [
+          process.env.LUMIGO_ENDPOINT,
+          process.env.ECS_CONTAINER_METADATA_URI,
+          process.env.ECS_CONTAINER_METADATA_URI_V4,
+        ]
+          .filter(Boolean)
+          .some((v) => url.includes(v)),
+      /169\.254\.\d+\.\d+.*/gm,
+    ];
   }
 }

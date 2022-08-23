@@ -31,27 +31,13 @@ let isTraceInitialized = false;
 const externalInstrumentations = [];
 const INSTRUMENTED_MODULES = new Set<string>();
 
-const ignoreConfig = [
-  (url: string) =>
-    [
-      process.env.LUMIGO_ENDPOINT,
-      process.env.ECS_CONTAINER_METADATA_URI,
-      process.env.ECS_CONTAINER_METADATA_URI_V4,
-    ]
-      .filter(Boolean)
-      .some((v) => url.includes(v)),
-  /169\.254\.\d+\.\d+.*/gm,
-];
-
 const lumigoInstrumentationList: Instrumentor[] = [
   new LumigoExpressInstrumentation(),
   new LumigoHttpInstrumentation(),
 ];
 
 const instrumentationList: InstrumentationBase[] = lumigoInstrumentationList.map((i) =>
-  i instanceof LumigoHttpInstrumentation
-    ? i.getInstrumentation(ignoreConfig)
-    : i.getInstrumentation()
+  i.getInstrumentation()
 );
 
 registerInstrumentations({
