@@ -48,10 +48,10 @@ describe('LumigoExpressInstrumentation', () => {
 
   test('requireIfAvailable should return required name', () => {
     const child_process = require('child_process');
-    child_process.execSync('npm install express');
+    child_process.execSync('npm install express').toString();
     const express = require('express');
 
     expect(lumigoExpressInstrumentation.requireIfAvailable()).toEqual(express);
-    child_process.execSync('npm uninstall express');
+    child_process.execSync('npm uninstall express').toString();
   });
 });
