@@ -316,8 +316,6 @@ const httpSpanAttrLengthTest = new HttpSpanAttrLengthTest();
 const httpAttrLengthTest = new HttpAttrLengthTest();
 const httpDefaultAttrLengthTest = new HttpDefaultAttrLengthTest();
 export default {httpInstrumentationTest, httpSpanAttrLengthTest, httpAttrLengthTest, httpDefaultAttrLengthTest};
-// export default httpDefaultAttrLengthTest;
 
 
 export const httpComponentTests = [httpInstrumentationTest, httpSpanAttrLengthTest, httpAttrLengthTest, httpDefaultAttrLengthTest];
-// export const httpComponentTests = [httpDefaultAttrLengthTest];

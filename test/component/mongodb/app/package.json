@@ -1,15 +1,23 @@
 {
-  "name": "lumigo-http-test",
+  "name": "lumigo-mongodb-test",
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start:http:injected": "node -r @lumigo/opentelemetry app.js",
+    "start:mongodb:injected": "LUMIGO_DEBUG=true LUMIGO_TRACER_TOKEN=t_276e76232b3d49948d76c LUMIGO_DEBUG_SPANDUMP=./shani.json node -r @lumigo/opentelemetry app.js",
     "install-dependencies": "node installDependencies.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../wrapper.tgz",
-    "mongodb": "^4.9.0"
+    "mongodb": "^3.7.3",
+    "testcontainers": "^8.12.0"
+  },
+  "lumigo": {
+    "supportedDependencies": {
+      "mongodb": {
+        "satisfies": "^3.7.3"
+      }
+    }
   }
 }

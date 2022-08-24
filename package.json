@@ -33,6 +33,7 @@
     "@opentelemetry/sdk-trace-node": "1.1.1",
     "@opentelemetry/semantic-conventions": "1.1.1",
     "opentelemetry-instrumentation-express": "0.28.0",
+    "@opentelemetry/instrumentation-mongodb": "0.28.0",
     "shimmer": "^1.2.1"
   },
   "homepage": "https://github.com/lumigo-io/opentelemetry-js-distro.git",
