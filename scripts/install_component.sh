@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 function install_dependencies {
   echo "clearing..."
   rm -rf node_modules package-lock.json
