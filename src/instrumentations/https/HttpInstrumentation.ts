@@ -3,12 +3,12 @@ import { HttpInstrumentation, IgnoreMatcher } from '@opentelemetry/instrumentati
 import { HttpHooks } from './http';
 import { Instrumentor } from '../instrumentor';
 
-export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrumentation> {
+export default class LumigoHttpInstrumentation extends Instrumentor {
   getInstrumentationId(): string {
     return 'http';
   }
 
-  getInstrumentation(): HttpInstrumentation {
+  getInstrumentation() {
     return new HttpInstrumentation({
       ignoreOutgoingUrls: this.getIgnoreConfig(),
       ignoreIncomingPaths: this.getIgnoreConfig(),
