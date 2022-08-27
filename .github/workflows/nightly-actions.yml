@@ -17,7 +17,8 @@ jobs:
           node-version: ${{ matrix.node_cimg_tag }}
       - run: npm ci
       - run: npm run build
-      - run: npm run test:components
+      - run: npm run test:component
+      - run: npm run test:integration:version
         continue-on-error: true
       - run: git --no-pager diff
       - run: mkdir versions_artifact
