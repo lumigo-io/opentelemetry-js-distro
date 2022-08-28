@@ -9,9 +9,6 @@ export default class LumigoMongoDBInstrumentation extends Instrumentor<MongoDBIn
   getInstrumentation(): MongoDBInstrumentation {
     return new MongoDBInstrumentation({
       enhancedDatabaseReporting: true,
-      responseHook: (span) => {
-        console.log('span: span mongodb', span);
-      },
     });
   }
 }

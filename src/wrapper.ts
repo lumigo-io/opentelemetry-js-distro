@@ -12,10 +12,10 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
+import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
-import { Instrumentor } from './instrumentations/instrumentor';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
@@ -31,14 +31,13 @@ let isTraceInitialized = false;
 const externalInstrumentations = [];
 const INSTRUMENTED_MODULES = new Set<string>();
 
-const lumigoInstrumentationList: Instrumentor[] = [
+const lumigoInstrumentationList = [
   new LumigoExpressInstrumentation(),
   new LumigoHttpInstrumentation(),
+  new LumigoMongoDBInstrumentation(),
 ];
 
-const instrumentationList: InstrumentationBase[] = lumigoInstrumentationList.map((i) =>
-  i.getInstrumentation()
-);
+const instrumentationList = lumigoInstrumentationList.map((i) => i.getInstrumentation());
 
 registerInstrumentations({
   instrumentations: [instrumentationList, ...externalInstrumentations],
