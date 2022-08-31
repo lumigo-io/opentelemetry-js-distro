@@ -25,6 +25,10 @@ class DB {
         await client.connect();
         this.client = client;
     }
+
+    static async closeConnection() {
+        this.client.close();
+    }
 }
 
 module.exports = DB;

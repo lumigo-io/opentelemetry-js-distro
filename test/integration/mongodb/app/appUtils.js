@@ -21,12 +21,11 @@ async function initContainerDB() {
     } catch (e) {
         console.error(`Error initializing mongo container: ${e}`);
     }
-
 }
 
 async function stopDbContainer(){
-    if (mongoContainer && client) {
-        await client.close()
+    if (mongoContainer) {
+        await DB.closeConnection();
         await mongoContainer.stop();
         console.log("Container stopped successfully");
     } else {
