@@ -14,7 +14,7 @@ describe('LumigoMongoDBInstrumentation', () => {
   test('getInstrumentation should return MongoDBInstrumentation object', () => {
     expect(lumigoMongoDBInstrumentation.getInstrumentation()).toMatchObject({
       instrumentationName: '@opentelemetry/instrumentation-mongodb',
-      instrumentationVersion: '0.28.0',
+      instrumentationVersion: '0.29.0',
       _config: {
         enhancedDatabaseReporting: true,
       },
@@ -24,10 +24,14 @@ describe('LumigoMongoDBInstrumentation', () => {
       _tracer: {
         _provider: {},
         name: '@opentelemetry/instrumentation-mongodb',
-        version: '0.28.0',
+        version: '0.29.0',
       },
       _meter: {},
       _hooks: [
+        {
+          cache: {},
+          _unhooked: false,
+        },
         {
           cache: {},
           _unhooked: false,
@@ -38,10 +42,28 @@ describe('LumigoMongoDBInstrumentation', () => {
         {
           name: 'mongodb',
           supportedVersions: expect.any(Array),
+          patch: undefined,
+          unpatch: undefined,
           files: [
             {
               supportedVersions: expect.any(Array),
               name: 'mongodb/lib/core/wireprotocol/index.js',
+              patch: expect.any(Function),
+              unpatch: expect.any(Function),
+            },
+          ],
+        },
+        {
+          name: 'mongodb',
+          supportedVersions: expect.any(Array),
+          patch: undefined,
+          unpatch: undefined,
+          files: [
+            {
+              supportedVersions: expect.any(Array),
+              name: 'mongodb/lib/cmap/connection.js',
+              patch: expect.any(Function),
+              unpatch: expect.any(Function),
             },
           ],
         },
