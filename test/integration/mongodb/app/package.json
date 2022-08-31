@@ -15,7 +15,7 @@
   "lumigo": {
     "supportedDependencies": {
       "mongodb": {
-        "satisfies": "^3.3"
+        "satisfies": "^3.7"
       }
     }
   }

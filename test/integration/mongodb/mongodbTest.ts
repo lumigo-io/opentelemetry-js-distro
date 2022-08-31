@@ -10,7 +10,9 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
     }
 
     getEnvVars(){
-        return {}
+        return {
+            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"
+        }
     }
 
     onChildProcessReady(): Promise<void> {
@@ -72,7 +74,7 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
                 attributes: resourceAttributes
             },
             attributes: {
-                'net.host.name': 'localhost',
+                'net.host.name': "127.0.0.1",
                 'net.host.port': expect.any(String),
                 'db.system': "mongodb",
                 'db.name': "myProject",
@@ -96,7 +98,7 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
                 attributes: resourceAttributes
             },
             attributes: {
-                'net.host.name': 'localhost',
+                'net.host.name': "127.0.0.1",
                 'net.host.port': expect.any(String),
                 'db.system': "mongodb",
                 'db.name': "myProject",
@@ -120,7 +122,7 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
                 attributes: resourceAttributes
             },
             attributes: {
-                'net.host.name': 'localhost',
+                'net.host.name': "127.0.0.1",
                 'net.host.port': expect.any(String),
                 'db.system': "mongodb",
                 'db.name': "myProject",
@@ -144,7 +146,7 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
                 attributes: resourceAttributes
             },
             attributes: {
-                'net.host.name': 'localhost',
+                'net.host.name': "127.0.0.1",
                 'net.host.port': expect.any(String),
                 'db.system': "mongodb",
                 'db.name': "myProject",
@@ -168,7 +170,7 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
                 attributes: resourceAttributes
             },
             attributes: {
-                'net.host.name': 'localhost',
+                'net.host.name': "127.0.0.1",
                 'net.host.port': expect.any(String),
                 'db.system': "mongodb",
                 'db.name': "admin",
@@ -192,7 +194,7 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
                 attributes: resourceAttributes
             },
             attributes: {
-                'net.host.name': 'localhost',
+                'net.host.name': "127.0.0.1",
                 'net.host.port': expect.any(String),
                 'db.system': "mongodb",
                 'db.name': "myProject",

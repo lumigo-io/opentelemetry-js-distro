@@ -97,10 +97,11 @@ describe("'All Instrumentation's tests'", () => {
                     {
                       LUMIGO_TRACER_TOKEN: 't_123321',
                       LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
-                      OTEL_SERVICE_NAME: 'express-js',
+                      OTEL_SERVICE_NAME: integration,
                       LUMIGO_DEBUG: true,
+                      ...integrationTest.getEnvVars()
                     },
-                    10000
+                    15000
                   );
 
                   await waitAndRunSpansAssertions(
