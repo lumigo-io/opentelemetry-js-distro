@@ -117,7 +117,7 @@ describe("'All Instrumentation's tests'", () => {
                   throw e;
                 }
               },
-              20000
+              30000
             );
           }
         }

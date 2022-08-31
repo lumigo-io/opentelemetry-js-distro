@@ -34,7 +34,6 @@ class MongoDbInstrumentationTest implements InstrumentationTest {
         return "mongodb" //should be the same as package.json script middle name "start:http:injected"
     }
 
-    //TODO: SHANI
     runTests(spans: any[]): void {
         expect(spans.filter(span => span.name.includes("mongodb"))).toHaveLength(6);
         const insertSpan = spans.find((span) => span.name === "mongodb.insert");
