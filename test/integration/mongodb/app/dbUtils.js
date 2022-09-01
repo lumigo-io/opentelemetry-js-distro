@@ -27,7 +27,9 @@ class DB {
     }
 
     static async closeConnection() {
-        this.client.close();
+        if (this.client) {
+            this.client.close();
+        }
     }
 }
 

@@ -8,6 +8,7 @@ let db = null;
 const requestListener = async function (req, res) {
     try {
         db = await initContainerDB();
+        console.log("mongodb is ready")
         let collection = db.collection('insertOne');
         await collection.insertOne({a: 1});
         await collection.find({a: 1}).toArray();

@@ -1,9 +1,12 @@
-const {GenericContainer} = require("testcontainers");
+const {GenericContainer, Wait} = require("testcontainers");
 const DB = require("./dbUtils");
 
 const MONGODB_DEFAULT_PORT = 27017;
 let mongoContainer;
-let client = null;
+
+const sleep = (time) => {
+    return new Promise((resolve) => setTimeout(resolve, time));
+};
 
 /**
  * Helper function to asynchronously create a Test Docker Container of a Mongo Instance
@@ -13,13 +16,16 @@ async function initContainerDB() {
     try {
         mongoContainer = await new GenericContainer("mongo")
             .withExposedPorts(MONGODB_DEFAULT_PORT)
+            .withWaitStrategy(Wait.forLogMessage("Waiting for connections"))
             .start();
+        await sleep(1000);
         const MAPPED_PORT = mongoContainer.getMappedPort(MONGODB_DEFAULT_PORT);
         process.env.MONGODB_URL = `mongodb://${mongoContainer.getHost()}:${MAPPED_PORT}`;
         process.env.MONGODB_DEFAULT_PORT = String(MONGODB_DEFAULT_PORT);
         return await DB.setUp();
     } catch (e) {
         console.error(`Error initializing mongo container: ${e}`);
+        throw e;
     }
 }
 

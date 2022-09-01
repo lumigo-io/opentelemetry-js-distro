@@ -13,6 +13,10 @@ class HttpInstrumentationTest implements InstrumentationTest {
         return {}
     }
 
+    getSupportedVersion() {
+        return undefined;
+    }
+
     onChildProcessReady(): Promise<void> {
         return callContainer(8000, 'test', 'get');
     }
@@ -129,6 +133,10 @@ class HttpSpanAttrLengthTest implements InstrumentationTest {
         }
     }
 
+    getSupportedVersion() {
+        return undefined;
+    }
+
     getName() {
         return "http"
     }
@@ -189,6 +197,10 @@ class HttpAttrLengthTest implements InstrumentationTest {
         return {
             OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: "3"
         }
+    }
+
+    getSupportedVersion() {
+        return undefined;
     }
 
     spansReadyCondition(lines: string[], resolve): void {
@@ -259,6 +271,10 @@ class HttpDefaultAttrLengthTest implements InstrumentationTest {
 
     getEnvVars(){
         return {}
+    }
+
+    getSupportedVersion() {
+        return undefined;
     }
 
     getName() {

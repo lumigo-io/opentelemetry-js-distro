@@ -7,4 +7,5 @@ export interface InstrumentationTest {
   runTests: (spans: any[]) => void;
   getName:() => string;
   getEnvVars: ()=> {[key: string]: string}
+  getSupportedVersion:() => number;
 }

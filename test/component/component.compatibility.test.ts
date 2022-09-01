@@ -1,5 +1,5 @@
 import fs from 'fs';
-var kill  = require('tree-kill');
+const kill  = require('tree-kill');
 
 
 import { watchDir, stopWatching } from '../helpers/fileListener';
