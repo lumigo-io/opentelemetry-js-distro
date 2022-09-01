@@ -31,6 +31,14 @@ class ExpressInstrumentationTest implements InstrumentationTest {
     return undefined;
   }
 
+  getChildProcessTimeout(): number {
+    return 10000;
+  }
+
+  getTestTimeout(): number {
+    return 20000;
+  }
+
   onChildProcessReady(data: any,  nodeChildApp: ChildProcess): Promise<void> {
     return callContainer(data, 'invoke-requests', 'get', {
       a: '1',

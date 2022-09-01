@@ -17,6 +17,14 @@ class HttpInstrumentationTest implements InstrumentationTest {
         return undefined;
     }
 
+    getChildProcessTimeout(): number {
+        return 10000;
+    }
+
+    getTestTimeout(): number {
+        return 20000;
+    }
+
     onChildProcessReady(): Promise<void> {
         return callContainer(8000, 'test', 'get');
     }
@@ -127,6 +135,14 @@ class HttpSpanAttrLengthTest implements InstrumentationTest {
         getReadySpans(lines, resolve);
     }
 
+    getChildProcessTimeout(): number {
+        return 10000;
+    }
+
+    getTestTimeout(): number {
+        return 20000;
+    }
+
     getEnvVars(){
         return {
             OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "1"
@@ -203,6 +219,14 @@ class HttpAttrLengthTest implements InstrumentationTest {
         return undefined;
     }
 
+    getChildProcessTimeout(): number {
+        return 10000;
+    }
+
+    getTestTimeout(): number {
+        return 20000;
+    }
+
     spansReadyCondition(lines: string[], resolve): void {
         getReadySpans(lines, resolve);
     }
@@ -275,6 +299,14 @@ class HttpDefaultAttrLengthTest implements InstrumentationTest {
 
     getSupportedVersion() {
         return undefined;
+    }
+
+    getChildProcessTimeout(): number {
+        return 10000;
+    }
+
+    getTestTimeout(): number {
+        return 20000;
     }
 
     getName() {

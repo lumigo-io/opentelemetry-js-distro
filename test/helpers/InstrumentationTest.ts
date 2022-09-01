@@ -8,4 +8,6 @@ export interface InstrumentationTest {
   getName:() => string;
   getEnvVars: ()=> {[key: string]: string}
   getSupportedVersion:() => number;
+  getChildProcessTimeout: () => number;
+  getTestTimeout: () => number;
 }

@@ -18,7 +18,6 @@ async function initContainerDB() {
             .withExposedPorts(MONGODB_DEFAULT_PORT)
             .withWaitStrategy(Wait.forLogMessage("Waiting for connections"))
             .start();
-        await sleep(1000);
         const MAPPED_PORT = mongoContainer.getMappedPort(MONGODB_DEFAULT_PORT);
         process.env.MONGODB_URL = `mongodb://${mongoContainer.getHost()}:${MAPPED_PORT}`;
         process.env.MONGODB_DEFAULT_PORT = String(MONGODB_DEFAULT_PORT);

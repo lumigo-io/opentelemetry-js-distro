@@ -106,7 +106,7 @@ describe("'All Instrumentation's tests'", () => {
                       LUMIGO_DEBUG: true,
                       ...integrationTest.getEnvVars()
                     },
-                    30000
+                    integrationTest.getChildProcessTimeout()
                   );
 
                   await waitAndRunSpansAssertions(
@@ -122,7 +122,7 @@ describe("'All Instrumentation's tests'", () => {
                   throw e;
                 }
               },
-              30000
+              integrationTest.getTestTimeout()
             );
           }
         }

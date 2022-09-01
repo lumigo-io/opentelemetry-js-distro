@@ -29,6 +29,15 @@ class MongoDbV3InstrumentationTest implements InstrumentationTest {
         return 3;
     }
 
+
+    getChildProcessTimeout(): number {
+        return 30000;
+    }
+
+    getTestTimeout(): number {
+        return 30000;
+    }
+
     onChildProcessReady(): Promise<void> {
         console.log("in onChildProcessReady");
         return callContainer(8080, '/', 'get');
@@ -213,7 +222,7 @@ class MongoDbV3InstrumentationTest implements InstrumentationTest {
                 'db.system': "mongodb",
                 'db.name': "myProject",
                 'db.mongodb.collection': "$cmd",
-                'db.statement':  "{\"createIndexes\":\"insertOne\",\"indexes\":[{\"name\":\"a_1\",\"key\":{\"a\":1}}]}"
+                'db.statement':   expect.stringMatching(/"createIndexes":"insertOne","indexes":\[{"name":"a_1","key":/),
             },
             status: {
                 code: 0,
@@ -236,6 +245,14 @@ class MongoDbV4InstrumentationTest implements InstrumentationTest {
 
     getSupportedVersion() {
         return 4;
+    }
+
+    getChildProcessTimeout(): number {
+        return 30000;
+    }
+
+    getTestTimeout(): number {
+        return 30000;
     }
 
     onChildProcessReady(): Promise<void> {
@@ -422,7 +439,7 @@ class MongoDbV4InstrumentationTest implements InstrumentationTest {
                 'db.system': "mongodb",
                 'db.name': "myProject",
                 'db.mongodb.collection': "$cmd",
-                'db.statement': "{\"createIndexes\":\"insertOne\",\"indexes\":[{\"name\":\"a_1\",\"key\":{\"a\":1}}]}"
+                'db.statement': expect.stringMatching(/"createIndexes":"insertOne","indexes":\[{"name":"a_1","key":/),
             },
             status: {
                 code: 0,
