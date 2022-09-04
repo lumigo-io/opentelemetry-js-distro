@@ -12,6 +12,9 @@
     "@lumigo/opentelemetry": "file:../../../../wrapper.tgz",
     "testcontainers": "8.9.0"
   },
+  "devDependencies": {
+    "optional-require": "^1.1.8"
+  },
   "lumigo": {
     "supportedDependencies": {
       "mongodb": {
