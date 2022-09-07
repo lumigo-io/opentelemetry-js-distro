@@ -1,5 +1,4 @@
 import { safeRequire } from '../utils';
-import { InstrumentationBase } from '@opentelemetry/instrumentation';
 
 export abstract class Instrumentor<T> {
   abstract getInstrumentationId(): string;

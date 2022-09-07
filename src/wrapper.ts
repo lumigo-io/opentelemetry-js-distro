@@ -12,6 +12,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
+import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
@@ -33,6 +34,7 @@ const INSTRUMENTED_MODULES = new Set<string>();
 const lumigoInstrumentationList = [
   new LumigoExpressInstrumentation(),
   new LumigoHttpInstrumentation(),
+  new LumigoMongoDBInstrumentation(),
 ];
 
 const instrumentationList = lumigoInstrumentationList.map((i) => i.getInstrumentation());
