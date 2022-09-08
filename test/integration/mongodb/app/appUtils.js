@@ -4,9 +4,6 @@ const DB = require("./dbUtils");
 const MONGODB_DEFAULT_PORT = 27017;
 let mongoContainer;
 
-const sleep = (time) => {
-    return new Promise((resolve) => setTimeout(resolve, time));
-};
 
 /**
  * Helper function to asynchronously create a Test Docker Container of a Mongo Instance
