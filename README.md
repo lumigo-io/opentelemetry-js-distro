@@ -203,7 +203,7 @@ import * as lumigo from '@lumigo/opentelemetry';
 import { Resource } from '@opentelemetry/resources';
 import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 
-const tracerProvider: BasicTracerProvider = await lumigo.init.tracerProvider;
+const tracerProvider: BasicTracerProvider = (await lumigo.init).tracerProvider;
 
 // Do some quick logic
 
