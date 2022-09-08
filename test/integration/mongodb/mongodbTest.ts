@@ -39,7 +39,6 @@ class MongoDbV3InstrumentationTest implements InstrumentationTest {
     }
 
     onChildProcessReady(): Promise<void> {
-        console.log("in onChildProcessReady");
         return callContainer(8080, '/', 'get');
     }
 
@@ -256,7 +255,6 @@ class MongoDbV4InstrumentationTest implements InstrumentationTest {
     }
 
     onChildProcessReady(): Promise<void> {
-        console.log("in onChildProcessReady");
         return callContainer(8080, '/', 'get');
     }
 

@@ -64,6 +64,7 @@ describe("'All Instrumentation's tests'", () => {
           if (app) kill(app.pid);
           await stopWatching();
           rimraf.sync(`${__dirname}/${integration}/app/node_modules/${dependency}`);
+          rimraf.sync(`${SPANS_DIR}/`); //when running locally, comment this line
         });
 
         beforeEach(async () => {
