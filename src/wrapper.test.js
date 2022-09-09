@@ -246,6 +246,64 @@ describe('Distro initialization', () => {
   });
 });
 
+describe('NodeTracerProvider should be initialize with span limit according to environment variables or default', () => {
+  test('NodeTracerProvider should be initialize with span limit equals to OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT', async () => {
+    jest.isolateModules(async () => {
+      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+      process.env.OTEL_SERVICE_NAME = 'service-1';
+      process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
+      const wrapper = jest.requireActual('./wrapper');
+      await wrapper.init
+        .then((initStatus) => initStatus.tracerProvider._config)
+        .then((config) => {
+          expect(config.spanLimits['attributeValueLengthLimit']).toBe(1);
+        });
+    });
+  });
+
+  test('NodeTracerProvider should be initialize with span limit equals to OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT', async () => {
+    jest.isolateModules(async () => {
+      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+      process.env.OTEL_SERVICE_NAME = 'service-1';
+      process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
+      const wrapper = jest.requireActual('./wrapper');
+      await wrapper.init
+        .then((initStatus) => initStatus.tracerProvider._config)
+        .then((config) => {
+          expect(config.spanLimits['attributeValueLengthLimit']).toBe(50);
+        });
+    });
+  });
+
+  test('NodeTracerProvider should be initialize with span limit equals to default value', async () => {
+    jest.isolateModules(async () => {
+      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+      process.env.OTEL_SERVICE_NAME = 'service-1';
+      const wrapper = jest.requireActual('./wrapper');
+      await wrapper.init
+        .then((initStatus) => initStatus.tracerProvider._config)
+        .then((config) => {
+          expect(config.spanLimits['attributeValueLengthLimit']).toBe(2048);
+        });
+    });
+  });
+
+  test('NodeTracerProvider should be initialize with span limit equals to OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT when both env. vars set', async () => {
+    jest.isolateModules(async () => {
+      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+      process.env.OTEL_SERVICE_NAME = 'service-1';
+      process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
+      process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
+      const wrapper = jest.requireActual('./wrapper');
+      await wrapper.init
+        .then((initStatus) => initStatus.tracerProvider._config)
+        .then((config) => {
+          expect(config.spanLimits['attributeValueLengthLimit']).toBe(1);
+        });
+    });
+  });
+});
+
 function checkBasicResourceAttributes(resource) {
   const resourceAttributeKeys = Object.keys(resource.attributes);
 

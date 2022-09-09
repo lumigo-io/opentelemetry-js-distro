@@ -16,6 +16,6 @@ jobs:
           architecture: x64
       - run: npm ci
       - run: npm run build
-      - run: npm run install-component
       - run: npm run test:unit
-      - run: npm run test:components
+      - run: npm run test:component
+      - run: npm run test:integration:version

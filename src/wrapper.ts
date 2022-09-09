@@ -12,12 +12,12 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
-import { extractEnvVars, isEnvVarTrue, logger, safeRequire } from './utils';
+import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
+import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
-const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
@@ -28,37 +28,27 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
 }
 
 let isTraceInitialized = false;
-
 const externalInstrumentations = [];
+const INSTRUMENTED_MODULES = new Set<string>();
 
-function requireIfAvailable(names: string[]) {
-  names.forEach((name) => safeRequire(name));
-}
-
-const ignoreConfig = [
-  (url: string) =>
-    [
-      process.env.LUMIGO_ENDPOINT,
-      process.env.ECS_CONTAINER_METADATA_URI,
-      process.env.ECS_CONTAINER_METADATA_URI_V4,
-    ]
-      .filter(Boolean)
-      .some((v) => url.includes(v)),
-  /169\.254\.\d+\.\d+.*/gm,
+const lumigoInstrumentationList = [
+  new LumigoExpressInstrumentation(),
+  new LumigoHttpInstrumentation(),
+  new LumigoMongoDBInstrumentation(),
 ];
 
+const instrumentationList = lumigoInstrumentationList.map((i) => i.getInstrumentation());
+
 registerInstrumentations({
-  instrumentations: [
-    new LumigoHttpInstrumentation(ignoreConfig),
-    new LumigoExpressInstrumentation(),
-    ...externalInstrumentations,
-  ],
+  instrumentations: [instrumentationList, ...externalInstrumentations],
 });
 
-requireIfAvailable([
-  ...MODULES_TO_INSTRUMENT,
-  ...JSON.parse(process.env.MODULES_TO_INSTRUMENT || '[]'),
-]);
+lumigoInstrumentationList.forEach((instrumentation) => {
+  const required = instrumentation.requireIfAvailable();
+  if (required) {
+    INSTRUMENTED_MODULES.add(instrumentation.getInstrumentationId());
+  }
+});
 
 function reportInitError(err) {
   logger.error(
@@ -69,6 +59,14 @@ function reportInitError(err) {
 
 export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
+}
+
+function getFramework(): string {
+  if (INSTRUMENTED_MODULES.has('express')) {
+    return 'express';
+  } else {
+    return 'node';
+  }
 }
 
 const trace = async (): Promise<LumigoSdkInitialization> => {
@@ -106,11 +104,14 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         resource: Resource.default()
           .merge(
             new Resource({
-              framework: 'express',
+              framework: getFramework(),
               'process.environ': JSON.stringify(extractEnvVars()),
             })
           )
           .merge(detectedResource),
+        spanLimits: {
+          attributeValueLengthLimit: getMaxSize(),
+        },
       });
 
       if (lumigoSpanDumpPath) {

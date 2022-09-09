@@ -5,8 +5,8 @@ import * as https from 'https';
 import { sortify } from './tools/jsonSortify';
 import { diag, DiagLogger } from '@opentelemetry/api';
 
+const DEFAULT_MAX_ENTRY_SIZE = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 300;
-export const MAX_SIZE = 4084;
 
 export function safeExecute<T>(
   callback: Function,
@@ -50,11 +50,16 @@ export const getProtocolModuleForUri = (uri: string) => {
   return uri.indexOf('https') === 0 ? https : http;
 };
 
+/**
+ * This function return the environment variables by total max size of the values of each environment variable key.
+ * For example: if max size=2, environment variables ={"key_1": "value1", "key_2": "value_2"}, return {"key_1": "value1"}.
+ */
 export const extractEnvVars = () => {
   const res = {};
+  const maxSize = getMaxSize();
   let length = 0;
   Object.entries(process.env).forEach(([key, value]) => {
-    if (length + value.length <= MAX_SIZE) {
+    if (length + value.length <= maxSize) {
       res[key] = value;
       length += value.length;
     }
@@ -174,4 +179,12 @@ export const safeRequire = (libId) => {
     }
   }
   return undefined;
+};
+
+export const getMaxSize = () => {
+  return (
+    parseInt(process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT) ||
+    parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT) ||
+    DEFAULT_MAX_ENTRY_SIZE
+  );
 };
