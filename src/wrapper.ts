@@ -12,12 +12,12 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
-import { extractEnvVars, getMaxSize, isEnvVarTrue, logger, safeRequire } from './utils';
+import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
+import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
-const MODULES_TO_INSTRUMENT = ['express', 'http', 'https'];
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
@@ -28,39 +28,27 @@ if (isEnvVarTrue(LUMIGO_DEBUG)) {
 }
 
 let isTraceInitialized = false;
-
 const externalInstrumentations = [];
+const INSTRUMENTED_MODULES = new Set<string>();
 
-function requireIfAvailable(names: string[]) {
-  const instrumentedValues = new Set<string>();
-  names.forEach((name) => {
-    const required = safeRequire(name);
-    if (required) instrumentedValues.add(name);
-  });
-  return instrumentedValues;
-}
-
-const ignoreConfig = [
-  (url: string) =>
-    [
-      process.env.LUMIGO_ENDPOINT,
-      process.env.ECS_CONTAINER_METADATA_URI,
-      process.env.ECS_CONTAINER_METADATA_URI_V4,
-    ]
-      .filter(Boolean)
-      .some((v) => url.includes(v)),
-  /169\.254\.\d+\.\d+.*/gm,
+const lumigoInstrumentationList = [
+  new LumigoExpressInstrumentation(),
+  new LumigoHttpInstrumentation(),
+  new LumigoMongoDBInstrumentation(),
 ];
 
+const instrumentationList = lumigoInstrumentationList.map((i) => i.getInstrumentation());
+
 registerInstrumentations({
-  instrumentations: [
-    new LumigoHttpInstrumentation(ignoreConfig),
-    new LumigoExpressInstrumentation(),
-    ...externalInstrumentations,
-  ],
+  instrumentations: [instrumentationList, ...externalInstrumentations],
 });
 
-const INSTRUMENTED_MODULES = requireIfAvailable(MODULES_TO_INSTRUMENT);
+lumigoInstrumentationList.forEach((instrumentation) => {
+  const required = instrumentation.requireIfAvailable();
+  if (required) {
+    INSTRUMENTED_MODULES.add(instrumentation.getInstrumentationId());
+  }
+});
 
 function reportInitError(err) {
   logger.error(
