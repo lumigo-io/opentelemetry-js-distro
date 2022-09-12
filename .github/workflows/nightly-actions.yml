@@ -73,4 +73,4 @@ jobs:
           commit-message: ${{ env.new_versions }}
           body: ${{ env.new_versions }}
           base: main
-          reviewers: OrrLumigo,GuyMoses
+          reviewers: mmanciop,GuyMoses
