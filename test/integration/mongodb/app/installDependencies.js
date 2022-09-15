@@ -14,7 +14,7 @@ spawnSync('npm', ['install']);
 fs.mkdirSync('./node_modules/.tmp', { recursive: true });
 
 for (const dependency in supportedDependencies) {
-  installDependencyInTempLocation(supportedDependencies, dependency);
-  moveDependencyFromTempToActiveModule(supportedDependencies, dependency);
+    installDependencyInTempLocation(supportedDependencies, dependency);
+    moveDependencyFromTempToActiveModule(supportedDependencies ,dependency);
 }
 console.log(`Supported dependency versions installed successfully.`);

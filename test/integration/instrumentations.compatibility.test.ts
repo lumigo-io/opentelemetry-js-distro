@@ -1,6 +1,7 @@
 import fs from 'fs';
 const rimraf = require('rimraf');
 const semver = require('semver');
+const kill  = require('tree-kill');
 import { watchDir, stopWatching } from '../helpers/fileListener';
 import { waitForChildProcess } from '../helpers/helpers';
 import { instrumentationsVersionManager } from '../helpers/InstrumentationsVersionManager';
@@ -60,9 +61,10 @@ describe("'All Instrumentation's tests'", () => {
         });
 
         afterEach(async () => {
-          if (app) app.kill('SIGINT');
+          if (app) kill(app.pid);
           await stopWatching();
           rimraf.sync(`${__dirname}/${integration}/app/node_modules/${dependency}`);
+          rimraf.sync(`${SPANS_DIR}/`); //when running locally, comment this line
         });
 
         beforeEach(async () => {
@@ -73,6 +75,10 @@ describe("'All Instrumentation's tests'", () => {
         for (let version of versionsToTest) {
           const testMessage = `test happy flow on ${dependency}@${version} / node@${process.version}`;
           for (let integrationTest of integrationTests) {
+            const testSupportedVersion = integrationTest.getSupportedVersion();
+            if (testSupportedVersion && parseInt(version)!=testSupportedVersion){
+              continue;
+            }
             it(
               testMessage,
               async () => {
@@ -97,10 +103,11 @@ describe("'All Instrumentation's tests'", () => {
                     {
                       LUMIGO_TRACER_TOKEN: 't_123321',
                       LUMIGO_DEBUG_SPANDUMP: FILE_EXPORTER_FILE_NAME,
-                      OTEL_SERVICE_NAME: 'express-js',
+                      OTEL_SERVICE_NAME: integration,
                       LUMIGO_DEBUG: true,
+                      ...integrationTest.getEnvVars()
                     },
-                    10000
+                    integrationTest.getChildProcessTimeout()
                   );
 
                   await waitAndRunSpansAssertions(
@@ -116,7 +123,7 @@ describe("'All Instrumentation's tests'", () => {
                   throw e;
                 }
               },
-              20000
+              integrationTest.getTestTimeout()
             );
           }
         }

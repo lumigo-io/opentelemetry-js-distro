@@ -1,9 +1,14 @@
 import { ExpressHooks } from './express';
 import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
+import { Instrumentor } from '../instrumentor';
 
-export default class LumigoExpressInstrumentation {
-  constructor() {
-    new ExpressInstrumentation({
+export default class LumigoExpressInstrumentation extends Instrumentor<ExpressInstrumentation> {
+  getInstrumentationId(): string {
+    return 'express';
+  }
+
+  getInstrumentation(): ExpressInstrumentation {
+    return new ExpressInstrumentation({
       requestHook: ExpressHooks.requestHook,
       includeHttpAttributes: true,
     });
