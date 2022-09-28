@@ -1,4 +1,3 @@
-const {info, error} = require("console")
 const { assert } = require("chai");
 const {ContinueLoopError, WaitIsOverError} = require("./customeErrors");
 require('log-timestamp');
@@ -26,7 +25,7 @@ async function syncLoop(func, wait, givenMaxRepetitions, givenMaxWaitTime = MAX_
     let sleepTime = wait;
     givenMaxRepetitions = Math.min(MAX_REPETITIONS, givenMaxRepetitions);
     while (!exit) {
-        info(`Running function ${func.name} ${repCount + 1} times.`);
+        console.info(`Running function ${func.name} ${repCount + 1} times.`);
         try {
             await sleep(sleepTime);
             return await func();
@@ -54,7 +53,7 @@ async function waitForSpansInFile(filePath, condition) {
             assert(result);
             return result;
         } catch (e) {
-            error("Failed on waitForSpansInFile", e);
+            console.error("Failed on waitForSpansInFile", e);
         }
         throw new ContinueLoopError();
     }

@@ -1,4 +1,3 @@
-const {info, error} = require("console")
 const {instrumentationsVersionManager} = require("../../helpers/InstrumentationsVersionManager");
 const fs = require("fs");
 const rimraf = require("rimraf");
@@ -26,7 +25,6 @@ const test = function (
     {itParamConfig = null},
     testCode
 ) {
-    info(`Starting integration tests: `, testName)
     const integration = itParamConfig.integration;
     const versionsToTest = require(`../${integration}/app/${integration}_versions.json`);
     for (let version of versionsToTest) {
@@ -35,9 +33,10 @@ const test = function (
         if (testSupportedVersion && parseInt(version) !== testSupportedVersion) {
             continue;
         }
-        it(testMessage, async function () {
+        jestGlobals.test(testMessage, async function () {
             try {
-                info(`\nStarting the test: ${testMessage}\n`);
+                console.log(`\n`);
+                console.info(`Starting the test: ${testMessage}\n`);
                 fs.renameSync(
                     `${__dirname}/../${integration}/app/node_modules/${integration}@${version}`,
                     `${__dirname}/../${integration}/app/node_modules/${integration}`
@@ -46,8 +45,9 @@ const test = function (
 
                 await testCode(FILE_EXPORTER_FILE_NAME);
                 instrumentationsVersionManager.addPackageSupportedVersion(integration, version);
+                console.info("Test was finished successfully")
             } catch (e) {
-                error(`${integration}@${version} / node@${process.version} failed!`, e);
+                console.error(`${integration}@${version} / node@${process.version} failed!`, e);
                 instrumentationsVersionManager.addPackageUnsupportedVersion(integration, version);
                 throw e;
             }

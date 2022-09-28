@@ -17,6 +17,7 @@
     "test:unit": "npm run build && NODE_OPTIONS=--unhandled-rejections=warn jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
     "test:component": "npm run build && npm run install-component && jest -c jest.component.config.js --detectOpenHandles --runInBand --forceExit",
     "test:integration:version": "npm run build && npm run install-integration && jest -c jest.integration.config.js --detectOpenHandles --runInBand --forceExit --silent=false",
+    "local:test:integration:version": "npm run install-integration && jest -c jest.integration.config.js --detectOpenHandles --forceExit --silent=false",
     "tsc": "tsc"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",

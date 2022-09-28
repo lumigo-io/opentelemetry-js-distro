@@ -13,6 +13,10 @@ afterEach(() => {
   process.env = { ...oldEnv };
 });
 
+beforeAll(() => {
+  global.console = require('console');
+  require( 'console-stamp' )( global.console )
+});
 
 afterAll(() => {
   const versions = instrumentationsVersionManager.getInstrumantaionsVersions();

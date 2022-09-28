@@ -1,5 +1,3 @@
-require( 'console-stamp' )( console );
-const {info, error} = require("console")
 const {test, describe} = require("../integrationTestUtils/setup");
 const fs = require("fs");
 const waitOn = require('wait-on')
@@ -64,7 +62,7 @@ describe({
     });
 
     afterEach(async () => {
-        info("afterEach, stop child process")
+        console.info("afterEach, stop child process")
         if (app) {
             kill(app.pid);
         }
@@ -95,7 +93,7 @@ describe({
             });
 
             app.stderr.on('data', (data) => {
-                info('spawn data stderr: ', data.toString());
+                console.info('spawn data stderr: ', data.toString());
             });
             app.on('error', (error) => {
                 error('spawn stderr: ', error);
@@ -106,7 +104,7 @@ describe({
                     getAppPort(data, app, resolve, reject);
                 });
             });
-            info(`port: ${port}`)
+            console.info(`port: ${port}`)
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
@@ -124,10 +122,10 @@ describe({
                     },
                     async function (err) {
                         if (err) {
-                            error("inside waitOn", err);
+                            console.error("inside waitOn", err);
                             return reject(err)
                         } else {
-                            info('Got a response from server');
+                            console.info('Got a response from server');
                             await callContainer(port, 'invoke-requests', 'get', {
                                 a: '1',
                             });
@@ -140,7 +138,7 @@ describe({
             try {
                 spans = await waited
             } catch (e) {
-                error(e)
+                console.error(e)
                 throw e;
             }
             expect(spans).toHaveLength(3);

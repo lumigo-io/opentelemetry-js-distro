@@ -1,4 +1,3 @@
-const {info, error} = require("console")
 const http = require("http");
 const {initContainerDB, stopDbContainer} = require("./appUtils");
 require('log-timestamp');
@@ -10,16 +9,16 @@ let db = null;
 async function connectToDb() {
     try {
         db = await initContainerDB();
-        info("mongodb is ready")
+        console.info("mongodb is ready")
     } catch (e) {
-        error(e);
+        console.error(e);
         await stopDbContainer();
     }
 }
 
 async function sendMongoDbRequest(res) {
     try {
-        let collection = db.collection('insertOne');
+        let collection = db ? db.collection('insertOne'): await initContainerDB();
         await collection.insertOne({a: 1});
         await collection.find({a: 1}).toArray();
         await collection.updateOne({a: 1}, {$set: {b: 1}});
@@ -31,7 +30,7 @@ async function sendMongoDbRequest(res) {
         res.writeHead(200);
         res.end(JSON.stringify("done"));
     } catch (e) {
-        error(e)
+        console.error(e)
         await stopDbContainer();
         res.writeHead(404);
         res.end(JSON.stringify({error: "Resource not found"}));
@@ -64,6 +63,6 @@ const requestListener = async function (req, res) {
 connectToDb().then(()=> {
 const server = http.createServer(requestListener);
 server.listen(port, host, () => {
-    info(`Server is running on http://${host}:${port}`);
-})}).catch(e =>  error(e))
+    console.info(`Server is running on http://${host}:${port}`);
+})}).catch(e =>  console.error(`Server could not listen to port ${port}, error: ${e}`))
 

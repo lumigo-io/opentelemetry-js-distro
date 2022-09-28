@@ -1,5 +1,3 @@
-require( 'console-stamp' )( console );
-const {info, error} = require("console")
 const {test, describe} = require("../integrationTestUtils/setup");
 const fs = require("fs");
 const waitOn = require('wait-on')
@@ -13,7 +11,7 @@ const kill = require("tree-kill");
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/mongodb/app";
 const TEST_TIMEOUT = 300000;
-const WAIT_ON_TIMEOUT = 30000;
+const WAIT_ON_TIMEOUT = 80000;
 const APP_PORT = 8080;
 const INTEGRATION_NAME = `mongodb`;
 
@@ -41,6 +39,20 @@ describe({
     let app = undefined;
     let spans;
 
+    process.on('SIGINT', (app) => {
+        if (app){
+            app.kill('SIGINT');
+        }
+        process.exit();
+    }); // catch ctrl-c
+
+    process.on('SIGTERM', (app) => {
+        if (app){
+            app.kill('SIGINT');
+        }
+        process.exit();
+    }); // catch kill
+
     beforeAll(() => {
         if (!fs.existsSync(SPANS_DIR)) {
             fs.mkdirSync(SPANS_DIR);
@@ -48,10 +60,10 @@ describe({
     });
 
     afterEach(async () => {
-        info("afterEach, stop child process")
         if (app) {
             await callContainer(APP_PORT, 'stop-mongodb', 'get');
             kill(app.pid);
+            console.info("afterEach, stop child process")
         }
     });
 
@@ -65,7 +77,7 @@ describe({
                 timeout: TEST_TIMEOUT
             }
         }, async (exporterFile) => {
-            // //start server
+            // start server
             app = spawn(`cd ${EXEC_SERVER_FOLDER} && npm`, ["run", `start:${INTEGRATION_NAME}:injected`], {
                 env: {
                     ...process.env, ...{
@@ -80,19 +92,17 @@ describe({
             });
 
             app.stderr.on('data', (data) => {
-                info('spawn data stderr: ', data.toString());
+                console.info('spawn data stderr: ', data.toString());
             });
             app.on('error', (error) => {
-                error('spawn stderr: ', error);
+                console.error('spawn stderr: ', error);
             });
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
                     {
                         resources: [`http-get://localhost:${APP_PORT}`],
-                        delay: 10000,
-                        timeout: WAIT_ON_TIMEOUT,
-                        simultaneous: 1,
+                        delay: 20000,
                         log: true, //TODO: SHANI -remove
                         verbose: true, //TODO: SHANI -remove
                         validateStatus: function (status) {
@@ -105,7 +115,7 @@ describe({
                             console.error("inside waitOn", err);
                             return reject(err)
                         } else {
-                            info('Got a response from server');
+                            console.info('Got a response from server');
                             await callContainer(APP_PORT, 'test-mongodb', 'get');
                             let spans = await waitForSpansInFile(exporterFile, isAllSpansInFile);
                             resolve(spans.map((text) => JSON.parse(text)))
@@ -113,10 +123,11 @@ describe({
                     }
                 );
             });
+
             try {
                 spans = await waited
             } catch (e) {
-                error(e)
+                console.error(e)
                 throw e;
             }
             expect(spans.filter(span => span.name.includes("mongodb") && !span.name.includes("mongodb.isMaster"))).toHaveLength(5);
@@ -292,10 +303,10 @@ describe({
             });
 
             app.stderr.on('data', (data) => {
-                info('spawn data stderr: ', data.toString());
+                console.info('spawn data stderr: ', data.toString());
             });
             app.on('error', (error) => {
-                error('spawn stderr: ', error);
+                console.error('spawn stderr: ', error);
             });
 
             const waited = new Promise((resolve, reject) => {
@@ -317,7 +328,7 @@ describe({
                             console.error("inside waitOn", err);
                             return reject(err)
                         } else {
-                            info('Got a response from server');
+                            console.info('Got a response from server');
                             await callContainer(APP_PORT, 'test-mongodb', 'get');
                             let spans = await waitForSpansInFile(exporterFile, isAllSpansInFile);
                             resolve(spans.map((text) => JSON.parse(text)))
@@ -328,7 +339,7 @@ describe({
             try {
                 spans = await waited
             } catch (e) {
-                error(e)
+                console.error(e)
                 throw e;
             }
             expect(spans.filter(span => span.name.includes("mongodb") && !span.name.includes("mongodb.isMaster"))).toHaveLength(5);
