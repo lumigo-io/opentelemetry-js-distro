@@ -35,7 +35,6 @@ const test = function (
         }
         jestGlobals.test(testMessage, async function () {
             try {
-                console.log(`\n`);
                 console.info(`Starting the test: ${testMessage}\n`);
                 fs.renameSync(
                     `${__dirname}/../${integration}/app/node_modules/${integration}@${version}`,
