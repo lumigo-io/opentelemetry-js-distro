@@ -1,5 +1,5 @@
 import fs from 'fs';
-var kill  = require('tree-kill');
+const kill  = require('tree-kill');
 
 
 import { watchDir, stopWatching } from '../helpers/fileListener';
@@ -43,7 +43,6 @@ for (let component of components) {
 
     afterEach(async () => {
       if (app) {
-        // app.kill('SIGINT');
          kill(app.pid);
       }
       await stopWatching();

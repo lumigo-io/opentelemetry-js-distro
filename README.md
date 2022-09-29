@@ -113,6 +113,8 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 | Instrumentation | Package | Supported Versions |
 | --- | --- | --- |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.1 |
+| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
+| | | 4.0.0~4.9.1 |
 
 ## Baseline setup
 
@@ -203,7 +205,7 @@ import * as lumigo from '@lumigo/opentelemetry';
 import { Resource } from '@opentelemetry/resources';
 import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 
-const tracerProvider: BasicTracerProvider = await lumigo.init.tracerProvider;
+const tracerProvider: BasicTracerProvider = (await lumigo.init).tracerProvider;
 
 // Do some quick logic
 
