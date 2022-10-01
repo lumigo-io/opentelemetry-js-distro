@@ -1,4 +1,3 @@
-const {info} = require("console")
 const axios = require('axios');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -27,10 +26,10 @@ app.get('/invoke-requests', async (req, res) => {
 
 const server = app.listen(0, () => {
   const port = server.address().port;
-  info('Listening on port ' + port);
+  console.info('Listening on port ' + port);
   if (process.send) {
     process.send(port);
   } else {
-    info(`PORT:${port}`);
+    console.info(`PORT:${port}`);
   }
 });
