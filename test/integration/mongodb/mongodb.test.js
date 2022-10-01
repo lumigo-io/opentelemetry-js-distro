@@ -10,8 +10,8 @@ const kill = require("tree-kill");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/mongodb/app";
-const TEST_TIMEOUT = 30000;
-const WAIT_ON_TIMEOUT = 30000;
+const TEST_TIMEOUT = 300000;
+const WAIT_ON_TIMEOUT = 80000;
 const APP_PORT = 8080;
 const INTEGRATION_NAME = `mongodb`;
 
@@ -102,7 +102,7 @@ describe({
                 waitOn(
                     {
                         resources: [`http-get://localhost:${APP_PORT}`],
-                        delay: 10000,
+                        delay: 20000,
                         log: true, //TODO: SHANI -remove
                         verbose: true, //TODO: SHANI -remove
                         validateStatus: function (status) {
