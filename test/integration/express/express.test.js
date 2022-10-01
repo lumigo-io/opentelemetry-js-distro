@@ -10,8 +10,8 @@ const kill = require("tree-kill");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/express/app";
-const TEST_TIMEOUT = 200000;
-const WAIT_ON_TIMEOUT = 30000;
+const TEST_TIMEOUT = 20000;
+const WAIT_ON_TIMEOUT = 10000;
 const INTEGRATION_NAME = `express`;
 
 function getSpanByKind(spans, spanKindValue) {
@@ -110,7 +110,7 @@ describe({
                 waitOn(
                     {
                         resources: [`http-get://localhost:${port}`],
-                        delay: 10000,
+                        delay: 5000,
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true, //TODO: SHANI -remove
