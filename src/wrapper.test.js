@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as utils from './utils';
+import { logger } from './utils';
+import packageJson from '../package.json';
 
 import { FileSpanExporter } from './exporters';
 jest.mock('./exporters');
@@ -63,9 +65,13 @@ describe('Distro initialization', () => {
 
   test('should initialize instrumentation', () => {
     jest.isolateModules(async () => {
+      // const logSpy = jest.spyOn(utils.logger, 'info');
       const wrapper = jest.requireActual('./wrapper');
+      const utils = jest.requireActual('./Utils');
+      jest.spyOn(utils.logger, 'info');
       await wrapper.init.then(() => {
         expect(ExpressInstrumentation).toHaveBeenCalled();
+        expect(logger.info).toHaveBeenCalledWith(`Lumigo tracer v${packageJson.version} started.`);
       });
     });
   });
