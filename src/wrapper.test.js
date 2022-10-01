@@ -65,7 +65,6 @@ describe('Distro initialization', () => {
 
   test('should initialize instrumentation', () => {
     jest.isolateModules(async () => {
-      // const logSpy = jest.spyOn(utils.logger, 'info');
       const wrapper = jest.requireActual('./wrapper');
       const utils = jest.requireActual('./Utils');
       jest.spyOn(utils.logger, 'info');
