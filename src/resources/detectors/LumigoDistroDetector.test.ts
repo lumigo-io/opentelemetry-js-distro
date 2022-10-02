@@ -18,10 +18,17 @@ describe('LumigoDistroDetector', () => {
     });
 
     it('detects resource attributes correctly', async () => {
+      jest.mock(
+        '../../../package.json',
+        () => ({
+          name: '__name__',
+          version: '1.0.1',
+        }),
+        { virtual: true }
+      );
       const resource = await new LumigoDistroDetector(`${__dirname}/../`).detect();
-
       expect(resource.attributes).toEqual({
-        'lumigo.distro.version': 'unknown',
+        'lumigo.distro.version': '1.0.1',
       });
     });
   });
