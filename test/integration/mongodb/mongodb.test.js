@@ -7,6 +7,9 @@ const {waitForSpansInFile} = require("../integrationTestUtils/waiters");
 const {callContainer} = require("../../helpers/helpers");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
+const {getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
+    getExpectedSpanWithParent
+} = require("./mongodbTestUtils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/mongodb/app";
@@ -14,27 +17,18 @@ const TEST_TIMEOUT = 300000;
 const WAIT_ON_TIMEOUT = 80000;
 const APP_PORT = 8080;
 const INTEGRATION_NAME = `mongodb`;
+const INSERT_CMD = "mongodb.insert";
+const FIND_CMD = 'mongodb.find';
+const UPDATE_CMD = 'mongodb.update';
+const REMOVE_CMD = 'mongodb.remove';
+const CREATE_INDEX_CMD = 'mongodb.createIndexes';
+const DELETE_CMD = "mongodb.delete";
+const expectedIndexStatement = expect.stringMatching(/"createIndexes":"insertOne","indexes":\[{"name":"a_1","key"/);
 
-function getSpanByName(spans, spanName) {
-    return spans.find((span) => span.name === spanName);
-}
-
-function isAllSpansInFile(filePath) {
-    const allFileContents = fs.readFileSync(filePath, 'utf-8');
-    const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-    if (
-        lines.length > 2 &&
-        lines[0].startsWith('{"traceId"') &&
-        lines[1].startsWith('{"traceId"') &&
-        lines.filter((line) => line.includes('"name":"mongodb') && !line.includes("mongodb.isMaster")).length === 5
-    ) {
-        return lines
-    }
-}
 
 describe({
     name: `Integration compatibility tests for all supported versions of ${INTEGRATION_NAME}`,
-    itParamConfig: {dependencyPath: `${__dirname}/app/node_modules/${INTEGRATION_NAME}`}
+    describeParamConfig: {dependencyPath: `${__dirname}/app/node_modules/${INTEGRATION_NAME}`}
 }, function () {
     let app = undefined;
     let spans;
@@ -103,8 +97,8 @@ describe({
                     {
                         resources: [`http-get://localhost:${APP_PORT}`],
                         delay: 20000,
-                        log: true, //TODO: SHANI -remove
-                        verbose: true, //TODO: SHANI -remove
+                        log: true,
+                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -117,7 +111,7 @@ describe({
                         } else {
                             console.info('Got a response from server');
                             await callContainer(APP_PORT, 'test-mongodb', 'get');
-                            let spans = await waitForSpansInFile(exporterFile, isAllSpansInFile);
+                            let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
                     }
@@ -130,151 +124,20 @@ describe({
                 console.error(e)
                 throw e;
             }
-            expect(spans.filter(span => span.name.includes("mongodb") && !span.name.includes("mongodb.isMaster"))).toHaveLength(5);
-            const insertSpan = getSpanByName(spans, "mongodb.insert");
-            const findSpan = getSpanByName(spans, "mongodb.find");
-            const updateSpan = getSpanByName(spans, "mongodb.update");
-            const removeSpan = getSpanByName(spans, "mongodb.remove");
-            const indexSpan = getSpanByName(spans, "mongodb.createIndexes");
 
-            let resourceAttributes = {
-                "service.name": "mongodb",
-                "telemetry.sdk.language": "nodejs",
-                "telemetry.sdk.name": "opentelemetry",
-                "telemetry.sdk.version": "1.1.1",
-                "framework": "node",
-                'process.environ': expect.jsonMatching(
-                    expect.objectContaining({
-                        "OTEL_SERVICE_NAME": "mongodb",
-                        "LUMIGO_TRACER_TOKEN": "t_123321",
-                    })),
-                'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
-                'process.pid': expect.any(Number),
-                "process.executable.name": "node",
-                'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-                "process.runtime.name": "nodejs",
-                "process.runtime.description": "Node.js",
-            };
+            expect(getFilteredSpans(spans)).toHaveLength(5);
+            const insertSpan = getSpanByName(spans, INSERT_CMD);
+            const findSpan = getSpanByName(spans, FIND_CMD);
+            const updateSpan = getSpanByName(spans, UPDATE_CMD);
+            const removeSpan = getSpanByName(spans, REMOVE_CMD);
+            const indexSpan = getSpanByName(spans, CREATE_INDEX_CMD);
 
-            expect(insertSpan).toMatchObject({
-                traceId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: "mongodb.insert",
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': expect.stringMatching(/"a":1,"_id":/),
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(findSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.find',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': "{\"a\":1}"
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(updateSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.update',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': "{\"a\":1}"
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(removeSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.remove',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': "{\"b\":1}"
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(indexSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.createIndexes',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "$cmd",
-                    'db.statement': expect.stringMatching(/"createIndexes":"insertOne","indexes":\[{"name":"a_1","key":/),
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
+            let resourceAttributes = getExpectedResourceAttributes();
+
+            expect(insertSpan).toMatchObject(getExpectedSpan(INSERT_CMD, resourceAttributes, expect.stringMatching(/"a":1,"_id":/)));
+            expect(findSpan).toMatchObject(getExpectedSpanWithParent(FIND_CMD, resourceAttributes, "{\"a\":1}"));
+            expect(updateSpan).toMatchObject(getExpectedSpanWithParent(UPDATE_CMD, resourceAttributes, "{\"a\":1}"));
+            expect(removeSpan).toMatchObject(getExpectedSpanWithParent(REMOVE_CMD, resourceAttributes, "{\"b\":1}"), "$cmd");
         }
     );
 
@@ -316,8 +179,8 @@ describe({
                         delay: 10000,
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
-                        log: true, //TODO: SHANI -remove
-                        verbose: true, //TODO: SHANI -remove
+                        log: true,
+                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -330,163 +193,36 @@ describe({
                         } else {
                             console.info('Got a response from server');
                             await callContainer(APP_PORT, 'test-mongodb', 'get');
-                            let spans = await waitForSpansInFile(exporterFile, isAllSpansInFile);
+                            let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
                     }
                 );
             });
+
             try {
                 spans = await waited
             } catch (e) {
                 console.error(e)
                 throw e;
             }
-            expect(spans.filter(span => span.name.includes("mongodb") && !span.name.includes("mongodb.isMaster"))).toHaveLength(5);
-            const insertSpan = getSpanByName(spans, "mongodb.insert");
-            const findSpan = getSpanByName(spans, "mongodb.find");
-            const updateSpan = getSpanByName(spans, "mongodb.update");
-            const removeSpan = getSpanByName(spans, "mongodb.delete");
-            const indexSpan = getSpanByName(spans, "mongodb.createIndexes");
 
-            let resourceAttributes = {
-                "service.name": "mongodb",
-                "telemetry.sdk.language": "nodejs",
-                "telemetry.sdk.name": "opentelemetry",
-                "telemetry.sdk.version": "1.1.1",
-                "framework": "node",
-                'process.environ': expect.jsonMatching(
-                    expect.objectContaining({
-                        "OTEL_SERVICE_NAME": "mongodb",
-                        "LUMIGO_TRACER_TOKEN": "t_123321",
-                    })),
-                'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
-                'process.pid': expect.any(Number),
-                "process.executable.name": "node",
-                'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-                "process.runtime.name": "nodejs",
-                "process.runtime.description": "Node.js",
-            };
+            expect(getFilteredSpans(spans)).toHaveLength(5);
+            const insertSpan = getSpanByName(spans, INSERT_CMD);
+            const findSpan = getSpanByName(spans, FIND_CMD);
+            const updateSpan = getSpanByName(spans, UPDATE_CMD);
+            const removeSpan = getSpanByName(spans, DELETE_CMD);
+            const indexSpan = getSpanByName(spans, CREATE_INDEX_CMD);
 
-            expect(insertSpan).toMatchObject({
-                traceId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: "mongodb.insert",
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': expect.stringMatching(/"a":1,"_id":/),
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(findSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.find',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': "{\"find\":\"insertOne\",\"filter\":{\"a\":1}}"
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(updateSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.update',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': "{\"update\":\"insertOne\",\"updates\":[{\"q\":{\"a\":1},\"u\":{\"$set\":{\"b\":1}}}],\"ordered\":true}"
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(removeSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.delete',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "insertOne",
-                    'db.statement': "{\"delete\":\"insertOne\",\"deletes\":[{\"q\":{\"b\":1},\"limit\":0}],\"ordered\":true}"
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-            expect(indexSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'mongodb.createIndexes',
-                kind: 2,
-                resource: {
-                    attributes: resourceAttributes
-                },
-                attributes: {
-                    'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
-                    'net.host.port': expect.any(String),
-                    'db.system': "mongodb",
-                    'db.name': "myProject",
-                    'db.mongodb.collection': "$cmd",
-                    'db.statement': expect.stringMatching(/"createIndexes":"insertOne","indexes":\[{"name":"a_1","key":/),
-                },
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
+            let resourceAttributes = getExpectedResourceAttributes();
+
+            expect(insertSpan).toMatchObject(getExpectedSpan(INSERT_CMD, resourceAttributes, expect.stringMatching(/"a":1,"_id":/)));
+            expect(findSpan).toMatchObject(getExpectedSpanWithParent(FIND_CMD, resourceAttributes, "{\"find\":\"insertOne\",\"filter\":{\"a\":1}}"));
+            const expectedUpdateStatement = "{\"update\":\"insertOne\",\"updates\":[{\"q\":{\"a\":1},\"u\":{\"$set\":{\"b\":1}}}],\"ordered\":true}";
+            expect(updateSpan).toMatchObject(getExpectedSpanWithParent(UPDATE_CMD, resourceAttributes, expectedUpdateStatement));
+            const expectedDeleteStatement = "{\"delete\":\"insertOne\",\"deletes\":[{\"q\":{\"b\":1},\"limit\":0}],\"ordered\":true}";
+            expect(removeSpan).toMatchObject(getExpectedSpanWithParent(DELETE_CMD, resourceAttributes, expectedDeleteStatement));
+            expect(indexSpan).toMatchObject(getExpectedSpanWithParent(CREATE_INDEX_CMD, resourceAttributes, expectedIndexStatement, "$cmd"));
         }
     );
 });

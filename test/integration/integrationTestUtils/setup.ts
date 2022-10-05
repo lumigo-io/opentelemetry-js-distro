@@ -1,14 +1,35 @@
-const {instrumentationsVersionManager} = require("../../helpers/InstrumentationsVersionManager");
-const fs = require("fs");
-const rimraf = require("rimraf");
-const jestGlobals = require('@jest/globals')
+import {instrumentationsVersionManager} from "../../helpers/InstrumentationsVersionManager";
+import fs  from "fs";
+import rimraf from "rimraf";
+import jestGlobals from '@jest/globals'
 
-const describe = function (
-    {name, itParamConfig = null,},
-    describeCode
+interface DescribeParamParam {
+    name: string;
+    describeParamConfig: DescribeParamConfig;
+}
+
+interface DescribeParamConfig {
+    dependencyPath: string;
+}
+
+
+interface TestParam {
+    itParamConfig: TestParamConfig;
+}
+
+interface TestParamConfig {
+    integration: string;
+    spansFilePath: string;
+    supportedVersion: number;
+    timeout: number;
+}
+
+export const describe = function (
+    {name, describeParamConfig = null}: DescribeParamParam,
+    describeCode: () => void
 ) {
     afterEach(async () => {
-        rimraf.sync(itParamConfig.dependencyPath);
+        rimraf.sync(describeParamConfig.dependencyPath);
     });
 
     jestGlobals.describe(name, describeCode)
@@ -20,10 +41,10 @@ const describe = function (
  * @param timeout: test timeout
  * @param testCode: Callable, function to test
  */
-const test = function (
-    testName,
-    {itParamConfig = null},
-    testCode
+export const test = function (
+    testName :string,
+    {itParamConfig = null}: TestParam,
+    testCode : (path: string) => void
 ) {
     const integration = itParamConfig.integration;
     const versionsToTest = require(`../${integration}/app/${integration}_versions.json`);
@@ -53,5 +74,3 @@ const test = function (
         }, itParamConfig.timeout);
     }
 };
-
-module.exports = {test, describe};

@@ -1,13 +1,12 @@
-const { assert } = require("chai");
-const {ContinueLoopError, WaitIsOverError} = require("./customeErrors");
+import { assert } from "chai";
+import {ContinueLoopError, WaitIsOverError} from "./customErrors";
 require('log-timestamp');
-
 
 const WAIT=300
 const MAX_REPETITIONS= 50
 const MAX_WAIT_TIME = 10000
 
-const sleep = (time) => {
+const sleep = (time: number) => {
     return new Promise((resolve) => setTimeout(resolve, time));
 };
 
@@ -19,7 +18,7 @@ const sleep = (time) => {
  * @param givenMaxWaitTime {number} Maximum wait time
  * @returns {Promise<*>}
  */
-async function syncLoop(func, wait, givenMaxRepetitions, givenMaxWaitTime = MAX_WAIT_TIME) {
+async function syncLoop(func: Function, wait: number, givenMaxRepetitions: number, givenMaxWaitTime: number = MAX_WAIT_TIME) {
     let exit = false;
     let repCount = 0;
     let sleepTime = wait;
@@ -46,7 +45,7 @@ async function syncLoop(func, wait, givenMaxRepetitions, givenMaxWaitTime = MAX_
     );
 }
 
-async function waitForSpansInFile(filePath, condition) {
+export async function waitForSpansInFile(filePath: string, condition: Function) {
     async function waitForSpans() {
         try {
             const result = condition(filePath);
@@ -59,5 +58,3 @@ async function waitForSpansInFile(filePath, condition) {
     }
     return await syncLoop(waitForSpans, WAIT, MAX_REPETITIONS);
 }
-
-module.exports = {waitForSpansInFile}
