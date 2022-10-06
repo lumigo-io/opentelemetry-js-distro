@@ -15,7 +15,6 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/invoke-requests', async (req, res) => {
-  axios.defaults.adapter = require('axios/lib/adapters/http') //handle cross-origin error https://stackoverflow.com/questions/51054286/cross-origin-http-request-originating-from-server-side-nodejs-axios-jsdom
   const response = await axios.get('https://api.chucknorris.io/jokes/categories', {
     headers: {
       header: 'a',
@@ -29,7 +28,5 @@ const server = app.listen(0, () => {
   console.info('Listening on port ' + port);
   if (process.send) {
     process.send(port);
-  } else {
-    console.info(`PORT:${port}`);
   }
 });

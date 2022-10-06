@@ -6,7 +6,6 @@ import {
 } from 'child_process';
 
 export const callContainer = async (port: number, path: string, method = 'get', body = {}) => {
-  axios.defaults.adapter = require('axios/lib/adapters/http') //handle cross-origin error https://stackoverflow.com/questions/51054286/cross-origin-http-request-originating-from-server-side-nodejs-axios-jsdom
   const httpResponse = await axios[method](`http://localhost:${port}/${path}`, body);
   expect(httpResponse.status).toBeGreaterThan(199);
   expect(httpResponse.status).toBeLessThan(300);
