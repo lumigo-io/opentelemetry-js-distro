@@ -16,6 +16,7 @@ import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInst
 import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
+import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
@@ -140,7 +141,11 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
 
       tracerProvider.register();
 
-      logger.info(`Lumigo tracer started.`);
+      const distroVersion =
+        detectedResource && detectedResource.attributes
+          ? detectedResource.attributes[LUMIGO_DISTRO_VERSION]
+          : 'unknown';
+      logger.info(`Lumigo tracer v${distroVersion} started.`);
       return Promise.resolve({
         tracerProvider: tracerProvider,
       });
