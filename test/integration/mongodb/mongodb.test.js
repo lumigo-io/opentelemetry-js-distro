@@ -1,6 +1,6 @@
 const {test, describe} = require("../setup");
 const fs = require("fs");
-const waitOn = require('wait-on')
+const waitOn = require("wait-on")
 require("jest-json");
 
 const {waitForSpansInFile} = require("../../testUtils/waiters");
@@ -15,12 +15,12 @@ const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/mongodb/app";
 const TEST_TIMEOUT = 300000;
 const WAIT_ON_TIMEOUT = 80000;
-const INTEGRATION_NAME = `mongodb`;
+const INTEGRATION_NAME = "mongodb";
 const INSERT_CMD = "mongodb.insert";
-const FIND_CMD = 'mongodb.find';
-const UPDATE_CMD = 'mongodb.update';
-const REMOVE_CMD = 'mongodb.remove';
-const CREATE_INDEX_CMD = 'mongodb.createIndexes';
+const FIND_CMD = "mongodb.find";
+const UPDATE_CMD = "mongodb.update";
+const REMOVE_CMD = "mongodb.remove";
+const CREATE_INDEX_CMD = "mongodb.createIndexes";
 const DELETE_CMD = "mongodb.delete";
 const expectedIndexStatement = expect.stringMatching(/"createIndexes":"insertOne","indexes":\[{"name":"a_1","key"/);
 
@@ -67,7 +67,7 @@ describe({
             app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
 
             port = await new Promise((resolve, reject) => {
-                app.stdout.on('data', (data) => {
+                app.stdout.on("data", (data) => {
                     getAppPort(data, resolve, reject);
                 });
             });
@@ -89,8 +89,8 @@ describe({
                             console.error("inside waitOn", err);
                             return reject(err)
                         } else {
-                            console.info('Got a response from server');
-                            await callContainer(port, 'test-mongodb', 'get');
+                            console.info("Got a response from server");
+                            await callContainer(port, "test-mongodb", "get");
                             let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -136,7 +136,7 @@ describe({
             app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
 
             port = await new Promise((resolve, reject) => {
-                app.stdout.on('data', (data) => {
+                app.stdout.on("data", (data) => {
                     getAppPort(data, resolve, reject);
                 });
             });
@@ -160,8 +160,8 @@ describe({
                             console.error("inside waitOn", err);
                             return reject(err)
                         } else {
-                            console.info('Got a response from server');
-                            await callContainer(port, 'test-mongodb', 'get');
+                            console.info("Got a response from server");
+                            await callContainer(port, "test-mongodb", "get");
                             let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }

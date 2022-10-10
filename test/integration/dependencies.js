@@ -1,15 +1,34 @@
-const fs = require('fs');
-const { spawnSync, execSync } = require('child_process');
-const semver = require('semver');
+import { mkdirSync, writeFileSync, accessSync, constants } from 'fs';
+import { spawnSync, execSync } from 'child_process';
+import { satisfies } from 'semver';
+
+const install = () => {
+    console.log('Installing supported dependency versions...');
+    
+    let packageJson = require('./package.json');
+    let { supportedDependencies } = packageJson.lumigo;
+    
+    supportedDependencies = writeDependencyVersionsFile(supportedDependencies);
+    
+    spawnSync('npm', ['install']);
+    
+    mkdirSync('./node_modules/.tmp', { recursive: true });
+    
+    for (const dependency in supportedDependencies) {
+      installDependencyInTempLocation(supportedDependencies, dependency);
+      moveDependencyFromTempToActiveModule(supportedDependencies, dependency);
+    }
+    console.log('Supported dependency versions installed successfully.');
+};
 
 const writeDependencyVersionsFile = (supportedDependencies) => {
     for (let dependency in supportedDependencies) {
         execSync(`npm view ${dependency} versions --json > ${dependency}_versions.json`);
         const versionsFile = `${__dirname}/${dependency}/app/${dependency}_versions.json`;
         supportedDependencies[dependency].versions = require(versionsFile).filter(
-            (v) => semver.satisfies(v, supportedDependencies[dependency].satisfies)
+            (v) => satisfies(v, supportedDependencies[dependency].satisfies)
         );
-        fs.writeFileSync(
+        writeFileSync(
             versionsFile,
             JSON.stringify(supportedDependencies[dependency].versions, null, 2)
         );
@@ -23,7 +42,7 @@ const installDependencyInTempLocation = (supportedDependencies, dependency) => {
         let fullName = version ? `${dependency}@${version}` : dependency;
         let holdingPath = `${__dirname}/${dependency}/app/node_modules/.tmp/${fullName}`;
         try {
-            fs.accessSync(holdingPath, fs.constants.F_OK);
+            accessSync(holdingPath, fs.constants.F_OK);
             console.info(`${fullName} already installed`);
         } catch (err) {
             console.info(`Installing ${fullName}`);
@@ -42,5 +61,4 @@ const moveDependencyFromTempToActiveModule = (supportedDependencies, dependency)
     });
 }
 
-
-module.exports = { writeDependencyVersionsFile, installDependencyInTempLocation,  moveDependencyFromTempToActiveModule}
+export default { install }
