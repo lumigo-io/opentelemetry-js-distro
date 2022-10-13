@@ -24,9 +24,9 @@ const installDependencyInTempLocation = (supportedDependencies, dependency) => {
         let holdingPath = `${__dirname}/${dependency}/app/node_modules/.tmp/${fullName}`;
         try {
             fs.accessSync(holdingPath, fs.constants.F_OK);
-            console.log(`${fullName} installed`);
+            console.info(`${fullName} installed`);
         } catch (err) {
-            console.log(`Installing ${fullName}`);
+            console.error(`Installing ${fullName}`);
             spawnSync('npm', ['install', fullName, '--no-save']);
             spawnSync('mv', [`${__dirname}/${dependency}/app/node_modules/${dependency}`, holdingPath]);
         }
@@ -37,7 +37,7 @@ const installDependencyInTempLocation = (supportedDependencies, dependency) => {
 const moveDependencyFromTempToActiveModule = (supportedDependencies, dependency) => {
     supportedDependencies[dependency].versions.forEach((version) => {
         let fullName = version ? `${dependency}@${version}` : dependency;
-        console.log(`Copying ${fullName}`);
+        console.info(`Copying ${fullName}`);
         spawnSync('cp', [`-a`, `${__dirname}/${dependency}/app/node_modules/.tmp/${fullName}`, `${__dirname}/${dependency}/app/node_modules/${fullName}`]);
     });
 }
