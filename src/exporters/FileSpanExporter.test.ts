@@ -8,6 +8,11 @@ jest.mock('fs');
 import { FileSpanExporter } from './index';
 
 describe('FileSpanExporter tests', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+  });
+
   let provider: BasicTracerProvider;
 
   it('should not write anything to file when there is no span', () => {
@@ -127,4 +132,31 @@ describe('FileSpanExporter tests', () => {
       expect(spyCloseSync).toHaveBeenCalledTimes(expectedCloseSync);
     }
   );
+
+  it('should write log error message when fdatasyncSync throw error', async () => {
+    const tmpFile = './test-spans.json';
+    const error = new Error('EINVAL: invalid argument, fdatasync');
+
+    fs.openSync.mockReturnValue(28);
+    const spyFdatasyncSync = jest.spyOn(fs, 'fdatasyncSync').mockImplementation(() => {
+      throw error;
+    });
+    const spyCloseSync = jest.spyOn(fs, 'closeSync').mockImplementation((fd) => {
+      return fd;
+    });
+    const utils = jest.requireActual('../Utils');
+    const spyLogger = jest.spyOn(utils.logger, 'error');
+
+    const exporterUnderTest = new FileSpanExporter(tmpFile);
+    const spyShutdown = jest.spyOn(exporterUnderTest, 'shutdown');
+    provider = new BasicTracerProvider();
+    provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+
+    await exporterUnderTest.shutdown();
+
+    expect(spyShutdown).toHaveBeenCalledTimes(1);
+    expect(spyFdatasyncSync).toHaveBeenCalledTimes(1);
+    expect(spyCloseSync).toHaveBeenCalledTimes(1);
+    expect(spyLogger.mock.calls[0][0]).toEqual(error);
+  });
 });
