@@ -33,7 +33,7 @@ for (let component of components) {
       if (!fs.existsSync(SPANS_DIR)) {
         fs.mkdirSync(SPANS_DIR);
       }
-    })
+    });
 
     beforeEach(async () => {
       waitForDependencySpans = new Promise((resolve) => {
@@ -42,9 +42,8 @@ for (let component of components) {
     });
 
     afterEach(async () => {
-      if (app) {
-         kill(app.pid);
-      }
+      if (app) app.kill('SIGINT');
+      process.exit();
       await stopWatching();
     });
     for (let componentTest of componentTests){
