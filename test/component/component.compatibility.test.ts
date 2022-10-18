@@ -42,8 +42,9 @@ for (let component of components) {
     });
 
     afterEach(async () => {
-      if (app) app.kill('SIGINT');
-      process.exit();
+      if (app) {
+         kill(app.pid);
+      }
       await stopWatching();
     });
     for (let componentTest of componentTests){
