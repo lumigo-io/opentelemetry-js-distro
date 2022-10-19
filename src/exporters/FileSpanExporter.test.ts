@@ -144,7 +144,7 @@ describe('FileSpanExporter tests', () => {
     const spyCloseSync = jest.spyOn(fs, 'closeSync').mockImplementation((fd) => {
       return fd;
     });
-    const utils = jest.requireActual('../Utils');
+    const utils = jest.requireActual('../utils');
     const spyLogger = jest.spyOn(utils.logger, 'error');
 
     const exporterUnderTest = new FileSpanExporter(tmpFile);
