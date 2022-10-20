@@ -47,7 +47,7 @@ export const test = function (
     testCode : (path: string) => void
 ) {
     const integration = itParamConfig.integration;
-    const versionsToTest = require(`../${integration}/app/${integration}_versions.json`);
+    const versionsToTest = require(`./${integration}/app/${integration}_versions.json`);
     for (let version of versionsToTest) {
         const testMessage = `test happy flow on ${integration}@${version} / node@${process.version}`;
         const testSupportedVersion = itParamConfig.supportedVersion;
@@ -58,8 +58,8 @@ export const test = function (
             try {
                 console.info(`Starting the test: ${testMessage}\n`);
                 fs.renameSync(
-                    `${__dirname}/../${integration}/app/node_modules/${integration}@${version}`,
-                    `${__dirname}/../${integration}/app/node_modules/${integration}`
+                    `${__dirname}/${integration}/app/node_modules/${integration}@${version}`,
+                    `${__dirname}/${integration}/app/node_modules/${integration}`
                 );
                 const FILE_EXPORTER_FILE_NAME = `${(itParamConfig.spansFilePath)}/spans-test-${integration}${version}.json`;
 

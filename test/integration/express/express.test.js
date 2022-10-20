@@ -4,13 +4,13 @@ const waitOn = require('wait-on')
 require("jest-json");
 
 const {waitForSpansInFile} = require("../../testUtils/waiters");
-const {callContainer} = require("../../helpers/helpers");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
 const {getAppPort, getInstrumentationSpansFromFile, expectedResourceAttributes, expectedServerAttributes,
     internalSpanAttributes, expectedClientAttributes
 } = require("./expressTestUtils");
 const {getSpanByKind} = require("../../testUtils/spanUtils");
+const {callContainer} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/express/app";

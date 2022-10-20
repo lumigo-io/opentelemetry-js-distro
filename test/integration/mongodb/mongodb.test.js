@@ -4,12 +4,12 @@ const waitOn = require('wait-on')
 require("jest-json");
 
 const {waitForSpansInFile} = require("../../testUtils/waiters");
-const {callContainer} = require("../../helpers/helpers");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
 const {getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require("./mongodbTestUtils");
+const {callContainer} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/mongodb/app";

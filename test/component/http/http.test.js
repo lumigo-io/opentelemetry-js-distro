@@ -3,7 +3,6 @@ const waitOn = require('wait-on')
 require("jest-json");
 
 const {waitForSpansInFile, sleep} = require("../../testUtils/waiters");
-const {callContainer} = require("../../helpers/helpers");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
 const {
@@ -11,7 +10,7 @@ const {
     internalSpanAttributes, expectedClientAttributes
 } = require("./httpTestUtils");
 const {getSpanByKind} = require("../../testUtils/spanUtils");
-const {getAppPort} = require("../../testUtils/utils");
+const {getAppPort, callContainer} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const TEST_TIMEOUT = 20000;
