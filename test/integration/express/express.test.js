@@ -86,7 +86,7 @@ describe({
 
             const port = await new Promise((resolve, reject) => {
                 app.stdout.on('data', (data) => {
-                    getAppPort(data, app, resolve, reject);
+                    getAppPort(data, resolve, reject);
                 });
             });
             console.info(`port: ${port}`)
