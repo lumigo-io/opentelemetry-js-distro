@@ -33,7 +33,7 @@ for (let component of components) {
       if (!fs.existsSync(SPANS_DIR)) {
         fs.mkdirSync(SPANS_DIR);
       }
-    })
+    });
 
     beforeEach(async () => {
       waitForDependencySpans = new Promise((resolve) => {
