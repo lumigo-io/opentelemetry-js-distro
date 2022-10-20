@@ -65,6 +65,9 @@ jobs:
           name: prettier
           command: npm run prettier:ci
       - run:
+          name: run checks script
+          command: ./scripts/checks.sh
+      - run:
           name: test
           command: npm run test:unit
       - run:
