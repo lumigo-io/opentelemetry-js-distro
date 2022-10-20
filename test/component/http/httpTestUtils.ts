@@ -47,7 +47,7 @@ export const internalSpanAttributes = {
     'net.peer.port': expect.any(Number),
     'http.status_code': 200,
     'http.status_text': 'OK',
-    "http.url": "http://localhost:8000/test",
+    "http.url": expect.stringMatching(/http:\/\/localhost:\d+\/test/),
 };
 
 export const expectedClientAttributes = {

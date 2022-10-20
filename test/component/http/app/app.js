@@ -1,8 +1,8 @@
 const axios = require('axios');
 const http = require("http");
+require('log-timestamp');
 
 const host = 'localhost';
-const port = 8000;
 
 const requestListener = async function (req, res) {
     console.log("in request");
@@ -25,7 +25,7 @@ const requestListener = async function (req, res) {
             res.end(JSON.stringify(result.data));
             break
         case "/large-response":
-            const big_result = await axios.get('https://api.publicapis.org/entries', {
+            const big_result = await axios.get('http://universities.hipolabs.com/search?country=United+States', {
                 headers: {
                     header: 'a',
                 },
@@ -51,6 +51,9 @@ const requestListener = async function (req, res) {
 };
 
 const server = http.createServer(requestListener);
-server.listen(port, host, () => {
-    console.log(`Server is running on http://${host}:${port}`);
-});
+server.listen(0, host, () => {
+    const port = server.address().port;
+    console.info('Listening on port ' + port);
+    if (process.send) {
+        process.send(port);
+    }});

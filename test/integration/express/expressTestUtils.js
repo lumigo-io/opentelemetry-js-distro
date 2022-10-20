@@ -91,19 +91,3 @@ export function getInstrumentationSpansFromFile(filePath) {
         return spansWithoutWaitOnCall
     }
 }
-
-export function getAppPort(data, app, resolve, reject) {
-    const dataStr = data.toString();
-    const portRegex = new RegExp('.*(Listening on port )([0-9]*)', 'g');
-
-    const portRegexMatch = portRegex.exec(dataStr);
-
-    if (portRegexMatch && portRegexMatch.length >= 3) {
-        try {
-            const port = parseInt(portRegexMatch[2]);
-            resolve(port);
-        } catch (exception) {
-            reject(exception);
-        }
-    }
-}

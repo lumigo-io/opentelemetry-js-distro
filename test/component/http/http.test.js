@@ -2,7 +2,7 @@ const fs = require("fs");
 const waitOn = require('wait-on')
 require("jest-json");
 
-const {waitForSpansInFile} = require("../../testUtils/waiters");
+const {waitForSpansInFile, sleep} = require("../../testUtils/waiters");
 const {callContainer} = require("../../helpers/helpers");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
@@ -11,15 +11,15 @@ const {
     internalSpanAttributes, expectedClientAttributes
 } = require("./httpTestUtils");
 const {getSpanByKind} = require("../../testUtils/spanUtils");
+const {getAppPort} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const TEST_TIMEOUT = 20000;
-const WAIT_ON_TIMEOUT = 15000;
-const APP_PORT = 8000;
+const WAIT_ON_TIMEOUT = 20000;
 const COMPONENT_NAME = `http`;
 const EXEC_SERVER_FOLDER = `test/component/${COMPONENT_NAME}/app`;
 
-function getStartedApp(fileExporterName, env_vars ={}) {
+function getStartedApp(fileExporterName, env_vars = {}) {
     let app = spawn(`cd ${EXEC_SERVER_FOLDER} && npm`, ["run", `start:${COMPONENT_NAME}:injected`], {
         env: {
             ...process.env, ...{
@@ -40,6 +40,16 @@ function getStartedApp(fileExporterName, env_vars ={}) {
         error('spawn stderr: ', error);
     });
     return app;
+}
+
+async function getPort(app) {
+    const port = await new Promise((resolve, reject) => {
+        app.stdout.on('data', (data) => {
+            getAppPort(data, resolve, reject);
+        });
+    });
+    console.info(`port: ${port}`)
+    return port;
 }
 
 describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
@@ -70,6 +80,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
         console.info("afterEach, stop child process")
         if (app) {
             kill(app.pid);
+            await sleep(100)
         }
     });
 
@@ -78,11 +89,12 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
 
             // start server
             app = getStartedApp(fileExporterName);
+            const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
                     {
-                        resources: [`http-get://localhost:${APP_PORT}`],
+                        resources: [`http-get://localhost:${port}`],
                         delay: 5000,
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
@@ -99,7 +111,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(APP_PORT, 'test', 'get');
+                            await callContainer(port, 'test', 'get');
                             let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -153,11 +165,12 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
 
             // start server
             app = getStartedApp(fileExporterName, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "1"});
+            const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
                     {
-                        resources: [`http-get://localhost:${APP_PORT}`],
+                        resources: [`http-get://localhost:${port}`],
                         delay: 5000,
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
@@ -174,7 +187,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(APP_PORT, 'v2/test', 'get');
+                            await callContainer(port, 'v2/test', 'get');
                             let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -236,11 +249,12 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
 
             // start server
             app = getStartedApp(fileExporterName, {OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: "3"});
+            const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
                     {
-                        resources: [`http-get://localhost:${APP_PORT}`],
+                        resources: [`http-get://localhost:${port}`],
                         delay: 5000,
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
@@ -257,7 +271,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(APP_PORT, 'large-response', 'get');
+                            await callContainer(port, 'large-response', 'get');
                             let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -296,20 +310,18 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                 {
                     'http.url': 'htt',
                     'http.method': 'GET',
-                    'http.target': '/en',
-                    'net.peer.name': 'api',
+                    'http.target': '/se',
+                    'net.peer.name': 'uni',
                     'http.request.body': '""',
-                    'net.peer.ip': expect.stringMatching(
-                        /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$))\b/
-                    ),
-                    'net.peer.port': 443,
-                    'http.host': 'api',
+                    'net.peer.ip': expect.stringMatching(/\d+\./),
+                    'net.peer.port': 80,
+                    'http.host': 'uni',
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.flavor': '1.1',
                     'http.request.headers': '{"a',
-                    'http.response.headers': '{"a',
-                    'http.response.body': '"{\\',
+                    'http.response.headers': '{"s',
+                    'http.response.body': '"[{',
                 }
             )
         }
@@ -320,11 +332,12 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
 
             // start server
             app = getStartedApp(fileExporterName);
+            const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
                     {
-                        resources: [`http-get://localhost:${APP_PORT}`],
+                        resources: [`http-get://localhost:${port}`],
                         delay: 5000,
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
@@ -341,7 +354,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(APP_PORT, 'large-response', 'get');
+                            await callContainer(port, 'large-response', 'get');
                             let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -360,7 +373,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             const clientSpan = getSpanByKind(spans, 2);
             expect(internalSpan.attributes).toMatchObject(
                 {
-                    'http.host': "localhost:8000",
+                    'http.host': `localhost:${port}`,
                     'net.host.name': "localhost",
                     'http.method': 'GET',
                     'http.user_agent': "axios/0.21.4",
@@ -372,22 +385,22 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'net.peer.port': expect.any(Number),
                     'http.status_code': 200,
                     'http.status_text': 'OK',
-                    "http.url": "http://localhost:8000/large-response",
+                    "http.url": `http://localhost:${port}/large-response`,
                 }
             )
             const clientAttributes = clientSpan.attributes;
             expect(clientAttributes).toMatchObject(
                 {
-                    'http.url': "https://api.publicapis.org/entries",
+                    'http.url': "http://universities.hipolabs.com/search?country=United+States",
                     'http.method': 'GET',
-                    'http.target': "/entries",
-                    'net.peer.name': "api.publicapis.org",
+                    'http.target': "/search?country=United+States",
+                    'net.peer.name': "universities.hipolabs.com",
                     'http.request.body': '""',
                     'net.peer.ip': expect.stringMatching(
                         /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$))\b/
                     ),
-                    'net.peer.port': 443,
-                    'http.host': "api.publicapis.org:443",
+                    'net.peer.port': 80,
+                    'http.host': "universities.hipolabs.com:80",
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.flavor': '1.1',
