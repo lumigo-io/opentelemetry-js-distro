@@ -1,9 +1,9 @@
-const {test, describe} = require("../integrationTestUtils/setup");
+const {test, describe} = require("../setup");
 const fs = require("fs");
 const waitOn = require('wait-on')
 require("jest-json");
 
-const {waitForSpansInFile} = require("../integrationTestUtils/waiters");
+const {waitForSpansInFile} = require("../../testUtils/waiters");
 const {callContainer} = require("../../helpers/helpers");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
@@ -138,6 +138,7 @@ describe({
             expect(findSpan).toMatchObject(getExpectedSpanWithParent(FIND_CMD, resourceAttributes, "{\"a\":1}"));
             expect(updateSpan).toMatchObject(getExpectedSpanWithParent(UPDATE_CMD, resourceAttributes, "{\"a\":1}"));
             expect(removeSpan).toMatchObject(getExpectedSpanWithParent(REMOVE_CMD, resourceAttributes, "{\"b\":1}"), "$cmd");
+            expect(indexSpan).toMatchObject(getExpectedSpanWithParent(CREATE_INDEX_CMD, resourceAttributes, expectedIndexStatement, "$cmd"));
         }
     );
 

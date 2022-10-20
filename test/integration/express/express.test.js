@@ -1,15 +1,16 @@
-const {test, describe} = require("../integrationTestUtils/setup");
+const {test, describe} = require("../setup");
 const fs = require("fs");
 const waitOn = require('wait-on')
 require("jest-json");
 
-const {waitForSpansInFile} = require("../integrationTestUtils/waiters");
+const {waitForSpansInFile} = require("../../testUtils/waiters");
 const {callContainer} = require("../../helpers/helpers");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
-const {getAppPort, getInstrumentationSpansFromFile, getSpanByKind, expectedResourceAttributes, expectedServerAttributes,
+const {getAppPort, getInstrumentationSpansFromFile, expectedResourceAttributes, expectedServerAttributes,
     internalSpanAttributes, expectedClientAttributes
 } = require("./expressTestUtils");
+const {getSpanByKind} = require("../../testUtils/spanUtils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/express/app";
@@ -24,6 +25,20 @@ describe({
 }, function () {
     let app = undefined;
     let spans;
+
+    process.on('SIGINT', (app) => {
+        if (app){
+            app.kill('SIGINT');
+        }
+        process.exit();
+    }); // catch ctrl-c
+
+    process.on('SIGTERM', (app) => {
+        if (app){
+            app.kill('SIGINT');
+        }
+        process.exit();
+    }); // catch kill
 
     beforeAll(() => {
         if (!fs.existsSync(SPANS_DIR)) {

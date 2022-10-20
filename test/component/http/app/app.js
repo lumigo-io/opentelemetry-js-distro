@@ -8,6 +8,12 @@ const requestListener = async function (req, res) {
     console.log("in request");
 
     switch (req.url) {
+        case "/":
+            res.setHeader("Content-Type", "application/json");
+            res.setHeader("access-control-allow-origin", "*");
+            res.writeHead(200);
+            res.end(JSON.stringify("server is ready!"));
+            break
         case "/test":
             const result = await axios.get('https://api.chucknorris.io/jokes/categories', {
                 headers: {
@@ -27,6 +33,16 @@ const requestListener = async function (req, res) {
             res.setHeader("Content-Type", "application/json");
             res.writeHead(200);
             res.end(JSON.stringify(big_result.data));
+            break
+        case "/v2/test":
+            const dog_res = await axios.get('https://dog.ceo/api/breeds/image/random', {
+                headers: {
+                    header: 'dog',
+                },
+            });
+            res.setHeader("Content-Type", "application/json");
+            res.writeHead(200);
+            res.end(JSON.stringify(dog_res.data));
             break
         default:
             res.writeHead(404);

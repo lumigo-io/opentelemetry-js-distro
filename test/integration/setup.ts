@@ -1,4 +1,4 @@
-import {instrumentationsVersionManager} from "../../helpers/InstrumentationsVersionManager";
+import {instrumentationsVersionManager} from "../helpers/InstrumentationsVersionManager";
 import fs  from "fs";
 import rimraf from "rimraf";
 import jestGlobals from '@jest/globals'

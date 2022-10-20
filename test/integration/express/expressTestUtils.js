@@ -78,10 +78,6 @@ export const expectedClientAttributes = {
     ),
 };
 
-export function getSpanByKind(spans, spanKindValue) {
-    return spans.find((span) => span.kind === spanKindValue);
-}
-
 export function getInstrumentationSpansFromFile(filePath) {
     const allFileContents = fs.readFileSync(filePath, 'utf-8');
     const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
