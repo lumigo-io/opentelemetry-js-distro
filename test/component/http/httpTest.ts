@@ -55,11 +55,11 @@ class HttpInstrumentationTest implements InstrumentationTest {
                     "telemetry.sdk.name": "opentelemetry",
                     "telemetry.sdk.version": "1.1.1",
                     "framework": "node",
-                    'process.environ': expect.jsonMatching(
-                        expect.objectContaining({
-                            "OTEL_SERVICE_NAME": "http-js",
-                            "LUMIGO_TRACER_TOKEN": "t_123321",
-                        })),
+                    // 'process.environ': expect.jsonMatching(
+                    //     expect.objectContaining({
+                    //         "OTEL_SERVICE_NAME": "http-js",
+                    //         "LUMIGO_TRACER_TOKEN": "****",
+                    //     })),
                     'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
                     'process.pid': expect.any(Number),
                     "process.executable.name": "node",
