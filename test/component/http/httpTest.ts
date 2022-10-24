@@ -55,11 +55,11 @@ class HttpInstrumentationTest implements InstrumentationTest {
                     "telemetry.sdk.name": "opentelemetry",
                     "telemetry.sdk.version": "1.1.1",
                     "framework": "node",
-                    // 'process.environ': expect.jsonMatching(
-                    //     expect.objectContaining({
-                    //         "OTEL_SERVICE_NAME": "http-js",
-                    //         "LUMIGO_TRACER_TOKEN": "****",
-                    //     })),
+                    'process.environ': expect.jsonMatching(
+                        expect.objectContaining({
+                            "OTEL_SERVICE_NAME": "http-js",
+                            "LUMIGO_TRACER_TOKEN": "****",
+                        })),
                     'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
                     'process.pid': expect.any(Number),
                     "process.executable.name": "node",
@@ -161,10 +161,7 @@ class HttpSpanAttrLengthTest implements InstrumentationTest {
         expect(spans).toHaveLength(2);
         const internalSpan = spans.find((span) => span.kind === 1);
         const clientSpan = spans.find((span) => span.kind === 2);
-        console.log(internalSpan.resource.attributes["process.environ"]);
-        console.log(internalSpan.resource.attributes["process.environ"].length);
-        console.log(JSON.parse(internalSpan.resource.attributes["process.environ"]));
-        expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(1);
+        expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(5);
         expect(internalSpan.attributes).toMatchObject(
             {
                 'http.host': "l",
@@ -242,7 +239,7 @@ class HttpAttrLengthTest implements InstrumentationTest {
         expect(spans).toHaveLength(2);
         const internalSpan = spans.find((span) => span.kind === 1);
         const clientSpan = spans.find((span) => span.kind === 2);
-        expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(3);
+        expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(7);
         expect(internalSpan.attributes).toMatchObject(
             {
                 'http.host': "loc",
