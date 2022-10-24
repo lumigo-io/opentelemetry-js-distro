@@ -85,18 +85,18 @@ describe('Distro initialization', () => {
     jest.isolateModules(async () => {
       process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
       process.env.OTEL_SERVICE_NAME = 'service-1';
-      process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]'
+      process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
       process.env.VAR_TO_MASK = 'some value';
 
       const wrapper = jest.requireActual('./wrapper');
       await wrapper.init
-          .then((initStatus) => initStatus.tracerProvider.resource)
-          .then((resource) => {
-            const vars = JSON.parse(resource.attributes["process.environ"]);
-            expect(vars.VAR_TO_MASK).toEqual("****");
-          });
+        .then((initStatus) => initStatus.tracerProvider.resource)
+        .then((resource) => {
+          const vars = JSON.parse(resource.attributes['process.environ']);
+          expect(vars.VAR_TO_MASK).toEqual('****');
+        });
     });
-  })
+  });
 
   test('Secret keys should be redacted from env vars', async () => {
     jest.isolateModules(async () => {
@@ -106,13 +106,13 @@ describe('Distro initialization', () => {
 
       const wrapper = jest.requireActual('./wrapper');
       await wrapper.init
-          .then((initStatus) => initStatus.tracerProvider.resource)
-          .then((resource) => {
-            const vars = JSON.parse(resource.attributes["process.environ"]);
-            expect(vars.AUTHORIZATION).toEqual("****");
-          });
+        .then((initStatus) => initStatus.tracerProvider.resource)
+        .then((resource) => {
+          const vars = JSON.parse(resource.attributes['process.environ']);
+          expect(vars.AUTHORIZATION).toEqual('****');
+        });
     });
-  })
+  });
 
   describe('with the LUMIGO_TRACER_TOKEN environment variable set', () => {
     beforeEach(() => {
