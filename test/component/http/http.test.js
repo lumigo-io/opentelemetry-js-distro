@@ -3,14 +3,13 @@ const waitOn = require('wait-on')
 require("jest-json");
 
 const {waitForSpansInFile, sleep} = require("../../testUtils/waiters");
-const {spawn} = require("child_process");
 const kill = require("tree-kill");
 const {
     getInstrumentationSpansFromFile, expectedResourceAttributes,
     internalSpanAttributes, expectedClientAttributes
 } = require("./httpTestUtils");
 const {getSpanByKind} = require("../../testUtils/spanUtils");
-const {getAppPort, callContainer} = require("../../testUtils/utils");
+const {getAppPort, callContainer, getStartedApp} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const TEST_TIMEOUT = 20000;
@@ -18,28 +17,6 @@ const WAIT_ON_TIMEOUT = 20000;
 const COMPONENT_NAME = `http`;
 const EXEC_SERVER_FOLDER = `test/component/${COMPONENT_NAME}/app`;
 
-function getStartedApp(fileExporterName, env_vars = {}) {
-    let app = spawn(`cd ${EXEC_SERVER_FOLDER} && npm`, ["run", `start:${COMPONENT_NAME}:injected`], {
-        env: {
-            ...process.env, ...{
-                LUMIGO_TRACER_TOKEN: 't_123321',
-                LUMIGO_DEBUG_SPANDUMP: fileExporterName,
-                OTEL_SERVICE_NAME: COMPONENT_NAME,
-                LUMIGO_DEBUG: true,
-                ...env_vars
-            }
-        },
-        shell: true
-    });
-
-    app.stderr.on('data', (data) => {
-        console.info('spawn data stderr: ', data.toString());
-    });
-    app.on('error', (error) => {
-        error('spawn stderr: ', error);
-    });
-    return app;
-}
 
 async function getPort(app) {
     const port = await new Promise((resolve, reject) => {
@@ -54,20 +31,6 @@ async function getPort(app) {
 describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
     let app = undefined;
     let spans;
-
-    process.on('SIGINT', (app) => {
-        if (app) {
-            app.kill('SIGINT');
-        }
-        process.exit();
-    }); // catch ctrl-c
-
-    process.on('SIGTERM', (app) => {
-        if (app) {
-            app.kill('SIGINT');
-        }
-        process.exit();
-    }); // catch kill
 
     beforeAll(() => {
         if (!fs.existsSync(SPANS_DIR)) {
@@ -87,7 +50,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-basic.json`;
 
             // start server
-            app = getStartedApp(fileExporterName);
+            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName);
             const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
@@ -110,7 +73,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(port, 'test', 'get');
+                            await callContainer(port, 'test1', 'get');
                             let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -163,7 +126,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-span-attr.json`;
 
             // start server
-            app = getStartedApp(fileExporterName, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "1"});
+            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "1"});
             const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
@@ -186,7 +149,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(port, 'v2/test', 'get');
+                            await callContainer(port, 'test2', 'get');
                             let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -247,7 +210,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-otel-attr.json`;
 
             // start server
-            app = getStartedApp(fileExporterName, {OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: "3"});
+            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: "3"});
             const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
@@ -330,7 +293,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-default.json`;
 
             // start server
-            app = getStartedApp(fileExporterName);
+            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName);
             const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {

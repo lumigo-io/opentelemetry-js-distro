@@ -14,7 +14,7 @@ const requestListener = async function (req, res) {
             res.writeHead(200);
             res.end(JSON.stringify("server is ready!"));
             break
-        case "/test":
+        case "/test1":
             const result = await axios.get('https://api.chucknorris.io/jokes/categories', {
                 headers: {
                     header: 'a',
@@ -34,7 +34,7 @@ const requestListener = async function (req, res) {
             res.writeHead(200);
             res.end(JSON.stringify(big_result.data));
             break
-        case "/v2/test":
+        case "/test2":
             const dog_res = await axios.get('https://dog.ceo/api/breeds/image/random', {
                 headers: {
                     header: 'dog',

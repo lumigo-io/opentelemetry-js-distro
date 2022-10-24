@@ -10,7 +10,7 @@ const {getInstrumentationSpansFromFile, expectedResourceAttributes, expectedServ
     internalSpanAttributes, expectedClientAttributes
 } = require("./expressTestUtils");
 const {getSpanByKind} = require("../../testUtils/spanUtils");
-const {callContainer, getAppPort} = require("../../testUtils/utils");
+const {callContainer, getAppPort, getStartedApp} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/express/app";
@@ -25,20 +25,6 @@ describe({
 }, function () {
     let app = undefined;
     let spans;
-
-    process.on('SIGINT', (app) => {
-        if (app){
-            app.kill('SIGINT');
-        }
-        process.exit();
-    }); // catch ctrl-c
-
-    process.on('SIGTERM', (app) => {
-        if (app){
-            app.kill('SIGINT');
-        }
-        process.exit();
-    }); // catch kill
 
     beforeAll(() => {
         if (!fs.existsSync(SPANS_DIR)) {
@@ -64,25 +50,7 @@ describe({
             }
         }, async (exporterFile) => {
             // //start server
-            app = spawn(`cd ${EXEC_SERVER_FOLDER} && npm`, ["run", `start:${INTEGRATION_NAME}:injected`], {
-                env: {
-                    ...process.env, ...{
-                        LUMIGO_TRACER_TOKEN: 't_123321',
-                        LUMIGO_DEBUG_SPANDUMP: exporterFile,
-                        OTEL_SERVICE_NAME: INTEGRATION_NAME,
-                        LUMIGO_DEBUG: true,
-                        OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"
-                    }
-                },
-                shell: true
-            });
-
-            app.stderr.on('data', (data) => {
-                console.info('spawn data stderr: ', data.toString());
-            });
-            app.on('error', (error) => {
-                error('spawn stderr: ', error);
-            });
+            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
 
             const port = await new Promise((resolve, reject) => {
                 app.stdout.on('data', (data) => {
