@@ -162,6 +162,8 @@ class HttpSpanAttrLengthTest implements InstrumentationTest {
         const internalSpan = spans.find((span) => span.kind === 1);
         const clientSpan = spans.find((span) => span.kind === 2);
         console.log(internalSpan.resource.attributes["process.environ"]);
+        console.log(internalSpan.resource.attributes["process.environ"].length);
+        console.log(JSON.parse(internalSpan.resource.attributes["process.environ"]));
         expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(1);
         expect(internalSpan.attributes).toMatchObject(
             {
