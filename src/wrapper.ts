@@ -107,7 +107,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           .merge(
             new Resource({
               framework: getFramework(),
-              'process.environ': CommonUtils.payloadStringify(extractEnvVars()),
+              'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20000),
             })
           )
           .merge(detectedResource),
