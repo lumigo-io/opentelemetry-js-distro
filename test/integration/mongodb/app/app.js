@@ -1,14 +1,14 @@
 const http = require("http");
 const {initContainerDB, stopDbContainer} = require("./appUtils");
+const retry = require('async-await-retry');
 require('log-timestamp');
 
 const host = 'localhost';
-const port = 8080;
 let db = null;
 
 async function connectToDb() {
     try {
-        db = await initContainerDB();
+        db = await retry(initContainerDB, [], {retriesMax: 3, interval: 100});
         console.info("mongodb is ready")
     } catch (e) {
         console.error(e);
@@ -18,7 +18,7 @@ async function connectToDb() {
 
 async function sendMongoDbRequest(res) {
     try {
-        let collection = db ? db.collection('insertOne'): await initContainerDB();
+        let collection = db ? db.collection('insertOne') : await initContainerDB();
         await collection.insertOne({a: 1});
         await collection.find({a: 1}).toArray();
         await collection.updateOne({a: 1}, {$set: {b: 1}});
@@ -60,9 +60,14 @@ const requestListener = async function (req, res) {
 };
 
 
-connectToDb().then(()=> {
-const server = http.createServer(requestListener);
-server.listen(port, host, () => {
-    console.info(`Server is running on http://${host}:${port}`);
-})}).catch(e =>  console.error(`Server could not listen to port ${port}, error: ${e}`))
+connectToDb().then(() => {
+    const server = http.createServer(requestListener);
+    server.listen(0, host, () => {
+        const port = server.address().port;
+        console.info('Listening on port ' + port);
+        if (process.send) {
+            process.send(port);
+        }
+    })
+}).catch(e => console.error(`Server error: ${e}`))
 
