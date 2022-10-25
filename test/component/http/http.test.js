@@ -166,7 +166,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             expect(spans).toHaveLength(2);
             const internalSpan = getSpanByKind(spans, 1);
             const clientSpan = getSpanByKind(spans, 2);
-            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(1);
+            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(5);
 
             expect(internalSpan.attributes).toMatchObject(
                 {
@@ -250,7 +250,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             expect(spans).toHaveLength(2);
             const internalSpan = getSpanByKind(spans, 1);
             const clientSpan = getSpanByKind(spans, 2);
-            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(3);
+            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(7);
             expect(internalSpan.attributes).toMatchObject(
                 {
                     'http.host': "loc",
