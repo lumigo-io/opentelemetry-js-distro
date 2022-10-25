@@ -98,8 +98,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                 duration: expect.any(Number),
                 name: 'HTTP GET',
                 kind: 1,
-                // resource: expectedResourceAttributes,
-                // attributes: internalSpanAttributes,
+                resource: expectedResourceAttributes,
+                attributes: internalSpanAttributes,
                 status: {
                     code: 0,
                 },
