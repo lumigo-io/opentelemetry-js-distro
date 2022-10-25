@@ -1,15 +1,16 @@
-const {test, describe} = require("../integrationTestUtils/setup");
+const {test, describe} = require("../setup");
 const fs = require("fs");
 const waitOn = require('wait-on')
 require("jest-json");
 
-const {waitForSpansInFile} = require("../integrationTestUtils/waiters");
-const {callContainer} = require("../../helpers/helpers");
+const {waitForSpansInFile} = require("../../testUtils/waiters");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
-const {getAppPort, getInstrumentationSpansFromFile, getSpanByKind, expectedResourceAttributes, expectedServerAttributes,
+const {getInstrumentationSpansFromFile, expectedResourceAttributes, expectedServerAttributes,
     internalSpanAttributes, expectedClientAttributes
 } = require("./expressTestUtils");
+const {getSpanByKind} = require("../../testUtils/spanUtils");
+const {callContainer, getAppPort, getStartedApp} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/express/app";
@@ -49,29 +50,11 @@ describe({
             }
         }, async (exporterFile) => {
             // //start server
-            app = spawn(`cd ${EXEC_SERVER_FOLDER} && npm`, ["run", `start:${INTEGRATION_NAME}:injected`], {
-                env: {
-                    ...process.env, ...{
-                        LUMIGO_TRACER_TOKEN: 't_123321',
-                        LUMIGO_DEBUG_SPANDUMP: exporterFile,
-                        OTEL_SERVICE_NAME: INTEGRATION_NAME,
-                        LUMIGO_DEBUG: true,
-                        OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"
-                    }
-                },
-                shell: true
-            });
-
-            app.stderr.on('data', (data) => {
-                console.info('spawn data stderr: ', data.toString());
-            });
-            app.on('error', (error) => {
-                error('spawn stderr: ', error);
-            });
+            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
 
             const port = await new Promise((resolve, reject) => {
                 app.stdout.on('data', (data) => {
-                    getAppPort(data, app, resolve, reject);
+                    getAppPort(data, resolve, reject);
                 });
             });
             console.info(`port: ${port}`)

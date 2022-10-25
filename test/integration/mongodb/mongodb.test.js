@@ -1,15 +1,15 @@
-const {test, describe} = require("../integrationTestUtils/setup");
+const {test, describe} = require("../setup");
 const fs = require("fs");
 const waitOn = require('wait-on')
 require("jest-json");
 
-const {waitForSpansInFile} = require("../integrationTestUtils/waiters");
-const {callContainer} = require("../../helpers/helpers");
+const {waitForSpansInFile} = require("../../testUtils/waiters");
 const {spawn} = require("child_process");
 const kill = require("tree-kill");
 const {getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require("./mongodbTestUtils");
+const {callContainer, getStartedApp} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/mongodb/app";
@@ -32,20 +32,6 @@ describe({
 }, function () {
     let app = undefined;
     let spans;
-
-    process.on('SIGINT', (app) => {
-        if (app){
-            app.kill('SIGINT');
-        }
-        process.exit();
-    }); // catch ctrl-c
-
-    process.on('SIGTERM', (app) => {
-        if (app){
-            app.kill('SIGINT');
-        }
-        process.exit();
-    }); // catch kill
 
     beforeAll(() => {
         if (!fs.existsSync(SPANS_DIR)) {
@@ -72,25 +58,7 @@ describe({
             }
         }, async (exporterFile) => {
             // start server
-            app = spawn(`cd ${EXEC_SERVER_FOLDER} && npm`, ["run", `start:${INTEGRATION_NAME}:injected`], {
-                env: {
-                    ...process.env, ...{
-                        LUMIGO_TRACER_TOKEN: 't_123321',
-                        LUMIGO_DEBUG_SPANDUMP: exporterFile,
-                        OTEL_SERVICE_NAME: INTEGRATION_NAME,
-                        LUMIGO_DEBUG: true,
-                        OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"
-                    }
-                },
-                shell: true
-            });
-
-            app.stderr.on('data', (data) => {
-                console.info('spawn data stderr: ', data.toString());
-            });
-            app.on('error', (error) => {
-                console.error('spawn stderr: ', error);
-            });
+            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
@@ -138,6 +106,7 @@ describe({
             expect(findSpan).toMatchObject(getExpectedSpanWithParent(FIND_CMD, resourceAttributes, "{\"a\":1}"));
             expect(updateSpan).toMatchObject(getExpectedSpanWithParent(UPDATE_CMD, resourceAttributes, "{\"a\":1}"));
             expect(removeSpan).toMatchObject(getExpectedSpanWithParent(REMOVE_CMD, resourceAttributes, "{\"b\":1}"), "$cmd");
+            expect(indexSpan).toMatchObject(getExpectedSpanWithParent(CREATE_INDEX_CMD, resourceAttributes, expectedIndexStatement, "$cmd"));
         }
     );
 

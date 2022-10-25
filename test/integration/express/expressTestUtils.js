@@ -78,10 +78,6 @@ export const expectedClientAttributes = {
     ),
 };
 
-export function getSpanByKind(spans, spanKindValue) {
-    return spans.find((span) => span.kind === spanKindValue);
-}
-
 export function getInstrumentationSpansFromFile(filePath) {
     const allFileContents = fs.readFileSync(filePath, 'utf-8');
     const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
@@ -93,21 +89,5 @@ export function getInstrumentationSpansFromFile(filePath) {
         spansWithoutWaitOnCall[2].startsWith('{"traceId"')
     ) {
         return spansWithoutWaitOnCall
-    }
-}
-
-export function getAppPort(data, app, resolve, reject) {
-    const dataStr = data.toString();
-    const portRegex = new RegExp('.*(Listening on port )([0-9]*)', 'g');
-
-    const portRegexMatch = portRegex.exec(dataStr);
-
-    if (portRegexMatch && portRegexMatch.length >= 3) {
-        try {
-            const port = parseInt(portRegexMatch[2]);
-            resolve(port);
-        } catch (exception) {
-            reject(exception);
-        }
     }
 }
