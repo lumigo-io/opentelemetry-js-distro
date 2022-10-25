@@ -4,18 +4,16 @@ const waitOn = require('wait-on')
 require("jest-json");
 
 const {waitForSpansInFile} = require("../../testUtils/waiters");
-const {spawn} = require("child_process");
 const kill = require("tree-kill");
 const {getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require("./mongodbTestUtils");
-const {callContainer, getStartedApp} = require("../../testUtils/utils");
+const {callContainer, getStartedApp, getAppPort} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = "test/integration/mongodb/app";
 const TEST_TIMEOUT = 300000;
 const WAIT_ON_TIMEOUT = 80000;
-const APP_PORT = 8080;
 const INTEGRATION_NAME = `mongodb`;
 const INSERT_CMD = "mongodb.insert";
 const FIND_CMD = 'mongodb.find';
@@ -31,6 +29,7 @@ describe({
     describeParamConfig: {dependencyPath: `${__dirname}/app/node_modules/${INTEGRATION_NAME}`}
 }, function () {
     let app = undefined;
+    let port = undefined;
     let spans;
 
     beforeAll(() => {
@@ -41,7 +40,11 @@ describe({
 
     afterEach(async () => {
         if (app) {
-            await callContainer(APP_PORT, 'stop-mongodb', 'get');
+            try {
+                await callContainer(port, 'stop-mongodb', 'get');
+            } catch (e) {
+                console.warn("afterEach, could not stop mongodb docker container", e)
+            }
             kill(app.pid);
             console.info("afterEach, stop child process")
         }
@@ -60,10 +63,17 @@ describe({
             // start server
             app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
 
+            port = await new Promise((resolve, reject) => {
+                app.stdout.on('data', (data) => {
+                    getAppPort(data, resolve, reject);
+                });
+            });
+            console.info(`port: ${port}`)
+
             const waited = new Promise((resolve, reject) => {
                 waitOn(
                     {
-                        resources: [`http-get://localhost:${APP_PORT}`],
+                        resources: [`http-get://localhost:${port}`],
                         delay: 20000,
                         log: true,
                         verbose: true,
@@ -78,7 +88,7 @@ describe({
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(APP_PORT, 'test-mongodb', 'get');
+                            await callContainer(port, 'test-mongodb', 'get');
                             let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }
@@ -121,30 +131,19 @@ describe({
             }
         }, async (exporterFile) => {
             // //start server
-            app = spawn(`cd ${EXEC_SERVER_FOLDER} && npm`, ["run", `start:${INTEGRATION_NAME}:injected`], {
-                env: {
-                    ...process.env, ...{
-                        LUMIGO_TRACER_TOKEN: 't_123321',
-                        LUMIGO_DEBUG_SPANDUMP: exporterFile,
-                        OTEL_SERVICE_NAME: INTEGRATION_NAME,
-                        LUMIGO_DEBUG: true,
-                        OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"
-                    }
-                },
-                shell: true
-            });
+            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
 
-            app.stderr.on('data', (data) => {
-                console.info('spawn data stderr: ', data.toString());
+            port = await new Promise((resolve, reject) => {
+                app.stdout.on('data', (data) => {
+                    getAppPort(data, resolve, reject);
+                });
             });
-            app.on('error', (error) => {
-                console.error('spawn stderr: ', error);
-            });
+            console.info(`port: ${port}`)
 
             const waited = new Promise((resolve, reject) => {
                 waitOn(
                     {
-                        resources: [`http-get://localhost:${APP_PORT}`],
+                        resources: [`http-get://localhost:${port}`],
                         delay: 10000,
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
@@ -161,7 +160,7 @@ describe({
                             return reject(err)
                         } else {
                             console.info('Got a response from server');
-                            await callContainer(APP_PORT, 'test-mongodb', 'get');
+                            await callContainer(port, 'test-mongodb', 'get');
                             let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
                             resolve(spans.map((text) => JSON.parse(text)))
                         }

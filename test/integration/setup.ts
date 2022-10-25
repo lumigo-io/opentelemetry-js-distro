@@ -65,10 +65,11 @@ export const test = function (
 
                 await testCode(FILE_EXPORTER_FILE_NAME);
                 instrumentationsVersionManager.addPackageSupportedVersion(integration, version);
-                console.info("Test was finished successfully")
+                console.info(`Test ${testMessage} was finished successfully`)
             } catch (e) {
                 console.error(`${integration}@${version} / node@${process.version} failed!`, e);
                 instrumentationsVersionManager.addPackageUnsupportedVersion(integration, version);
+                console.error(`Test ${testMessage} failed!`)
                 throw e;
             }
         }, itParamConfig.timeout);
