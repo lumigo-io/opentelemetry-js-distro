@@ -5,7 +5,7 @@ export const expectedResourceAttributes = {
         'service.name': 'express',
         'telemetry.sdk.language': 'nodejs',
         'telemetry.sdk.name': 'opentelemetry',
-        'telemetry.sdk.version': '1.1.1',
+        'telemetry.sdk.version':  expect.any(String),
         framework: 'express',
         'process.environ': expect.jsonMatching(
             expect.objectContaining({
