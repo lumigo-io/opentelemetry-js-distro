@@ -6,7 +6,7 @@ const WAIT=300
 const MAX_REPETITIONS= 50
 const MAX_WAIT_TIME = 10000
 
-const sleep = (time: number) => {
+export const sleep = (time: number) => {
     return new Promise((resolve) => setTimeout(resolve, time));
 };
 
