@@ -13,7 +13,7 @@ describe('LumigoHttpInstrumentation', () => {
 
     expect(lumigoHttpInstrumentation.getInstrumentation()).toMatchObject({
       instrumentationName: '@opentelemetry/instrumentation-http',
-      instrumentationVersion: '0.28.0',
+      instrumentationVersion: expect.any(String),
       _config: {
         enabled: true,
         ignoreOutgoingUrls: expect.arrayContaining(ignoreConfig),
@@ -25,7 +25,7 @@ describe('LumigoHttpInstrumentation', () => {
       _tracer: {
         _provider: {},
         name: '@opentelemetry/instrumentation-http',
-        version: '0.28.0',
+        version: expect.any(String),
       },
       _meter: {},
       _hooks: [
