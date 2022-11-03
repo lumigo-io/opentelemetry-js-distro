@@ -22,7 +22,7 @@ export function getExpectedResourceAttributes() {
         "service.name": "mongodb",
         "telemetry.sdk.language": "nodejs",
         "telemetry.sdk.name": "opentelemetry",
-        "telemetry.sdk.version": "1.1.1",
+        "telemetry.sdk.version":  expect.any(String),
         "framework": "node",
         'process.environ': expect.jsonMatching(
             expect.objectContaining({

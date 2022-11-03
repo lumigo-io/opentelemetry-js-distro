@@ -1,5 +1,6 @@
 const axios = require('axios');
 const http = require("http");
+const {trace} =require('@opentelemetry/api');
 require('log-timestamp');
 
 const host = 'localhost';
@@ -22,6 +23,7 @@ const requestListener = async function (req, res) {
             });
             res.setHeader("Content-Type", "application/json");
             res.writeHead(200);
+            trace.getActiveSpan().setAttribute("lumigo.execution_tags.foo",["bar","baz"]);
             res.end(JSON.stringify(result.data));
             break
         case "/large-response":
@@ -32,6 +34,7 @@ const requestListener = async function (req, res) {
             });
             res.setHeader("Content-Type", "application/json");
             res.writeHead(200);
+            trace.getActiveSpan().setAttribute("lumigo.execution_tags.foo", "bar");
             res.end(JSON.stringify(big_result.data));
             break
         case "/test2":
@@ -42,6 +45,8 @@ const requestListener = async function (req, res) {
             });
             res.setHeader("Content-Type", "application/json");
             res.writeHead(200);
+            trace.getActiveSpan().setAttribute("lumigo.execution_tags.foo", "bar");
+            trace.getActiveSpan().setAttribute("lumigo.execution_tags.foo", "foo");
             res.end(JSON.stringify(dog_res.data));
             break
         default:
