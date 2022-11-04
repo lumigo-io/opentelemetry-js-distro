@@ -102,7 +102,6 @@ Specifically supported are:
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions. All regular expressions are case-insensitive. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`.
-* `LUMIGO_DOMAINS_SCRUBBER='[".*secret.*"]'`: Prevents Lumigo from collecting both request and response details from a list of domains. This accepts a comma-separated list of regular expressions that is JSON-formatted. By default, the tracer uses `["secretsmanager\..*\.amazonaws\.com", "ssm\..*\.amazonaws\.com", "kms\..*\.amazonaws\.com"]`. **Note** - These defaults are overridden when you define a different list of regular expressions.
 
 ## Supported runtimes
 
@@ -112,7 +111,9 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 
 | Instrumentation | Package | Supported Versions |
 | --- | --- | --- |
-| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.1 |
+| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
+| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
+| | | 4.0.0~4.11.0 |
 
 ## Baseline setup
 

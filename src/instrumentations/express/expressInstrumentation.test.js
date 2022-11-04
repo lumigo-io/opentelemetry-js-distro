@@ -10,7 +10,7 @@ describe('LumigoExpressInstrumentation', () => {
   test('getInstrumentation should return ExpressInstrumentation object', () => {
     expect(lumigoExpressInstrumentation.getInstrumentation()).toMatchObject({
       instrumentationName: 'opentelemetry-instrumentation-express',
-      instrumentationVersion: '0.28.0',
+      instrumentationVersion: expect.any(String),
       _config: {
         enabled: true,
         includeHttpAttributes: true,
@@ -21,7 +21,7 @@ describe('LumigoExpressInstrumentation', () => {
       _tracer: {
         _provider: {},
         name: 'opentelemetry-instrumentation-express',
-        version: '0.28.0',
+        version: expect.any(String),
       },
       _meter: {},
       _hooks: [

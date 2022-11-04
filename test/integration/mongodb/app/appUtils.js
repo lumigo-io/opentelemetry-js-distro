@@ -17,7 +17,7 @@ async function initContainerDB() {
             .start();
         const MAPPED_PORT = mongoContainer.getMappedPort(MONGODB_DEFAULT_PORT);
         process.env.MONGODB_URL = `mongodb://${mongoContainer.getHost()}:${MAPPED_PORT}`;
-        process.env.MONGODB_DEFAULT_PORT = String(MONGODB_DEFAULT_PORT);
+        process.env.MONGODB_DEFAULT_PORT = `${MONGODB_DEFAULT_PORT}`;
         return await DB.setUp();
     } catch (e) {
         console.error(`Error initializing mongo container: ${e}`);

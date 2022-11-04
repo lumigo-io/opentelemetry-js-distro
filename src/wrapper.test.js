@@ -64,8 +64,19 @@ describe('Distro initialization', () => {
   test('should initialize instrumentation', () => {
     jest.isolateModules(async () => {
       const wrapper = jest.requireActual('./wrapper');
+      const utils = jest.requireActual('./Utils');
+      jest.spyOn(utils.logger, 'info');
+      jest.mock(
+        '../package.json',
+        () => ({
+          name: '__name__',
+          version: '1.0.1',
+        }),
+        { virtual: true }
+      );
       await wrapper.init.then(() => {
         expect(ExpressInstrumentation).toHaveBeenCalled();
+        expect(utils.logger.info).toHaveBeenCalledWith(`Lumigo tracer v1.0.1 started.`);
       });
     });
   });
