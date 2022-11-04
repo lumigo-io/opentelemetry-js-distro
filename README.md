@@ -117,9 +117,33 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 
 ## Baseline setup
 
-The Lumigo OpenTelemetry Distro will automatically create the following OpenTelemetry constructs provided to a [`NodeTraceProvider`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-node/src/NodeTracerProvider.ts):
+The Lumigo OpenTelemetry Distro will automatically create the following OpenTelemetry constructs provided to a [`NodeTraceProvider`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-node/src/NodeTracerProvider.ts).
 
-* A `Resource` built from the default OpenTelemetry resource with the `sdk...` attributes
+### Resources
+
+A `Resource` built from the default OpenTelemetry resource with the `sdk...` attributes, plus:
+* The `lumigo.distro.version` documenting the version of this package
+
+Additional resource attributes depending on the compute platform.
+
+#### Amazon Elastic Container Service
+
+* `cloud.provider` with value `aws`
+* `cloud.platform` with value `aws_ecs`
+* `container.name` with, as value, the container name as defined in the task definition
+* `container.id` with, as value, the container id as defined by the underpinning Docker runtime
+
+If the [Task Metadata endpoint v4](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-metadata-endpoint-v4-fargate.html) is available (`ECS_CONTAINER_METADATA_URI_V4` env var is set), the following resource attributes as specified in the [AWS ECS Resource Semantic conventions](https://opentelemetry.io/docs/reference/specification/resource/semantic_conventions/cloud_provider/aws/ecs/) are also set:
+
+* `aws.ecs.container.arn`
+* `aws.ecs.cluster.arn`
+* `aws.ecs.launchtype`
+* `aws.ecs.task.arn`
+* `aws.ecs.task.family`
+* `aws.ecs.task.revision`
+
+### Exporters
+
 * If the `LUMIGO_TRACER_TOKEN` environment variable is set: a [`BatchSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/BatchSpanProcessorBase.ts), which uses an [`OTLPTraceExporter`](https://github.com/open-telemetry/opentelemetry-js/blob/main/experimental/packages/exporter-trace-otlp-http/src/platform/node/OTLPTraceExporter.ts) to push tracing data to Lumigo
 * If the `LUMIGO_DEBUG_SPANDUMP` environment variable is set: a [`SimpleSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/SimpleSpanProcessor.ts), which uses an [`FileSpanExporter`](src/exporters/FileSpanExporter.ts) to save to file the spans collected. **Do not use this in production!**
 
