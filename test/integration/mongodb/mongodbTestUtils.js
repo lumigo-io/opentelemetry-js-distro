@@ -27,7 +27,7 @@ export function getExpectedResourceAttributes() {
         'process.environ': expect.jsonMatching(
             expect.objectContaining({
                 "OTEL_SERVICE_NAME": "mongodb",
-                "LUMIGO_TRACER_TOKEN": "t_123321",
+                "LUMIGO_TRACER_TOKEN": "****",
             })),
         'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
         'process.pid': expect.any(Number),
