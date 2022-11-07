@@ -13,7 +13,8 @@
     "testcontainers": "8.9.0"
   },
   "devDependencies": {
-    "optional-require": "^1.1.8"
+    "optional-require": "^1.1.8",
+    "async-await-retry": "^2.0.0"
   },
   "lumigo": {
     "supportedDependencies": {

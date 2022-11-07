@@ -1,5 +1,6 @@
 import axios from "axios";
 import {spawn} from "child_process";
+import kill from "tree-kill";
 
 export function getAppPort(data: Buffer, resolve, reject) {
     const dataStr = data.toString();
@@ -46,14 +47,14 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
         });
 
         // catch ctrl-c
-        process.on('SIGINT', (app) => {
-            app.kill('SIGINT');
+        process.once('SIGINT', (app) => {
+            kill(app.pid);
             process.exit();
         });
 
         // catch kill
-        process.on('SIGTERM', (app) => {
-            app.kill('SIGINT');
+        process.once('SIGTERM', (app) => {
+            kill(app.pid);
             process.exit();
         });
     }

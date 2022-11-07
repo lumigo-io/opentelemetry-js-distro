@@ -99,7 +99,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                 name: 'HTTP GET',
                 kind: 1,
                 resource: expectedResourceAttributes,
-                attributes: internalSpanAttributes,
+                attributes: {...internalSpanAttributes, "lumigo.execution_tags.foo": ["bar", "baz"]},
                 status: {
                     code: 0,
                 },
@@ -183,6 +183,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'O',
                     "http.url": "h",
+                    "lumigo.execution_tags.foo": "f"
                 }
             )
             expect(clientSpan.attributes).toMatchObject(
@@ -266,6 +267,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     "http.url": "htt",
+                    "lumigo.execution_tags.foo": "bar"
                 }
             )
             expect(clientSpan.attributes).toMatchObject(
