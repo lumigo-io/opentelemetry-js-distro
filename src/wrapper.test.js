@@ -1,5 +1,9 @@
 import * as fs from 'fs';
 import * as utils from './utils';
+const nock = require('nock');
+
+import { awsEksDetector } from '@opentelemetry/resource-detector-aws';
+jest.mock('@opentelemetry/resource-detector-aws');
 
 import { FileSpanExporter } from './exporters';
 jest.mock('./exporters');
@@ -251,6 +255,59 @@ describe('Distro initialization', () => {
               expect(resource.attributes['aws.ecs.task.family']).toBe('curltest');
               expect(resource.attributes['aws.ecs.task.revision']).toBe('26');
             });
+        });
+      });
+    });
+  });
+
+  describe('On Amazon EKS', () => {
+    let awsDetectors;
+    beforeEach(() => {
+     // awsDetectors = jest.createMockFromModule('@opentelemetry/resource-detector-aws');
+     //  awsDetectors.awsEksDetector.fileAccessAsync = jest.fn(() => {});
+     //  awsDetectors.awsEksDetector.readFileAsync = jest.fn(() => {return "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklm"});
+     //  awsDetectors.awsEksDetector._getK8sCredHeader = jest.fn(() => {return 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269'});
+    });
+
+    afterEach(() => {
+      nock.enableNetConnect();
+    });
+    describe('on successful request', () => {
+      nock.disableNetConnect();
+      nock.cleanAll();
+      // todo: add eks mocks here
+      // jest.spyOn(awsEksDetector, 'fileAccessAsync').mockImplementation((x,y, z) => {});
+      // jest.spyOn(awsEksDetector, 'readFileAsync').mockImplementation(() => {return "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklm"});
+      // jest.spyOn(awsEksDetector, '_getK8sCredHeader').mockImplementation(() => {return 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269'});
+
+      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
+        jest.isolateModules(async () => {
+
+          const scope = nock('https://' + awsEksDetector.K8S_SVC_URL)
+            .persist()
+            .get(awsEksDetector.AUTH_CONFIGMAP_PATH)
+            .matchHeader('Authorization', 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269')
+            .reply(200, () => 'my-auth')
+            .get(awsEksDetector.CW_CONFIGMAP_PATH)
+            .matchHeader('Authorization', 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269')
+            .reply(200, () => '{"data":{"cluster.name":"my-cluster"}}');
+
+          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+          process.env.OTEL_SERVICE_NAME = 'service-1';
+
+          const wrapper = jest.requireActual('./wrapper');
+          await wrapper.init
+            .then((initStatus) => initStatus.tracerProvider.resource)
+            .then((resource) => {
+              checkBasicResourceAttributes(resource);
+              const resourceAttributeKeys = Object.keys(resource.attributes);
+
+              expect(resource.attributes['cloud.provider']).toBe('aws');
+              expect(resource.attributes['cloud.platform']).toBe('aws_eks');
+              expect(resourceAttributeKeys).toContain('container.id');
+              expect(resourceAttributeKeys).toContain('cluster.name');
+            });
+          scope.done();
         });
       });
     });
