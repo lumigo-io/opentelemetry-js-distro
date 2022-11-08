@@ -1,26 +1,10 @@
 import * as fs from 'fs';
 import * as utils from './utils';
-const nock = require('nock');
 
 const { Resource } = require("@opentelemetry/resources");
 const { SemanticResourceAttributes, CloudProviderValues, CloudPlatformValues } = require("@opentelemetry/semantic-conventions");
 
-
-
-import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
-// jest.mock('@opentelemetry/resource-detector-aws', ()=> {
-//   return {
-//     ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
-//     // ...jest.requireActual("@opentelemetry/resources"),
-//     // ...jest.requireActual("@opentelemetry/semantic-conventions"),
-//     awsEksDetector :   {
-//       detect: jest.fn().mockReturnValue(mockeResource)
-//     }
-//   }
-// });
-// jest.mock('@opentelemetry/resource-detector-aws');
-
-const mockeResource = new Resource({
+const mockedResource = new Resource({
   [SemanticResourceAttributes.CLOUD_PROVIDER]: CloudProviderValues.AWS,
   [SemanticResourceAttributes.CLOUD_PLATFORM]: CloudPlatformValues.AWS_EKS,
   [SemanticResourceAttributes.K8S_CLUSTER_NAME]: 'cluster-name',
@@ -283,57 +267,18 @@ describe('Distro initialization', () => {
   });
 
   describe('On Amazon EKS', () => {
-    let awsDetectors;
-    beforeEach(() => {
-     // awsDetectors = jest.createMockFromModule('@opentelemetry/resource-detector-aws');
-     //  awsDetectors.awsEksDetector.fileAccessAsync = jest.fn(() => {});
-     //  awsDetectors.awsEksDetector.readFileAsync = jest.fn(() => {return "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklm"});
-     //  awsDetectors.awsEksDetector._getK8sCredHeader = jest.fn(() => {return 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269'});
-    });
-
-    afterEach(() => {
-      nock.enableNetConnect();
-    });
     describe('on successful request', () => {
-      nock.disableNetConnect();
-      nock.cleanAll();
-
       jest.mock('@opentelemetry/resource-detector-aws', ()=> {
         return {
           ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
-          // ...jest.requireActual("@opentelemetry/resources"),
-          // ...jest.requireActual("@opentelemetry/semantic-conventions"),
           awsEksDetector :   {
-            detect: jest.fn().mockReturnValue(mockeResource)
+            detect: jest.fn().mockReturnValue(mockedResource)
           }
         }
       });
 
-      // todo: add eks mocks here
-      // jest.mock('@opentelemetry/resource-detector-aws');
-      // const awsResourceDetectors = require( '@opentelemetry/resource-detector-aws');
-
-      // awsResourceDetectors.mockImplementation(() => {
-      //   return {
-      //     awsEksDetector: jest.fn()
-      //   };
-      // });
-      // jest.spyOn(awsResourceDetectors.awsEksDetector, 'detect').mockImplementation((x,y, z) => {});
-      // jest.spyOn(awsResourceDetectors.awsEksDetector, 'readFileAsync').mockImplementation(() => {return "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklm"});
-      // jest.spyOn(awsResourceDetectors.awsEksDetector, '_getK8sCredHeader').mockImplementation(() => {return 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269'});
-
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
         jest.isolateModules(async () => {
-
-          // const scope = nock('https://' + awsResourceDetectors.awsEksDetector.K8S_SVC_URL)
-          //   .persist()
-          //   .get(awsEksDetector.AUTH_CONFIGMAP_PATH)
-          //   .matchHeader('Authorization', 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269')
-          //   .reply(200, () => 'my-auth')
-          //   .get(awsEksDetector.CW_CONFIGMAP_PATH)
-          //   .matchHeader('Authorization', 'Bearer 31ada4fd-adec-460c-809a-9e56ceb75269')
-          //   .reply(200, () => '{"data":{"cluster.name":"my-cluster"}}');
-
           process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
           process.env.OTEL_SERVICE_NAME = 'service-1';
 
@@ -344,12 +289,11 @@ describe('Distro initialization', () => {
               checkBasicResourceAttributes(resource);
               const resourceAttributeKeys = Object.keys(resource.attributes);
 
-              expect(resource.attributes['cloud.provider']).toBe('aws');
-              expect(resource.attributes['cloud.platform']).toBe('aws_eks');
-              expect(resourceAttributeKeys).toContain('container.id');
-              expect(resourceAttributeKeys).toContain('cluster.name');
+              expect(resource.attributes[SemanticResourceAttributes.CLOUD_PROVIDER]).toBe('aws');
+              expect(resource.attributes[SemanticResourceAttributes.CLOUD_PLATFORM]).toBe('aws_eks');
+              expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.CONTAINER_ID);
+              expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.K8S_CLUSTER_NAME);
             });
-          scope.done();
         });
       });
     });

@@ -76,7 +76,6 @@
     "jest-chain": "^1.1.6",
     "jest-json": "^2.0.0",
     "log-timestamp": "^0.3.0",
-    "nock": "^13.2.9",
     "node-notifier": "^10.0.0",
     "npm-install-peers": "^1.2.2",
     "prettier": "^2.2.1",
