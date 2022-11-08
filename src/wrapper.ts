@@ -17,6 +17,7 @@ import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
+import { CommonUtils } from '@lumigo/node-core';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
@@ -106,7 +107,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           .merge(
             new Resource({
               framework: getFramework(),
-              'process.environ': JSON.stringify(extractEnvVars()),
+              'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20000),
             })
           )
           .merge(detectedResource),
