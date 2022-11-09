@@ -1,8 +1,12 @@
 import * as fs from 'fs';
 import * as utils from './utils';
 
-const { Resource } = require("@opentelemetry/resources");
-const { SemanticResourceAttributes, CloudProviderValues, CloudPlatformValues } = require("@opentelemetry/semantic-conventions");
+const { Resource } = require('@opentelemetry/resources');
+const {
+  SemanticResourceAttributes,
+  CloudProviderValues,
+  CloudPlatformValues,
+} = require('@opentelemetry/semantic-conventions');
 
 const mockedResource = new Resource({
   [SemanticResourceAttributes.CLOUD_PROVIDER]: CloudProviderValues.AWS,
@@ -268,13 +272,13 @@ describe('Distro initialization', () => {
 
   describe('On Amazon EKS', () => {
     describe('on successful request', () => {
-      jest.mock('@opentelemetry/resource-detector-aws', ()=> {
+      jest.mock('@opentelemetry/resource-detector-aws', () => {
         return {
           ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
-          awsEksDetector :   {
-            detect: jest.fn().mockReturnValue(mockedResource)
-          }
-        }
+          awsEksDetector: {
+            detect: jest.fn().mockReturnValue(mockedResource),
+          },
+        };
       });
 
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
@@ -290,7 +294,9 @@ describe('Distro initialization', () => {
               const resourceAttributeKeys = Object.keys(resource.attributes);
 
               expect(resource.attributes[SemanticResourceAttributes.CLOUD_PROVIDER]).toBe('aws');
-              expect(resource.attributes[SemanticResourceAttributes.CLOUD_PLATFORM]).toBe('aws_eks');
+              expect(resource.attributes[SemanticResourceAttributes.CLOUD_PLATFORM]).toBe(
+                'aws_eks'
+              );
               expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.CONTAINER_ID);
               expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.K8S_CLUSTER_NAME);
             });
