@@ -103,6 +103,37 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions. All regular expressions are case-insensitive. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`.
 
+### Adding Execution Tags
+Execution Tags allow you to dynamically add dimensions to your invocations so that they can be identified, searched for, and filtered in Lumigo.
+
+You can add execution tags to a span with dynamic values using the openTelemetry "vanilla" `setAttribute` method, with `lumigo.execution_tags.<key>` as the key.
+OpenTelemetry also supports setting multiple values to the same attribute, and naturally that enables you to set multiple values to the same execution tag:
+
+```typescript
+// Typescript
+import { trace } from '@opentelemetry/api';
+
+trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
+trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo',['bar','baz']);
+```
+
+```js
+// Javascript
+const { trace } = require('@opentelemetry/api');
+
+trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
+trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo',['bar','baz']);
+```
+
+**Note**: If you use the Span.set_attribute API multiple times to set multiple values, you may instead override the previous single value. Instead, use `Span.set_attribute(<key>, [<value_1>, <value_2>])`
+
+
+**Limitations**
+* Up to 50 execution tags
+* Each tag key length can have 50 characters at most.
+* Each tag value length can have 70 characters at most.
+
+
 ## Supported runtimes
 
 * Node.js: 12.x, 14.x, 16.x
