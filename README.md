@@ -125,7 +125,7 @@ trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
 trace.getActiveSpan().setAttribute('lumigo.execution_tags.bar',['baz','xyz']);
 ```
 
-**Note**: If you use the Span.set_attribute API multiple times to set multiple values, you may instead override the previous single value. Instead, use `Span.set_attribute(<key>, [<value_1>, <value_2>])`
+**Note**: If you use the `Span.setAttribute` API multiple times to set multiple values, you may instead override the previous single value. Instead, use `Span.setAttribute(<key>, [<value_1>, <value_2>])`
 
 
 **Limitations**
