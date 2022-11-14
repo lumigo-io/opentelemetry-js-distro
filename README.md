@@ -114,7 +114,7 @@ OpenTelemetry also supports setting multiple values to the same attribute, and n
 import { trace } from '@opentelemetry/api';
 
 trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo',['bar','baz']);
+trace.getActiveSpan().setAttribute('lumigo.execution_tags.bar',['baz','xyz']);
 ```
 
 ```js
@@ -122,7 +122,7 @@ trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo',['bar','baz']);
 const { trace } = require('@opentelemetry/api');
 
 trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo',['bar','baz']);
+trace.getActiveSpan().setAttribute('lumigo.execution_tags.bar',['baz','xyz']);
 ```
 
 **Note**: If you use the Span.set_attribute API multiple times to set multiple values, you may instead override the previous single value. Instead, use `Span.set_attribute(<key>, [<value_1>, <value_2>])`
