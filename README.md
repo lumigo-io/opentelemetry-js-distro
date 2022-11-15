@@ -127,12 +127,12 @@ const { trace } = require('@opentelemetry/api');
 trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
 ```
 
-Notice that, using OpenTelemetry's `trace.getActiveSpan()` API, you do not need to keep track of the current span.
+Notice that, using OpenTelemetry's [`trace.getActiveSpan()` API](https://opentelemetry.io/docs/instrumentation/js/instrumentation/#get-the-current-span), you do not need to keep track of the current span, you can get it at any point of your program execution.
 
 In OpenTelemetry, span attributes can be `strings`, `numbers` (double precision floating point or signed 64 bit integer), `booleans` (a.k.a. "primitive types"), and arrays of one primitive type (e.g., an array of string, and array of numbers or an array of booleans).
 In Lumigo, booleans and numbers are transformed to strings.
 
-**IMPORTANT:** If you use the `Span.setAttribute` API multiple times _on the same span_ to set multiple values, you may instead override the previous single value:
+**IMPORTANT:** If you use the `Span.setAttribute` API multiple times _on the same span_ to set multiple values, or set the same key, you may instead override the previous one:
 
 ```typescript
 // Typescript
@@ -209,7 +209,7 @@ nestedSpan.end();
 
 In the examples above, the invocation in Lumigo resulting from executing the code will have both `bar` and `baz` values associated with the `foo` execution tag.
 Which spans are merged in the same invocation depends on the parent-child relations among those spans.
-Explaining this topic is outside of the scope of this documentation; a good first read to get deeper into the topic is the [Traces](https://opentelemetry.io/docs/concepts/signals/traces/) documentation of OpenTelemetry.
+Explaining this topic is outside the scope of this documentation; a good first read to get deeper into the topic is the [Traces](https://opentelemetry.io/docs/concepts/signals/traces/) documentation of OpenTelemetry.
 In case your execution tags on different spans appear on different invocations than what you would expect, get in touch with [Lumigo support](https://docs.lumigo.io/docs/support).
 
 #### Execution Tag Limitations
