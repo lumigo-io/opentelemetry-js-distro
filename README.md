@@ -132,7 +132,7 @@ Notice that, using OpenTelemetry's [`trace.getActiveSpan()` API](https://opentel
 In OpenTelemetry, span attributes can be `strings`, `numbers` (double precision floating point or signed 64 bit integer), `booleans` (a.k.a. "primitive types"), and arrays of one primitive type (e.g., an array of string, and array of numbers or an array of booleans).
 In Lumigo, booleans and numbers are transformed to strings.
 
-**IMPORTANT:** If you use the `Span.setAttribute` API multiple times _on the same span_ to set values for the same keu multiple values, you may override previous values with the new ones instead of adding them:
+**IMPORTANT:** If you use the `Span.setAttribute` API multiple times _on the same span_ to set values for the same key multiple values, you may override previous values rather than adding to them:
 
 ```typescript
 // Typescript
