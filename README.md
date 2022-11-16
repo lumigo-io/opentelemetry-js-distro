@@ -117,14 +117,24 @@ For example, you could add an execution tag as follows:
 // Typescript
 import { trace } from '@opentelemetry/api';
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
+/*
+ * In Node.js 14+, the '?' coalescing operator ensures that your code is
+ * safe even if the tracing is not active, and `trace.getActiveSpan()` returns
+ * `undefined`.
+ */
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
 ```
 
 ```js
 // Javascript
 const { trace } = require('@opentelemetry/api');
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
+/*
+ * In Node.js 14+, the '?' coalescing operator ensures that your code is
+ * safe even if the tracing is not active, and `trace.getActiveSpan()` returns
+ * `undefined`.
+ */
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
 ```
 
 Notice that, using OpenTelemetry's [`trace.getActiveSpan()` API](https://opentelemetry.io/docs/instrumentation/js/instrumentation/#get-the-current-span), you do not need to keep track of the current span, you can get it at any point of your program execution.
@@ -138,16 +148,16 @@ In Lumigo, booleans and numbers are transformed to strings.
 // Typescript
 import { trace } from '@opentelemetry/api';
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo', 'bar');
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo', 'baz');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'bar');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'baz');
 ```
 
 ```js
 // Javascript
 const { trace } = require('@opentelemetry/api');
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo', 'bar');
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo', 'baz');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'bar');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'baz');
 ```
 
 In the snippets above, the `foo` execution tag will have in Lumigo only the `baz` value!
@@ -157,14 +167,14 @@ Multiple values for an execution tag are supported as follows:
 // Typescript
 import { trace } from '@opentelemetry/api';
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo', ['bar', 'baz']);
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', ['bar', 'baz']);
 ```
 
 ```js
 // Javascript
 const { trace } = require('@opentelemetry/api');
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo', ['bar', 'baz']);
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', ['bar', 'baz']);
 ```
 
 The snippets above will produce in Lumigo the `foo` tag having both `bar` and `baz` values.
@@ -179,7 +189,7 @@ The invocation will include all execution tags on all its spans, and merge their
 // Javascript
 const { trace } = require('@opentelemetry/api');
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
 
 const tracer = tracerProvider.getTracer(__filename)
 
@@ -195,7 +205,7 @@ nestedSpan.end();
 // Typescript
 const tracer = tracerProvider.getTracer(__filename)
 
-trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo','bar');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
 
 const tracer = tracerProvider.getTracer(__filename)
 
