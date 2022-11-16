@@ -183,7 +183,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'O',
                     "http.url": "h",
-                    "lumigo.execution_tags.foo": "f"
+                    "lumigo.execution_tags.foo": "f",
+                    "lumigo.execution_tags.baz": true
                 }
             )
             expect(clientSpan.attributes).toMatchObject(
@@ -267,7 +268,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     "http.url": "htt",
-                    "lumigo.execution_tags.foo": "bar"
+                    "lumigo.execution_tags.foo": "bar",
+                    "lumigo.execution_tags.date": 1234567
                 }
             )
             expect(clientSpan.attributes).toMatchObject(
@@ -350,6 +352,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     "http.url": `http://localhost:${port}/large-response`,
+                    "lumigo.execution_tags.foo": "bar",
+                    "lumigo.execution_tags.date": 1234567
                 }
             )
             const clientAttributes = clientSpan.attributes;

@@ -35,6 +35,7 @@ const requestListener = async function (req, res) {
             res.setHeader("Content-Type", "application/json");
             res.writeHead(200);
             trace.getActiveSpan().setAttribute("lumigo.execution_tags.foo", "bar");
+            trace.getActiveSpan().setAttribute("lumigo.execution_tags.date", 1234567);
             res.end(JSON.stringify(big_result.data));
             break
         case "/test2":
@@ -47,6 +48,7 @@ const requestListener = async function (req, res) {
             res.writeHead(200);
             trace.getActiveSpan().setAttribute("lumigo.execution_tags.foo", "bar");
             trace.getActiveSpan().setAttribute("lumigo.execution_tags.foo", "foo");
+            trace.getActiveSpan().setAttribute("lumigo.execution_tags.baz", true);
             res.end(JSON.stringify(dog_res.data));
             break
         default:
