@@ -48,7 +48,7 @@ describe({
             } catch (e) {
                 console.warn("afterEach, could not stop mongodb docker container", e)
             }
-            kill(app.pid);
+            kill(app.pid, 'SIGHUP');
             console.info("afterEach, stop child process")
         }
     });

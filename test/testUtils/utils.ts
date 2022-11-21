@@ -49,7 +49,10 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
         app.on('exit', function (code, signal) {
             console.info('app exited with ' +
                 `code: ${code} and signal: ${signal}`);
-            throw new Error('app exit!');
+            //we kill the app with "SIGHUP" in the afterEach, we want to throw error only when it's real app issue
+            if (signal !== "SIGHUP"){
+                throw new Error('app exit unexpectedly!');
+            }
         });
 
         // catch ctrl-c

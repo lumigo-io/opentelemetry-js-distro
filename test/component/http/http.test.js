@@ -41,7 +41,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
     afterEach(async () => {
         console.info("afterEach, stop child process")
         if (app) {
-            kill(app.pid);
+            kill(app.pid, 'SIGHUP');
             await sleep(100)
         }
     });
