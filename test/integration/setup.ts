@@ -49,7 +49,14 @@ export const test = function (
     const integration = itParamConfig.integration;
     const versionsToTest = require(`./${integration}/app/${integration}_versions.json`);
     for (let version of versionsToTest) {
-        const testMessage = `test happy flow on ${integration}@${version} / node@${process.version}`;
+        const integrationWithVersion = `${integration}@${version}`;
+
+        global.console = require('console');
+        require( 'console-stamp' )(  global.console, {
+                format: `(${integrationWithVersion}) :date() :label(7)`
+        } );
+
+        const testMessage = `test happy flow on ${integrationWithVersion} / node@${process.version}`;
         const testSupportedVersion = itParamConfig.supportedVersion;
         if (testSupportedVersion && parseInt(version) !== testSupportedVersion) {
             continue;
@@ -58,16 +65,16 @@ export const test = function (
             try {
                 console.info(`Starting the test: ${testMessage}\n`);
                 fs.renameSync(
-                    `${__dirname}/${integration}/app/node_modules/${integration}@${version}`,
+                    `${__dirname}/${integration}/app/node_modules/${integrationWithVersion}`,
                     `${__dirname}/${integration}/app/node_modules/${integration}`
                 );
-                const FILE_EXPORTER_FILE_NAME = `${(itParamConfig.spansFilePath)}/spans-test-${integration}${version}.json`;
+                const FILE_EXPORTER_FILE_NAME = `${(itParamConfig.spansFilePath)}/spans-test-${integrationWithVersion}.json`;
 
                 await testCode(FILE_EXPORTER_FILE_NAME);
                 instrumentationsVersionManager.addPackageSupportedVersion(integration, version);
                 console.info(`Test ${testMessage} was finished successfully`)
             } catch (e) {
-                console.error(`${integration}@${version} / node@${process.version} failed!`, e);
+                console.error(`${integrationWithVersion} / node@${process.version} failed!`, e);
                 instrumentationsVersionManager.addPackageUnsupportedVersion(integration, version);
                 console.error(`Test ${testMessage} failed!`)
                 throw e;

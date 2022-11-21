@@ -79,7 +79,6 @@ describe({
                         resources: [`http-get://localhost:${port}`],
                         delay: 20000,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -151,7 +150,6 @@ describe({
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
