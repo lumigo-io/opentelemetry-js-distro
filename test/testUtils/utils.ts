@@ -46,6 +46,12 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
             console.error('spawn stderr: ', error);
         });
 
+        app.on('exit', function (code, signal) {
+            console.info('app exited with ' +
+                `code: ${code} and signal: ${signal}`);
+            throw new Error('app exit!');
+        });
+
         // catch ctrl-c
         process.once('SIGINT', (app) => {
             kill(app.pid);

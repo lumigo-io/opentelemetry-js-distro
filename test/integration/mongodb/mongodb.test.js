@@ -5,7 +5,8 @@ require("jest-json");
 
 const {waitForSpansInFile} = require("../../testUtils/waiters");
 const kill = require("tree-kill");
-const {getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
+const {
+    getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require("./mongodbTestUtils");
 const {callContainer, getStartedApp, getAppPort} = require("../../testUtils/utils");
@@ -41,7 +42,9 @@ describe({
     afterEach(async () => {
         if (app) {
             try {
-                await callContainer(port, 'stop-mongodb', 'get');
+                if (port) {
+                    await callContainer(port, 'stop-mongodb', 'get');
+                }
             } catch (e) {
                 console.warn("afterEach, could not stop mongodb docker container", e)
             }
