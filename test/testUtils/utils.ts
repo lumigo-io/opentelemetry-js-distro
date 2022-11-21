@@ -57,13 +57,13 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
 
         // catch ctrl-c
         process.once('SIGINT', (app) => {
-            kill(app.pid);
+            kill(app.pid, 'SIGINT');
             process.exit();
         });
 
         // catch kill
         process.once('SIGTERM', (app) => {
-            kill(app.pid);
+            kill(app.pid, 'SIGTERM');
             process.exit();
         });
     }
