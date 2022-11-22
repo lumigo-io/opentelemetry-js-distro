@@ -84,7 +84,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
 
       if (!process.env.LUMIGO_TRACER_TOKEN) {
         logger.warn(
-          'The Lumigo token is not available (the "LUMIGO_TRACER_TOKEN" environment variable is not set): no telemetry will sent to Lumigo.'
+          'The Lumigo token is not available (the "LUMIGO_TRACER_TOKEN" environment variable is not set): no telemetry will be sent to Lumigo.'
         );
       }
 
