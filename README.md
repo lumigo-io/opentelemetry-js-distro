@@ -239,7 +239,7 @@ In case your execution tags on different spans appear on different invocations t
 | --- | --- | --- |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
-| | | 4.0.0~4.11.0 |
+| | | 4.0.0~4.12.1 |
 
 ## Baseline setup
 
