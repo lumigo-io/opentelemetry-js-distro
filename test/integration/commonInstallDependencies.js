@@ -24,9 +24,9 @@ const installDependencyInTempLocation = (supportedDependencies, dependency) => {
         let holdingPath = `${__dirname}/${dependency}/app/node_modules/.tmp/${fullName}`;
         try {
             fs.accessSync(holdingPath, fs.constants.F_OK);
-            console.info(`${fullName} installed`);
+            console.info(`${fullName} already installed`);
         } catch (err) {
-            console.error(`Installing ${fullName} error: ${err}`);
+            console.info(`Installing ${fullName}`);
             spawnSync('npm', ['install', fullName, '--no-save']);
             spawnSync('mv', [`${__dirname}/${dependency}/app/node_modules/${dependency}`, holdingPath]);
         }

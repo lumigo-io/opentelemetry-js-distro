@@ -46,15 +46,24 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
             console.error('spawn stderr: ', error);
         });
 
+        app.on('exit', function (code, signal) {
+            const pid = `${this.pid ? this.pid : undefined}`;
+            console.info(`app with pid: ${pid} exited with code: ${code} and signal: ${signal}`);
+            //we kill the app with "SIGHUP" in the afterEach, we want to throw error only when it's real app issue
+            if (signal && signal !== "SIGHUP"){
+                throw new Error(`app with pid: ${pid} exit unexpectedly!`);
+            }
+        });
+
         // catch ctrl-c
         process.once('SIGINT', (app) => {
-            kill(app.pid);
+            kill(app.pid, 'SIGINT');
             process.exit();
         });
 
         // catch kill
         process.once('SIGTERM', (app) => {
-            kill(app.pid);
+            kill(app.pid, 'SIGTERM');
             process.exit();
         });
     }

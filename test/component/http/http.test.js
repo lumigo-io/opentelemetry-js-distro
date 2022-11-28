@@ -41,7 +41,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
     afterEach(async () => {
         console.info("afterEach, stop child process")
         if (app) {
-            kill(app.pid);
+            kill(app.pid, 'SIGHUP');
             await sleep(100)
         }
     });
@@ -61,7 +61,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -137,7 +136,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -223,7 +221,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -308,7 +305,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided

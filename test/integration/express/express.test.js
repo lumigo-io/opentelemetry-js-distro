@@ -4,7 +4,6 @@ const waitOn = require('wait-on')
 require("jest-json");
 
 const {waitForSpansInFile} = require("../../testUtils/waiters");
-const {spawn} = require("child_process");
 const kill = require("tree-kill");
 const {getInstrumentationSpansFromFile, expectedResourceAttributes, expectedServerAttributes,
     internalSpanAttributes, expectedClientAttributes
@@ -35,7 +34,7 @@ describe({
     afterEach(async () => {
         console.info("afterEach, stop child process")
         if (app) {
-            kill(app.pid);
+            kill(app.pid, 'SIGHUP');
         }
     });
 
@@ -67,7 +66,6 @@ describe({
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
