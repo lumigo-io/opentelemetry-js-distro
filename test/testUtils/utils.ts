@@ -28,7 +28,6 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
     let app = spawn(`cd ${serverFolder} && npm`, ["run", `start:${serviceName}:injected`], {
         env: {
             ...process.env, ...{
-                LUMIGO_TRACER_TOKEN: 't_123321',
                 LUMIGO_DEBUG_SPANDUMP: fileExporterName,
                 OTEL_SERVICE_NAME: serviceName,
                 LUMIGO_DEBUG: true,
