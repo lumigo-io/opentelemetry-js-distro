@@ -50,7 +50,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-basic.json`;
 
             // start server
-            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName);
+            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {LUMIGO_ENDPOINT: "https://walle-edge-app-us-west-2.walle.golumigo.com",
+                LUMIGO_TRACER_TOKEN: 't_123321'});
             const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
