@@ -1,6 +1,20 @@
 import * as fs from 'fs';
 import * as utils from './utils';
 
+const { Resource } = require('@opentelemetry/resources');
+const {
+  SemanticResourceAttributes,
+  CloudProviderValues,
+  CloudPlatformValues,
+} = require('@opentelemetry/semantic-conventions');
+
+const mockedResource = new Resource({
+  [SemanticResourceAttributes.CLOUD_PROVIDER]: CloudProviderValues.AWS,
+  [SemanticResourceAttributes.CLOUD_PLATFORM]: CloudPlatformValues.AWS_EKS,
+  [SemanticResourceAttributes.K8S_CLUSTER_NAME]: 'cluster-name',
+  [SemanticResourceAttributes.CONTAINER_ID]: 'container-id',
+});
+
 import { FileSpanExporter } from './exporters';
 jest.mock('./exporters');
 
@@ -283,6 +297,41 @@ describe('Distro initialization', () => {
               );
               expect(resource.attributes['aws.ecs.task.family']).toBe('curltest');
               expect(resource.attributes['aws.ecs.task.revision']).toBe('26');
+            });
+        });
+      });
+    });
+  });
+
+  describe('On Amazon EKS', () => {
+    describe('on successful request', () => {
+      jest.mock('@opentelemetry/resource-detector-aws', () => {
+        return {
+          ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
+          awsEksDetector: {
+            detect: jest.fn().mockReturnValue(mockedResource),
+          },
+        };
+      });
+
+      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
+        jest.isolateModules(async () => {
+          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+          process.env.OTEL_SERVICE_NAME = 'service-1';
+
+          const wrapper = jest.requireActual('./wrapper');
+          await wrapper.init
+            .then((initStatus) => initStatus.tracerProvider.resource)
+            .then((resource) => {
+              checkBasicResourceAttributes(resource);
+              const resourceAttributeKeys = Object.keys(resource.attributes);
+
+              expect(resource.attributes[SemanticResourceAttributes.CLOUD_PROVIDER]).toBe('aws');
+              expect(resource.attributes[SemanticResourceAttributes.CLOUD_PLATFORM]).toBe(
+                'aws_eks'
+              );
+              expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.CONTAINER_ID);
+              expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.K8S_CLUSTER_NAME);
             });
         });
       });
