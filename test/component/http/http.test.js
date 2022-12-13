@@ -41,7 +41,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
     afterEach(async () => {
         console.info("afterEach, stop child process")
         if (app) {
-            kill(app.pid);
+            kill(app.pid, 'SIGHUP');
             await sleep(100)
         }
     });
@@ -50,7 +50,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-basic.json`;
 
             // start server
-            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName);
+            app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {LUMIGO_ENDPOINT: "https://walle-edge-app-us-west-2.walle.golumigo.com",
+                LUMIGO_TRACER_TOKEN: 't_123321'});
             const port = await getPort(app);
 
             const waited = new Promise((resolve, reject) => {
@@ -61,7 +62,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -137,7 +137,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -166,7 +165,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             expect(spans).toHaveLength(2);
             const internalSpan = getSpanByKind(spans, 1);
             const clientSpan = getSpanByKind(spans, 2);
-            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(1);
+            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(5);
 
             expect(internalSpan.attributes).toMatchObject(
                 {
@@ -183,7 +182,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'O',
                     "http.url": "h",
-                    "lumigo.execution_tags.foo": "f"
+                    "lumigo.execution_tags.foo": "f",
+                    "lumigo.execution_tags.baz": true
                 }
             )
             expect(clientSpan.attributes).toMatchObject(
@@ -222,7 +222,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -251,7 +250,7 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
             expect(spans).toHaveLength(2);
             const internalSpan = getSpanByKind(spans, 1);
             const clientSpan = getSpanByKind(spans, 2);
-            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(3);
+            expect(Object.values(JSON.parse(internalSpan.resource.attributes["process.environ"])).join("").length).toBeLessThanOrEqual(7);
             expect(internalSpan.attributes).toMatchObject(
                 {
                     'http.host': "loc",
@@ -267,7 +266,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     "http.url": "htt",
-                    "lumigo.execution_tags.foo": "bar"
+                    "lumigo.execution_tags.foo": "bar",
+                    "lumigo.execution_tags.date": 1234567
                 }
             )
             expect(clientSpan.attributes).toMatchObject(
@@ -306,7 +306,6 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -350,6 +349,8 @@ describe(`Component compatibility tests for ${COMPONENT_NAME}`, function () {
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     "http.url": `http://localhost:${port}/large-response`,
+                    "lumigo.execution_tags.foo": "bar",
+                    "lumigo.execution_tags.date": 1234567
                 }
             )
             const clientAttributes = clientSpan.attributes;

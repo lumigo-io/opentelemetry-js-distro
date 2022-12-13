@@ -103,6 +103,132 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions. All regular expressions are case-insensitive. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`.
 
+### Execution Tags
+
+[Execution Tags](https://docs.lumigo.io/docs/execution-tags) allow you to dynamically add dimensions to your invocations so that they can be identified, searched for, and filtered in Lumigo.
+For example: in multi-tenanted systems, execution tags are often used to mark with the identifiers of the end-users that trigger them for analysis (e.g., [Explore view](https://docs.lumigo.io/docs/explore)) and alerting purposes.
+
+#### Creating Execution Tags
+
+In the Lumigo OpenTelemetry Distro for JS, execution tags are represented as [span attributes](https://opentelemetry.io/docs/reference/specification/common/#attribute) and, specifically, as span attributes with the `lumigo.execution_tags.` prefix.
+For example, you could add an execution tag as follows:
+
+```typescript
+// Typescript
+import { trace } from '@opentelemetry/api';
+
+/*
+ * In Node.js 14+, the '?' coalescing operator ensures that your code is
+ * safe even if the tracing is not active, and `trace.getActiveSpan()` returns
+ * `undefined`.
+ */
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
+```
+
+```js
+// Javascript
+const { trace } = require('@opentelemetry/api');
+
+/*
+ * In Node.js 14+, the '?' coalescing operator ensures that your code is
+ * safe even if the tracing is not active, and `trace.getActiveSpan()` returns
+ * `undefined`.
+ */
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
+```
+
+Notice that, using OpenTelemetry's [`trace.getActiveSpan()` API](https://opentelemetry.io/docs/instrumentation/js/instrumentation/#get-the-current-span), you do not need to keep track of the current span, you can get it at any point of your program execution.
+
+In OpenTelemetry, span attributes can be `strings`, `numbers` (double precision floating point or signed 64 bit integer), `booleans` (a.k.a. "primitive types"), and arrays of one primitive type (e.g., an array of string, and array of numbers or an array of booleans).
+In Lumigo, booleans and numbers are transformed to strings.
+
+**IMPORTANT:** If you use the `Span.setAttribute` API multiple times _on the same span_ to set values for the same key multiple values, you may override previous values rather than adding to them:
+
+```typescript
+// Typescript
+import { trace } from '@opentelemetry/api';
+
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'bar');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'baz');
+```
+
+```js
+// Javascript
+const { trace } = require('@opentelemetry/api');
+
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'bar');
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', 'baz');
+```
+
+In the snippets above, the `foo` execution tag will have in Lumigo only the `baz` value!
+Multiple values for an execution tag are supported as follows:
+
+```typescript
+// Typescript
+import { trace } from '@opentelemetry/api';
+
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', ['bar', 'baz']);
+```
+
+```js
+// Javascript
+const { trace } = require('@opentelemetry/api');
+
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', ['bar', 'baz']);
+```
+
+The snippets above will produce in Lumigo the `foo` tag having both `bar` and `baz` values.
+Another option to set multiple values is setting [execution Tags in different spans of an invocation](#execution-tags-in-different-spans-of-an-invocation).
+
+#### Execution Tags in different spans of an invocation
+
+In Lumigo, multiple spans may be merged together into one invocation, which is the entry that you see, for example, in the [Explore view](https://docs.lumigo.io/docs/explore).
+The invocation will include all execution tags on all its spans, and merge their values:
+
+```js
+// Javascript
+const { trace } = require('@opentelemetry/api');
+
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
+
+const tracer = tracerProvider.getTracer(__filename)
+
+const nestedSpan = tracer.startSpan('child_span');
+
+// Do something interesting
+nestedSpan.setAttribute('lumigo.execution_tags.foo','baz');
+
+nestedSpan.end();
+```
+
+```typescript
+// Typescript
+const tracer = tracerProvider.getTracer(__filename)
+
+trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo','bar');
+
+const tracer = tracerProvider.getTracer(__filename)
+
+const nestedSpan = tracer.startSpan('child_span');
+
+// Do something interesting
+nestedSpan.setAttribute('lumigo.execution_tags.foo','baz');
+
+nestedSpan.end();
+```
+
+In the examples above, the invocation in Lumigo resulting from executing the code will have both `bar` and `baz` values associated with the `foo` execution tag.
+Which spans are merged in the same invocation depends on the parent-child relations among those spans.
+Explaining this topic is outside the scope of this documentation; a good first read to get deeper into the topic is the [Traces](https://opentelemetry.io/docs/concepts/signals/traces/) documentation of OpenTelemetry.
+In case your execution tags on different spans appear on different invocations than what you would expect, get in touch with [Lumigo support](https://docs.lumigo.io/docs/support).
+
+#### Execution Tag Limitations
+
+* Up to 50 execution tag keys per invocation in Lumigo, irrespective of how many spans are part of the invocation or how many values each execution tag has.
+* The `key` of an execution tag cannot contain the `.` character; for example: `lumigo.execution_tags.my.tag` is not a valid tag. The OpenTelemetry `Span.setAttribute()` API will not fail or log warnings, but that will be displayed as `my` in Lumigo.
+* Each execution tag key can be at most 50 characters long; the `lumigo.execution_tags.` prefix does _not_ count against the 50 characters limit.
+* Each execution tag value can be at most 70 characters long.
+
 ## Supported runtimes
 
 * Node.js: 12.x, 14.x, 16.x
@@ -113,7 +239,7 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 | --- | --- | --- |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
-| | | 4.0.0~4.11.0 |
+| | | 4.0.0~4.12.1 |
 
 ## Baseline setup
 
@@ -146,6 +272,17 @@ If the [Task Metadata endpoint v4](https://docs.aws.amazon.com/AmazonECS/latest/
 
 * If the `LUMIGO_TRACER_TOKEN` environment variable is set: a [`BatchSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/BatchSpanProcessorBase.ts), which uses an [`OTLPTraceExporter`](https://github.com/open-telemetry/opentelemetry-js/blob/main/experimental/packages/exporter-trace-otlp-http/src/platform/node/OTLPTraceExporter.ts) to push tracing data to Lumigo
 * If the `LUMIGO_DEBUG_SPANDUMP` environment variable is set: a [`SimpleSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/SimpleSpanProcessor.ts), which uses an [`FileSpanExporter`](src/exporters/FileSpanExporter.ts) to save to file the spans collected. **Do not use this in production!**
+
+#### Process resource attributes
+
+* The following `process.runtime.*` attributes as specified in the [Process Semantic Conventions](https://opentelemetry.io/docs/reference/specification/resource/semantic_conventions/process/#process-runtimes):
+  * `process.runtime.description`
+  * `process.runtime.name`
+  * `process.runtime.version`
+
+
+* A non-standard `process.environ` resource attribute, containing a stringified representation of the process environment, with environment variables scrubbed based on the [`LUMIGO_SECRET_MASKING_REGEX`](#lumigo-specific-configurations) configuration.
+
 
 ### SDK configuration
 

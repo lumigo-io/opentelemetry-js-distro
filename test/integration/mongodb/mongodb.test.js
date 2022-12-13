@@ -5,7 +5,8 @@ require("jest-json");
 
 const {waitForSpansInFile} = require("../../testUtils/waiters");
 const kill = require("tree-kill");
-const {getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
+const {
+    getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require("./mongodbTestUtils");
 const {callContainer, getStartedApp, getAppPort} = require("../../testUtils/utils");
@@ -41,11 +42,13 @@ describe({
     afterEach(async () => {
         if (app) {
             try {
-                await callContainer(port, 'stop-mongodb', 'get');
+                if (port) {
+                    await callContainer(port, 'stop-mongodb', 'get');
+                }
             } catch (e) {
                 console.warn("afterEach, could not stop mongodb docker container", e)
             }
-            kill(app.pid);
+            kill(app.pid, 'SIGHUP');
             console.info("afterEach, stop child process")
         }
     });
@@ -76,7 +79,6 @@ describe({
                         resources: [`http-get://localhost:${port}`],
                         delay: 20000,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided
@@ -148,7 +150,6 @@ describe({
                         timeout: WAIT_ON_TIMEOUT,
                         simultaneous: 1,
                         log: true,
-                        verbose: true,
                         validateStatus: function (status) {
                             console.debug("server status:", status);
                             return status >= 200 && status < 300; // default if not provided

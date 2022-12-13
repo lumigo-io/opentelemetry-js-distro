@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.8.0",
+  "version": "1.13.0",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/wrapper.js",
   "private": false,
@@ -23,7 +23,7 @@
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
   "author": "Orr Levinger",
   "dependencies": {
-    "@lumigo/node-core": "^1.12.0",
+    "@lumigo/node-core": "^1.12.4",
     "@opentelemetry/api": "1.2.0",
     "@opentelemetry/core": "1.7.0",
     "@opentelemetry/exporter-trace-otlp-http": "0.33.0",
@@ -75,6 +75,7 @@
     "jest": "27.2.5",
     "jest-chain": "^1.1.6",
     "jest-json": "^2.0.0",
+    "jest-summarizing-reporter": "^1.1.4",
     "log-timestamp": "^0.3.0",
     "node-notifier": "^10.0.0",
     "npm-install-peers": "^1.2.2",

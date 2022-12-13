@@ -23,7 +23,8 @@ export const expectedResourceAttributes = {
         'process.environ': expect.jsonMatching(
             expect.objectContaining({
                 "OTEL_SERVICE_NAME": "http",
-                "LUMIGO_TRACER_TOKEN": "t_123321",
+                "LUMIGO_TRACER_TOKEN": "****",
+                "LUMIGO_ENDPOINT" :"https://walle-edge-app-us-west-2.walle.golumigo.com"
             })),
         'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
         'process.pid': expect.any(Number),
