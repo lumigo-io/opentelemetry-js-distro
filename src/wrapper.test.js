@@ -24,6 +24,7 @@ import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
 jest.mock('opentelemetry-instrumentation-express');
 
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { join } from 'path';
 jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
 const LUMIGO_ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
@@ -410,7 +411,7 @@ describe('NodeTracerProvider should be initialize with span limit according to e
       jest.clearAllMocks();
     });
 
-    test('is disabled if LUMIGO_TRACER_TOKEN is not set', () => {
+    test('is disabled if LUMIGO_TRACER_TOKEN is not set', async () => {
       jest.isolateModules(async () => {
         const utils = require('./utils');
         jest.mock('./utils');
@@ -429,7 +430,7 @@ describe('NodeTracerProvider should be initialize with span limit according to e
       });
     });
 
-    test('is disabled if the "LUMIGO_REPORT_DEPENDENCIES" set to something different than "true"', () => {
+    test('is disabled if the "LUMIGO_REPORT_DEPENDENCIES" set to something different than "true"', async () => {
       jest.isolateModules(async () => {
         process.env['LUMIGO_TRACER_TOKEN'] = 'abcdef';
         process.env['LUMIGO_REPORT_DEPENDENCIES'] = 'false';
@@ -451,7 +452,7 @@ describe('NodeTracerProvider should be initialize with span limit according to e
       });
     });
 
-    test('submits dependencies to the backend', () => {
+    test('submits dependencies to the backend', async () => {
       jest.isolateModules(async () => {
         const lumigoToken = 'abcdef';
         process.env['LUMIGO_TRACER_TOKEN'] = lumigoToken;
@@ -462,6 +463,40 @@ describe('NodeTracerProvider should be initialize with span limit according to e
         const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => {
           return Promise.resolve();
         });
+
+        const { init } = jest.requireActual('./wrapper');
+        const { reportDependencies } = await init;
+
+        await reportDependencies.finally(async () => {
+          const res = await reportDependencies;
+          expect(res).toBeUndefined();
+
+          expect(postUri.mock.calls.length).toBe(1);
+
+          const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
+
+          expect(dependenciesEndpoint).not.toBeFalsy();
+          expect(data.resourceAttributes['lumigo.distro.version']).toBe(version);
+          expect(data.packages.length).toBeGreaterThan(0);
+          expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
+        });
+      });
+    });
+
+    test('handles correctly folders in node_modules without package.json inside', async () => {
+      jest.isolateModules(async () => {
+        const lumigoToken = 'abcdef';
+        process.env['LUMIGO_TRACER_TOKEN'] = lumigoToken;
+
+        const utils = require('./utils');
+        jest.mock('./utils');
+
+        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => {
+          return Promise.resolve();
+        });
+
+        await fs.promises.mkdir(join(__dirname, 'node_modules', 'foo'), { recursive: true });
+        await fs.promises.mkdir(join(__dirname, 'node_modules', 'bar'), { recursive: true });
 
         const { init } = jest.requireActual('./wrapper');
         const { reportDependencies } = await init;
