@@ -12,7 +12,13 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
     this.ignoredHostnames = (ignoredHostnames || []).concat(
       [process.env.ECS_CONTAINER_METADATA_URI, process.env.ECS_CONTAINER_METADATA_URI_V4]
         .filter(Boolean)
-        .map((url) => new URL(url).hostname)
+        .map((url) => {
+          try {
+            return new URL(url).hostname;
+          } catch (err) {
+            return;
+          }
+        })
     );
   }
 

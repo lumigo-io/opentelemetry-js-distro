@@ -89,6 +89,7 @@ async function listDependencies() {
          * file is malformed. In any of these cases, it is not an actual
          * dependency the application can load, so it is safe to skip.
          */
+        continue;
       }
     }
   }
