@@ -1,4 +1,4 @@
-import fs from "fs";
+const fs = require('fs');
 
 export function getSpanByName(spans, spanName) {
     return spans.find((span) => span.name === spanName);
