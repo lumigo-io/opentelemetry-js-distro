@@ -4,7 +4,7 @@ on:
     - cron: "0 7 * * *"
 jobs:
   check-new-versions-of-instrumented-packages:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         node_cimg_tag: [ 14, 16, 18 ]
@@ -15,6 +15,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_cimg_tag }}
+      - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
       - run: npm ci
       - run: npm run build
       - run: npm run test:component
