@@ -44,13 +44,13 @@ export async function report(
     dependenciesEndpoint,
     { resourceAttributes, packages },
     { Authorization: `LumigoToken ${lumigoToken.trim()}` }
-  ).catch((err) => {});
+  ).catch();
 }
 
 async function listDependencies() {
   const validModulePaths = [];
 
-  for (let modulesPath of module.paths) {
+  for (const modulesPath of module.paths) {
     try {
       // Basic existence check of the modulesPath (no actual FS access)
       await access(modulesPath);
@@ -69,7 +69,7 @@ async function listDependencies() {
   }
 
   const dependencies = [];
-  for (let modulesPath of validModulePaths) {
+  for (const modulesPath of validModulePaths) {
     const packageDirs = await readdir(modulesPath);
 
     for (const packageDir of packageDirs) {
