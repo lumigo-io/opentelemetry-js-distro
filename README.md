@@ -102,6 +102,7 @@ Specifically supported are:
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions. All regular expressions are case-insensitive. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`.
+* `LUMIGO_REPORT_DEPENDENCIES=false`: This option disables the built-in dependency reporting to Lumigo SaaS. For more information, refer to the [Automated dependency reporting](#automated-dependency-reporting) section.
 
 ### Execution Tags
 
@@ -240,6 +241,18 @@ In case your execution tags on different spans appear on different invocations t
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
 | | | 4.0.0~4.12.1 |
+
+## Automated dependency reporting
+
+To provide better support and better data-driven product decisions with respect to which packages to support next, the Lumigo OpenTelemetry Distro for JS will report to Lumigo SaaS on startup the packages and their versions used in this application, together with the OpenTelemetry resource data to enable analytics in terms of which platforms use which dependencies.
+
+The data uploaded to Lumigo is a set of key-value pairs with package name and version.
+Similar is available through the tracing data sent to Lumigo, except that this aims at covering dependencies for which the Lumigo OpenTelemetry Distro for JS does not have instrumentation (yet?).
+Lumigo's only goal for these analytics data is to be able to give you the instrumentations you need without you needing to tell us!
+
+This behavior is opt-out using the `LUMIGO_REPORT_DEPENDENCIES=false` environment variable.
+Additionally, the dependencies data is sent only when the Lumigo endpoint is the default one (as to avoid issues when tracing data is sent through proxies like OpenTelemetry collectors), and it active only when a `LUMIGO_TRACER_TOKEN` is present in the process environment.
+If you are using the Lumigo OpenTelemetry Distro for JS with another OpenTelemetry-compatible backend, no dependency data will be transmitted (as this is not a standard OpenTelemetry Protocol functionality). 
 
 ## Baseline setup
 
