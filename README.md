@@ -232,7 +232,7 @@ In case your execution tags on different spans appear on different invocations t
 
 ## Supported runtimes
 
-* Node.js: 12.x, 14.x, 16.x
+* Node.js: 14.x, 16.x, 18.x
 
 ## Supported packages
 

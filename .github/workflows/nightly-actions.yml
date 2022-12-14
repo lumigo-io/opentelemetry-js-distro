@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node_cimg_tag: [ 12, 14, 16 ]
+        node_cimg_tag: [ 14, 16, 18 ]
     name: check-new-versions-of-instrumented-packages
     steps:
       - uses: actions/checkout@v3
