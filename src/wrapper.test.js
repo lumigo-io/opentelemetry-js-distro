@@ -56,36 +56,48 @@ describe('Distro initialization', () => {
     });
   });
 
-  test('Secret keys should be redacted from env vars by LUMIGO_SECRET_MASKING_REGEX', async () => {
-    await jest.isolateModules(async () => {
-      process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-      process.env.OTEL_SERVICE_NAME = 'service-1';
-      process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
-      process.env.VAR_TO_MASK = 'some value';
+  describe('secret keys', () => {
 
-      const wrapper = jest.requireActual('./wrapper');
-      const { tracerProvider } = await wrapper.init;
-      const resource = tracerProvider.resource;
-
-      const vars = JSON.parse(resource.attributes['process.environ']);
-      expect(vars.VAR_TO_MASK).toEqual('****');
+    beforeEach(() => {
+      /*
+       * We have a limit on the size of env we sent to the backend, and the env
+       * in the CI/CD goes over the limit, so the additional env vars we want to
+       * check for scrubbing get dropped.
+       */
+      process.env = {};
     });
-  });
 
-  test('Secret keys should be redacted from env vars', async () => {
-    await jest.isolateModules(async () => {
-      process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-      process.env.OTEL_SERVICE_NAME = 'service-1';
-      process.env.AUTHORIZATION = 'some value';
-
-      const wrapper = jest.requireActual('./wrapper');
-      const { tracerProvider } = await wrapper.init;
-      const resource = tracerProvider.resource;
-
-      const vars = JSON.parse(resource.attributes['process.environ']);
-      expect(vars.AUTHORIZATION).toEqual('****');
+    test('should be redacted from env vars by LUMIGO_SECRET_MASKING_REGEX', async () => {
+      await jest.isolateModules(async () => {
+        process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+        process.env.OTEL_SERVICE_NAME = 'service-1';
+        process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
+        process.env.VAR_TO_MASK = 'some value';
+  
+        const wrapper = jest.requireActual('./wrapper');
+        const { tracerProvider } = await wrapper.init;
+        const resource = tracerProvider.resource;
+  
+        const vars = JSON.parse(resource.attributes['process.environ']);
+        expect(vars.VAR_TO_MASK).toEqual('****');
+      });
+    });
+  
+    test('should be redacted from env vars', async () => {
+      await jest.isolateModules(async () => {
+        process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+        process.env.OTEL_SERVICE_NAME = 'service-1';
+        process.env.AUTHORIZATION = 'some value';
+  
+        const wrapper = jest.requireActual('./wrapper');
+        const { tracerProvider } = await wrapper.init;
+        const resource = tracerProvider.resource;
+  
+        const vars = JSON.parse(resource.attributes['process.environ']);
+        expect(vars.AUTHORIZATION).toEqual('****');
+      });
     });
   });
 
