@@ -9,6 +9,7 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
+import { report } from './dependencies';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
@@ -20,8 +21,12 @@ import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetecto
 import { CommonUtils } from '@lumigo/node-core';
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
+const DEFAULT_DEPENDENCIES_ENDPOINT =
+  'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/dependencies';
 const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
 const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
+
+const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
 if (isEnvVarTrue(LUMIGO_DEBUG)) {
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -35,7 +40,7 @@ const INSTRUMENTED_MODULES = new Set<string>();
 
 const lumigoInstrumentationList = [
   new LumigoExpressInstrumentation(),
-  new LumigoHttpInstrumentation(),
+  new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
   new LumigoMongoDBInstrumentation(),
 ];
 
@@ -88,9 +93,9 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         );
       }
 
-      const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
       const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
       const lumigoSpanDumpPath = process.env.LUMIGO_DEBUG_SPANDUMP;
+      const lumigoReportDependencies = process.env.LUMIGO_REPORT_DEPENDENCIES || 'true';
 
       const detectedResource = await detectResources({
         detectors: [
@@ -123,6 +128,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         );
       }
 
+      let reportDependencies: Promise<void | Object>;
       if (lumigoToken) {
         const otlpExporter = new OTLPTraceExporter({
           url: lumigoEndpoint,
@@ -139,6 +145,33 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
             maxExportBatchSize: 100,
           })
         );
+
+        /*
+         * We do not wait for this promise, we do not want to delay the application.
+         * Dependency reporting is done "best effort".
+         */
+        if (lumigoReportDependencies.toLowerCase() !== 'true') {
+          reportDependencies = Promise.resolve('Dependency reporting is turned off');
+        } else if (lumigoEndpoint === DEFAULT_LUMIGO_ENDPOINT) {
+          /*
+           * If the trace endpoint is different than the default, it could be
+           * that this application does not have egress to Lumigo SaaS or it is
+           * reporting to a backend that is not Lumigo, and thus does not have
+           * the facilities to process the dependencies anyways. In this case,
+           * skip the reporting, as it might not work and cause noise in the logs.
+           *
+           * We pass `detectedResource` as opposed to `tracerProvider.resource`
+           * because we want only the infrastructure-related resource attributes
+           * like ARNs, and specifically we do not need the process environment.
+           */
+          reportDependencies = report(
+            DEFAULT_DEPENDENCIES_ENDPOINT,
+            lumigoToken,
+            detectedResource.attributes
+          );
+        }
+      } else {
+        reportDependencies = Promise.resolve('No Lumigo token available');
       }
 
       tracerProvider.register();
@@ -148,8 +181,10 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           ? detectedResource.attributes[LUMIGO_DISTRO_VERSION]
           : 'unknown';
       logger.info(`Lumigo tracer v${distroVersion} started.`);
+
       return Promise.resolve({
-        tracerProvider: tracerProvider,
+        tracerProvider,
+        reportDependencies,
       });
     } catch (err) {
       reportInitError(err);
