@@ -49,7 +49,7 @@ export function getExpectedSpan(nameSpanAttr, resourceAttributes, dbStatement) {
             attributes: resourceAttributes
         },
         attributes: {
-            'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
+            'net.host.name': expect.any(String),
             'net.host.port': expect.any(String),
             'db.system': "mongodb",
             'db.name': "myProject",
@@ -76,7 +76,7 @@ export function getExpectedSpanWithParent(nameSpanAttr, resourceAttributes, dbSt
             attributes: resourceAttributes
         },
         attributes: {
-            'net.host.name': expect.stringMatching(/^(127\.[\d.]+|[0:]+1|localhost)$/),
+            'net.host.name': expect.any(String),
             'net.host.port': expect.any(String),
             'db.system': "mongodb",
             'db.name': "myProject",

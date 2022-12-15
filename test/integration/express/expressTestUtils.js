@@ -62,9 +62,7 @@ export const expectedClientAttributes = {
     'http.target': '/jokes/categories',
     'net.peer.name': 'api.chucknorris.io',
     'http.request.body': '""',
-    'net.peer.ip': expect.stringMatching(
-        /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}\b/
-    ),
+    'net.peer.ip': expect.any(String),
     'net.peer.port': 443,
     'http.host': 'api.chucknorris.io:443',
     'http.status_code': 200,
