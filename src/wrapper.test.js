@@ -1,5 +1,43 @@
 import * as fs from 'fs';
 
+/*
+ * Monkey-patch jest to be able to handle async in isolateModules
+ *
+ * See https://github.com/facebook/jest/issues/10428
+ */
+
+async function isolateModulesAsync(fn) {
+  if (this._isolatedModuleRegistry || this._isolatedMockRegistry) {
+    throw new Error(
+      'isolateModules cannot be nested inside another isolateModules.'
+    );
+  }
+
+  this._isolatedModuleRegistry = new Map();
+  this._isolatedMockRegistry = new Map();
+
+  try {
+    await fn();
+  } finally {
+    var _this$_isolatedModule, _this$_isolatedMockRe2;
+
+    // might be cleared within the callback
+    (_this$_isolatedModule = this._isolatedModuleRegistry) === null ||
+    _this$_isolatedModule === void 0
+      ? void 0
+      : _this$_isolatedModule.clear();
+    (_this$_isolatedMockRe2 = this._isolatedMockRegistry) === null ||
+    _this$_isolatedMockRe2 === void 0
+      ? void 0
+      : _this$_isolatedMockRe2.clear();
+    this._isolatedModuleRegistry = null;
+    this._isolatedMockRegistry = null;
+
+    return this;
+  }
+};
+jest.isolateModulesAsync = isolateModulesAsync.bind(jest);
+
 const { Resource } = require('@opentelemetry/resources');
 const {
   SemanticResourceAttributes,
@@ -45,7 +83,7 @@ describe('Distro initialization', () => {
     test('should not invoke trace initialization', async () => {
       process.env.LUMIGO_SWITCH_OFF = 'true';
 
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const wrapper = jest.requireActual('./wrapper');
 
         const sdkInitialized = await wrapper.init;
@@ -68,7 +106,7 @@ describe('Distro initialization', () => {
     });
 
     test('should be redacted from env vars by LUMIGO_SECRET_MASKING_REGEX', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
@@ -85,7 +123,7 @@ describe('Distro initialization', () => {
     });
   
     test('should be redacted from env vars', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
@@ -109,7 +147,7 @@ describe('Distro initialization', () => {
     });
 
     test('should initialize the OTLPTraceExporter', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const wrapper = jest.requireActual('./wrapper');
         await wrapper.init;
 
@@ -129,7 +167,7 @@ describe('Distro initialization', () => {
       });
 
       test('should initialize the FileSpanExporter', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           const wrapper = jest.requireActual('./wrapper');
           await wrapper.init;
 
@@ -141,7 +179,7 @@ describe('Distro initialization', () => {
 
   describe('without the LUMIGO_TRACER_TOKEN environment variable set', () => {
     test('should not initialize the OTLPTraceExporter', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const wrapper = jest.requireActual('./wrapper');
         await wrapper.init;
 
@@ -155,7 +193,7 @@ describe('Distro initialization', () => {
       });
 
       test('should initialize the FileSpanExporter', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           const wrapper = jest.requireActual('./wrapper');
           await wrapper.init;
 
@@ -173,7 +211,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const wrapper = jest.requireActual('./wrapper');
         const { tracerProvider } = await wrapper.init;
         const resource = tracerProvider.resource;
@@ -200,7 +238,7 @@ describe('Distro initialization', () => {
       });
 
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           const wrapper = jest.requireActual('./wrapper');
           const { tracerProvider } = await wrapper.init;
           const resource = tracerProvider.resource;
@@ -245,7 +283,7 @@ describe('Distro initialization', () => {
       });
 
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           jest.mock('./utils', () => ({
             ...jest.requireActual('./utils'), // import and retain the original functionalities
             getUri: mockMetadataGetUri,
@@ -300,7 +338,7 @@ describe('Distro initialization', () => {
           };
         });
 
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
           process.env.OTEL_SERVICE_NAME = 'service-1';
 
@@ -327,7 +365,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
@@ -340,7 +378,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
@@ -353,7 +391,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to default value', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
 
@@ -365,7 +403,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT when both env. vars set', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
@@ -381,7 +419,7 @@ describe('Distro initialization', () => {
 
   describe('dependency reporting', () => {
     test('is disabled if LUMIGO_TRACER_TOKEN is not set', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const utils = require('./utils');
         jest.mock('./utils');
 
@@ -398,7 +436,7 @@ describe('Distro initialization', () => {
     });
 
     test('is disabled if the "LUMIGO_REPORT_DEPENDENCIES" set to something different than "true"', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = 'abcdef';
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
@@ -418,7 +456,7 @@ describe('Distro initialization', () => {
     });
 
     test('submits dependencies to the backend', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const lumigoToken = 'abcdef';
         process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
@@ -447,7 +485,7 @@ describe('Distro initialization', () => {
     });
 
     test('handles correctly folders in node_modules without package.json inside', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const lumigoToken = 'abcdef';
         process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
