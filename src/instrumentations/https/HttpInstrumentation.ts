@@ -39,7 +39,14 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
 
   private getIgnoreConfig(): IgnoreMatcher[] {
     return [
-      (url: string) => this.ignoredHostnames.includes(new URL(url).hostname),
+      (url: string) => {
+        try {
+          return this.ignoredHostnames.includes(new URL(url).hostname);
+        } catch (err) {
+          // Invalid hostname means no match
+          return false;
+        }
+      },
       // Unroutable addresses, used by metadata services on all clouds
       /169\.254\.\d+\.\d+.*/gm,
     ];
