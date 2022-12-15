@@ -8,9 +8,7 @@ import * as fs from 'fs';
 
 async function isolateModulesAsync(fn) {
   if (this._isolatedModuleRegistry || this._isolatedMockRegistry) {
-    throw new Error(
-      'isolateModules cannot be nested inside another isolateModules.'
-    );
+    throw new Error('isolateModules cannot be nested inside another isolateModules.');
   }
 
   this._isolatedModuleRegistry = new Map();
@@ -35,7 +33,7 @@ async function isolateModulesAsync(fn) {
 
     return this;
   }
-};
+}
 jest.isolateModulesAsync = isolateModulesAsync.bind(jest);
 
 const { Resource } = require('@opentelemetry/resources');
@@ -95,7 +93,6 @@ describe('Distro initialization', () => {
   });
 
   describe('secret keys', () => {
-
     beforeEach(() => {
       /*
        * We have a limit on the size of env we sent to the backend, and the env
@@ -112,27 +109,27 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
         process.env.VAR_TO_MASK = 'some value';
-  
+
         const wrapper = jest.requireActual('./wrapper');
         const { tracerProvider } = await wrapper.init;
         const resource = tracerProvider.resource;
-  
+
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.VAR_TO_MASK).toEqual('****');
       });
     });
-  
+
     test('should be redacted from env vars', async () => {
       await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.AUTHORIZATION = 'some value';
-  
+
         const wrapper = jest.requireActual('./wrapper');
         const { tracerProvider } = await wrapper.init;
         const resource = tracerProvider.resource;
-  
+
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.AUTHORIZATION).toEqual('****');
       });
