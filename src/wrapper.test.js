@@ -1,19 +1,5 @@
 import * as fs from 'fs';
 
-const { Resource } = require('@opentelemetry/resources');
-const {
-  SemanticResourceAttributes,
-  CloudProviderValues,
-  CloudPlatformValues,
-} = require('@opentelemetry/semantic-conventions');
-
-const mockedResource = new Resource({
-  [SemanticResourceAttributes.CLOUD_PROVIDER]: CloudProviderValues.AWS,
-  [SemanticResourceAttributes.CLOUD_PLATFORM]: CloudPlatformValues.AWS_EKS,
-  [SemanticResourceAttributes.K8S_CLUSTER_NAME]: 'cluster-name',
-  [SemanticResourceAttributes.CONTAINER_ID]: 'container-id',
-});
-
 import { FileSpanExporter } from './exporters';
 jest.mock('./exporters');
 
@@ -272,18 +258,43 @@ describe('Distro initialization', () => {
 
   describe('On Amazon EKS', () => {
     describe('on successful request', () => {
-      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
+      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {        
         jest.mock('@opentelemetry/resource-detector-aws', () => {
           return {
             ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
           };
         });
-        
+
         await jest.isolateModules(async () => {
           process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
           process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
           process.env.OTEL_SERVICE_NAME = 'service-1';
 
+          const mockDetect = jest.fn();
+
+          const { Resource } = require('@opentelemetry/resources');
+          const {
+            SemanticResourceAttributes,
+            CloudProviderValues,
+            CloudPlatformValues,
+          } = require('@opentelemetry/semantic-conventions');
+
+          const mockedResource = new Resource({
+            [SemanticResourceAttributes.CLOUD_PROVIDER]: CloudProviderValues.AWS,
+            [SemanticResourceAttributes.CLOUD_PLATFORM]: CloudPlatformValues.AWS_EKS,
+            [SemanticResourceAttributes.K8S_CLUSTER_NAME]: 'cluster-name',
+            [SemanticResourceAttributes.CONTAINER_ID]: 'container-id',
+          });
+
+          jest.mock('@opentelemetry/resource-detector-aws', () => {
+            return {
+              ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
+              awsEksDetector: {
+                detect: jest.fn().mockReturnValue(mockedResource),
+              },
+            };
+          });
+  
           const { init } = jest.requireActual('./wrapper');
           const { tracerProvider } = await init;
           const resource = tracerProvider.resource;
