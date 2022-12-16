@@ -1,11 +1,6 @@
+import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
 import * as fs from 'fs';
-
-import { FileSpanExporter } from './exporters';
-jest.mock('./exporters');
-
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { join } from 'path';
-jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
 const LUMIGO_ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
 const LUMIGO_TRACER_TOKEN = 't_10faa5e13e7844aaa1234';
@@ -14,6 +9,12 @@ const ECS_CONTAINER_METADATA_URI_V4 = 'http://169.255.169.255/metadata/v4';
 const ECS_CONTAINER_METADATA_URI = 'http://169.255.169.255/metadata/v3';
 
 const { version } = require('../package.json');
+
+const runIsolated = (fn) => {
+  return async () => {
+    await jest.isolateModules(fn);
+  };
+};
 
 describe('Distro initialization', () => {
   const ORIGINAL_PROCESS_ENV = process.env;
@@ -37,23 +38,28 @@ describe('Distro initialization', () => {
   });
 
   describe("with the 'LUMIGO_SWITCH_OFF' environment variable set to 'true'", () => {
-    test('should not invoke trace initialization', async () => {
-      process.env.LUMIGO_SWITCH_OFF = 'true';
+    test(
+      'should not invoke trace initialization',
+      runIsolated(async () => {
+        process.env.LUMIGO_SWITCH_OFF = 'true';
 
-      await jest.isolateModules(async () => {
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+        jest.mock('@opentelemetry/exporter-trace-otlp-http');
+
         const { init } = jest.requireActual('./wrapper');
 
         const sdkInitialized = await init;
 
         expect(OTLPTraceExporter).not.toHaveBeenCalled();
         expect(sdkInitialized).toBeUndefined();
-      });
-    });
+      })
+    );
   });
 
   describe('secret keys', () => {
-    test('should be redacted from env vars by LUMIGO_SECRET_MASKING_REGEX', async () => {
-      await jest.isolateModules(async () => {
+    test(
+      'should be redacted by LUMIGO_SECRET_MASKING_REGEX from env vars',
+      runIsolated(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
@@ -66,11 +72,12 @@ describe('Distro initialization', () => {
 
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.VAR_TO_MASK).toEqual('****');
-      });
-    });
+      })
+    );
 
-    test('should be redacted from env vars', async () => {
-      await jest.isolateModules(async () => {
+    test(
+      'should be redacted from env vars',
+      runIsolated(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
@@ -82,17 +89,20 @@ describe('Distro initialization', () => {
 
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.AUTHORIZATION).toEqual('****');
-      });
-    });
+      })
+    );
   });
 
-  describe('with the LUMIGO_TRACER_TOKEN environment variable set', () => {    
+  describe('with the LUMIGO_TRACER_TOKEN environment variable set', () => {
     test('should initialize the OTLPTraceExporter', async () => {
       await jest.isolateModules(async () => {
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+        jest.mock('@opentelemetry/exporter-trace-otlp-http');
+
         process.env.LUMIGO_ENDPOINT = LUMIGO_ENDPOINT;
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-  
+
         const { init } = jest.requireActual('./wrapper');
         await init;
 
@@ -111,9 +121,12 @@ describe('Distro initialization', () => {
           process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
           process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
+          const { FileSpanExporter } = require('./exporters');
+          jest.mock('./exporters');
+
           const { init } = jest.requireActual('./wrapper');
           await init;
-  
+
           expect(FileSpanExporter).toHaveBeenCalledWith('/dev/stdout');
         });
       });
@@ -123,6 +136,9 @@ describe('Distro initialization', () => {
   describe('without the LUMIGO_TRACER_TOKEN environment variable set', () => {
     test('should not initialize the OTLPTraceExporter', async () => {
       await jest.isolateModules(async () => {
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+        jest.mock('@opentelemetry/exporter-trace-otlp-http');
+
         const { init } = jest.requireActual('./wrapper');
         await init;
 
@@ -134,6 +150,9 @@ describe('Distro initialization', () => {
       test('should initialize the FileSpanExporter', async () => {
         await jest.isolateModules(async () => {
           process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
+
+          const { FileSpanExporter } = require('./exporters');
+          jest.mock('./exporters');
 
           const { init } = jest.requireActual('./wrapper');
           await init;
@@ -258,19 +277,11 @@ describe('Distro initialization', () => {
 
   describe('On Amazon EKS', () => {
     describe('on successful request', () => {
-      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {        
-        jest.mock('@opentelemetry/resource-detector-aws', () => {
-          return {
-            ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
-          };
-        });
-
+      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
         await jest.isolateModules(async () => {
           process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
           process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
           process.env.OTEL_SERVICE_NAME = 'service-1';
-
-          const mockDetect = jest.fn();
 
           const { Resource } = require('@opentelemetry/resources');
           const {
@@ -294,7 +305,7 @@ describe('Distro initialization', () => {
               },
             };
           });
-  
+
           const { init } = jest.requireActual('./wrapper');
           const { tracerProvider } = await init;
           const resource = tracerProvider.resource;
