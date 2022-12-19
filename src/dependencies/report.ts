@@ -44,7 +44,7 @@ export async function report(
     dependenciesEndpoint,
     { resourceAttributes, packages },
     { Authorization: `LumigoToken ${lumigoToken.trim()}` }
-  ).catch();
+  ).catch(() => {});
 }
 
 async function listDependencies() {

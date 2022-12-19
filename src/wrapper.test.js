@@ -417,9 +417,7 @@ describe('Distro initialization', () => {
         const utils = require('./utils');
         jest.mock('./utils');
 
-        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => {
-          return Promise.resolve();
-        });
+        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
         const { init } = jest.requireActual('./wrapper');
         const { reportDependencies } = await init;
@@ -437,9 +435,7 @@ describe('Distro initialization', () => {
         const utils = require('./utils');
         jest.mock('./utils');
 
-        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => {
-          return Promise.resolve();
-        });
+        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
         const { init } = jest.requireActual('./wrapper');
         const { reportDependencies } = await init;
@@ -457,9 +453,34 @@ describe('Distro initialization', () => {
         const utils = require('./utils');
         jest.mock('./utils');
 
-        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => {
-          return Promise.resolve();
-        });
+        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
+
+        const { init } = jest.requireActual('./wrapper');
+        const { reportDependencies } = await init;
+
+        const res = await reportDependencies;
+        expect(res).toBeUndefined();
+
+        expect(postUri.mock.calls.length).toBe(1);
+
+        const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
+
+        expect(dependenciesEndpoint).not.toBeFalsy();
+        expect(data.resourceAttributes['lumigo.distro.version']).toBe(version);
+        expect(data.packages.length).toBeGreaterThan(0);
+        expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
+      });
+    });
+
+    test('does not fail if dependency submission fails', async () => {
+      await jest.isolateModulesAsync(async () => {
+        const lumigoToken = 'abcdef';
+        process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
+
+        const utils = require('./utils');
+        jest.mock('./utils');
+
+        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.reject(new Error('FAIL!')));
 
         const { init } = jest.requireActual('./wrapper');
         const { reportDependencies } = await init;
@@ -486,9 +507,7 @@ describe('Distro initialization', () => {
         const utils = require('./utils');
         jest.mock('./utils');
 
-        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => {
-          return Promise.resolve();
-        });
+        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
         await fs.promises.mkdir(join(__dirname, 'node_modules', 'foo'), { recursive: true });
         await fs.promises.mkdir(join(__dirname, 'node_modules', 'bar'), { recursive: true });
