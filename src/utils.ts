@@ -6,7 +6,7 @@ import { sortify } from './tools/jsonSortify';
 import { diag, DiagLogger } from '@opentelemetry/api';
 
 const DEFAULT_MAX_ENTRY_SIZE = 2048;
-export const DEFAULT_CONNECTION_TIMEOUT = 300;
+export const DEFAULT_CONNECTION_TIMEOUT = 5000;
 
 interface HttpHeaders {
   [key: string]: string;
