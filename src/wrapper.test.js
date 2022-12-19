@@ -480,7 +480,9 @@ describe('Distro initialization', () => {
         const utils = require('./utils');
         jest.mock('./utils');
 
-        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.reject(new Error('FAIL!')));
+        const postUri = jest
+          .spyOn(utils, 'postUri')
+          .mockImplementation(() => Promise.reject(new Error('FAIL!')));
 
         const { init } = jest.requireActual('./wrapper');
         const { reportDependencies } = await init;
