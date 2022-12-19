@@ -1,4 +1,3 @@
-import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -9,12 +8,6 @@ const ECS_CONTAINER_METADATA_URI_V4 = 'http://169.255.169.255/metadata/v4';
 const ECS_CONTAINER_METADATA_URI = 'http://169.255.169.255/metadata/v3';
 
 const { version } = require('../package.json');
-
-const runIsolated = (fn) => {
-  return async () => {
-    await jest.isolateModules(fn);
-  };
-};
 
 describe('Distro initialization', () => {
   const ORIGINAL_PROCESS_ENV = process.env;
@@ -35,49 +28,50 @@ describe('Distro initialization', () => {
   afterEach(() => {
     process.env = {};
     jest.resetAllMocks();
+    jest.resetModules();
   });
 
   describe("with the 'LUMIGO_SWITCH_OFF' environment variable set to 'true'", () => {
-    test(
-      'should not invoke trace initialization',
-      runIsolated(async () => {
-        process.env.LUMIGO_SWITCH_OFF = 'true';
+    test('should not invoke trace initialization',
+      async () => {
+        await jest.isolateModulesAsync(async () => {
+          process.env.LUMIGO_SWITCH_OFF = 'true';
 
-        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-        jest.mock('@opentelemetry/exporter-trace-otlp-http');
+          const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+          jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
-        const { init } = jest.requireActual('./wrapper');
+          const { init } = jest.requireActual('./wrapper');
 
-        const sdkInitialized = await init;
+          const sdkInitialized = await init;
 
-        expect(OTLPTraceExporter).not.toHaveBeenCalled();
-        expect(sdkInitialized).toBeUndefined();
+          expect(OTLPTraceExporter).not.toHaveBeenCalled();
+          expect(sdkInitialized).toBeUndefined();
+        });
       })
-    );
   });
 
   describe('secret keys', () => {
-    test(
-      'should be redacted by LUMIGO_SECRET_MASKING_REGEX from env vars',
-      runIsolated(async () => {
-        process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-        process.env.OTEL_SERVICE_NAME = 'service-1';
-        process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
-        process.env.VAR_TO_MASK = 'some value';
+    test('should be redacted by LUMIGO_SECRET_MASKING_REGEX from env vars',
+      async () => {
+        await jest.isolateModulesAsync(async () => {
+          process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+          process.env.OTEL_SERVICE_NAME = 'service-1';
+          process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
+          process.env.VAR_TO_MASK = 'some value';
 
-        const { init } = jest.requireActual('./wrapper');
-        const { tracerProvider } = await init;
-        const resource = tracerProvider.resource;
+          const { init } = jest.requireActual('./wrapper');
+          const { tracerProvider } = await init;
+          const resource = tracerProvider.resource;
 
-        const vars = JSON.parse(resource.attributes['process.environ']);
-        expect(vars.VAR_TO_MASK).toEqual('****');
-      })
+          const vars = JSON.parse(resource.attributes['process.environ']);
+          expect(vars.VAR_TO_MASK).toEqual('****');
+        })
+      }
     );
 
-    test(
-      'should be redacted from env vars',
-      runIsolated(async () => {
+    test('should be redacted from env vars', async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
@@ -90,12 +84,12 @@ describe('Distro initialization', () => {
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.AUTHORIZATION).toEqual('****');
       })
-    );
+    });
   });
 
   describe('with the LUMIGO_TRACER_TOKEN environment variable set', () => {
     test('should initialize the OTLPTraceExporter', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
         jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
@@ -117,7 +111,7 @@ describe('Distro initialization', () => {
 
     describe('with the LUMIGO_DEBUG_SPANDUMP variable set', () => {
       test('should initialize the FileSpanExporter', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
           process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
@@ -135,7 +129,7 @@ describe('Distro initialization', () => {
 
   describe('without the LUMIGO_TRACER_TOKEN environment variable set', () => {
     test('should not initialize the OTLPTraceExporter', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
         jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
@@ -148,7 +142,7 @@ describe('Distro initialization', () => {
 
     describe('with the LUMIGO_DEBUG_SPANDUMP variable set', () => {
       test('should initialize the FileSpanExporter', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
 
           const { FileSpanExporter } = require('./exporters');
@@ -165,7 +159,7 @@ describe('Distro initialization', () => {
 
   describe('outside of a computing platform for which we have detectors', () => {
     test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
@@ -190,7 +184,7 @@ describe('Distro initialization', () => {
 
     describe('without the Task Metadata V4 endpoint', () => {
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
           process.env.OTEL_SERVICE_NAME = 'service-1';
 
@@ -232,7 +226,7 @@ describe('Distro initialization', () => {
       }
 
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-        await jest.isolateModules(async () => {
+        await jest.isolateModulesAsync(async () => {
           process.env.ECS_CONTAINER_METADATA_URI_V4 = ECS_CONTAINER_METADATA_URI_V4;
           process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
           process.env.OTEL_SERVICE_NAME = 'service-1';
@@ -275,53 +269,6 @@ describe('Distro initialization', () => {
     });
   });
 
-  describe('On Amazon EKS', () => {
-    describe('on successful request', () => {
-      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-        await jest.isolateModules(async () => {
-          process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-          process.env.OTEL_SERVICE_NAME = 'service-1';
-
-          const { Resource } = require('@opentelemetry/resources');
-          const {
-            SemanticResourceAttributes,
-            CloudProviderValues,
-            CloudPlatformValues,
-          } = require('@opentelemetry/semantic-conventions');
-
-          const mockedResource = new Resource({
-            [SemanticResourceAttributes.CLOUD_PROVIDER]: CloudProviderValues.AWS,
-            [SemanticResourceAttributes.CLOUD_PLATFORM]: CloudPlatformValues.AWS_EKS,
-            [SemanticResourceAttributes.K8S_CLUSTER_NAME]: 'cluster-name',
-            [SemanticResourceAttributes.CONTAINER_ID]: 'container-id',
-          });
-
-          jest.mock('@opentelemetry/resource-detector-aws', () => {
-            return {
-              ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
-              awsEksDetector: {
-                detect: jest.fn().mockReturnValue(mockedResource),
-              },
-            };
-          });
-
-          const { init } = jest.requireActual('./wrapper');
-          const { tracerProvider } = await init;
-          const resource = tracerProvider.resource;
-
-          checkBasicResourceAttributes(resource);
-          const resourceAttributeKeys = Object.keys(resource.attributes);
-
-          expect(resource.attributes[SemanticResourceAttributes.CLOUD_PROVIDER]).toBe('aws');
-          expect(resource.attributes[SemanticResourceAttributes.CLOUD_PLATFORM]).toBe('aws_eks');
-          expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.CONTAINER_ID);
-          expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.K8S_CLUSTER_NAME);
-        });
-      });
-    });
-  });
-
   describe('NodeTracerProvider should be initialize with span limit according to environment variables or default', () => {
     beforeEach(() => {
       process.env = { ...ORIGINAL_PROCESS_ENV };
@@ -329,7 +276,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
@@ -342,7 +289,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
@@ -355,7 +302,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to default value', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
 
@@ -367,7 +314,7 @@ describe('Distro initialization', () => {
     });
 
     test('NodeTracerProvider should be initialize with span limit equals to OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT when both env. vars set', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
@@ -383,7 +330,7 @@ describe('Distro initialization', () => {
 
   describe('dependency reporting', () => {
     test('is disabled if LUMIGO_TRACER_TOKEN is not set', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const utils = require('./utils');
         jest.mock('./utils');
 
@@ -398,7 +345,7 @@ describe('Distro initialization', () => {
     });
 
     test('is disabled if the "LUMIGO_REPORT_DEPENDENCIES" set to something different than "true"', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_TRACER_TOKEN = 'abcdef';
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
@@ -416,7 +363,7 @@ describe('Distro initialization', () => {
     });
 
     test('submits dependencies to the backend', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const lumigoToken = 'abcdef';
         process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
@@ -473,7 +420,7 @@ describe('Distro initialization', () => {
     });
 
     test('handles correctly folders in node_modules without package.json inside', async () => {
-      await jest.isolateModules(async () => {
+      await jest.isolateModulesAsync(async () => {
         const lumigoToken = 'abcdef';
         process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
