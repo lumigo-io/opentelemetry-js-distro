@@ -40,11 +40,16 @@ export async function report(
 ) {
   const packages = await listDependencies();
 
-  return postUri(
-    dependenciesEndpoint,
-    { resourceAttributes, packages },
-    { Authorization: `LumigoToken ${lumigoToken.trim()}` }
-  ).catch(() => {});
+  return (
+    postUri(
+      dependenciesEndpoint,
+      { resourceAttributes, packages },
+      { Authorization: `LumigoToken ${lumigoToken.trim()}` }
+    )
+      /* eslint-disable */
+      .catch(() => {})
+    /* eslint-enable */
+  );
 }
 
 async function listDependencies() {
