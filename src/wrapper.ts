@@ -102,6 +102,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           envDetector,
           processDetector,
           awsResourceDetectors.awsEcsDetector,
+          awsResourceDetectors.awsEksDetector,
           new AwsEcsDetector(),
           new LumigoDistroDetector(),
         ],

@@ -329,6 +329,9 @@ describe('Distro initialization', () => {
         jest.mock('@opentelemetry/resource-detector-aws', () => {
           return {
             ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
+            awsEksDetector: {
+              detect: jest.fn().mockReturnValue(mockedResource),
+            },
           };
         });
 
