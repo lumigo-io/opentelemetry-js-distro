@@ -23,9 +23,9 @@ echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
 echo "Running semantic-release"
 npm run semantic-release
 
+echo "Pushing to origin/main"
+git push origin main
+
 echo "Pushing binary to logz"
 source ../utils/common_bash/functions.sh
 send_metric_to_logz_io type=\"Release\"
-
-echo "Pushing to origin/main"
-git push origin main
