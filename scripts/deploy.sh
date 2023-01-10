@@ -24,6 +24,8 @@ echo "Running semantic-release"
 npm run semantic-release
 
 echo "Pushing binary to logz"
-echo \{\"type\":\"Release\",\"repo\":\"${CIRCLE_PROJECT_REPONAME}\",\"buildUrl\":\"${CIRCLE_BUILD_URL}\"\} | curl -X POST "https://listener.logz.io:8071?token=${LOGZ}" -v --data-binary @-
+source ../utils/common_bash/functions.sh
+send_metric_to_logz_io type=\"Release\"
+
 echo "Pushing to origin/main"
 git push origin main
