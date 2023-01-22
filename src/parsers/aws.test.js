@@ -346,6 +346,51 @@ describe('aws parser', () => {
     });
   });
 
+  test('sqsParser -> with inner SNS', () => {
+    const requestData = {
+      host: 'sqs.us-west-2.amazonaws.com',
+      body: `Action=SendMessage&DelaySeconds=1&MessageBody=Some%20Message%20to%20SQS&QueueUrl=queueUrl`,
+    };
+    const responseData = {
+      body:
+        '<?xml version="1.0"?><ReceiveMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/"><ReceiveMessageResult><Message><MessageId>sqs-message</MessageId><ReceiptHandle>aaaaaaaaaaaaaaa</ReceiptHandle><MD5OfBody>bbbbbbbbbbbbb</MD5OfBody><Body>{\n' +
+        '  &quot;Type&quot; : &quot;Notification&quot;,\n' +
+        '  &quot;MessageId&quot; : &quot;sns-message&quot;,\n' +
+        '  &quot;TopicArn&quot; : &quot;arn:aws:sns:us-west-2:123456789:inner-sns&quot;,\n' +
+        '  &quot;Message&quot; : &quot;{}&quot;,\n' +
+        '  &quot;Timestamp&quot; : &quot;2023-01-15T10:29:01.127Z&quot;,\n' +
+        '  &quot;SignatureVersion&quot; : &quot;1&quot;,\n' +
+        '  &quot;SigningCertURL&quot; : &quot;https://sns.us-west-2.amazonaws.com/SimpleNotificationService-123456789.pem&quot;,\n' +
+        '  &quot;UnsubscribeURL&quot; : &quot;https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&amp;SubscriptionArn=arn:aws:sns:us-west-2:123456789:inner-sns:123456789&quot;\n' +
+        '}</Body></Message></ReceiveMessageResult><ResponseMetadata><RequestId>aaaa-bbbbb-cccccc-ddddd</RequestId></ResponseMetadata></ReceiveMessageResponse>',
+    };
+
+    const result = aws.sqsParser(requestData, responseData);
+    const lumigoData = JSON.parse(result['lumigoData']);
+    expect(lumigoData.trigger.length).toEqual(2);
+    expect(lumigoData.trigger[1].targetId).toEqual(lumigoData.trigger[0].id);
+    lumigoData.trigger.forEach((trigger) => {
+      delete trigger.id;
+      delete trigger.targetId;
+    });
+    expect(lumigoData.trigger).toEqual([
+      {
+        extra: {
+          resource: 'queueUrl',
+        },
+        fromMessageIds: ['sqs-message'],
+        triggeredBy: 'sqs',
+      },
+      {
+        extra: {
+          arn: 'arn:aws:sns:us-west-2:123456789:inner-sns',
+        },
+        fromMessageIds: ['sns-message'],
+        triggeredBy: 'sns',
+      },
+    ]);
+  });
+
   test('eventBridgeParser -> happy flow', () => {
     const requestData = {
       host: 'events.us-west-2.amazonaws.com',
