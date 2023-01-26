@@ -32,43 +32,40 @@ describe('Distro initialization', () => {
   });
 
   describe("with the 'LUMIGO_SWITCH_OFF' environment variable set to 'true'", () => {
-    test('should not invoke trace initialization',
-      async () => {
-        await jest.isolateModulesAsync(async () => {
-          process.env.LUMIGO_SWITCH_OFF = 'true';
+    test('should not invoke trace initialization', async () => {
+      await jest.isolateModulesAsync(async () => {
+        process.env.LUMIGO_SWITCH_OFF = 'true';
 
-          const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-          jest.mock('@opentelemetry/exporter-trace-otlp-http');
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+        jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
-          const { init } = jest.requireActual('./wrapper');
+        const { init } = jest.requireActual('./wrapper');
 
-          const sdkInitialized = await init;
+        const sdkInitialized = await init;
 
-          expect(OTLPTraceExporter).not.toHaveBeenCalled();
-          expect(sdkInitialized).toBeUndefined();
-        });
-      })
+        expect(OTLPTraceExporter).not.toHaveBeenCalled();
+        expect(sdkInitialized).toBeUndefined();
+      });
+    });
   });
 
   describe('secret keys', () => {
-    test('should be redacted by LUMIGO_SECRET_MASKING_REGEX from env vars',
-      async () => {
-        await jest.isolateModulesAsync(async () => {
-          process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-          process.env.OTEL_SERVICE_NAME = 'service-1';
-          process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
-          process.env.VAR_TO_MASK = 'some value';
+    test('should be redacted by LUMIGO_SECRET_MASKING_REGEX from env vars', async () => {
+      await jest.isolateModulesAsync(async () => {
+        process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+        process.env.OTEL_SERVICE_NAME = 'service-1';
+        process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
+        process.env.VAR_TO_MASK = 'some value';
 
-          const { init } = jest.requireActual('./wrapper');
-          const { tracerProvider } = await init;
-          const resource = tracerProvider.resource;
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
+        const resource = tracerProvider.resource;
 
-          const vars = JSON.parse(resource.attributes['process.environ']);
-          expect(vars.VAR_TO_MASK).toEqual('****');
-        })
-      }
-    );
+        const vars = JSON.parse(resource.attributes['process.environ']);
+        expect(vars.VAR_TO_MASK).toEqual('****');
+      });
+    });
 
     test('should be redacted from env vars', async () => {
       await jest.isolateModulesAsync(async () => {
@@ -83,7 +80,7 @@ describe('Distro initialization', () => {
 
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.AUTHORIZATION).toEqual('****');
-      })
+      });
     });
   });
 
