@@ -38,7 +38,7 @@ export async function report(
   lumigoToken: string,
   resourceAttributes: ResourceAttributes
 ) {
-  const packages = await listDependencies();
+  const packages = await listPackages();
 
   return (
     postUri(
@@ -52,7 +52,7 @@ export async function report(
   );
 }
 
-async function listDependencies() {
+async function listPackages() {
   const validModulePaths = [];
 
   for (const modulesPath of module.paths) {
@@ -73,7 +73,7 @@ async function listDependencies() {
     }
   }
 
-  const dependencies = [];
+  const packages = [];
   for (const modulesPath of validModulePaths) {
     const packageDirs = await readdir(modulesPath);
 
@@ -82,7 +82,7 @@ async function listDependencies() {
         const packageJsonFile = `${modulesPath}/${packageDir}/package.json`;
         const content = await readFile(packageJsonFile);
         const packageJson = JSON.parse(content.toString());
-        dependencies.push({
+        packages.push({
           name: packageJson.name,
           version: packageJson.version,
         });
@@ -99,5 +99,5 @@ async function listDependencies() {
     }
   }
 
-  return dependencies;
+  return packages;
 }
