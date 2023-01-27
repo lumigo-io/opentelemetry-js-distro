@@ -3,8 +3,8 @@ import LumigoExpressInstrumentation from './ExpressInstrumentation';
 describe('LumigoExpressInstrumentation', () => {
   let lumigoExpressInstrumentation = new LumigoExpressInstrumentation();
 
-  test('getInstrumentationId should return "express"', () => {
-    expect(lumigoExpressInstrumentation.getInstrumentationId()).toEqual('express');
+  test('getInstrumentedModule should return "express"', () => {
+    expect(lumigoExpressInstrumentation.getInstrumentedModule()).toEqual('express');
   });
 
   test('getInstrumentation should return ExpressInstrumentation object', () => {

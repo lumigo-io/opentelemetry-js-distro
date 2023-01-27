@@ -201,19 +201,41 @@ export const logger: DiagLogger = diag.createComponentLogger({
   namespace: '@lumigo/opentelemetry:',
 });
 
-export const safeRequire = (libId) => {
+export const canRequireModule = (libId) => {
+  const customReq =
+    // eslint-disable-next-line no-undef,camelcase
+    // @ts-ignore __non_webpack_require__ not available at compile time
+    typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+
   try {
-    const customReq =
-      // eslint-disable-next-line no-undef,camelcase
-      // @ts-ignore __non_webpack_require__ not available at compile time
-      typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+    return !!customReq.resolve(libId);
+  } catch (e) {
+    try {
+      return !!customReq.resolve(libId, {
+        paths: (process.env.NODE_PATH || '').split(':'),
+      });
+    } catch (e) {
+      if (e.code !== 'MODULE_NOT_FOUND') {
+        logger.warn('Unable to resolve module', {
+          error: e,
+          libId: libId,
+        });
+      }
+    }
+  }
+  return false;
+};
+
+export const safeRequire = (libId) => {
+  const customReq =
+    // eslint-disable-next-line no-undef,camelcase
+    // @ts-ignore __non_webpack_require__ not available at compile time
+    typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+
+  try {
     return customReq(libId);
   } catch (e) {
     try {
-      const customReq =
-        // eslint-disable-next-line no-undef,camelcase
-        // @ts-ignore __non_webpack_require__ not available at compile time
-        typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
       const path = customReq.resolve(libId, {
         paths: (process.env.NODE_PATH || '').split(':'),
       });

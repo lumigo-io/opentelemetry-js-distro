@@ -7,8 +7,8 @@ describe('LumigoMongoDBInstrumentation', () => {
 
   let lumigoMongoDBInstrumentation = new LumigoMongoDBInstrumentation();
 
-  test('getInstrumentationId should return "mongodb"', () => {
-    expect(lumigoMongoDBInstrumentation.getInstrumentationId()).toEqual('mongodb');
+  test('getInstrumentedModule should return "mongodb"', () => {
+    expect(lumigoMongoDBInstrumentation.getInstrumentedModule()).toEqual('mongodb');
   });
 
   test('getInstrumentation should return MongoDBInstrumentation object', () => {

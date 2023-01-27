@@ -1,7 +1,8 @@
-import { HttpInstrumentation, IgnoreMatcher } from '@opentelemetry/instrumentation-http';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 
 import { HttpHooks } from './http';
 import { Instrumentor } from '../instrumentor';
+import { RequestOptions } from 'https';
 
 export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrumentation> {
   private readonly ignoredHostnames: string[];
@@ -9,46 +10,31 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
   constructor(...ignoredHostnames: string[]) {
     super();
 
-    this.ignoredHostnames = (ignoredHostnames || []).concat(
-      [process.env.ECS_CONTAINER_METADATA_URI, process.env.ECS_CONTAINER_METADATA_URI_V4]
-        .filter(Boolean)
-        .map((url) => {
-          try {
-            return new URL(url).hostname;
-          } catch (err) {
-            return;
-          }
-        })
-    );
+    this.ignoredHostnames = (ignoredHostnames || [])
+      .concat(
+        [process.env.ECS_CONTAINER_METADATA_URI, process.env.ECS_CONTAINER_METADATA_URI_V4]
+          .filter(Boolean)
+          .map((url) => {
+            try {
+              return new URL(url).hostname;
+            } catch (err) {
+              return;
+            }
+          })
+      )
+      // Unroutable addresses, used by metadata services on all clouds
+      .concat('169.254.169.254');
   }
 
-  getInstrumentationId(): string {
+  getInstrumentedModule(): string {
     return 'http';
   }
 
-  getInstrumentation(): HttpInstrumentation {
-    const ignoreConfig = this.getIgnoreConfig();
-
-    return new HttpInstrumentation({
-      ignoreOutgoingUrls: ignoreConfig,
-      ignoreIncomingPaths: [],
+  getInstrumentation = (): HttpInstrumentation =>
+    new HttpInstrumentation({
+      ignoreOutgoingRequestHook: (request: RequestOptions) =>
+        this.ignoredHostnames.includes(request.hostname),
       requestHook: HttpHooks.requestHook,
       responseHook: HttpHooks.responseHook,
     });
-  }
-
-  private getIgnoreConfig(): IgnoreMatcher[] {
-    return [
-      (url: string) => {
-        try {
-          return this.ignoredHostnames.includes(new URL(url).hostname);
-        } catch (err) {
-          // Invalid hostname means no match
-          return false;
-        }
-      },
-      // Unroutable addresses, used by metadata services on all clouds
-      /169\.254\.\d+\.\d+.*/gm,
-    ];
-  }
 }
