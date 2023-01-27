@@ -97,25 +97,25 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
       const lumigoSpanDumpPath = process.env.LUMIGO_DEBUG_SPANDUMP;
       const lumigoReportDependencies = process.env.LUMIGO_REPORT_DEPENDENCIES || 'true';
 
-      const detectedResource = await detectResources({
-        detectors: [
-          envDetector,
-          processDetector,
-          awsResourceDetectors.awsEcsDetector,
-          new AwsEcsDetector(),
-          new LumigoDistroDetector(),
-        ],
-      });
+      const detectedResource = Resource.default().merge(
+        await detectResources({
+          detectors: [
+            envDetector,
+            processDetector,
+            awsResourceDetectors.awsEcsDetector,
+            new AwsEcsDetector(),
+            new LumigoDistroDetector(),
+          ],
+        })
+      );
 
       const tracerProvider = new NodeTracerProvider({
-        resource: Resource.default()
-          .merge(
-            new Resource({
-              framework: getFramework(),
-              'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20000),
-            })
-          )
-          .merge(detectedResource),
+        resource: detectedResource.merge(
+          new Resource({
+            framework: getFramework(),
+            'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20000),
+          })
+        ),
         spanLimits: {
           attributeValueLengthLimit: getMaxSize(),
         },

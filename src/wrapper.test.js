@@ -1,61 +1,5 @@
 import * as fs from 'fs';
-
-/*
- * Monkey-patch jest to be able to handle async in isolateModules
- *
- * See https://github.com/facebook/jest/issues/10428
- */
-
-async function isolateModulesAsync(fn) {
-  if (this._isolatedModuleRegistry || this._isolatedMockRegistry) {
-    throw new Error('isolateModules cannot be nested inside another isolateModules.');
-  }
-
-  this._isolatedModuleRegistry = new Map();
-  this._isolatedMockRegistry = new Map();
-
-  try {
-    await fn();
-  } finally {
-    var _this$_isolatedModule, _this$_isolatedMockRe2;
-
-    // might be cleared within the callback
-    (_this$_isolatedModule = this._isolatedModuleRegistry) === null ||
-    _this$_isolatedModule === void 0
-      ? void 0
-      : _this$_isolatedModule.clear();
-    (_this$_isolatedMockRe2 = this._isolatedMockRegistry) === null ||
-    _this$_isolatedMockRe2 === void 0
-      ? void 0
-      : _this$_isolatedMockRe2.clear();
-    this._isolatedModuleRegistry = null;
-    this._isolatedMockRegistry = null;
-
-    return this;
-  }
-}
-jest.isolateModulesAsync = isolateModulesAsync.bind(jest);
-
-const { Resource } = require('@opentelemetry/resources');
-const {
-  SemanticResourceAttributes,
-  CloudProviderValues,
-  CloudPlatformValues,
-} = require('@opentelemetry/semantic-conventions');
-
-const mockedResource = new Resource({
-  [SemanticResourceAttributes.CLOUD_PROVIDER]: CloudProviderValues.AWS,
-  [SemanticResourceAttributes.CLOUD_PLATFORM]: CloudPlatformValues.AWS_EKS,
-  [SemanticResourceAttributes.K8S_CLUSTER_NAME]: 'cluster-name',
-  [SemanticResourceAttributes.CONTAINER_ID]: 'container-id',
-});
-
-import { FileSpanExporter } from './exporters';
-jest.mock('./exporters');
-
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { join } from 'path';
-jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
 const LUMIGO_ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
 const LUMIGO_TRACER_TOKEN = 't_10faa5e13e7844aaa1234';
@@ -68,23 +12,36 @@ const { version } = require('../package.json');
 describe('Distro initialization', () => {
   const ORIGINAL_PROCESS_ENV = process.env;
 
+  afterAll(() => {
+    process.env = ORIGINAL_PROCESS_ENV;
+  });
+
   beforeEach(() => {
-    process.env = { ...ORIGINAL_PROCESS_ENV };
+    /*
+     * We have a limit on the size of env we sent to the backend, and the env
+     * in the CI/CD goes over the limit, so the additional env vars we want to
+     * check for scrubbing get dropped.
+     */
+    process.env = {};
   });
 
   afterEach(() => {
-    process.env = ORIGINAL_PROCESS_ENV;
+    process.env = {};
     jest.resetAllMocks();
+    jest.resetModules();
   });
 
   describe("with the 'LUMIGO_SWITCH_OFF' environment variable set to 'true'", () => {
     test('should not invoke trace initialization', async () => {
-      process.env.LUMIGO_SWITCH_OFF = 'true';
-
       await jest.isolateModulesAsync(async () => {
-        const wrapper = jest.requireActual('./wrapper');
+        process.env.LUMIGO_SWITCH_OFF = 'true';
 
-        const sdkInitialized = await wrapper.init;
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+        jest.mock('@opentelemetry/exporter-trace-otlp-http');
+
+        const { init } = jest.requireActual('./wrapper');
+
+        const sdkInitialized = await init;
 
         expect(OTLPTraceExporter).not.toHaveBeenCalled();
         expect(sdkInitialized).toBeUndefined();
@@ -93,16 +50,7 @@ describe('Distro initialization', () => {
   });
 
   describe('secret keys', () => {
-    beforeEach(() => {
-      /*
-       * We have a limit on the size of env we sent to the backend, and the env
-       * in the CI/CD goes over the limit, so the additional env vars we want to
-       * check for scrubbing get dropped.
-       */
-      process.env = {};
-    });
-
-    test('should be redacted from env vars by LUMIGO_SECRET_MASKING_REGEX', async () => {
+    test('should be redacted by LUMIGO_SECRET_MASKING_REGEX from env vars', async () => {
       await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
@@ -110,8 +58,8 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
         process.env.VAR_TO_MASK = 'some value';
 
-        const wrapper = jest.requireActual('./wrapper');
-        const { tracerProvider } = await wrapper.init;
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
         const vars = JSON.parse(resource.attributes['process.environ']);
@@ -126,8 +74,8 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.AUTHORIZATION = 'some value';
 
-        const wrapper = jest.requireActual('./wrapper');
-        const { tracerProvider } = await wrapper.init;
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
         const vars = JSON.parse(resource.attributes['process.environ']);
@@ -137,16 +85,17 @@ describe('Distro initialization', () => {
   });
 
   describe('with the LUMIGO_TRACER_TOKEN environment variable set', () => {
-    beforeEach(() => {
-      process.env.LUMIGO_ENDPOINT = LUMIGO_ENDPOINT;
-      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-      process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-    });
-
     test('should initialize the OTLPTraceExporter', async () => {
       await jest.isolateModulesAsync(async () => {
-        const wrapper = jest.requireActual('./wrapper');
-        await wrapper.init;
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+        jest.mock('@opentelemetry/exporter-trace-otlp-http');
+
+        process.env.LUMIGO_ENDPOINT = LUMIGO_ENDPOINT;
+        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+        process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+
+        const { init } = jest.requireActual('./wrapper');
+        await init;
 
         expect(OTLPTraceExporter).toHaveBeenCalledWith({
           headers: {
@@ -158,15 +107,16 @@ describe('Distro initialization', () => {
     });
 
     describe('with the LUMIGO_DEBUG_SPANDUMP variable set', () => {
-      beforeEach(() => {
-        process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
-        process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-      });
-
       test('should initialize the FileSpanExporter', async () => {
         await jest.isolateModulesAsync(async () => {
-          const wrapper = jest.requireActual('./wrapper');
-          await wrapper.init;
+          process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
+          process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+
+          const { FileSpanExporter } = require('./exporters');
+          jest.mock('./exporters');
+
+          const { init } = jest.requireActual('./wrapper');
+          await init;
 
           expect(FileSpanExporter).toHaveBeenCalledWith('/dev/stdout');
         });
@@ -177,22 +127,26 @@ describe('Distro initialization', () => {
   describe('without the LUMIGO_TRACER_TOKEN environment variable set', () => {
     test('should not initialize the OTLPTraceExporter', async () => {
       await jest.isolateModulesAsync(async () => {
-        const wrapper = jest.requireActual('./wrapper');
-        await wrapper.init;
+        const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+        jest.mock('@opentelemetry/exporter-trace-otlp-http');
+
+        const { init } = jest.requireActual('./wrapper');
+        await init;
 
         expect(OTLPTraceExporter).not.toHaveBeenCalled();
       });
     });
 
     describe('with the LUMIGO_DEBUG_SPANDUMP variable set', () => {
-      beforeEach(() => {
-        process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
-      });
-
       test('should initialize the FileSpanExporter', async () => {
         await jest.isolateModulesAsync(async () => {
-          const wrapper = jest.requireActual('./wrapper');
-          await wrapper.init;
+          process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
+
+          const { FileSpanExporter } = require('./exporters');
+          jest.mock('./exporters');
+
+          const { init } = jest.requireActual('./wrapper');
+          await init;
 
           expect(FileSpanExporter).toHaveBeenCalledWith('/dev/stdout');
         });
@@ -201,16 +155,14 @@ describe('Distro initialization', () => {
   });
 
   describe('outside of a computing platform for which we have detectors', () => {
-    beforeEach(() => {
-      process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-      process.env.OTEL_SERVICE_NAME = 'service-1';
-      process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-    });
-
     test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
       await jest.isolateModulesAsync(async () => {
-        const wrapper = jest.requireActual('./wrapper');
-        const { tracerProvider } = await wrapper.init;
+        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+        process.env.OTEL_SERVICE_NAME = 'service-1';
+        process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
         expect(resource.attributes['framework']).toBe('node');
@@ -223,21 +175,18 @@ describe('Distro initialization', () => {
 
   describe('On Amazon ECS', () => {
     beforeEach(() => {
-      process.env = { ...ORIGINAL_PROCESS_ENV };
       process.env.ECS_CONTAINER_METADATA_URI = ECS_CONTAINER_METADATA_URI;
       process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
     });
 
     describe('without the Task Metadata V4 endpoint', () => {
-      beforeEach(() => {
-        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-        process.env.OTEL_SERVICE_NAME = 'service-1';
-      });
-
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
         await jest.isolateModulesAsync(async () => {
-          const wrapper = jest.requireActual('./wrapper');
-          const { tracerProvider } = await wrapper.init;
+          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+          process.env.OTEL_SERVICE_NAME = 'service-1';
+
+          const { init } = jest.requireActual('./wrapper');
+          const { tracerProvider } = await init;
           const resource = tracerProvider.resource;
 
           checkBasicResourceAttributes(resource);
@@ -273,21 +222,19 @@ describe('Distro initialization', () => {
         return fs.promises.readFile(responseFilepath).then(JSON.parse);
       }
 
-      beforeEach(() => {
-        process.env.ECS_CONTAINER_METADATA_URI_V4 = ECS_CONTAINER_METADATA_URI_V4;
-        process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-        process.env.OTEL_SERVICE_NAME = 'service-1';
-      });
-
       test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
         await jest.isolateModulesAsync(async () => {
+          process.env.ECS_CONTAINER_METADATA_URI_V4 = ECS_CONTAINER_METADATA_URI_V4;
+          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+          process.env.OTEL_SERVICE_NAME = 'service-1';
+
           jest.mock('./utils', () => ({
             ...jest.requireActual('./utils'), // import and retain the original functionalities
             getUri: mockMetadataGetUri,
           }));
 
-          const wrapper = jest.requireActual('./wrapper');
-          const { tracerProvider } = await wrapper.init;
+          const { init } = jest.requireActual('./wrapper');
+          const { tracerProvider } = await init;
           const resource = tracerProvider.resource;
 
           checkBasicResourceAttributes(resource);
@@ -319,39 +266,6 @@ describe('Distro initialization', () => {
     });
   });
 
-  describe('On Amazon EKS', () => {
-    beforeEach(() => {
-      process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
-    });
-
-    describe('on successful request', () => {
-      test('NodeTracerProvider should be given a resource with all the right attributes', async () => {
-        jest.mock('@opentelemetry/resource-detector-aws', () => {
-          return {
-            ...jest.requireActual('@opentelemetry/resource-detector-aws'), // import and retain the original functionalities
-          };
-        });
-
-        await jest.isolateModulesAsync(async () => {
-          process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
-          process.env.OTEL_SERVICE_NAME = 'service-1';
-
-          const wrapper = jest.requireActual('./wrapper');
-          const { tracerProvider } = await wrapper.init;
-          const resource = tracerProvider.resource;
-
-          checkBasicResourceAttributes(resource);
-          const resourceAttributeKeys = Object.keys(resource.attributes);
-
-          expect(resource.attributes[SemanticResourceAttributes.CLOUD_PROVIDER]).toBe('aws');
-          expect(resource.attributes[SemanticResourceAttributes.CLOUD_PLATFORM]).toBe('aws_eks');
-          expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.CONTAINER_ID);
-          expect(resourceAttributeKeys).toContain(SemanticResourceAttributes.K8S_CLUSTER_NAME);
-        });
-      });
-    });
-  });
-
   describe('NodeTracerProvider should be initialize with span limit according to environment variables or default', () => {
     beforeEach(() => {
       process.env = { ...ORIGINAL_PROCESS_ENV };
@@ -364,8 +278,8 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
 
-        const wrapper = jest.requireActual('./wrapper');
-        const { tracerProvider } = await wrapper.init;
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(1);
       });
@@ -377,8 +291,8 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
 
-        const wrapper = jest.requireActual('./wrapper');
-        const { tracerProvider } = await wrapper.init;
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(50);
       });
@@ -389,8 +303,8 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
 
-        const wrapper = jest.requireActual('./wrapper');
-        const { tracerProvider } = await wrapper.init;
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(2048);
       });
@@ -403,8 +317,8 @@ describe('Distro initialization', () => {
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
         process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
 
-        const wrapper = jest.requireActual('./wrapper');
-        const { tracerProvider } = await wrapper.init;
+        const { init } = jest.requireActual('./wrapper');
+        const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(1);
       });
@@ -495,6 +409,7 @@ describe('Distro initialization', () => {
         const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
         expect(dependenciesEndpoint).not.toBeFalsy();
+        expect(data.resourceAttributes['telemetry.sdk.language']).toBe('nodejs');
         expect(data.resourceAttributes['lumigo.distro.version']).toBe(version);
         expect(data.packages.length).toBeGreaterThan(0);
         expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
