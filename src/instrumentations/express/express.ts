@@ -1,12 +1,11 @@
 import type express from 'express';
 
 import { Span } from '@opentelemetry/api';
-import { PatchedRequest } from '@opentelemetry/instrumentation-express/build/src/types';
 
 import { safeExecute, logger } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
 
-type ExpressRequestType = { req: PatchedRequest; res: express.Response };
+type ExpressRequestType = { req: express.Request; res: express.Response };
 
 export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
   requestHook(span: Span, { req, res }: ExpressRequestType): void {
