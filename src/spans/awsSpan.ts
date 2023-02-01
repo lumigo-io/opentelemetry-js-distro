@@ -29,6 +29,7 @@ export type AwsServiceData = {
     [key: string]: any;
   };
   messageId?: string;
+  lumigoData?: string;
   [key: string]: any;
 };
 

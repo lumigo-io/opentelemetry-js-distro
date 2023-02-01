@@ -17,7 +17,7 @@ describe('LumigoHttpInstrumentation', () => {
       _config: {
         enabled: true,
         ignoreOutgoingUrls: expect.arrayContaining(ignoreConfig),
-        ignoreIncomingPaths: expect.arrayContaining(ignoreConfig),
+        ignoreIncomingPaths: [],
       },
       _diag: {
         _namespace: '@opentelemetry/instrumentation-http',

@@ -1,6 +1,9 @@
 import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
 import { traverse } from '../tools/xmlToJson';
 import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
+import { CommonUtils } from '@lumigo/node-core';
+import { Triggers } from '@lumigo/node-core';
+import { AwsServiceData } from '../spans/awsSpan';
 
 const extractDynamodbMessageId = (reqBody, method) => {
   if (method === 'PutItem' && reqBody['Item']) {
@@ -125,8 +128,7 @@ export const sqsParser = (requestData, responseData) => {
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;
   const parsedResBody = resBody ? traverse(resBody) : undefined;
   const resourceName = parsedReqBody ? parsedReqBody['QueueUrl'] : undefined;
-  const awsServiceData = { 'aws.resource.name': resourceName };
-  // @ts-ignore
+  const awsServiceData: AwsServiceData = { 'aws.resource.name': resourceName };
   awsServiceData.messageId =
     safeGet(parsedResBody, ['SendMessageResponse', 'SendMessageResult', 'MessageId'], undefined) ||
     safeGet(
@@ -160,6 +162,20 @@ export const sqsParser = (requestData, responseData) => {
       ['ReceiveMessageResponse', 'ReceiveMessageResult', 'Message', 0, 'MessageId'],
       undefined
     );
+  const innerRaw = parsedResBody?.ReceiveMessageResponse?.ReceiveMessageResult?.Message?.Body || '';
+  if (innerRaw.search(Triggers.INNER_MESSAGES_IDENTIFIER_PATTERN) > 0) {
+    const inner = JSON.parse(innerRaw.replace(/&quot;/g, '"'));
+    const mainTrigger = {
+      id: CommonUtils.getRandomString(10),
+      targetId: null,
+      triggeredBy: Triggers.MessageTrigger.SQS,
+      fromMessageIds: [awsServiceData.messageId],
+      extra: { resource: resourceName },
+    };
+    awsServiceData.lumigoData = JSON.stringify({
+      trigger: [mainTrigger, ...Triggers.recursiveParseTriggers(inner, mainTrigger.id)],
+    });
+  }
   return awsServiceData;
 };
 

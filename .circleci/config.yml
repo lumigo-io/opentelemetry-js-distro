@@ -3,34 +3,44 @@ version: 2.1
 orbs:
   lumigo-orb: &lumigo_orb_version lumigo/lumigo-orb@volatile
 
+defaults: &defaults
+  docker:
+  - image: lumigo/ci-ubuntu2204:latest
+    auth:
+      username: lumigo
+      password: $DOCKERHUB_PASSWORD
+  working_directory: ~/opentelemetry-js-distro
+
 workflows:
   test-deploy:
     jobs:
     - lumigo-orb/print_orb_versions:
         lumigo_orb_version: *lumigo_orb_version
+
     - test:
+        context: common
         filters:
           branches:
             ignore: main
     - lumigo-orb/is_environment_available:
+        context: common
         filters:
           branches:
             ignore: main
     - lumigo-orb/be-deploy:
+        context: common
         requires:
           - lumigo-orb/is_environment_available
     - lumigo-orb/integration-test-prep:
-        deploy_spec: default
+        context: common
         requires:
           - lumigo-orb/be-deploy
     - lumigo-orb/integration-test-limited-flows:
-        deploy_spec: default
-        tests_spec: testNormal
+        context: common
         requires:
           - lumigo-orb/integration-test-prep
     - lumigo-orb/integration-test-parallel:
-        deploy_spec: default
-        tests_spec: testNormal
+        context: common
         requires:
           - lumigo-orb/integration-test-limited-flows
     - lumigo-orb/workflow-completed-successfully:
@@ -39,22 +49,20 @@ workflows:
           - lumigo-orb/integration-test-parallel
 
     - deploy:
+        context:
+          - common
+          - node.js
         filters:
           branches:
             only: main
 
 jobs:
   test:
-    docker:
-      - image: lumigo/ci:latest
-        auth:
-          username: lumigo
-          password: $DOCKERHUB_PASSWORD
+    <<: *defaults
     environment:
       - TZ: Asia/Jerusalem
       - NODE_OPTIONS: --max_old_space_size=1500
     resource_class: medium+
-    working_directory: ~/opentelemetry-js-distro
     steps:
       - checkout
       - restore_cache:
@@ -86,25 +94,12 @@ jobs:
           prefix: coverage
 
   deploy:
-    docker:
-      - image: lumigo/ci:latest
-        auth:
-          username: lumigo
-          password: $DOCKERHUB_PASSWORD
+    <<: *defaults
     environment:
       - TZ: Asia/Jerusalem
     resource_class: medium+
-    working_directory: ~/opentelemetry-js-distro
     steps:
-      - run:
-          command: |
-            mkdir ~/.ssh/ && echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
-            cd ..
-            git clone git@github.com:lumigo-io/common-resources.git
-      - run:
-          command: |
-            cd ..
-            git clone git@github.com:lumigo-io/utils.git
+      - lumigo-orb/checkout_utils
       - checkout
       - run:
           name: Check if tagged

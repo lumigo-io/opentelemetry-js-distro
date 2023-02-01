@@ -23,7 +23,9 @@ echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
 echo "Running semantic-release"
 npm run semantic-release
 
-echo "Pushing binary to logz"
-echo \{\"type\":\"Release\",\"repo\":\"${CIRCLE_PROJECT_REPONAME}\",\"buildUrl\":\"${CIRCLE_BUILD_URL}\"\} | curl -X POST "https://listener.logz.io:8071?token=${LOGZ}" -v --data-binary @-
 echo "Pushing to origin/main"
 git push origin main
+
+echo "Pushing binary to logz"
+source ../utils/common_bash/functions.sh
+send_metric_to_logz_io type=\"Release\"
