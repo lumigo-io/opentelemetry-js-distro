@@ -4,7 +4,8 @@ import { join } from 'path';
 const LUMIGO_ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
 const LUMIGO_TRACER_TOKEN = 't_10faa5e13e7844aaa1234';
 
-const ECS_CONTAINER_METADATA_URI_V4 = 'http://169.255.169.255:12345/v4/96d36db6cf2942269b2c2c0c9540c444-4190541037';
+const ECS_CONTAINER_METADATA_URI_V4 =
+  'http://169.255.169.255:12345/v4/96d36db6cf2942269b2c2c0c9540c444-4190541037';
 const ECS_CONTAINER_METADATA_URI = 'http://169.255.169.255/v3';
 
 const { version } = require('../package.json');
@@ -207,7 +208,6 @@ describe('Distro initialization', () => {
         expect(resource.attributes['cloud.platform']).toBe('aws_ecs');
       });
     });
-
   });
 
   describe('NodeTracerProvider should be initialize with span limit according to environment variables or default', () => {

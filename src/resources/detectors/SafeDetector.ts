@@ -8,20 +8,18 @@ import { logger } from '../../utils';
  * caller.
  */
 export class SafeDetector implements Detector {
+  readonly wrappedDetector: Detector;
 
-    readonly wrappedDetector: Detector;
+  constructor(wrappedDetector: Detector) {
+    this.wrappedDetector = wrappedDetector;
+  }
 
-    constructor(wrappedDetector: Detector) {
-        this.wrappedDetector = wrappedDetector;
+  async detect(config?: ResourceDetectionConfig): Promise<Resource> {
+    try {
+      return await this.wrappedDetector.detect(config);
+    } catch (err) {
+      logger.debug(`Error from ${this.wrappedDetector} detector`, err);
+      return Resource.EMPTY;
     }
-
-    async detect(config?: ResourceDetectionConfig): Promise<Resource> {
-        try {
-            return await this.wrappedDetector.detect(config);
-        } catch (err) {
-            logger.debug(`Error from ${this.wrappedDetector} detector`, err);
-            return Resource.EMPTY;
-        }
-    }
-
+  }
 }
