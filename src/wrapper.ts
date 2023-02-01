@@ -16,7 +16,7 @@ import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentat
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
-import { LumigoDistroDetector } from './resources/detectors';
+import { LumigoDistroDetector, SafeDetector } from './resources/detectors';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
 import { CommonUtils } from '@lumigo/node-core';
 
@@ -59,6 +59,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
       }
 
       const instrumentationsToInstall = [
+        // new LumigoAwsSdkInstrumentation(),
         new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
         new LumigoExpressInstrumentation(),
         new LumigoMongoDBInstrumentation(),
@@ -86,10 +87,11 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
 
       const detectedResource = Resource.default().merge(
         await detectResources({
+          // Wrap upstream detectors to prevent errors from compromising the startup process
           detectors: [
-            envDetector,
-            processDetector,
-            awsResourceDetectors.awsEcsDetector,
+            new SafeDetector(envDetector),
+            new SafeDetector(processDetector),
+            new SafeDetector(awsResourceDetectors.awsEcsDetector),
             new LumigoDistroDetector(),
           ],
         })
