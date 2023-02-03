@@ -61,7 +61,6 @@
     "axios": "^0.21.1",
     "body-parser": "^1.19.1",
     "bufferutil": "^4.0.1",
-    "canvas": "^2.5.0",
     "chai": "^4.3.6",
     "console-stamp": "^3.0.6",
     "cross-env": "^6.0.0",
