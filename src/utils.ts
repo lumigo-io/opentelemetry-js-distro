@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as https from 'https';
 
 import { sortify } from './tools/jsonSortify';
-import { diag, DiagLogger } from '@opentelemetry/api';
+import { logger } from './wrapper';
 
 const DEFAULT_MAX_ENTRY_SIZE = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
@@ -195,10 +195,6 @@ export const md5Hash = (item: {}): string | undefined => {
 
 // @ts-ignore
 export const removeDuplicates = (arr) => Array.from(new Set(arr));
-
-export const logger: DiagLogger = diag.createComponentLogger({
-  namespace: '@lumigo/opentelemetry:',
-});
 
 export const canRequireModule = (libId) => {
   const customReq =

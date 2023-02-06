@@ -1,5 +1,5 @@
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
-import { logger } from '../../utils';
+import { logger } from '../../wrapper';
 
 /*
  * Wrapper for instances of `Detector` that ensure that,

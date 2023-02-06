@@ -5,7 +5,7 @@ import {
 } from '@opentelemetry/instrumentation';
 import { SpanKind } from '@opentelemetry/api';
 
-import { logger } from '../utils';
+import { logger } from '../wrapper';
 
 export default class LogsInstrumentation extends InstrumentationBase<any> {
   instrumentationDescription: string;
@@ -19,6 +19,7 @@ export default class LogsInstrumentation extends InstrumentationBase<any> {
     | InstrumentationModuleDefinition<any>
     | InstrumentationModuleDefinition<any>[]
     | void {
+
     logger.debug('in console instrumentation');
 
     return [

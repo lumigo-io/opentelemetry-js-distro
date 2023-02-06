@@ -6,8 +6,9 @@ import { CommonUtils } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
+import { logger } from '../../wrapper';
 import { getAwsServiceData } from '../../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, logger, getMaxSize } from '../../utils';
+import { isAwsService, runOneTimeWrapper, safeExecute, getMaxSize } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -161,7 +162,6 @@ export class Http {
       },
       'failed to extractBodyFromEmitSocketEvent',
       'warn',
-      ''
     )();
   }
 

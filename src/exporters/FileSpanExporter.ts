@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import { ExportResult, ExportResultCode, hrTimeToMicroseconds } from '@opentelemetry/core';
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
-import { logger } from '../utils';
+import { logger } from '../wrapper';
 
 /**
  * This is implementation of {@link SpanExporter} that prints spans to a file.
@@ -132,7 +132,7 @@ export class FileSpanExporter implements SpanExporter {
         try {
           return fs.fdatasyncSync(this._fd);
         } catch (e) {
-          logger.error(e);
+          logger.error(`Cannot export log spandump`, e);
         }
       }
     });

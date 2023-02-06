@@ -2,7 +2,7 @@ import type express from 'express';
 
 import { Span } from '@opentelemetry/api';
 
-import { safeExecute, logger } from '../../utils';
+import { safeExecute } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
 
 type ExpressRequestType = { req: express.Request; res: express.Response };

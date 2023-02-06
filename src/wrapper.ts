@@ -14,7 +14,7 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
-import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
+import { extractEnvVars, getMaxSize, isEnvVarTrue } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { LumigoDistroDetector, SafeDetector } from './resources/detectors';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
@@ -28,11 +28,11 @@ const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
-if (isEnvVarTrue(LUMIGO_DEBUG)) {
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-} else {
-  diag.setLogger(new DiagConsoleLogger());
-}
+diag.setLogger(new DiagConsoleLogger(), isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.DEBUG : DiagLogLevel.INFO);
+
+export const logger = diag.createComponentLogger({
+  namespace: '@lumigo/opentelemetry',
+});
 
 let isTraceInitialized = false;
 
@@ -73,7 +73,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
 
       const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
 
-      logger.debug(`Instrumented modules: ${instrumentedModules}`);
+      logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
 
       if (!process.env.LUMIGO_TRACER_TOKEN) {
         logger.warn(
@@ -169,7 +169,8 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         detectedResource && detectedResource.attributes
           ? detectedResource.attributes[LUMIGO_DISTRO_VERSION]
           : 'unknown';
-      logger.info(`Lumigo tracer v${distroVersion} started.`);
+
+          logger.info(`Lumigo tracer v${distroVersion} started.`);
 
       return Promise.resolve({
         tracerProvider,

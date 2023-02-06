@@ -1,4 +1,5 @@
-import { logger, md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
+import { logger } from '../wrapper';
+import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
 import { traverse } from '../tools/xmlToJson';
 import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
 import { CommonUtils } from '@lumigo/node-core';
