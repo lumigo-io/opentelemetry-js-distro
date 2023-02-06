@@ -1,4 +1,4 @@
-import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
+import { logger, md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
 import { traverse } from '../tools/xmlToJson';
 import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
 import { CommonUtils } from '@lumigo/node-core';
@@ -187,7 +187,7 @@ export const kinesisParser = (requestData, responseData) => {
   try {
     resBodyJSON = (!!resBody && JSON.parse(resBody)) || {};
   } catch (e) {
-    console.info(`Unable to parse response, ${e}`);
+    logger.debug(`Unable to parse response, ${e}`);
     resBodyJSON = {};
   }
   const resourceName = (reqBodyJSON['StreamName'] && reqBodyJSON.StreamName) || undefined;

@@ -9,7 +9,6 @@ type ExpressRequestType = { req: express.Request; res: express.Response };
 
 export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
   requestHook(span: Span, { req, res }: ExpressRequestType): void {
-    logger.debug('opentelemetry-instrumentation-express on requestHook()');
     const oldResEnd = res.end;
     const oldResSend = res.send;
     if (req.query) span.setAttribute('http.request.query', JSON.stringify(req.query, undefined, 0));
@@ -22,7 +21,6 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
       return oldResSend.apply(res, arguments);
     };
     res.end = function () {
-      logger.debug('opentelemetry-instrumentation-express on end()');
       return safeExecute(() => {
         // eslint-disable-next-line prefer-rest-params
         const origRes = oldResEnd.apply(res, arguments);
@@ -37,6 +35,5 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   responseHook(span: Span, response: any): void {
-    logger.debug('opentelemetry-instrumentation-express on responseHook()');
   },
 };

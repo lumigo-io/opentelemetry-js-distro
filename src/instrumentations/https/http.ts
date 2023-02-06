@@ -37,7 +37,7 @@ const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer)
     };
     shimmerLib.wrap(module, funcName, wrapper);
   } catch (e) {
-    console.warn(`Wrapping of function ${funcName} failed`, options);
+    logger.warn(`Wrapping of function ${funcName} failed`, options);
   }
 };
 
@@ -131,8 +131,8 @@ export class Http {
           span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
         }
       } catch (e) {
-        console.warn('Failed to parse aws service data', e);
-        console.warn('getHttpSpan args', { requestData: requestRawData });
+        logger.debug('Failed to parse aws service data', e);
+        logger.debug('getHttpSpan args', { requestData: requestRawData });
       }
     };
   }

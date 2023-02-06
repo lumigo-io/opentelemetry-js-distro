@@ -5,6 +5,8 @@ import {
 } from '@opentelemetry/instrumentation';
 import { SpanKind } from '@opentelemetry/api';
 
+import { logger } from '../utils';
+
 export default class LogsInstrumentation extends InstrumentationBase<any> {
   instrumentationDescription: string;
   supportedVersions: string[];
@@ -17,7 +19,7 @@ export default class LogsInstrumentation extends InstrumentationBase<any> {
     | InstrumentationModuleDefinition<any>
     | InstrumentationModuleDefinition<any>[]
     | void {
-    console.log('in console instrumentation');
+    logger.debug('in console instrumentation');
 
     return [
       new InstrumentationNodeModuleDefinition<any>(

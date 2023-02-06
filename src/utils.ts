@@ -15,14 +15,13 @@ interface HttpHeaders {
 export function safeExecute<T>(
   callback: Function,
   message = 'Error in Lumigo tracer',
-  logLevel = 'warn',
   defaultReturn: T = undefined
 ): Function {
   return function (...args) {
     try {
       return callback.apply(this, args);
     } catch (err) {
-      console[logLevel](message, err);
+      logger.debug(message, err);
       return defaultReturn;
     }
   };
@@ -189,7 +188,7 @@ export const md5Hash = (item: {}): string | undefined => {
     md5sum.update(sortify(item));
     return md5sum.digest('hex');
   } catch (err) {
-    console.warn('Failed to hash item', err);
+    logger.debug('Failed to hash item', err);
     return undefined;
   }
 };
