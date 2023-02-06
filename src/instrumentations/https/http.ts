@@ -69,7 +69,6 @@ export const HttpHooks: InstrumentationIfc<
 > = {
   requestHook(span: Span & { attributes: Record<string, string> }, request: RequestType) {
     if (request instanceof ClientRequest) {
-      logger.debug('@opentelemetry/instrumentation-http on requestHook()');
       safeExecute(() => {
         const requestData: RequestRawData = {
           request: {
@@ -109,7 +108,6 @@ export const HttpHooks: InstrumentationIfc<
     }
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
-    logger.debug('@opentelemetry/instrumentation-http on responseHook()');
     const scrubbedHeaders = CommonUtils.payloadStringify(response.headers);
     if (response.headers) {
       span.setAttribute('http.response.headers', scrubbedHeaders);

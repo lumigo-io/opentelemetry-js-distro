@@ -77,7 +77,7 @@ export class FileSpanExporter implements SpanExporter {
   private _sendSpans(spans: ReadableSpan[], done?: (result: ExportResult) => void): void {
     let json = '';
     for (const span of spans) {
-      json += JSON.stringify(this._exportInfo(span));
+      json += JSON.stringify(this._exportInfo(span), undefined, 0);
       json += '\n';
     }
 

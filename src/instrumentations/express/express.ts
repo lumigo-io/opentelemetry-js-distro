@@ -12,8 +12,8 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
     logger.debug('opentelemetry-instrumentation-express on requestHook()');
     const oldResEnd = res.end;
     const oldResSend = res.send;
-    if (req.query) span.setAttribute('http.request.query', JSON.stringify(req.query));
-    if (req.headers) span.setAttribute('http.request.headers', JSON.stringify(req.headers));
+    if (req.query) span.setAttribute('http.request.query', JSON.stringify(req.query, undefined, 0));
+    if (req.headers) span.setAttribute('http.request.headers', JSON.stringify(req.headers, undefined, 0));
     let response;
     res.send = function (data: any) {
       response = data;
@@ -27,9 +27,9 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
         // eslint-disable-next-line prefer-rest-params
         const origRes = oldResEnd.apply(res, arguments);
         if (res.getHeaders())
-          span.setAttribute('http.response.headers', JSON.stringify(res.getHeaders())); // TODO This is not compliant with the HTTP semantic conventions
-        if (response) span.setAttribute('http.response.body', JSON.stringify(response));
-        if (req.body) span.setAttribute('http.request.body', JSON.stringify(req.body));
+          span.setAttribute('http.response.headers', JSON.stringify(res.getHeaders(), undefined, 0)); // TODO This is not compliant with the HTTP semantic conventions
+        if (response) span.setAttribute('http.response.body', JSON.stringify(response, undefined, 0));
+        if (req.body) span.setAttribute('http.request.body', JSON.stringify(req.body, undefined, 0));
         res.end = oldResEnd;
         return origRes;
       })();
