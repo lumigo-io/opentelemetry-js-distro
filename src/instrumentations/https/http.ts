@@ -6,7 +6,7 @@ import { CommonUtils } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
-import { logger } from '../../wrapper';
+import { logger } from '../../logging';
 import { getAwsServiceData } from '../../spans/awsSpan';
 import { isAwsService, runOneTimeWrapper, safeExecute, getMaxSize } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';

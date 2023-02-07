@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { logger } from '../../wrapper';
+import { logger } from '../../logging';
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 
 export const LUMIGO_DISTRO_VERSION = 'lumigo.distro.version';

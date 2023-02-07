@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import { ExportResult, ExportResultCode, hrTimeToMicroseconds } from '@opentelemetry/core';
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
-import { logger } from '../wrapper';
+import { logger } from '../logging';
 
 /**
  * This is implementation of {@link SpanExporter} that prints spans to a file.

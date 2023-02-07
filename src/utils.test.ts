@@ -1,4 +1,4 @@
-import { extractEnvVars, getMaxSize, logger, safeRequire } from './utils';
+import { extractEnvVars, getMaxSize, safeRequire } from './utils';
 import http from 'http';
 
 describe('utils tests', () => {
@@ -12,15 +12,6 @@ describe('utils tests', () => {
     const result = safeRequire('http');
 
     expect(http).toEqual(result);
-  });
-
-  test('safeRequire -> simple flow', () => {
-    delete process.env.NODE_PATH;
-    jest.spyOn(logger, 'warn');
-    const result = safeRequire('BlaBlaBlaBla');
-
-    expect(result).toEqual(undefined);
-    expect(logger.warn).toBeCalledTimes(0);
   });
 
   test('safeRequire -> not exist', () => {

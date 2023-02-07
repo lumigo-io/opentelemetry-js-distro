@@ -142,12 +142,12 @@ describe('Distro initialization', () => {
         await jest.isolateModulesAsync(async () => {
           process.env.LUMIGO_DEBUG_SPANDUMP = '/dev/stdout';
 
-          const { FileSpanExporter } = require('./exporters');
           jest.mock('./exporters');
 
           const { init } = jest.requireActual('./wrapper');
           await init;
 
+          const { FileSpanExporter } = require('./exporters');
           expect(FileSpanExporter).toHaveBeenCalledWith('/dev/stdout');
         });
       });

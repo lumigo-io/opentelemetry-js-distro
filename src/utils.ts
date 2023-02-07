@@ -2,8 +2,8 @@ import * as crypto from 'crypto';
 import * as http from 'http';
 import * as https from 'https';
 
+import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
-import { logger } from './wrapper';
 
 const DEFAULT_MAX_ENTRY_SIZE = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;

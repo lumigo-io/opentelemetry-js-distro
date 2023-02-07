@@ -1,4 +1,3 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations, InstrumentationOption } from '@opentelemetry/instrumentation';
 import { detectResources, envDetector, processDetector, Resource } from '@opentelemetry/resources';
@@ -23,19 +22,12 @@ import { CommonUtils } from '@lumigo/node-core';
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const DEFAULT_DEPENDENCIES_ENDPOINT =
   'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/dependencies';
-const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
-const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
+export const LUMIGO_DEBUG_ENV_VAR = 'LUMIGO_DEBUG';
+const LUMIGO_SWITCH_OFF_ENV_VAR = 'LUMIGO_SWITCH_OFF';
+
+import { logger } from './logging';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
-
-diag.setLogger(
-  new DiagConsoleLogger(),
-  isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.DEBUG : DiagLogLevel.INFO
-);
-
-export const logger = diag.createComponentLogger({
-  namespace: '@lumigo/opentelemetry',
-});
 
 let isTraceInitialized = false;
 
@@ -54,7 +46,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
   if (!isTraceInitialized) {
     isTraceInitialized = true;
     try {
-      if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
+      if (isEnvVarTrue(LUMIGO_SWITCH_OFF_ENV_VAR)) {
         logger.info(
           'The Lumigo OpenTelemetry Distro is switched off (the "LUMIGO_SWITCH_OFF" environment variable is set): no telemetry will be sent to Lumigo.'
         );
