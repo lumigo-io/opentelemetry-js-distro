@@ -13,17 +13,28 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
-import { extractEnvVars, getMaxSize, isEnvVarTrue } from './utils';
+import { extractEnvVars, getMaxSize } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { LumigoDistroDetector, SafeDetector } from './resources/detectors';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
 import { CommonUtils } from '@lumigo/node-core';
 
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      LUMIGO_DEBUG?: string;
+      LUMIGO_DEBUG_SPANDUMP?: string;
+      LUMIGO_ENDPOINT?: string;
+      LUMIGO_REPORT_DEPENDENCIES?: string;
+      LUMIGO_SWITCH_OFF?: string;
+      LUMIGO_TRACER_TOKEN?: string;
+    }
+  }
+}
+
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const DEFAULT_DEPENDENCIES_ENDPOINT =
   'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/dependencies';
-export const LUMIGO_DEBUG_ENV_VAR = 'LUMIGO_DEBUG';
-const LUMIGO_SWITCH_OFF_ENV_VAR = 'LUMIGO_SWITCH_OFF';
 
 import { logger } from './logging';
 
@@ -46,7 +57,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
   if (!isTraceInitialized) {
     isTraceInitialized = true;
     try {
-      if (isEnvVarTrue(LUMIGO_SWITCH_OFF_ENV_VAR)) {
+      if (process.env.LUMIGO_SWITCH_OFF?.toLowerCase() === 'true') {
         logger.info(
           'The Lumigo OpenTelemetry Distro is switched off (the "LUMIGO_SWITCH_OFF" environment variable is set): no telemetry will be sent to Lumigo.'
         );
@@ -77,8 +88,8 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
       }
 
       const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
-      const lumigoSpanDumpPath = process.env.LUMIGO_DEBUG_SPANDUMP;
-      const lumigoReportDependencies = process.env.LUMIGO_REPORT_DEPENDENCIES || 'true';
+      const lumigoReportDependencies =
+        process.env.LUMIGO_REPORT_DEPENDENCIES?.toLowerCase() !== 'false';
 
       const detectedResource = Resource.default().merge(
         await detectResources({
@@ -106,14 +117,14 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         },
       });
 
-      if (lumigoSpanDumpPath) {
+      if (!!process.env.LUMIGO_DEBUG_SPANDUMP) {
         tracerProvider.addSpanProcessor(
-          new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpPath))
+          new SimpleSpanProcessor(new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP))
         );
       }
 
       let reportDependencies: Promise<void | Object>;
-      if (lumigoToken) {
+      if (!!lumigoToken) {
         const otlpExporter = new OTLPTraceExporter({
           url: lumigoEndpoint,
           headers: {
@@ -134,7 +145,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
          * We do not wait for this promise, we do not want to delay the application.
          * Dependency reporting is done "best effort".
          */
-        if (lumigoReportDependencies.toLowerCase() !== 'true') {
+        if (!lumigoReportDependencies) {
           reportDependencies = Promise.resolve('Dependency reporting is turned off');
         } else if (lumigoEndpoint === DEFAULT_LUMIGO_ENDPOINT) {
           /*
