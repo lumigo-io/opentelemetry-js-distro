@@ -39,6 +39,6 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
       })();
     };
   },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   responseHook(span: Span, response: any): void {},
 };

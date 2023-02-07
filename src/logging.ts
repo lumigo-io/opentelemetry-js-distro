@@ -1,6 +1,7 @@
 import { diag, DiagLogLevel, DiagConsoleLogger } from '@opentelemetry/api';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface ProcessEnv {
       LUMIGO_DEBUG?: string;

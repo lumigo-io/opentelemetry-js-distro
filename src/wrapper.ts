@@ -20,6 +20,7 @@ import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetecto
 import { CommonUtils } from '@lumigo/node-core';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface ProcessEnv {
       LUMIGO_DEBUG?: string;
@@ -117,14 +118,14 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         },
       });
 
-      if (!!process.env.LUMIGO_DEBUG_SPANDUMP) {
+      if (process.env.LUMIGO_DEBUG_SPANDUMP) {
         tracerProvider.addSpanProcessor(
           new SimpleSpanProcessor(new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP))
         );
       }
 
       let reportDependencies: Promise<void | Object>;
-      if (!!lumigoToken) {
+      if (lumigoToken) {
         const otlpExporter = new OTLPTraceExporter({
           url: lumigoEndpoint,
           headers: {
