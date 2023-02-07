@@ -28,7 +28,10 @@ const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
-diag.setLogger(new DiagConsoleLogger(), isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.DEBUG : DiagLogLevel.INFO);
+diag.setLogger(
+  new DiagConsoleLogger(),
+  isEnvVarTrue(LUMIGO_DEBUG) ? DiagLogLevel.DEBUG : DiagLogLevel.INFO
+);
 
 export const logger = diag.createComponentLogger({
   namespace: '@lumigo/opentelemetry',
@@ -170,7 +173,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           ? detectedResource.attributes[LUMIGO_DISTRO_VERSION]
           : 'unknown';
 
-          logger.info(`Lumigo tracer v${distroVersion} started.`);
+      logger.info(`Lumigo tracer v${distroVersion} started.`);
 
       return Promise.resolve({
         tracerProvider,

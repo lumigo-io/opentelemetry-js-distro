@@ -161,7 +161,7 @@ export class Http {
         }
       },
       'failed to extractBodyFromEmitSocketEvent',
-      'warn',
+      'warn'
     )();
   }
 

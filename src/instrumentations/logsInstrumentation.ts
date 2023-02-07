@@ -19,7 +19,6 @@ export default class LogsInstrumentation extends InstrumentationBase<any> {
     | InstrumentationModuleDefinition<any>
     | InstrumentationModuleDefinition<any>[]
     | void {
-
     logger.debug('in console instrumentation');
 
     return [
