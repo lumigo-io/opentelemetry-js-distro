@@ -66,7 +66,6 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
       }
 
       const instrumentationsToInstall = [
-        // new LumigoAwsSdkInstrumentation(),
         new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
         new LumigoExpressInstrumentation(),
         new LumigoMongoDBInstrumentation(),
