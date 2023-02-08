@@ -165,7 +165,7 @@ describe('Distro initialization', () => {
         const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
-        expect(resource.attributes['framework']).toBe('node');
+        // expect(resource.attributes['framework']).toBe('node');
         expect(resource.attributes['service.name']).toBe('service-1');
 
         checkBasicResourceAttributes(resource);

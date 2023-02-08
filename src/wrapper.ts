@@ -65,22 +65,6 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         return;
       }
 
-      const instrumentationsToInstall = [
-        new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
-        new LumigoExpressInstrumentation(),
-        new LumigoMongoDBInstrumentation(),
-      ].filter((i) => i.isApplicable());
-
-      registerInstrumentations({
-        instrumentations: instrumentationsToInstall.map(
-          (i) => i.getInstrumentation() as InstrumentationOption
-        ),
-      });
-
-      const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
-
-      logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
-
       if (!process.env.LUMIGO_TRACER_TOKEN) {
         logger.warn(
           'The Lumigo token is not available (the "LUMIGO_TRACER_TOKEN" environment variable is not set): no telemetry will be sent to Lumigo.'
@@ -103,12 +87,12 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         })
       );
 
-      const framework = instrumentedModules.includes('express') ? 'express' : 'node';
+      // const framework = instrumentedModules.includes('express') ? 'express' : 'node';
 
       const tracerProvider = new NodeTracerProvider({
         resource: detectedResource.merge(
           new Resource({
-            framework,
+            // framework,
             'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20_000),
           })
         ),
@@ -123,6 +107,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         );
       }
 
+      let instrumentedModules = []
       let reportDependencies: Promise<void | Object>;
       if (lumigoToken) {
         const otlpExporter = new OTLPTraceExporter({
@@ -141,6 +126,23 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           })
         );
 
+        const instrumentationsToInstall = [
+          new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
+          new LumigoExpressInstrumentation(),
+          new LumigoMongoDBInstrumentation(),
+        ].filter((i) => i.isApplicable());
+  
+        registerInstrumentations({
+          tracerProvider,
+          instrumentations: instrumentationsToInstall.map(
+            (i) => i.getInstrumentation() as InstrumentationOption
+          ),
+        });
+  
+        instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
+  
+        logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
+  
         /*
          * We do not wait for this promise, we do not want to delay the application.
          * Dependency reporting is done "best effort".
