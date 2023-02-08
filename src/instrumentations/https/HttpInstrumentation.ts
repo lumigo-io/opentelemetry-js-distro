@@ -10,20 +10,17 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
   constructor(...ignoredHostnames: string[]) {
     super();
 
-    this.ignoredHostnames = (ignoredHostnames || [])
-      .concat(
-        [process.env.ECS_CONTAINER_METADATA_URI, process.env.ECS_CONTAINER_METADATA_URI_V4]
-          .filter(Boolean)
-          .map((url) => {
-            try {
-              return new URL(url).hostname;
-            } catch (err) {
-              return;
-            }
-          })
-      )
-      // Unroutable addresses, used by metadata services on all clouds
-      .concat('169.254.169.254');
+    this.ignoredHostnames = (ignoredHostnames || []).concat(
+      [process.env.ECS_CONTAINER_METADATA_URI, process.env.ECS_CONTAINER_METADATA_URI_V4]
+        .filter(Boolean)
+        .map((url) => {
+          try {
+            return new URL(url).hostname;
+          } catch (err) {
+            return;
+          }
+        })
+    );
   }
 
   getInstrumentedModule(): string {
@@ -33,7 +30,9 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
   getInstrumentation = (): HttpInstrumentation =>
     new HttpInstrumentation({
       ignoreOutgoingRequestHook: (request: RequestOptions) =>
-        this.ignoredHostnames.includes(request.hostname),
+        this.ignoredHostnames.includes(request.hostname) ||
+        // Unroutable addresses, used by metadata and credential services on all clouds
+        /169\.254\.\d+\.\d+.*/gm.test(request.hostname),
       requestHook: HttpHooks.requestHook,
       responseHook: HttpHooks.responseHook,
     });
