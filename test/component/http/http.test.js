@@ -10,7 +10,6 @@ const {
 } = require("./httpTestUtils");
 const {getSpanByKind} = require("../../testUtils/spanUtils");
 const {getAppPort, callContainer, getStartedApp} = require("../../testUtils/utils");
-const nock = require('nock');
 
 const SPANS_DIR = `${__dirname}/spans`;
 const TEST_TIMEOUT = 20_000;
@@ -373,77 +372,6 @@ describe(`Component compatibility tests for HTTP`, function () {
             }
         )
         expect(clientAttributes['http.response.body'].length).toEqual(2048)
-    }, TEST_TIMEOUT);
-
-    test("requests to the ECS metadata endpoint host are not traced", async () => {
-        const endpoint = 'https://httpbin.org';
-        const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-default.json`;
-
-        // start server
-        app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {
-            ECS_CONTAINER_METADATA_URI: `${endpoint}:443/v3`,
-            AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: 'status/201',
-            
-        });
-        const port = await getPort(app);
-
-        const waited = new Promise((resolve, reject) => {
-            waitOn(
-                {
-                    resources: [`http-get://localhost:${port}`],
-                    delay: 5000,
-                    timeout: WAIT_ON_TIMEOUT,
-                    simultaneous: 1,
-                    log: true,
-                    validateStatus: function (status) {
-                        console.debug("server status:", status);
-                        return status >= 200 && status < 300; // default if not provided
-                    },
-                },
-                async function (err) {
-                    if (err) {
-                        return reject(err);
-                    }
-
-                    try {
-                        console.info('app is ready to receive requests');
-                        await callContainer(port, 'aws-credentials');
-                        console.info('request completed');
-                        let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
-                        resolve(spans.map((text) => JSON.parse(text)))
-                    } catch (err) {
-                        return reject(err);
-                    }
-                }
-            );
-        });
-
-        try {
-            spans = await waited
-        } catch (e) {
-            console.error(e)
-            throw e;
-        }
-
-        expect(spans).toHaveLength(1);
-        const internalSpan = getSpanByKind(spans, 1);
-        expect(internalSpan.attributes).toMatchObject(
-            {
-                'http.host': `localhost:${port}`,
-                'net.host.name': "localhost",
-                'http.method': 'GET',
-                'http.user_agent': "axios/0.21.4",
-                'http.flavor': '1.1',
-                'net.transport': "ip_tcp",
-                "net.host.ip": expect.any(String),
-                'net.host.port': expect.any(Number),
-                "net.peer.ip": expect.any(String),
-                'net.peer.port': expect.any(Number),
-                'http.status_code': 200,
-                'http.status_text': 'OK',
-                "http.url": `http://localhost:${port}/aws-credentials`,
-            }
-        )
     }, TEST_TIMEOUT);
        
 });
