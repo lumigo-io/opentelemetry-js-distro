@@ -1,9 +1,9 @@
+import { RequestOptions } from 'https';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 
 import { HttpHooks } from './http';
 import { Instrumentor } from '../instrumentor';
-// import { RequestOptions } from 'https';
-// import { logger } from '../../logging';
+import { logger } from '../../logging';
 
 export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrumentation> {
   private readonly ignoredHostnames: string[];
@@ -24,35 +24,21 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
     );
   }
 
-  getInstrumentedModule(): string {
-    return 'http';
-  }
+  getInstrumentedModule = () => 'http';
 
-  getInstrumentation = (): HttpInstrumentation =>
+  getInstrumentation = () =>
     new HttpInstrumentation({
-      ignoreOutgoingUrls: [
-        (url: string) => {
-          try {
-            return this.ignoredHostnames.includes(new URL(url).hostname);
-          } catch (err) {
-            // Invalid hostname means no match
-            return false;
-          }
-        },
-        // Unroutable addresses, used by metadata and credential services services on all clouds
-        /169\.254\.\d+\.\d+.*/gm,
-      ],
-      // ignoreOutgoingRequestHook: (request: RequestOptions) => {
-      //   const requestHostname = request.hostname;
-      //   const isRequestIgnored =
-      //     this.ignoredHostnames.includes(requestHostname) ||
-      //     // Unroutable addresses, used by metadata and credential services on all clouds
-      //     /169\.254\.\d+\.\d+.*/gm.test(requestHostname);
+      ignoreOutgoingRequestHook: (request: RequestOptions) => {
+        const requestHostname = request.hostname;
+        const isRequestIgnored =
+          this.ignoredHostnames.includes(requestHostname) ||
+          // Unroutable addresses, used by metadata and credential services on all clouds
+          /169\.254\.\d+\.\d+.*/gm.test(requestHostname);
 
-      //   logger.debug(`Ignoring request towards '${requestHostname}'? ${isRequestIgnored}`);
+        logger.debug(`Ignoring request towards '${requestHostname}'? ${isRequestIgnored}`);
 
-      //   return isRequestIgnored;
-      // },
+        return isRequestIgnored;
+      },
       requestHook: HttpHooks.requestHook,
       responseHook: HttpHooks.responseHook,
     });

@@ -2,13 +2,9 @@ import fs from "fs";
 
 export function getInstrumentationSpansFromFile(filePath: string) {
     const allFileContents = fs.readFileSync(filePath, 'utf-8');
-    const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
+    const lines = allFileContents.split(/\r?\n/).filter(l => !!l.length);
     const spansWithoutWaitOnCall = lines.slice(1, lines.length)
-    if (
-        spansWithoutWaitOnCall.length === 2 &&
-        spansWithoutWaitOnCall[0].startsWith('{"traceId"') &&
-        spansWithoutWaitOnCall[1].startsWith('{"traceId"')
-    ) {
+    if (spansWithoutWaitOnCall) {
         return spansWithoutWaitOnCall
     }
 }

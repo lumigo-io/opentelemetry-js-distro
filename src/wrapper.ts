@@ -107,7 +107,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         );
       }
 
-      let instrumentedModules = []
+      let instrumentedModules = [];
       let reportDependencies: Promise<void | Object>;
       if (lumigoToken) {
         const otlpExporter = new OTLPTraceExporter({
@@ -131,18 +131,18 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           new LumigoExpressInstrumentation(),
           new LumigoMongoDBInstrumentation(),
         ].filter((i) => i.isApplicable());
-  
+
         registerInstrumentations({
           tracerProvider,
           instrumentations: instrumentationsToInstall.map(
             (i) => i.getInstrumentation() as InstrumentationOption
           ),
         });
-  
+
         instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
-  
+
         logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
-  
+
         /*
          * We do not wait for this promise, we do not want to delay the application.
          * Dependency reporting is done "best effort".
