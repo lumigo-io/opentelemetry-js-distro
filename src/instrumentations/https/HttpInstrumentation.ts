@@ -29,17 +29,17 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
   getInstrumentation = () =>
     new HttpInstrumentation({
       ignoreOutgoingRequestHook: (request: RequestOptions) => {
-        const requestHostname = request.hostname;
+        /*
+         * Some requests, like towards the ECS Credentials endpoints, do not have the
+         * hostname set, but they do have the host
+         */
+        const requestHostname = request.hostname || request.host;
         const isRequestIgnored =
           this.ignoredHostnames.includes(requestHostname) ||
           // Unroutable addresses, used by metadata and credential services on all clouds
           /169\.254\.\d+\.\d+.*/gm.test(requestHostname);
 
-        if (requestHostname) {
-          logger.debug(`Ignoring request towards '${requestHostname}'? ${isRequestIgnored}`);
-        } else {
-          logger.debug(`Ignoring request towards '${JSON.stringify(request)}'? ${isRequestIgnored}`);
-        }
+        logger.debug(`Ignoring request: ${JSON.stringify(request)}`);
 
         return isRequestIgnored;
       },
