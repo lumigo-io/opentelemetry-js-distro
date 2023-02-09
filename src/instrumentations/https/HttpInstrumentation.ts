@@ -35,7 +35,11 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
           // Unroutable addresses, used by metadata and credential services on all clouds
           /169\.254\.\d+\.\d+.*/gm.test(requestHostname);
 
-        logger.debug(`Ignoring request towards '${requestHostname}'? ${isRequestIgnored}`);
+        if (requestHostname) {
+          logger.debug(`Ignoring request towards '${requestHostname}'? ${isRequestIgnored}`);
+        } else {
+          logger.debug(`Ignoring request towards '${JSON.stringify(request)}'? ${isRequestIgnored}`);
+        }
 
         return isRequestIgnored;
       },
