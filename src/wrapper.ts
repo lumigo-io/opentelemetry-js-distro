@@ -15,7 +15,7 @@ import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentat
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { extractEnvVars, getMaxSize } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
-import { LumigoDistroDetector, SafeDetector } from './resources/detectors';
+import { LumigoDistroDetector } from './resources/detectors';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
 import { CommonUtils } from '@lumigo/node-core';
 
@@ -65,34 +65,55 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         return;
       }
 
-      if (!process.env.LUMIGO_TRACER_TOKEN) {
+      const instrumentationsToInstall = [
+        new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
+        new LumigoExpressInstrumentation(),
+        new LumigoMongoDBInstrumentation(),
+      ].filter((i) => i.isApplicable());
+
+      /*
+       * Register instrumentation globally, so that all tracer providers
+       * will receive traces. This may be necessary when there is already
+       * built-in instrumentation in the app.
+       */
+      registerInstrumentations({
+        instrumentations: instrumentationsToInstall.map(
+          (i) => i.getInstrumentation() as InstrumentationOption
+        ),
+      });
+
+      const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
+
+      logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
+
+      const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
+
+      if (!lumigoToken) {
         logger.warn(
           'The Lumigo token is not available (the "LUMIGO_TRACER_TOKEN" environment variable is not set): no telemetry will be sent to Lumigo.'
         );
       }
 
-      const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
       const lumigoReportDependencies =
         process.env.LUMIGO_REPORT_DEPENDENCIES?.toLowerCase() !== 'false';
 
       const detectedResource = Resource.default().merge(
         await detectResources({
-          // Wrap upstream detectors to prevent errors from compromising the startup process
           detectors: [
-            new SafeDetector(envDetector),
-            new SafeDetector(processDetector),
-            new SafeDetector(awsResourceDetectors.awsEcsDetector),
+            envDetector,
+            processDetector,
+            awsResourceDetectors.awsEcsDetector,
             new LumigoDistroDetector(),
           ],
         })
       );
 
-      // const framework = instrumentedModules.includes('express') ? 'express' : 'node';
+      const framework = instrumentedModules.includes('express') ? 'express' : 'node';
 
       const tracerProvider = new NodeTracerProvider({
         resource: detectedResource.merge(
           new Resource({
-            // framework,
+            framework,
             'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20_000),
           })
         ),
@@ -107,7 +128,6 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         );
       }
 
-      let instrumentedModules = [];
       let reportDependencies: Promise<void | Object>;
       if (lumigoToken) {
         const otlpExporter = new OTLPTraceExporter({
@@ -125,23 +145,6 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
             maxExportBatchSize: 100,
           })
         );
-
-        const instrumentationsToInstall = [
-          new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
-          new LumigoExpressInstrumentation(),
-          new LumigoMongoDBInstrumentation(),
-        ].filter((i) => i.isApplicable());
-
-        registerInstrumentations({
-          tracerProvider,
-          instrumentations: instrumentationsToInstall.map(
-            (i) => i.getInstrumentation() as InstrumentationOption
-          ),
-        });
-
-        instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
-
-        logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
 
         /*
          * We do not wait for this promise, we do not want to delay the application.
