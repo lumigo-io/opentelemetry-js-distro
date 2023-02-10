@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { readFile } from 'fs/promises';
 import { logger } from '../../logging';
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
@@ -10,9 +11,8 @@ const CONTAINER_ID_LENGTH = 64;
  * Detector for the Kubernetes Pod UUID, based on https://github.com/open-telemetry/opentelemetry-python-contrib/pull/1489
  */
 export class LumigoKubernetesDetector implements Detector {
-  constructor() {}
 
-  async detect(config?: ResourceDetectionConfig): Promise<Resource> {
+  async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
     try {
       const hostFileContent = await readFile('/etc/hosts', {
         flag: 'r',
