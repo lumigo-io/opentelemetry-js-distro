@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from 'fs';
 
 export function getSpanByName(spans, spanName) {
     return spans.find((span) => span.name === spanName);
@@ -11,7 +11,7 @@ export function getInstrumentationSpansFromFile(filePath) {
         lines.length > 2 &&
         lines[0].startsWith('{"traceId"') &&
         lines[1].startsWith('{"traceId"') &&
-        lines.filter((line) => line.includes('"name":"mongodb') && !line.includes("mongodb.isMaster")).length === 5
+        lines.filter((line) => line.includes('"name":"mongodb') && !line.includes('mongodb.isMaster')).length === 5
     ) {
         return lines
     }
@@ -19,21 +19,21 @@ export function getInstrumentationSpansFromFile(filePath) {
 
 export function getExpectedResourceAttributes() {
     return {
-        "service.name": "mongodb",
-        "telemetry.sdk.language": "nodejs",
-        "telemetry.sdk.name": "opentelemetry",
-        "telemetry.sdk.version":  expect.any(String),
-        "framework": "node",
+        'service.name': 'mongodb',
+        'telemetry.sdk.language': 'nodejs',
+        'telemetry.sdk.name': 'opentelemetry',
+        'telemetry.sdk.version':  expect.any(String),
+        'framework': 'node',
         'process.environ': expect.jsonMatching(
             expect.objectContaining({
-                "OTEL_SERVICE_NAME": "mongodb",
+                'OTEL_SERVICE_NAME': 'mongodb',
             })),
         'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
         'process.pid': expect.any(Number),
-        "process.executable.name": "node",
+        'process.executable.name': 'node',
         'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-        "process.runtime.name": "nodejs",
-        "process.runtime.description": "Node.js",
+        'process.runtime.name': 'nodejs',
+        'process.runtime.description': 'Node.js',
     };
 }
 
@@ -49,9 +49,9 @@ export function getExpectedSpan(nameSpanAttr, resourceAttributes, dbStatement) {
             attributes: resourceAttributes
         },
         attributes: {
-            'db.system': "mongodb",
-            'db.name': "myProject",
-            'db.mongodb.collection': "insertOne",
+            'db.system': 'mongodb',
+            'db.name': 'myProject',
+            'db.mongodb.collection': 'insertOne',
             'db.statement': dbStatement,
         },
         status: {
@@ -61,7 +61,7 @@ export function getExpectedSpan(nameSpanAttr, resourceAttributes, dbStatement) {
     };
 }
 
-export function getExpectedSpanWithParent(nameSpanAttr, resourceAttributes, dbStatement, dbCollection="insertOne") {
+export function getExpectedSpanWithParent(nameSpanAttr, resourceAttributes, dbStatement, dbCollection='insertOne') {
     return {
         traceId: expect.any(String),
         parentId: expect.any(String),
@@ -74,8 +74,8 @@ export function getExpectedSpanWithParent(nameSpanAttr, resourceAttributes, dbSt
             attributes: resourceAttributes
         },
         attributes: {
-            'db.system': "mongodb",
-            'db.name': "myProject",
+            'db.system': 'mongodb',
+            'db.name': 'myProject',
             'db.mongodb.collection': dbCollection,
             'db.statement': dbStatement,
         },
@@ -87,5 +87,5 @@ export function getExpectedSpanWithParent(nameSpanAttr, resourceAttributes, dbSt
 }
 
 export function getFilteredSpans(spans) {
-    return spans.filter(span => span.name.includes("mongodb") && !span.name.includes("mongodb.isMaster"));
+    return spans.filter(span => span.name.includes('mongodb') && !span.name.includes('mongodb.isMaster'));
 }

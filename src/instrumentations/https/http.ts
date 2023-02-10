@@ -6,8 +6,9 @@ import { CommonUtils } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
+import { logger } from '../../logging';
 import { getAwsServiceData } from '../../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, logger, getMaxSize } from '../../utils';
+import { isAwsService, runOneTimeWrapper, safeExecute, getMaxSize } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -37,7 +38,7 @@ const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer)
     };
     shimmerLib.wrap(module, funcName, wrapper);
   } catch (e) {
-    console.warn(`Wrapping of function ${funcName} failed`, options);
+    logger.warn(`Wrapping of function ${funcName} failed`, options);
   }
 };
 
@@ -69,7 +70,6 @@ export const HttpHooks: InstrumentationIfc<
 > = {
   requestHook(span: Span & { attributes: Record<string, string> }, request: RequestType) {
     if (request instanceof ClientRequest) {
-      logger.debug('@opentelemetry/instrumentation-http on requestHook()');
       safeExecute(() => {
         const requestData: RequestRawData = {
           request: {
@@ -109,7 +109,6 @@ export const HttpHooks: InstrumentationIfc<
     }
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
-    logger.debug('@opentelemetry/instrumentation-http on responseHook()');
     const scrubbedHeaders = CommonUtils.payloadStringify(response.headers);
     if (response.headers) {
       span.setAttribute('http.response.headers', scrubbedHeaders);
@@ -133,8 +132,8 @@ export class Http {
           span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
         }
       } catch (e) {
-        console.warn('Failed to parse aws service data', e);
-        console.warn('getHttpSpan args', { requestData: requestRawData });
+        logger.debug('Failed to parse aws service data', e);
+        logger.debug('getHttpSpan args', { requestData: requestRawData });
       }
     };
   }
@@ -162,8 +161,7 @@ export class Http {
         }
       },
       'failed to extractBodyFromEmitSocketEvent',
-      'warn',
-      ''
+      'warn'
     )();
   }
 

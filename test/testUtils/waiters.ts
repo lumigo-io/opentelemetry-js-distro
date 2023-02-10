@@ -49,7 +49,7 @@ export async function waitForSpansInFile(filePath: string, condition: Function) 
     async function waitForSpans() {
         try {
             const result = condition(filePath);
-            assert(result);
+            assert(!!result);
             return result;
         } catch (e) {
             console.error("Failed on waitForSpansInFile", e);

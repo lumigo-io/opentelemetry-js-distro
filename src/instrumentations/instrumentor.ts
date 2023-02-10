@@ -1,10 +1,13 @@
-import { safeRequire } from '../utils';
+import { canRequireModule, safeRequire } from '../utils';
 
 export abstract class Instrumentor<T> {
-  abstract getInstrumentationId(): string;
+  abstract getInstrumentedModule(): string;
+
   abstract getInstrumentation(options?): T;
 
+  isApplicable = () => canRequireModule(this.getInstrumentedModule());
+
   requireIfAvailable(): string {
-    return safeRequire(this.getInstrumentationId());
+    return safeRequire(this.getInstrumentedModule());
   }
 }

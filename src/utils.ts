@@ -2,8 +2,8 @@ import * as crypto from 'crypto';
 import * as http from 'http';
 import * as https from 'https';
 
+import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
-import { diag, DiagLogger } from '@opentelemetry/api';
 
 const DEFAULT_MAX_ENTRY_SIZE = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
@@ -15,14 +15,13 @@ interface HttpHeaders {
 export function safeExecute<T>(
   callback: Function,
   message = 'Error in Lumigo tracer',
-  logLevel = 'warn',
   defaultReturn: T = undefined
 ): Function {
   return function (...args) {
     try {
       return callback.apply(this, args);
     } catch (err) {
-      console[logLevel](message, err);
+      logger.debug(message, err);
       return defaultReturn;
     }
   };
@@ -154,9 +153,6 @@ export const safeGet = (obj, arr, dflt = null) => {
   return current || dflt;
 };
 
-export const isEnvVarTrue = (envVar: string) =>
-  process.env[envVar] && process.env[envVar].toLowerCase() === 'true';
-
 export const isAwsService = (host, responseData = undefined): boolean => {
   if (host && host.includes('amazonaws.com')) {
     return true;
@@ -189,7 +185,7 @@ export const md5Hash = (item: {}): string | undefined => {
     md5sum.update(sortify(item));
     return md5sum.digest('hex');
   } catch (err) {
-    console.warn('Failed to hash item', err);
+    logger.debug('Failed to hash item', err);
     return undefined;
   }
 };
@@ -197,23 +193,41 @@ export const md5Hash = (item: {}): string | undefined => {
 // @ts-ignore
 export const removeDuplicates = (arr) => Array.from(new Set(arr));
 
-export const logger: DiagLogger = diag.createComponentLogger({
-  namespace: '@lumigo/opentelemetry:',
-});
+export const canRequireModule = (libId) => {
+  const customReq =
+    // eslint-disable-next-line no-undef,camelcase
+    // @ts-ignore __non_webpack_require__ not available at compile time
+    typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+
+  try {
+    return !!customReq.resolve(libId);
+  } catch (e) {
+    try {
+      return !!customReq.resolve(libId, {
+        paths: (process.env.NODE_PATH || '').split(':'),
+      });
+    } catch (e) {
+      if (e.code !== 'MODULE_NOT_FOUND') {
+        logger.warn('Unable to resolve module', {
+          error: e,
+          libId: libId,
+        });
+      }
+    }
+  }
+  return false;
+};
 
 export const safeRequire = (libId) => {
+  const customReq =
+    // eslint-disable-next-line no-undef,camelcase
+    // @ts-ignore __non_webpack_require__ not available at compile time
+    typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+
   try {
-    const customReq =
-      // eslint-disable-next-line no-undef,camelcase
-      // @ts-ignore __non_webpack_require__ not available at compile time
-      typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
     return customReq(libId);
   } catch (e) {
     try {
-      const customReq =
-        // eslint-disable-next-line no-undef,camelcase
-        // @ts-ignore __non_webpack_require__ not available at compile time
-        typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
       const path = customReq.resolve(libId, {
         paths: (process.env.NODE_PATH || '').split(':'),
       });

@@ -1,6 +1,5 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { registerInstrumentations, InstrumentationOption } from '@opentelemetry/instrumentation';
 import { detectResources, envDetector, processDetector, Resource } from '@opentelemetry/resources';
 import {
   BasicTracerProvider,
@@ -14,50 +13,37 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
-import { extractEnvVars, getMaxSize, isEnvVarTrue, logger } from './utils';
+import { extractEnvVars, getMaxSize } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
-import { AwsEcsDetector, LumigoDistroDetector } from './resources/detectors';
+import { LumigoDistroDetector } from './resources/detectors';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
 import { CommonUtils } from '@lumigo/node-core';
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface ProcessEnv {
+      LUMIGO_DEBUG?: string;
+      LUMIGO_DEBUG_SPANDUMP?: string;
+      LUMIGO_ENDPOINT?: string;
+      LUMIGO_REPORT_DEPENDENCIES?: string;
+      LUMIGO_SWITCH_OFF?: string;
+      LUMIGO_TRACER_TOKEN?: string;
+    }
+  }
+}
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const DEFAULT_DEPENDENCIES_ENDPOINT =
   'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/dependencies';
-const LUMIGO_DEBUG = 'LUMIGO_DEBUG';
-const LUMIGO_SWITCH_OFF = 'LUMIGO_SWITCH_OFF';
+
+import { logger } from './logging';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
-if (isEnvVarTrue(LUMIGO_DEBUG)) {
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-} else {
-  diag.setLogger(new DiagConsoleLogger());
-}
-
 let isTraceInitialized = false;
-const externalInstrumentations = [];
-const INSTRUMENTED_MODULES = new Set<string>();
 
-const lumigoInstrumentationList = [
-  new LumigoExpressInstrumentation(),
-  new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
-  new LumigoMongoDBInstrumentation(),
-];
-
-const instrumentationList = lumigoInstrumentationList.map((i) => i.getInstrumentation());
-
-registerInstrumentations({
-  instrumentations: [instrumentationList, ...externalInstrumentations],
-});
-
-lumigoInstrumentationList.forEach((instrumentation) => {
-  const required = instrumentation.requireIfAvailable();
-  if (required) {
-    INSTRUMENTED_MODULES.add(instrumentation.getInstrumentationId());
-  }
-});
-
-function reportInitError(err) {
+function reportInitError(err: Error) {
   logger.error(
     'An error occurred while initializing the Lumigo OpenTelemetry Distro: no telemetry will be collected and sent to Lumigo.',
     err
@@ -68,34 +54,48 @@ export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
 }
 
-function getFramework(): string {
-  if (INSTRUMENTED_MODULES.has('express')) {
-    return 'express';
-  } else {
-    return 'node';
-  }
-}
-
 const trace = async (): Promise<LumigoSdkInitialization> => {
   if (!isTraceInitialized) {
     isTraceInitialized = true;
     try {
-      if (isEnvVarTrue(LUMIGO_SWITCH_OFF)) {
+      if (process.env.LUMIGO_SWITCH_OFF?.toLowerCase() === 'true') {
         logger.info(
           'The Lumigo OpenTelemetry Distro is switched off (the "LUMIGO_SWITCH_OFF" environment variable is set): no telemetry will be sent to Lumigo.'
         );
         return;
       }
 
-      if (!process.env.LUMIGO_TRACER_TOKEN) {
+      const instrumentationsToInstall = [
+        new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
+        new LumigoExpressInstrumentation(),
+        new LumigoMongoDBInstrumentation(),
+      ].filter((i) => i.isApplicable());
+
+      /*
+       * Register instrumentation globally, so that all tracer providers
+       * will receive traces. This may be necessary when there is already
+       * built-in instrumentation in the app.
+       */
+      registerInstrumentations({
+        instrumentations: instrumentationsToInstall.map(
+          (i) => i.getInstrumentation() as InstrumentationOption
+        ),
+      });
+
+      const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
+
+      logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
+
+      const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
+
+      if (!lumigoToken) {
         logger.warn(
           'The Lumigo token is not available (the "LUMIGO_TRACER_TOKEN" environment variable is not set): no telemetry will be sent to Lumigo.'
         );
       }
 
-      const lumigoToken = process.env.LUMIGO_TRACER_TOKEN;
-      const lumigoSpanDumpPath = process.env.LUMIGO_DEBUG_SPANDUMP;
-      const lumigoReportDependencies = process.env.LUMIGO_REPORT_DEPENDENCIES || 'true';
+      const lumigoReportDependencies =
+        process.env.LUMIGO_REPORT_DEPENDENCIES?.toLowerCase() !== 'false';
 
       const detectedResource = Resource.default().merge(
         await detectResources({
@@ -103,17 +103,18 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
             envDetector,
             processDetector,
             awsResourceDetectors.awsEcsDetector,
-            new AwsEcsDetector(),
             new LumigoDistroDetector(),
           ],
         })
       );
 
+      const framework = instrumentedModules.includes('express') ? 'express' : 'node';
+
       const tracerProvider = new NodeTracerProvider({
         resource: detectedResource.merge(
           new Resource({
-            framework: getFramework(),
-            'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20000),
+            framework,
+            'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20_000),
           })
         ),
         spanLimits: {
@@ -121,9 +122,9 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         },
       });
 
-      if (lumigoSpanDumpPath) {
+      if (process.env.LUMIGO_DEBUG_SPANDUMP) {
         tracerProvider.addSpanProcessor(
-          new SimpleSpanProcessor(new FileSpanExporter(lumigoSpanDumpPath))
+          new SimpleSpanProcessor(new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP))
         );
       }
 
@@ -149,7 +150,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
          * We do not wait for this promise, we do not want to delay the application.
          * Dependency reporting is done "best effort".
          */
-        if (lumigoReportDependencies.toLowerCase() !== 'true') {
+        if (!lumigoReportDependencies) {
           reportDependencies = Promise.resolve('Dependency reporting is turned off');
         } else if (lumigoEndpoint === DEFAULT_LUMIGO_ENDPOINT) {
           /*
@@ -179,11 +180,13 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         detectedResource && detectedResource.attributes
           ? detectedResource.attributes[LUMIGO_DISTRO_VERSION]
           : 'unknown';
+
       logger.info(`Lumigo tracer v${distroVersion} started.`);
 
       return Promise.resolve({
         tracerProvider,
         reportDependencies,
+        instrumentedModules,
       });
     } catch (err) {
       reportInitError(err);
