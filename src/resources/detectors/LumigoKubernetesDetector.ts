@@ -11,7 +11,6 @@ const CONTAINER_ID_LENGTH = 64;
  * Detector for the Kubernetes Pod UUID, based on https://github.com/open-telemetry/opentelemetry-python-contrib/pull/1489
  */
 export class LumigoKubernetesDetector implements Detector {
-
   async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
     try {
       const hostFileContent = await readFile('/etc/hosts', {
