@@ -15,7 +15,7 @@ import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentat
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { extractEnvVars, getMaxSize } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
-import { LumigoDistroDetector } from './resources/detectors';
+import { LumigoDistroDetector, LumigoKubernetesDetector } from './resources/detectors';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
 import { CommonUtils } from '@lumigo/node-core';
 
@@ -104,6 +104,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
             processDetector,
             awsResourceDetectors.awsEcsDetector,
             new LumigoDistroDetector(),
+            new LumigoKubernetesDetector(),
           ],
         })
       );

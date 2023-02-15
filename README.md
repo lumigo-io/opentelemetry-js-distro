@@ -281,6 +281,10 @@ If the [Task Metadata endpoint v4](https://docs.aws.amazon.com/AmazonECS/latest/
 * `aws.ecs.task.family`
 * `aws.ecs.task.revision`
 
+#### Kubernetes resource attributes
+
+* `k8s.pod.uid` with the Pod identifier, supported for both cgroups v1 and v2
+
 ### Exporters
 
 * If the `LUMIGO_TRACER_TOKEN` environment variable is set: a [`BatchSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/BatchSpanProcessorBase.ts), which uses an [`OTLPTraceExporter`](https://github.com/open-telemetry/opentelemetry-js/blob/main/experimental/packages/exporter-trace-otlp-http/src/platform/node/OTLPTraceExporter.ts) to push tracing data to Lumigo

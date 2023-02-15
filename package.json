@@ -73,6 +73,8 @@
     "jest-json": "^2.0.0",
     "jest-summarizing-reporter": "^1.1.4",
     "log-timestamp": "^0.3.0",
+    "mock-fs": "^5.2.0",
+    "multiline": "^2.0.0",
     "node-notifier": "^10.0.0",
     "npm-install-peers": "^1.2.2",
     "prettier": "^2.2.1",
