@@ -10,6 +10,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+app.post('/test-scrubbing', async (req, res) => {
+  res.send({
+    "Authorization": "SECRET"
+  }, 200);
+});
+
 app.get('/', async (req, res) => {
   res.send("server is ready").status(200);
 });

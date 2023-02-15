@@ -19,7 +19,7 @@ export const expectedResourceAttributes = {
     },
 };
 
-export const expectedServerAttributes = {
+export const expectedBasicServerAttributes = {
     'http.method': 'GET',
     'http.target': '/invoke-requests',
     'http.flavor': '1.1',
@@ -34,6 +34,25 @@ export const expectedServerAttributes = {
     'http.route': '/invoke-requests',
     'express.route.full': '/invoke-requests',
     'express.route.configured': '/invoke-requests',
+    'express.route.params': '{}',
+    'http.status_code': 200,
+};
+
+export const expectedScrubbedServerAttributes = {
+    'http.method': 'GET',
+    'http.target': '/test-scrubbing',
+    'http.flavor': '1.1',
+    'http.host': expect.stringMatching(/localhost:\d+/),
+    'http.scheme': 'http',
+    'net.peer.ip': expect.any(String),
+    'http.request.query': '{}',
+    'http.request.headers': expect.stringMatching(/\{.*\}/),
+    'http.response.headers': expect.stringMatching(/\{.*\}/),
+    'http.response.body': expect.jsonMatching({Authorization: '****'}),
+    'http.request.body': '',
+    'http.route': '/test-scrubbing',
+    'express.route.full': '/test-scrubbing',
+    'express.route.configured': '/test-scrubbing',
     'express.route.params': '{}',
     'http.status_code': 200,
 };
