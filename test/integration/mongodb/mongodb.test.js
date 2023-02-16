@@ -9,7 +9,7 @@ const {
     getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require('./mongodbTestUtils');
-const {callContainer, getStartedApp, getAppPort} = require('../../testUtils/utils');
+const {callContainer, startTestApp, getAppPort} = require('../../testUtils/utils');
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = 'test/integration/mongodb/app';
@@ -64,7 +64,7 @@ describe({
             }
         }, async (exporterFile) => {
             // start server
-            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
 
             port = await new Promise((resolve, reject) => {
                 app.stdout.on('data', (data) => {
@@ -133,7 +133,7 @@ describe({
             }
         }, async (exporterFile) => {
             // //start server
-            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
 
             port = await new Promise((resolve, reject) => {
                 app.stdout.on('data', (data) => {

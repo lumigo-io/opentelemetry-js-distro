@@ -3,7 +3,6 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 
 import { HttpHooks } from './http';
 import { Instrumentor } from '../instrumentor';
-import { logger } from '../../logging';
 
 export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrumentation> {
   private readonly ignoredHostnames: string[];
@@ -38,8 +37,6 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
           this.ignoredHostnames.includes(requestHostname) ||
           // Unroutable addresses, used by metadata and credential services on all clouds
           /169\.254\.\d+\.\d+.*/gm.test(requestHostname);
-
-        logger.debug(`Ignoring request: ${JSON.stringify(request)}`);
 
         return isRequestIgnored;
       },

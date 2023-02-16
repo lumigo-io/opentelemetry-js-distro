@@ -10,13 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../wrapper.tgz",
-    "body-parser": "^1.19.1"
-  },
-  "lumigo": {
-    "supportedDependencies": {
-      "express": {
-        "satisfies": "^4.9.0"
-      }
-    }
+    "body-parser": "^1.19.1",
+    "express": "^4.9.0"
   }
 }
