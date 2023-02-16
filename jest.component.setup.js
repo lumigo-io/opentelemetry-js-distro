@@ -1,5 +1,5 @@
-require("jest-json");
-require("jest-chain");
+require('jest-json');
+require('jest-chain');
 
 const oldEnv = Object.assign({}, process.env);
 
@@ -13,5 +13,5 @@ afterEach(() => {
 
 beforeAll(() => {
   global.console = require('console');
-  require( 'console-stamp' )( global.console )
+  require('console-stamp')(global.console)
 });

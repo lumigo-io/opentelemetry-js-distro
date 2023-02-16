@@ -10,7 +10,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.post('/test-scrubbing', async (req, res) => {
+app.get('/test-scrubbing', async (req, res) => {
   res.send({
     "Authorization": "SECRET"
   }, 200);
@@ -20,13 +20,8 @@ app.get('/', async (req, res) => {
   res.send("server is ready").status(200);
 });
 
-app.get('/invoke-requests', async (req, res) => {
-  const response = await axios.get('https://api.chucknorris.io/jokes/categories', {
-    headers: {
-      header: 'a',
-    },
-  });
-  res.send(response.data).status(200);
+app.get('/basic', async (req, res) => {
+  res.send('Hello world').status(200);
 });
 
 const server = app.listen(0, () => {

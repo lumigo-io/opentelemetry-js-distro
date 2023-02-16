@@ -1,260 +1,197 @@
-const {test, describe} = require("../setup");
-const fs = require("fs");
+const { spawnSync } = require('child_process');
+const { existsSync, mkdirSync } = require('fs');
+require('jest-json');
+const { join } = require('path');
+const kill = require('tree-kill');
 const waitOn = require('wait-on')
-require("jest-json");
 
-const {waitForSpansInFile} = require("../../testUtils/waiters");
-const kill = require("tree-kill");
-const {getInstrumentationSpansFromFile, expectedResourceAttributes, expectedServerAttributes,
-    internalSpanAttributes, expectedClientAttributes
-} = require("./expressTestUtils");
-const {getSpanByKind} = require("../../testUtils/spanUtils");
-const {callContainer, getAppPort, getStartedApp} = require("../../testUtils/utils");
+const { getAppPort, readSpans, startTestApp, versionsToTest } = require('../../testUtils/utils');
 
-const SPANS_DIR = `${__dirname}/spans`;
-const EXEC_SERVER_FOLDER = "test/integration/express/app";
-const TEST_TIMEOUT = 20000;
-const WAIT_ON_TIMEOUT = 10000;
+const SPANS_DIR = join(__dirname, 'spans');
+const EXEC_SERVER_FOLDER = join(__dirname, 'app');
+const TEST_TIMEOUT = 20_000;
+const WAIT_ON_INITIAL_DELAY = 3_000;
+const WAIT_ON_TIMEOUT = 10_000;
 const INTEGRATION_NAME = `express`;
 
+const expectedResourceAttributes = {
+    attributes: {
+        'service.name': 'express',
+        'telemetry.sdk.language': 'nodejs',
+        'telemetry.sdk.name': 'opentelemetry',
+        'telemetry.sdk.version': expect.any(String),
+        framework: 'express',
+        'process.environ': expect.jsonMatching(
+            expect.objectContaining({
+                "OTEL_SERVICE_NAME": "express",
+            })),
+        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
+        'process.pid': expect.any(Number),
+        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
+        'process.runtime.name': 'nodejs',
+        'process.executable.name': 'node',
+    },
+};
 
-describe({
-    name: `Integration compatibility tests for all supported versions of ${INTEGRATION_NAME}`,
-    describeParamConfig: {dependencyPath: `${__dirname}/app/node_modules/${INTEGRATION_NAME}`}
-}, function () {
-    let app = undefined;
-    let spans;
+describe.each(versionsToTest('express', 'express'))(`Integration tests express`, (versionToTest) => {
+
+    let app;
 
     beforeAll(() => {
-        if (!fs.existsSync(SPANS_DIR)) {
-            fs.mkdirSync(SPANS_DIR);
+        const res = spawnSync('npm', ['install'], {
+            cwd: join(__dirname, 'app'),
+        });
+
+        if (res.error) {
+            throw new Error(res.error);
+        }
+
+        if (!existsSync(SPANS_DIR)) {
+            mkdirSync(SPANS_DIR);
         }
     });
 
-    afterEach(async () => {
-        console.info("afterEach, stop child process")
+    beforeEach(() => {
+        console.info(`beforeEach '${versionToTest}': install dependencies`)
+
+        const res = spawnSync('npm', ['install', `express@${versionToTest}`], {
+            cwd: join(__dirname, 'app'),
+        });
+
+        if (res.error) {
+            throw new Error(res.error);
+        }
+    });
+
+    afterEach(() => {
+        console.info(`afterEach '${versionToTest}': stop test app`);
         if (app) {
             kill(app.pid, 'SIGHUP');
         }
+
+        console.info(`afterEach '${versionToTest}': uninstall tested version`);
+
+        const res = spawnSync('npm', ['uninstall', `express@${versionToTest}`], {
+            cwd: join(__dirname, 'app'),
+        });
+
+        if (res.error) {
+            throw new Error(res.error);
+        }
     });
 
-    test(
-        "basic express test",
-        {
-            itParamConfig: {
-                integration: INTEGRATION_NAME,
-                spansFilePath: SPANS_DIR,
-                supportedVersion: null,
-                timeout: TEST_TIMEOUT
-            }
-        }, async (exporterFile) => {
-            // //start server
-            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
+    test('basic', async () => {
+        const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
+        // start server
+        app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
 
-            const port = await new Promise((resolve, reject) => {
-                app.stdout.on('data', (data) => {
-                    getAppPort(data, resolve, reject);
-                });
+        const port = await new Promise((resolve, reject) => {
+            app.stdout.on('data', (data) => {
+                getAppPort(data, resolve, reject);
             });
-            console.info(`port: ${port}`)
+        });
 
-            const waited = new Promise((resolve, reject) => {
-                waitOn(
-                    {
-                        resources: [`http-get://localhost:${port}`],
-                        delay: 5000,
-                        timeout: WAIT_ON_TIMEOUT,
-                        simultaneous: 1,
-                        log: true,
-                        validateStatus: function (status) {
-                            console.debug("server status:", status);
-                            return status >= 200 && status < 300; // default if not provided
-                        },
-                    },
-                    async function (err) {
-                        if (err) {
-                            console.error("inside waitOn", err);
-                            return reject(err)
-                        } else {
-                            console.info('Got a response from server');
-                            await callContainer(port, 'invoke-requests', 'get', {
-                                a: '1',
-                            });
-                            let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
-                            resolve(spans.map((text) => JSON.parse(text)))
-                        }
-                    }
-                );
+        await waitOn({
+            resources: [`http-get://localhost:${port}/basic`],
+            delay: WAIT_ON_INITIAL_DELAY,
+            timeout: WAIT_ON_TIMEOUT,
+            simultaneous: 1,
+            log: true,
+            validateStatus: function (status) {
+                return status >= 200 && status < 300; // default if not provided
+            },
+        });
+
+        const spans = readSpans(exporterFile);
+        expect(spans[0]).toMatchObject({
+            traceId: expect.any(String),
+            parentId: expect.any(String),
+            name: 'GET /basic',
+            id: expect.any(String),
+            kind: 0,
+            timestamp: expect.any(Number),
+            duration: expect.any(Number),
+            resource: expectedResourceAttributes,
+            attributes: {
+                'http.method': 'GET',
+                'http.target': '/basic',
+                'http.flavor': '1.1',
+                'http.host': expect.stringMatching(/localhost:\d+/),
+                'http.scheme': 'http',
+                'net.peer.ip': expect.any(String),
+                'http.request.query': '{}',
+                'http.request.headers': expect.stringMatching(/\{.*\}/),
+                'http.response.headers': expect.stringMatching(/\{.*\}/),
+                'http.response.body': '"Hello world"',
+                'http.request.body': '{}',
+                'http.route': '/basic',
+                'express.route.full': '/basic',
+                'express.route.configured': '/basic',
+                'express.route.params': '{}',
+                'http.status_code': 200,
+            },
+            status: {
+                code: 1,
+            },
+            events: [],
+        });
+    }, TEST_TIMEOUT);
+
+    test('secret masking requests', async () => {
+        const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
+        // start server
+        app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
+
+        const port = await new Promise((resolve, reject) => {
+            app.stdout.on('data', (data) => {
+                getAppPort(data, resolve, reject);
             });
-            try {
-                spans = await waited
-            } catch (e) {
-                console.error(e)
-                throw e;
-            }
+        });
 
-            expect(spans).toHaveLength(3);
-            const serverSpan = getSpanByKind(spans,0);
-            const internalSpan = getSpanByKind(spans,1);
-            const clientSpan = getSpanByKind(spans,2);
-            expect(
-                serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
-            ).toBeTruthy();
+        await waitOn({
+            resources: [`http-get://localhost:${port}/test-scrubbing`],
+            delay: WAIT_ON_INITIAL_DELAY,
+            timeout: WAIT_ON_TIMEOUT,
+            simultaneous: 1,
+            log: true,
+            validateStatus: function (status) {
+                return status >= 200 && status < 300; // default if not provided
+            },
+        });
 
-            expect(serverSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                name: 'GET /invoke-requests',
-                id: expect.any(String),
-                kind: 0,
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                resource: expectedResourceAttributes,
-                attributes: expectedServerAttributes,
-                status: {
-                    code: 1,
-                },
-                events: [],
-            });
+        const spans = readSpans(exporterFile);
+        expect(spans[0]).toMatchObject({
+            traceId: expect.any(String),
+            parentId: expect.any(String),
+            name: 'GET /test-scrubbing',
+            id: expect.any(String),
+            kind: 0,
+            timestamp: expect.any(Number),
+            duration: expect.any(Number),
+            resource: expectedResourceAttributes,
+            attributes: {
+                'http.method': 'GET',
+                'http.target': '/test-scrubbing',
+                'http.flavor': '1.1',
+                'http.host': expect.stringMatching(/localhost:\d+/),
+                'http.scheme': 'http',
+                'net.peer.ip': expect.any(String),
+                'http.request.query': '{}',
+                'http.request.headers': expect.stringMatching(/\{.*\}/),
+                'http.response.headers': expect.stringMatching(/\{.*\}/),
+                'http.response.body': expect.jsonMatching({ Authorization: '****' }),
+                'http.request.body': '{}',
+                'http.route': '/test-scrubbing',
+                'express.route.full': '/test-scrubbing',
+                'express.route.configured': '/test-scrubbing',
+                'express.route.params': '{}',
+                'http.status_code': 200,
+            },
+            status: {
+                code: 1,
+            },
+            events: [],
+        });
+    }, TEST_TIMEOUT);
 
-            expect(internalSpan).toMatchObject({
-                traceId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'HTTP GET',
-                kind: 1,
-                attributes: internalSpanAttributes,
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-
-            expect(clientSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'HTTPS GET',
-                kind: 2,
-                attributes: expectedClientAttributes,
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-        }
-    );
-
-    test(
-        "secret masking requests and responses",
-        {
-            itParamConfig: {
-                integration: INTEGRATION_NAME,
-                spansFilePath: SPANS_DIR,
-                supportedVersion: null,
-                timeout: TEST_TIMEOUT
-            }
-        }, async (exporterFile) => {
-            // //start server
-            app = getStartedApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "4096"});
-
-            const port = await new Promise((resolve, reject) => {
-                app.stdout.on('data', (data) => {
-                    getAppPort(data, resolve, reject);
-                });
-            });
-            console.info(`port: ${port}`)
-
-            const waited = new Promise((resolve, reject) => {
-                waitOn(
-                    {
-                        resources: [`http-get://localhost:${port}/test-scrubbing`],
-                        delay: 5000,
-                        timeout: WAIT_ON_TIMEOUT,
-                        simultaneous: 1,
-                        log: true,
-                        validateStatus: function (status) {
-                            console.debug("server status:", status);
-                            return status >= 200 && status < 300; // default if not provided
-                        },
-                    },
-                    async function (err) {
-                        if (err) {
-                            console.error("inside waitOn", err);
-                            return reject(err)
-                        } else {
-                            console.info('Got a response from server');
-                            await callContainer(port, 'invoke-requests', 'get', {
-                                a: '1',
-                            });
-                            let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
-                            resolve(spans.map((text) => JSON.parse(text)))
-                        }
-                    }
-                );
-            });
-            try {
-                spans = await waited
-            } catch (e) {
-                console.error(e)
-                throw e;
-            }
-
-            expect(spans).toHaveLength(3);
-            const serverSpan = getSpanByKind(spans,0);
-            const internalSpan = getSpanByKind(spans,1);
-            const clientSpan = getSpanByKind(spans,2);
-            expect(
-                serverSpan.traceId === internalSpan.traceId && serverSpan.traceId === clientSpan.traceId
-            ).toBeTruthy();
-
-            expect(serverSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                name: 'GET /test-scrubbing',
-                id: expect.any(String),
-                kind: 0,
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                resource: expectedResourceAttributes,
-                attributes: expectedScrubbedServerAttributes,
-                status: {
-                    code: 1,
-                },
-                events: [],
-            });
-
-            expect(internalSpan).toMatchObject({
-                traceId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'HTTP GET',
-                kind: 1,
-                attributes: internalSpanAttributes,
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-
-            expect(clientSpan).toMatchObject({
-                traceId: expect.any(String),
-                parentId: expect.any(String),
-                id: expect.any(String),
-                timestamp: expect.any(Number),
-                duration: expect.any(Number),
-                name: 'HTTPS GET',
-                kind: 2,
-                attributes: expectedClientAttributes,
-                status: {
-                    code: 0,
-                },
-                events: [],
-            });
-        }
-    );
 });

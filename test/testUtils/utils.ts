@@ -1,6 +1,8 @@
-import axios from "axios";
-import {spawn} from "child_process";
-import kill from "tree-kill";
+import { readFileSync } from 'fs';
+import { dirname } from 'path';
+import axios from 'axios';
+import { spawn } from 'child_process';
+import kill from 'tree-kill';
 
 export function getAppPort(data: Buffer, resolve, reject) {
     const dataStr = data.toString();
@@ -24,12 +26,17 @@ export const callContainer = async (port: number, path: string, method = 'get', 
     expect(httpResponse.status).toBeLessThan(300);
 };
 
-export function getStartedApp(serverFolder: string, serviceName: string, fileExporterName: string, env_vars = {}) {
-    let app = spawn(`cd ${serverFolder} && npm`, ["run", `start:${serviceName}:injected`], {
+export function readSpans(filePath) {
+    return readFileSync(filePath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
+}
+
+export function startTestApp(cwd: string, serviceName: string, fileExporterName: string, env_vars = {}) {
+    let app = spawn('npm', ['run', `start:${serviceName}:injected`], {
+        cwd,
         env: {
             ...process.env, ...{
-                LUMIGO_DEBUG_SPANDUMP: fileExporterName,
                 OTEL_SERVICE_NAME: serviceName,
+                LUMIGO_DEBUG_SPANDUMP: fileExporterName,
                 LUMIGO_DEBUG: true,
                 ...env_vars
             }
@@ -48,8 +55,8 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
         app.on('exit', function (code, signal) {
             const pid = `${this.pid ? this.pid : undefined}`;
             console.info(`app with pid: ${pid} exited with code: ${code} and signal: ${signal}`);
-            //we kill the app with "SIGHUP" in the afterEach, we want to throw error only when it's real app issue
-            if (signal && signal !== "SIGHUP"){
+            //we kill the app with 'SIGHUP' in the afterEach, we want to throw error only when it's real app issue
+            if (signal && signal !== 'SIGHUP') {
                 throw new Error(`app with pid: ${pid} exit unexpectedly!`);
             }
         });
@@ -68,4 +75,12 @@ export function getStartedApp(serverFolder: string, serviceName: string, fileExp
     }
 
     return app;
+}
+
+export function versionsToTest(instrumentationName, packageName) {
+    return readFileSync(`${dirname(dirname(__dirname))}/src/instrumentations/${instrumentationName}/tested_versions/${packageName}`)
+        .toString()
+        .split('\n')
+        .filter(Boolean)
+        .filter(version => !version.startsWith('!'));
 }

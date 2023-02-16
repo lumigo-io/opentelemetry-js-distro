@@ -9,7 +9,7 @@ const {
     internalSpanAttributes, expectedClientAttributes
 } = require("./httpTestUtils");
 const {getSpanByKind} = require("../../testUtils/spanUtils");
-const {getAppPort, callContainer, getStartedApp} = require("../../testUtils/utils");
+const {getAppPort, callContainer, startTestApp} = require("../../testUtils/utils");
 
 const SPANS_DIR = `${__dirname}/spans`;
 const TEST_TIMEOUT = 20_000;
@@ -50,7 +50,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-basic.json`;
 
         // start server
-        app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {LUMIGO_ENDPOINT: "https://walle-edge-app-us-west-2.walle.golumigo.com",
+        app = startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {LUMIGO_ENDPOINT: "https://walle-edge-app-us-west-2.walle.golumigo.com",
             LUMIGO_TRACER_TOKEN: 't_123321'});
         const port = await getPort(app);
 
@@ -125,7 +125,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-span-attr.json`;
 
         // start server
-        app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "1"});
+        app = startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: "1"});
         const port = await getPort(app);
 
         const waited = new Promise((resolve, reject) => {
@@ -209,7 +209,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-otel-attr.json`;
 
         // start server
-        app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: "3"});
+        app = startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName, {OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: "3"});
         const port = await getPort(app);
 
         const waited = new Promise((resolve, reject) => {
@@ -292,7 +292,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-default.json`;
 
         // start server
-        app = getStartedApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName);
+        app = startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName);
         const port = await getPort(app);
 
         const waited = new Promise((resolve, reject) => {
