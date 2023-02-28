@@ -67,6 +67,25 @@ const requestListener = async function (req, res) {
                 res.end(JSON.stringify(err));
             }
             break
+        case '/amazon-sigv4':
+            try {
+                // We expect this to throw due to the timeout + impossibility to connect
+                await axios.get(`https://httpbin.org/status/201`, {
+                    headers: {
+                        'x-amz-content-sha256': 'abcdefghi',
+                    },
+                    timeout: 5_000, // Milliseconds
+                });
+                res.setHeader('Content-Type', 'application/json');
+                res.writeHead(200);
+                res.end();
+            } catch (err) {
+                res.setHeader('Content-Type', 'application/json');
+                res.writeHead(500);
+                res.end(JSON.stringify(err));
+            }
+            break
+
         default:
             res.writeHead(404);
             res.end(JSON.stringify({error: 'Resource not found'}));

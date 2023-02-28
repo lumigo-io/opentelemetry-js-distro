@@ -16,6 +16,7 @@ import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInst
 import { extractEnvVars, getMaxSize } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { LumigoDistroDetector, LumigoKubernetesDetector } from './resources/detectors';
+import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import { LUMIGO_DISTRO_VERSION } from './resources/detectors/LumigoDistroDetector';
 import { CommonUtils } from '@lumigo/node-core';
 
@@ -122,6 +123,10 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
           attributeValueLengthLimit: getMaxSize(),
         },
       });
+
+      tracerProvider.register({
+        propagator: new LumigoW3CTraceContextPropagator(),
+      })
 
       if (process.env.LUMIGO_DEBUG_SPANDUMP) {
         tracerProvider.addSpanProcessor(
