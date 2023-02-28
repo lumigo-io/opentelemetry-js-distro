@@ -126,7 +126,7 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
 
       tracerProvider.register({
         propagator: new LumigoW3CTraceContextPropagator(),
-      })
+      });
 
       if (process.env.LUMIGO_DEBUG_SPANDUMP) {
         tracerProvider.addSpanProcessor(
