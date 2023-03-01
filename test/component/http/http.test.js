@@ -373,5 +373,88 @@ describe(`Component compatibility tests for HTTP`, function () {
         )
         expect(clientAttributes['http.response.body'].length).toEqual(2048)
     }, TEST_TIMEOUT);
-       
+
+    test("http test - no trace context set if Amazon Sigv4 header is present", async () => {
+        const fileExporterName = `${SPANS_DIR}/spans-${COMPONENT_NAME}-default.json`;
+
+        // start server
+        app = startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, fileExporterName);
+        const port = await getPort(app);
+
+        const waited = new Promise((resolve, reject) => {
+            waitOn(
+                {
+                    resources: [`http-get://localhost:${port}`],
+                    delay: 5000,
+                    timeout: WAIT_ON_TIMEOUT,
+                    simultaneous: 1,
+                    log: true,
+                    validateStatus: function (status) {
+                        console.debug("server status:", status);
+                        return status >= 200 && status < 300; // default if not provided
+                    },
+                },
+                async function (err) {
+                    if (err) {
+                        console.error("inside waitOn", err);
+                        return reject(err)
+                    } else {
+                        console.info('Got a response from server');
+                        await callContainer(port, 'amazon-sigv4', 'get');
+                        let spans = await waitForSpansInFile(fileExporterName, getInstrumentationSpansFromFile);
+                        resolve(spans.map((text) => JSON.parse(text)))
+                    }
+                }
+            );
+        });
+        try {
+            spans = await waited
+        } catch (e) {
+            console.error(e)
+            throw e;
+        }
+
+        expect(spans).toHaveLength(2);
+        const internalSpan = getSpanByKind(spans, 1);
+        const clientSpan = getSpanByKind(spans, 2);
+        expect(internalSpan.attributes).toMatchObject(
+            {
+                'http.host': `localhost:${port}`,
+                'net.host.name': "localhost",
+                'http.method': 'GET',
+                'http.user_agent': "axios/0.21.4",
+                'http.flavor': '1.1',
+                'net.transport': "ip_tcp",
+                "net.host.ip": expect.any(String),
+                'net.host.port': expect.any(Number),
+                "net.peer.ip": expect.any(String),
+                'net.peer.port': expect.any(Number),
+                'http.status_code': 200,
+                'http.status_text': 'OK',
+                "http.url": `http://localhost:${port}/amazon-sigv4`,
+            }
+        )
+        const clientAttributes = clientSpan.attributes;
+        expect(clientAttributes).toMatchObject(
+            {
+                'http.url': "https://httpbin.org/status/201",
+                'http.method': 'GET',
+                'http.target': "/status/201",
+                'net.peer.name': "httpbin.org",
+                'http.request.body': '""',
+                'net.peer.ip': expect.stringMatching(
+                    /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$))\b/
+                ),
+                'net.peer.port': 443,
+                'http.host': "httpbin.org:443",
+                'http.status_code': 201,
+                'http.status_text': 'CREATED',
+                'http.flavor': '1.1',
+                'http.request.headers': expect.not.stringMatching(/{.*traceparent.*}/),
+                'http.response.headers': expect.stringMatching(/{.*}/),
+                'http.response.body': expect.any(String),
+            }
+        )
+    }, TEST_TIMEOUT);
+
 });
