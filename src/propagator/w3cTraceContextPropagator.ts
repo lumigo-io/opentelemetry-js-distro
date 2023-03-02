@@ -14,9 +14,12 @@ const contextKeysSkipInject = [
 export class LumigoW3CTraceContextPropagator extends W3CTraceContextPropagator {
   override inject(context: Context, carrier: unknown, setter: TextMapSetter): void {
     if (typeof carrier === 'object') {
-      diag.error(`Carrier keys: ${Object.keys(carrier).map(key => key.toLowerCase())}`)
       for (const key of contextKeysSkipInject) {
-        if (Object.keys(carrier).map(key => key.toLowerCase()).includes(key)) {
+        if (
+          Object.keys(carrier)
+            .map((key) => key.toLowerCase())
+            .includes(key)
+        ) {
           diag.debug(`Skipping injection of trace context due to key '${key}' in carrier`);
           return;
         }
