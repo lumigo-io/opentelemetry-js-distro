@@ -72,7 +72,7 @@ const requestListener = async function (req, res) {
                 // We expect this to throw due to the timeout + impossibility to connect
                 await axios.get(`https://httpbin.org/status/201`, {
                     headers: {
-                        'x-amz-content-sha256': 'abcdefghi',
+                        'x-aMz-cOntEnt-sHa256': 'abcdefghi', // Creative upper-casing, but only marginally less insane than Amazon's :-)
                     },
                     timeout: 5_000, // Milliseconds
                 });
