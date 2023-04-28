@@ -36,6 +36,7 @@ declare global {
 
 export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
+  readonly instrumentedModules: string[],
 }
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
@@ -124,10 +125,6 @@ const initDistro = async (): Promise<LumigoSdkInitialization> => {
         },
       });
 
-      tracerProvider.register({
-        propagator: new LumigoW3CTraceContextPropagator(),
-      });
-
       if (process.env.LUMIGO_DEBUG_SPANDUMP) {
         tracerProvider.addSpanProcessor(
           new SimpleSpanProcessor(new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP))
@@ -180,12 +177,11 @@ const initDistro = async (): Promise<LumigoSdkInitialization> => {
         reportDependencies = Promise.resolve('No Lumigo token available');
       }
 
-      tracerProvider.register();
+      tracerProvider.register({
+        propagator: new LumigoW3CTraceContextPropagator(),
+      });
 
-      const distroVersion =
-        detectedResource && detectedResource.attributes
-          ? detectedResource.attributes[LUMIGO_DISTRO_VERSION]
-          : 'unknown';
+      const distroVersion = detectedResource?.attributes?.[LUMIGO_DISTRO_VERSION] || 'unknown';
 
       logger.info(`Lumigo tracer v${distroVersion} started.`);
 

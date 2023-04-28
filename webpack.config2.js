@@ -45,7 +45,7 @@ module.exports = {
 
   output: {
     globalObject: 'this',
-    library: 'lumigoNodeWrapper',
+    library: '@lumigo/opentelemetry',
     filename: 'distro.js',
     libraryTarget: 'umd',
     umdNamedDefine: true,
