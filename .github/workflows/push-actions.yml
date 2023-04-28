@@ -63,9 +63,9 @@ jobs:
           name: distro-package
       - run: npm i ./distro.tgz
       - run: |
-          output=$(node -e "require('@lumigo/opentelemetry')")
+          output=$(node -e "require('@lumigo/opentelemetry')" 2>&1)
 
-          if [ "${output}" != "@lumigo/opentelemetry: Node.js version '$(node --version)' is not supported*" ]; then
+          if [ "${output}" != "@lumigo/opentelemetry: Node.js version '$(node --version)' is not supported"* ]; then
             echo "Unexpected output: ${output}"
             exit 1
           fi
