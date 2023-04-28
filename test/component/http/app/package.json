@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@lumigo/opentelemetry": "file:../../../../wrapper.tgz"
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz"
   }
 }
