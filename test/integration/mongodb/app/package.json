@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@lumigo/opentelemetry": "file:../../../../wrapper.tgz",
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
     "bson": "4.7.2",
     "testcontainers": "8.9.0"
   },
