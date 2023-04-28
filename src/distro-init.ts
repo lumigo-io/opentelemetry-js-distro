@@ -34,6 +34,10 @@ declare global {
   }
 }
 
+export interface LumigoSdkInitialization {
+  readonly tracerProvider: BasicTracerProvider;
+}
+
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
 const DEFAULT_DEPENDENCIES_ENDPOINT =
   'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/dependencies';
@@ -51,11 +55,7 @@ function reportInitError(err: Error) {
   );
 }
 
-export interface LumigoSdkInitialization {
-  readonly tracerProvider: BasicTracerProvider;
-}
-
-const trace = async (): Promise<LumigoSdkInitialization> => {
+const initDistro = async (): Promise<LumigoSdkInitialization> => {
   if (!isTraceInitialized) {
     isTraceInitialized = true;
     try {
@@ -205,4 +205,4 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
   }
 };
 
-export const init = trace();
+export const init = initDistro();

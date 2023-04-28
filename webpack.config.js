@@ -35,7 +35,7 @@ module.exports = {
   output: {
     globalObject: 'this',
     library: 'lumigoNodeWrapper',
-    filename: 'wrapper.js',
+    filename: 'distro.js',
     libraryTarget: 'umd',
     umdNamedDefine: true,
     path: path.resolve(__dirname, 'dist'),
