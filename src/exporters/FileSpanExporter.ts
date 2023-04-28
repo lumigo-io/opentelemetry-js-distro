@@ -16,7 +16,12 @@
 
 import { FileHandle, lstat, open, realpath } from 'fs/promises';
 
-import { BindOnceFuture, ExportResult, ExportResultCode, hrTimeToMicroseconds } from '@opentelemetry/core';
+import {
+  BindOnceFuture,
+  ExportResult,
+  ExportResultCode,
+  hrTimeToMicroseconds,
+} from '@opentelemetry/core';
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
 import { logger } from '../logging';
 
@@ -53,28 +58,30 @@ export class FileSpanExporter implements SpanExporter {
   export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): void {
     if (!spans || !spans.length) {
       return resultCallback({
-          code: ExportResultCode.SUCCESS,
+        code: ExportResultCode.SUCCESS,
       });
     }
 
-    this.getFileHandleOrOpen().then(async (fileHandle) => {
-      const json = spans
-        .map(span => JSON.stringify(this._exportInfo(span), undefined, 0))
-        .join('\n') + '\n';
+    this.getFileHandleOrOpen()
+      .then(async (fileHandle) => {
+        const json =
+          spans.map((span) => JSON.stringify(this._exportInfo(span), undefined, 0)).join('\n') +
+          '\n';
 
-      fileHandle.appendFile(json).then(() => (
-        resultCallback({
-          code: ExportResultCode.SUCCESS,
-        })
-      ));
-    }).catch(err => {
-      logger.error(`An error occured while exporting the spandump to file '${this.file}'`, err);
+        fileHandle.appendFile(json).then(() =>
+          resultCallback({
+            code: ExportResultCode.SUCCESS,
+          })
+        );
+      })
+      .catch((err) => {
+        logger.error(`An error occured while exporting the spandump to file '${this.file}'`, err);
 
-      return resultCallback({
-        code: ExportResultCode.FAILED,
-        error: err,
+        return resultCallback({
+          code: ExportResultCode.FAILED,
+          error: err,
+        });
       });
-    });
   }
 
   /**
@@ -118,10 +125,10 @@ export class FileSpanExporter implements SpanExporter {
     return await this._flushAll().finally(async () => {
       if (this._fd) {
         /*
-        * Do not close block and character devices like `/dev/stdout` or `/dev/stderr`.
-        * We need to resolve symbolic links until we get to the actual file, e.g.,
-        * `/dev/stdout` -> `/proc/self/fd/1` -> `/dev/pts/0`.
-        */
+         * Do not close block and character devices like `/dev/stdout` or `/dev/stderr`.
+         * We need to resolve symbolic links until we get to the actual file, e.g.,
+         * `/dev/stdout` -> `/proc/self/fd/1` -> `/dev/pts/0`.
+         */
         try {
           const realPath = await realpath(this.file);
           const stats = await lstat(realPath);
@@ -130,16 +137,18 @@ export class FileSpanExporter implements SpanExporter {
             await this._fd.close();
           }
         } catch (err) {
-          logger.error(`An error occured while shutting down the spandump exporter to file '${this.file}'`, err);
+          logger.error(
+            `An error occured while shutting down the spandump exporter to file '${this.file}'`,
+            err
+          );
         }
       }
     });
   }
 
   private _flushAll = async (): Promise<void> => {
-    return await this._fd?.sync().catch(err => {
+    return await this._fd?.sync().catch((err) => {
       logger.error(`An error occured while flushing the spandump to file '${this.file}'`, err);
     });
-  }
-
+  };
 }

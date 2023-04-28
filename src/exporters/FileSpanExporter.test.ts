@@ -1,4 +1,8 @@
-import { BasicTracerProvider, ReadableSpan, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import {
+  BasicTracerProvider,
+  ReadableSpan,
+  SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import { Span, SpanKind, SpanStatusCode, TraceFlags } from '@opentelemetry/api';
 import mock from 'mock-fs';
 
@@ -124,7 +128,9 @@ describe('FileSpanExporter tests', () => {
     await exporterUnderTest.shutdown();
 
     expect(spyShutdown).toHaveBeenCalledTimes(1);
-    expect(spyLogger.mock.calls[0][0]).toMatch(/An error occured while exporting the spandump to file.*/);
+    expect(spyLogger.mock.calls[0][0]).toMatch(
+      /An error occured while exporting the spandump to file.*/
+    );
   });
 });
 
@@ -149,5 +155,5 @@ const testSpan: ReadableSpan = {
   resource: Resource.EMPTY,
   instrumentationLibrary: {
     name: 'testScope',
-  }
+  },
 };
