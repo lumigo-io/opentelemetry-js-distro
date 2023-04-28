@@ -12,7 +12,7 @@
  */
 import { minMajor, maxMajor } from './supportedVersions.json';
 
-const trace = (): Promise<any> => {
+const trace = async (): Promise<any> => {
     const version = process.version;
     try {
         const nodeJsMajorVersion = parseInt(version.match(/v(\d+)\..*/)[1]);
@@ -36,8 +36,9 @@ const trace = (): Promise<any> => {
         return Promise.resolve();
     }
 
-    const { init } = require('./distro-init');
-    return init();
+    const distro = await import('./distro-init');
+    const { init } = distro;
+    return await init;
 };
 
 export const init = trace();
