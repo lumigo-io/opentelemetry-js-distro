@@ -10,7 +10,7 @@
  * with `undefined` as value; the promise is resolves, instead of rejected, to avoid UnhandledPromiseRejectionWarning
  * or errors affecting processes using unsupported Node.js versions. 
  */
-const { minMajor, maxMajor } = require('./supportedVersions.json');
+import { minMajor, maxMajor } from './supportedVersions.json';
 
 const trace = (): Promise<any> => {
     const version = process.version;
