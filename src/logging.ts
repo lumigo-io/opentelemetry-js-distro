@@ -15,5 +15,8 @@ export const logger = diag.createComponentLogger({
 
 diag.setLogger(
   new DiagConsoleLogger(),
-  process.env.LUMIGO_DEBUG?.toLowerCase() === 'true' ? DiagLogLevel.DEBUG : DiagLogLevel.INFO
+  {
+    logLevel: process.env.LUMIGO_DEBUG?.toLowerCase() === 'true' ? DiagLogLevel.DEBUG : DiagLogLevel.INFO,
+    suppressOverrideMessage: true,  // This removes noise from tests
+  },
 );
