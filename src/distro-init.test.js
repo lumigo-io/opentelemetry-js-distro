@@ -26,6 +26,16 @@ describe('Distro initialization', () => {
 
   afterEach(() => {
     process.env = {};
+
+    // Unregister Otel globals
+    jest.isolateModules(() => {
+      const { context, diag, propagation, trace } = require('@opentelemetry/api');
+      context.disable();
+      propagation.disable();
+      trace.disable();
+      diag.disable();
+    });
+
     jest.resetAllMocks();
     jest.resetModules();
   });
@@ -388,6 +398,19 @@ describe('Distro initialization', () => {
       });
     });
   });
+
+  it('does not invoke console.error', async () => {
+    console.error = jest.fn();
+
+    await jest.isolateModulesAsync(async () => {
+      const { init } = jest.requireActual('./distro-init');
+
+      await init;
+
+      expect(console.error).not.toHaveBeenCalled();
+    });
+  });
+
 });
 
 function checkBasicResourceAttributes(resource) {

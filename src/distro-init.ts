@@ -99,15 +99,24 @@ const initDistro = async (): Promise<LumigoSdkInitialization> => {
       const lumigoReportDependencies =
         process.env.LUMIGO_REPORT_DEPENDENCIES?.toLowerCase() !== 'false';
 
+      const detectors = [
+        envDetector,
+        processDetector,
+        new LumigoDistroDetector(),
+        new LumigoKubernetesDetector(),
+      ];
+
+      if (process.env.ECS_CONTAINER_METADATA_URI || process.env.ECS_CONTAINER_METADATA_URI_V4) {
+        /*
+         * The ECS detector does not have a component logger we can suppress, to we need to
+         * check whether we should try it at all.
+         */
+        detectors.push(awsResourceDetectors.awsEcsDetector);
+      }
+
       const detectedResource = Resource.default().merge(
         await detectResources({
-          detectors: [
-            envDetector,
-            processDetector,
-            awsResourceDetectors.awsEcsDetector,
-            new LumigoDistroDetector(),
-            new LumigoKubernetesDetector(),
-          ],
+          detectors,
         })
       );
 
