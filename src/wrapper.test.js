@@ -390,6 +390,18 @@ describe('Distro initialization', () => {
       });
     });
   });
+
+  it('does not invoke console.error', async () => {
+    console.error = jest.fn();
+
+    await jest.isolateModulesAsync(async () => {
+      const { init } = jest.requireActual('./wrapper');
+
+      await init;
+
+      expect(console.error).not.toHaveBeenCalled();
+    });
+  });
 });
 
 function checkBasicResourceAttributes(resource) {

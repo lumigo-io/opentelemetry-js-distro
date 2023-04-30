@@ -124,10 +124,6 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         },
       });
 
-      tracerProvider.register({
-        propagator: new LumigoW3CTraceContextPropagator(),
-      });
-
       if (process.env.LUMIGO_DEBUG_SPANDUMP) {
         tracerProvider.addSpanProcessor(
           new SimpleSpanProcessor(new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP))
@@ -180,7 +176,9 @@ const trace = async (): Promise<LumigoSdkInitialization> => {
         reportDependencies = Promise.resolve('No Lumigo token available');
       }
 
-      tracerProvider.register();
+      tracerProvider.register({
+        propagator: new LumigoW3CTraceContextPropagator(),
+      });
 
       const distroVersion =
         detectedResource && detectedResource.attributes
