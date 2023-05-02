@@ -331,9 +331,14 @@ describe('Distro initialization', () => {
 
         const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
+        const payload = data as {
+          resourceAttributes: Object,
+          packages: string,
+        };
+
         expect(dependenciesEndpoint).not.toBeFalsy();
-        expect(data.resourceAttributes['lumigo.distro.version']).toBe(version);
-        expect(data.packages.length).toBeGreaterThan(0);
+        expect(payload.resourceAttributes['lumigo.distro.version']).toBe(version);
+        expect(payload.packages.length).toBeGreaterThan(0);
         expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
       });
     });
@@ -360,10 +365,15 @@ describe('Distro initialization', () => {
 
         const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
+        const payload = data as {
+          resourceAttributes: Object,
+          packages: string,
+        };
+
         expect(dependenciesEndpoint).not.toBeFalsy();
-        expect(data.resourceAttributes['telemetry.sdk.language']).toBe('nodejs');
-        expect(data.resourceAttributes['lumigo.distro.version']).toBe(version);
-        expect(data.packages.length).toBeGreaterThan(0);
+        expect(payload.resourceAttributes['telemetry.sdk.language']).toBe('nodejs');
+        expect(payload.resourceAttributes['lumigo.distro.version']).toBe(version);
+        expect(payload.packages.length).toBeGreaterThan(0);
         expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
       });
     });
@@ -391,9 +401,14 @@ describe('Distro initialization', () => {
 
         const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
+        const payload = data as {
+          resourceAttributes: Object,
+          packages: string,
+        };
+
         expect(dependenciesEndpoint).not.toBeFalsy();
-        expect(data.resourceAttributes['lumigo.distro.version']).toBe(version);
-        expect(data.packages.length).toBeGreaterThan(0);
+        expect(payload.resourceAttributes['lumigo.distro.version']).toBe(version);
+        expect(payload.packages.length).toBeGreaterThan(0);
         expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
       });
     });

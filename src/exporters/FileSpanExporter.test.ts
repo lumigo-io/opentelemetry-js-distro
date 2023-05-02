@@ -1,14 +1,11 @@
 import {
   BasicTracerProvider,
-  ReadableSpan,
   SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { Span, SpanKind, SpanStatusCode, TraceFlags } from '@opentelemetry/api';
+import { Span, SpanKind } from '@opentelemetry/api';
 import mock from 'mock-fs';
 
 import { FileSpanExporter } from './index';
-import { Resource } from '@opentelemetry/resources';
-import { ExportResult, ExportResultCode } from '@opentelemetry/core';
 
 describe('FileSpanExporter tests', () => {
   afterEach(() => {
@@ -109,51 +106,8 @@ describe('FileSpanExporter tests', () => {
   });
 
   test('should log an error when provided an invalid file path', async () => {
-    const { logger } = jest.requireActual('../logging');
-    const spyLogger = jest.spyOn(logger, 'error');
-
-    const exporterUnderTest = new FileSpanExporter('\0'); // Invalid Linux file path
-    const spyShutdown = jest.spyOn(exporterUnderTest, 'shutdown');
-
-    const provider = new BasicTracerProvider();
-    provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
-
-    const { code, error } = await new Promise<ExportResult>((resolve, _) => {
-      exporterUnderTest.export([testSpan], (result) => resolve(result));
-    });
-
-    expect(code).toBe(ExportResultCode.FAILED);
-    expect(error?.name).toBe('TypeError');
-
-    await exporterUnderTest.shutdown();
-
-    expect(spyShutdown).toHaveBeenCalledTimes(1);
-    expect(spyLogger.mock.calls[0][0]).toMatch(
-      /An error occured while exporting the spandump to file.*/
-    );
+    expect(() => {
+      new FileSpanExporter('\0')
+    }).toThrowError("The argument 'path' must be a string or Uint8Array without null bytes. Received '\\x00'");
   });
 });
-
-const testSpan: ReadableSpan = {
-  name: 'test',
-  kind: SpanKind.INTERNAL,
-  spanContext: () => ({
-    spanId: '1234',
-    traceId: 'abcd-1234',
-    traceFlags: TraceFlags.NONE,
-  }),
-  startTime: [1609504210, 150000000],
-  endTime: [1609514210, 150000000],
-  status: {
-    code: SpanStatusCode.OK,
-  },
-  attributes: {},
-  links: [],
-  events: [],
-  duration: [10000, 0],
-  ended: true,
-  resource: Resource.EMPTY,
-  instrumentationLibrary: {
-    name: 'testScope',
-  },
-};

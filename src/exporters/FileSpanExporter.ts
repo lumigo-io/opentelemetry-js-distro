@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { FileHandle, lstat, open, realpath } from 'fs/promises';
-
+import { appendFileSync, closeSync, fsyncSync, openSync } from 'fs';
+import { realpath, lstat } from 'fs/promises';
 import {
   BindOnceFuture,
   ExportResult,
@@ -34,20 +34,13 @@ import { logger } from '../logging';
 /* eslint-disable no-console */
 export class FileSpanExporter implements SpanExporter {
   private readonly file: string;
-  private _fd: FileHandle;
+  private _fd: number;
   private readonly _shutdownOnce: BindOnceFuture<void>;
 
   constructor(file: string) {
     this.file = file;
+    this._fd = openSync(file, 'w');
     this._shutdownOnce = new BindOnceFuture(this._shutdown.bind(this), this);
-  }
-
-  private async getFileHandleOrOpen(): Promise<FileHandle> {
-    if (!this._fd) {
-      this._fd = await open(this.file, 'w+');
-    }
-
-    return this._fd;
   }
 
   /**
@@ -62,26 +55,20 @@ export class FileSpanExporter implements SpanExporter {
       });
     }
 
-    this.getFileHandleOrOpen()
-      .then(async (fileHandle) => {
-        const json =
-          spans.map((span) => JSON.stringify(this._exportInfo(span), undefined, 0)).join('\n') +
-          '\n';
+    const spansJson = spans.map((span) => JSON.stringify(this._exportInfo(span), undefined, 0)).join('\n') + '\n';
 
-        fileHandle.appendFile(json).then(() =>
-          resultCallback({
-            code: ExportResultCode.SUCCESS,
-          })
-        );
-      })
-      .catch((err) => {
-        logger.error(`An error occured while exporting the spandump to file '${this.file}'`, err);
-
-        return resultCallback({
-          code: ExportResultCode.FAILED,
-          error: err,
-        });
+    try {
+      appendFileSync(this._fd, spansJson);
+    } catch (err) {
+      return resultCallback({
+        code: ExportResultCode.FAILED,
+        error: err,
       });
+    }
+
+    return resultCallback({
+      code: ExportResultCode.SUCCESS,
+    });
   }
 
   /**
@@ -134,7 +121,7 @@ export class FileSpanExporter implements SpanExporter {
           const stats = await lstat(realPath);
 
           if (stats.isFile()) {
-            await this._fd.close();
+            closeSync(this._fd);
           }
         } catch (err) {
           logger.error(
@@ -146,9 +133,15 @@ export class FileSpanExporter implements SpanExporter {
     });
   }
 
-  private _flushAll = async (): Promise<void> => {
-    return await this._fd?.sync().catch((err) => {
+  private _flushAll = async (): Promise<void> => new Promise((resolve, reject) => {
+    try {
+      fsyncSync(this._fd);
+    } catch (err) {
       logger.error(`An error occured while flushing the spandump to file '${this.file}'`, err);
-    });
-  };
+      reject(err);
+      return;
+    }
+
+    resolve();
+  });
 }

@@ -1,12 +1,13 @@
-const axios = require('axios');
-const http = require('http');
-const { trace } = require('@opentelemetry/api');
-const { init } = require('@lumigo/opentelemetry');
-
 (async() => {
-    await init;
+    const { init } = require('@lumigo/opentelemetry');
+
+    await init; // Need to finish initialize the HTTP instrumentation before importing the rest
 
     require('log-timestamp');
+
+    const axios = require('axios');
+    const http = require('http');
+    const { trace } = require('@opentelemetry/api');
 
     const host = 'localhost';
     

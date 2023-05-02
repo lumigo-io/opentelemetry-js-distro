@@ -1,11 +1,10 @@
-import fs from "fs";
+import fs from 'fs';
 
-export function getInstrumentationSpansFromFile(filePath: string) {
-    const allFileContents = fs.readFileSync(filePath, 'utf-8');
-    const lines = allFileContents.split(/\r?\n/).filter(l => !!l.length);
-    const spansWithoutWaitOnCall = lines.slice(1, lines.length)
-    if (spansWithoutWaitOnCall) {
-        return spansWithoutWaitOnCall
+export function getSpansFromSpanDump(filePath: string) {
+    try {
+        return fs.readFileSync(filePath, 'utf-8').split(/\r?\n/).filter(l => !!l.length).map(line => JSON.parse(line));
+    } catch (err) {
+        return [];
     }
 }
 

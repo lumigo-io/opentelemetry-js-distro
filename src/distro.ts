@@ -10,25 +10,26 @@
  * with `undefined` as value; the promise is resolves, instead of rejected, to avoid UnhandledPromiseRejectionWarning
  * or errors affecting processes using unsupported Node.js versions. 
  */
+import { LUMIGO_LOGGING_NAMESPACE } from './constants';
 import { minMajor, maxMajor } from './supportedVersions.json';
 
-const trace = async (): Promise<any> => {
+const bootstrap = async (): Promise<any> => {
     const version = process.version;
     try {
         const nodeJsMajorVersion = parseInt(version.match(/v(\d+)\..*/)[1]);
 
         if (nodeJsMajorVersion < minMajor) {
-            console.error(`@lumigo/opentelemetry: Node.js version '${version}' is not supported (minumum supported version: ${minMajor}.x); skipping initialization of the Lumigo OpenTelemetry Distro`);
+            console.error(`${LUMIGO_LOGGING_NAMESPACE}: Node.js version '${version}' is not supported (minumum supported version: ${minMajor}.x); skipping initialization of the Lumigo OpenTelemetry Distro`);
             /*
              * Return a resolve promise, as opposed to a rejected one, to avoid UnhandledPromiseRejectionWarning
              * processes using unsupported Node.js versions. 
              */
             return Promise.resolve();
         } if (nodeJsMajorVersion > maxMajor) {
-            console.error(`@lumigo/opentelemetry: Node.js version '${version}' has not been tested with the Lumigo OpenTelemetry Distro (maximum supported version: ${maxMajor}.x); if you encounter issues, please contact support@lumigo.io`);
+            console.error(`${LUMIGO_LOGGING_NAMESPACE}: Node.js version '${version}' has not been tested with the Lumigo OpenTelemetry Distro (maximum supported version: ${maxMajor}.x); if you encounter issues, please contact support@lumigo.io`);
         }
     } catch (err) {
-        console.error(`@lumigo/opentelemetry: Cannot parse the Node.js version '${version}; skipping initialization of the Lumigo OpenTelemetry Distro`);
+        console.error(`${LUMIGO_LOGGING_NAMESPACE}: Cannot parse the Node.js version '${version}; skipping initialization of the Lumigo OpenTelemetry Distro`);
         /*
          * Return a resolve promise, as opposed to a rejected one, to avoid UnhandledPromiseRejectionWarning
          * processes using unsupported Node.js versions. 
@@ -36,9 +37,8 @@ const trace = async (): Promise<any> => {
         return Promise.resolve();
     }
 
-    const distro = await import('./distro-init');
-    const { init } = distro;
-    return await init;
+    const { init } = await import('./distro-init');
+    return init;
 };
 
-export const init = trace();
+export const init = bootstrap();
