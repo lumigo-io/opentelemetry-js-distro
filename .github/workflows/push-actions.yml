@@ -34,7 +34,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
       - run: npm ci
       - run: npm run prettier:ci
-      - run: npm run eslint
+      - run: npm run lint
       - run: npm run build
       - name: Upload distro as artifact
         uses: actions/upload-artifact@v3
