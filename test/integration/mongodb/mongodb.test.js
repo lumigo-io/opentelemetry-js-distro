@@ -1,5 +1,5 @@
 const { spawnSync } = require('child_process');
-const { existsSync, mkdirSync } = require('fs');
+const { existsSync, mkdirSync, readFileSync } = require('fs');
 require('jest-json');
 const { join } = require('path');
 const kill = require('tree-kill');
@@ -9,7 +9,7 @@ const {
     getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require('./mongodbTestUtils');
-const { callContainer, startTestApp, versionsToTest } = require('../../testUtils/utils');
+const { startTestApp, versionsToTest } = require('../../testUtils/utils');
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = 'test/integration/mongodb/app';
@@ -77,13 +77,12 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Integration tests mongodb',
         const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
         app = testApp;
 
-        console.info(`port: ${port}`)
-
         const waited = new Promise((resolve, reject) => {
             waitOn(
                 {
-                    resources: [`http-get://localhost:${port}`],
-                    delay: 20000,
+                    resources: [`http-get://localhost:${port}/test-mongodb`],
+                    delay: 500,
+                    timeout: WAIT_ON_TIMEOUT,
                     log: true,
                     validateStatus: function (status) {
                         console.debug('server status:', status);
@@ -95,10 +94,7 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Integration tests mongodb',
                         console.error('inside waitOn', err);
                         return reject(err)
                     } else {
-                        console.info('Got a response from server');
-                        await callContainer(port, 'test-mongodb', 'get');
-                        let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
-                        resolve(spans.map((text) => JSON.parse(text)))
+                        resolve(readSpans(exporterFile));
                     }
                 }
             );
@@ -133,13 +129,11 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Integration tests mongodb',
         const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
         app = testApp;
 
-        console.info(`port: ${port}`)
-
         const waited = new Promise((resolve, reject) => {
             waitOn(
                 {
-                    resources: [`http-get://localhost:${port}`],
-                    delay: 10000,
+                    resources: [`http-get://localhost:${port}/test-mongodb`],
+                    delay: 500,
                     timeout: WAIT_ON_TIMEOUT,
                     simultaneous: 1,
                     log: true,
@@ -153,10 +147,7 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Integration tests mongodb',
                         console.error('inside waitOn', err);
                         return reject(err)
                     } else {
-                        console.info('Got a response from server');
-                        await callContainer(port, 'test-mongodb', 'get');
-                        let spans = await waitForSpansInFile(exporterFile, getInstrumentationSpansFromFile);
-                        resolve(spans.map((text) => JSON.parse(text)))
+                        resolve(readSpans(exporterFile));
                     }
                 }
             );
@@ -187,3 +178,7 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Integration tests mongodb',
         expect(indexSpan).toMatchObject(getExpectedSpanWithParent(CREATE_INDEX_CMD, resourceAttributes, expectedIndexStatement, '$cmd'));
     }, TEST_TIMEOUT);
 });
+
+function readSpans(filePath) {
+    return readFileSync(filePath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
+}
