@@ -332,8 +332,8 @@ describe('Distro initialization', () => {
         const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
         const payload = data as {
-          resourceAttributes: Object,
-          packages: string,
+          resourceAttributes: Object;
+          packages: string;
         };
 
         expect(dependenciesEndpoint).not.toBeFalsy();
@@ -366,8 +366,8 @@ describe('Distro initialization', () => {
         const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
         const payload = data as {
-          resourceAttributes: Object,
-          packages: string,
+          resourceAttributes: Object;
+          packages: string;
         };
 
         expect(dependenciesEndpoint).not.toBeFalsy();
@@ -402,8 +402,8 @@ describe('Distro initialization', () => {
         const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
         const payload = data as {
-          resourceAttributes: Object,
-          packages: string,
+          resourceAttributes: Object;
+          packages: string;
         };
 
         expect(dependenciesEndpoint).not.toBeFalsy();
@@ -425,7 +425,6 @@ describe('Distro initialization', () => {
       expect(console.error).not.toHaveBeenCalled();
     });
   });
-
 });
 
 function checkBasicResourceAttributes(resource) {

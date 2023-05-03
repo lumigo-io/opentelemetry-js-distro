@@ -1,1 +1,1 @@
-export const LUMIGO_LOGGING_NAMESPACE='@lumigo/opentelemetry';
+export const LUMIGO_LOGGING_NAMESPACE = '@lumigo/opentelemetry';

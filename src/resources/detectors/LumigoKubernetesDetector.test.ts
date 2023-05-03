@@ -4,7 +4,11 @@ import mock from 'mock-fs';
 
 const K8S_POD_ID = '6189e731-8c9a-4c3a-ba6f-9796664788a8';
 
-const trimMultiline = (s: string) => s.split('\n').map(s => s.trim()).join('\n');
+const trimMultiline = (s: string) =>
+  s
+    .split('\n')
+    .map((s) => s.trim())
+    .join('\n');
 
 describe('LumigoKubernetesDetector', () => {
   afterEach(() => {
@@ -24,9 +28,9 @@ describe('LumigoKubernetesDetector', () => {
         mock({
           '/etc/hosts': trimMultiline(`# Kubernetes-managed hosts file.
             127.0.0.1       localhost
-            255.255.255.255 broadcasthost`
-          ),
-          '/proc/self/mountinfo': trimMultiline(`564 446 0:164 / / rw,relatime master:190 - overlay overlay rw,lowerdir=/var/lib/docker/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
+            255.255.255.255 broadcasthost`),
+          '/proc/self/mountinfo':
+            trimMultiline(`564 446 0:164 / / rw,relatime master:190 - overlay overlay rw,lowerdir=/var/lib/docker/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             565 564 0:166 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
             566 564 0:338 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755
             567 566 0:339 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=5,mode=620,ptmxmode=666
@@ -43,8 +47,7 @@ describe('LumigoKubernetesDetector', () => {
             448 565 0:166 /bus /bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             450 565 0:166 /irq /bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             451 565 0:166 /sys /bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
-            452 565 0:166 /sysrq-trigger /bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked`
-          )
+            452 565 0:166 /sysrq-trigger /bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked`),
         });
 
         const resource = await new LumigoKubernetesDetector().detect();
@@ -58,9 +61,9 @@ describe('LumigoKubernetesDetector', () => {
         mock({
           '/etc/hosts': trimMultiline(`# Kubernetes-managed hosts file.
             127.0.0.1       localhost
-            255.255.255.255 broadcasthost`
-          ),
-          '/proc/self/cgroup': trimMultiline(`14:name=systemd:/docker/c24aa3879860ee981d29f0492aef1e39c45d7c7fcdff7bd2050047d0bd390311/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
+            255.255.255.255 broadcasthost`),
+          '/proc/self/cgroup':
+            trimMultiline(`14:name=systemd:/docker/c24aa3879860ee981d29f0492aef1e39c45d7c7fcdff7bd2050047d0bd390311/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             13:rdma:/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             12:pids:/docker/c24aa3879860ee981d29f0492aef1e39c45d7c7fcdff7bd2050047d0bd390311/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             11:hugetlb:/docker/c24aa3879860ee981d29f0492aef1e39c45d7c7fcdff7bd2050047d0bd390311/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
@@ -74,8 +77,7 @@ describe('LumigoKubernetesDetector', () => {
             3:cpuacct:/docker/c24aa3879860ee981d29f0492aef1e39c45d7c7fcdff7bd2050047d0bd390311/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             2:cpu:/docker/c24aa3879860ee981d29f0492aef1e39c45d7c7fcdff7bd2050047d0bd390311/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
             1:cpuset:/docker/c24aa3879860ee981d29f0492aef1e39c45d7c7fcdff7bd2050047d0bd390311/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked
-            0::/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked`
-          )
+            0::/kubepods/besteffort/pod6189e731-8c9a-4c3a-ba6f-9796664788a8/bogusPodIdThatShouldNotBeOneSetBecauseTheFirstOneWasPicked`),
         });
 
         const resource = await new LumigoKubernetesDetector().detect();

@@ -3,11 +3,12 @@ on: [push]
 jobs:
 
   supported-node-versions-testing:
-    name: Node ${{ matrix.node_cimg_tag }}
+    name: Node ${{ matrix.node_cimg_tag }} ${{ matrix.npm_task }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node_cimg_tag: [ 14, 16, 18, 20 ]
+        npm_task: ['test:unit', 'test:component', 'test:integration:version']
     steps:
       - uses: actions/checkout@v3
       - name: Set up Node
@@ -18,9 +19,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
       - run: npm ci
       - run: npm run build
-      - run: npm run test:unit
-      - run: npm run test:component
-      - run: npm run test:integration:version
+      - run: npm run ${{ matrix.npm_task }}
 
   build-package:
     name: Build Lumigo OpenTelemetry for JS distro
@@ -34,6 +33,8 @@ jobs:
           architecture: x64
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
       - run: npm ci
+      - run: npm run prettier:ci
+      - run: npm run eslint
       - run: npm run build
       - name: Upload distro as artifact
         uses: actions/upload-artifact@v3

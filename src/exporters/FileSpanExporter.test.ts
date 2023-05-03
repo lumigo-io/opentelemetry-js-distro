@@ -1,7 +1,4 @@
-import {
-  BasicTracerProvider,
-  SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { Span, SpanKind } from '@opentelemetry/api';
 import mock from 'mock-fs';
 
@@ -107,7 +104,9 @@ describe('FileSpanExporter tests', () => {
 
   test('should log an error when provided an invalid file path', async () => {
     expect(() => {
-      new FileSpanExporter('\0')
-    }).toThrowError("The argument 'path' must be a string or Uint8Array without null bytes. Received '\\x00'");
+      new FileSpanExporter('\0');
+    }).toThrowError(
+      "The argument 'path' must be a string or Uint8Array without null bytes. Received '\\x00'"
+    );
   });
 });

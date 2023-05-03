@@ -15,10 +15,14 @@ export class LumigoW3CTraceContextPropagator extends W3CTraceContextPropagator {
   override inject(context: Context, carrier: unknown, setter: TextMapSetter): void {
     if (typeof carrier === 'object') {
       const carrierKeys = Object.keys(carrier).map((key) => key.toLowerCase());
-      const carrierFilteredKeys = carrierKeys.filter(key => contextKeysSkipInject.includes(key));
+      const carrierFilteredKeys = carrierKeys.filter((key) => contextKeysSkipInject.includes(key));
 
       if (carrierFilteredKeys.length) {
-        diag.debug(`Skipping injection of trace context due to keys in carrier: ${carrierFilteredKeys.join(", ")}`);
+        diag.debug(
+          `Skipping injection of trace context due to keys in carrier: ${carrierFilteredKeys.join(
+            ', '
+          )}`
+        );
         return;
       }
     }

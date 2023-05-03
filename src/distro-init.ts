@@ -35,7 +35,7 @@ declare global {
 
 export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
-  readonly instrumentedModules: string[],
+  readonly instrumentedModules: string[];
 }
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
@@ -58,7 +58,8 @@ function reportInitError(err: Error) {
 
 const initDistro = async (): Promise<LumigoSdkInitialization> => {
   if (isTraceInitialized) {
-    const message = 'The Lumigo OpenTelemetry Distro is already initialized: additional attempt to initialize has been ignored.';
+    const message =
+      'The Lumigo OpenTelemetry Distro is already initialized: additional attempt to initialize has been ignored.';
     logger.debug(message);
 
     return Promise.reject(new Error(message));
@@ -74,11 +75,10 @@ const initDistro = async (): Promise<LumigoSdkInitialization> => {
       return;
     }
 
-    const { version: distroVersion } = (
+    const { version: distroVersion } =
       require(join(dirname(__dirname), 'package.json')) ||
       require(join(__dirname, 'package.json')) ||
-      'unknown'
-    );
+      'unknown';
 
     const instrumentationsToInstall = [
       new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
@@ -96,8 +96,7 @@ const initDistro = async (): Promise<LumigoSdkInitialization> => {
         (i) => i.getInstrumentation() as Instrumentation
       ),
     });
-        
-    
+
     const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
 
     logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);

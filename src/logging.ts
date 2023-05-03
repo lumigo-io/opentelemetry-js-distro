@@ -14,10 +14,8 @@ export const logger = diag.createComponentLogger({
   namespace: LUMIGO_LOGGING_NAMESPACE,
 });
 
-diag.setLogger(
-  new DiagConsoleLogger(),
-  {
-    logLevel: process.env.LUMIGO_DEBUG?.toLowerCase() === 'true' ? DiagLogLevel.DEBUG : DiagLogLevel.INFO,
-    suppressOverrideMessage: true, // Suppress noise in logs
-  }
-);
+diag.setLogger(new DiagConsoleLogger(), {
+  logLevel:
+    process.env.LUMIGO_DEBUG?.toLowerCase() === 'true' ? DiagLogLevel.DEBUG : DiagLogLevel.INFO,
+  suppressOverrideMessage: true, // Suppress noise in logs
+});

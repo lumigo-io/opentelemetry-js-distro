@@ -55,7 +55,8 @@ export class FileSpanExporter implements SpanExporter {
       });
     }
 
-    const spansJson = spans.map((span) => JSON.stringify(this._exportInfo(span), undefined, 0)).join('\n') + '\n';
+    const spansJson =
+      spans.map((span) => JSON.stringify(this._exportInfo(span), undefined, 0)).join('\n') + '\n';
 
     try {
       appendFileSync(this._fd, spansJson);
@@ -133,15 +134,16 @@ export class FileSpanExporter implements SpanExporter {
     });
   }
 
-  private _flushAll = async (): Promise<void> => new Promise((resolve, reject) => {
-    try {
-      fsyncSync(this._fd);
-    } catch (err) {
-      logger.error(`An error occured while flushing the spandump to file '${this.file}'`, err);
-      reject(err);
-      return;
-    }
+  private _flushAll = async (): Promise<void> =>
+    new Promise((resolve, reject) => {
+      try {
+        fsyncSync(this._fd);
+      } catch (err) {
+        logger.error(`An error occured while flushing the spandump to file '${this.file}'`, err);
+        reject(err);
+        return;
+      }
 
-    resolve();
-  });
+      resolve();
+    });
 }
