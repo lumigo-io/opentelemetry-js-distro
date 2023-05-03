@@ -53,6 +53,8 @@ describe(`Component compatibility tests for HTTP`, function () {
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
 
+            console.error(`Spans: ${spans}`);
+
             expect(spans).toHaveLength(2);
 
             const serverSpan = getSpanByKind(spans, 1);
@@ -70,6 +72,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                 },
                 events: [],
             });
+            console.error('Server span matches');
 
             const clientSpan = getSpanByKind(spans, 2);
             expect(clientSpan).toMatchObject({
@@ -86,6 +89,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                 },
                 events: [],
             });
+            console.error('Client span matches');
         }, TEST_TIMEOUT);
     }, TEST_TIMEOUT);
 
@@ -102,6 +106,8 @@ describe(`Component compatibility tests for HTTP`, function () {
 
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
+
+            console.error(`Spans: ${spans}`);
 
             expect(spans).toHaveLength(2);
 
@@ -126,6 +132,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'lumigo.execution_tags.baz': true
                 }
             );
+            console.error('Server span matches');
 
             const clientSpan = getSpanByKind(spans, 2);
             expect(clientSpan.attributes).toMatchObject(
@@ -146,6 +153,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.response.body': '"',
                 }
             );
+            console.error('Client span matches');
         }, TEST_TIMEOUT);
     }, TEST_TIMEOUT);
 
@@ -162,6 +170,8 @@ describe(`Component compatibility tests for HTTP`, function () {
 
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
+
+            console.error(`Spans: ${spans}`);
 
             expect(spans).toHaveLength(2);
 
@@ -186,6 +196,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'lumigo.execution_tags.date': 1234567
                 }
             );
+            console.error('Server span matches');
 
             const clientSpan = getSpanByKind(spans, 2);
             expect(clientSpan.attributes).toMatchObject(
@@ -206,6 +217,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.response.body': '"[{',
                 }
             );
+            console.error('Client span matches');
         }, TEST_TIMEOUT);
     }, TEST_TIMEOUT);
 
@@ -222,6 +234,8 @@ describe(`Component compatibility tests for HTTP`, function () {
 
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
+
+            console.error(`Spans: ${spans}`);
 
             expect(spans).toHaveLength(2);
 
@@ -244,6 +258,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'lumigo.execution_tags.date': 1234567
                 }
             );
+            console.error('Server span matches');
 
             const clientSpan = getSpanByKind(spans, 2);
             expect(clientSpan.attributes).toMatchObject(
@@ -267,6 +282,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                 }
             );
             expect(clientAttributes['http.response.body'].length).toEqual(2048);               
+            console.error('Client span matches');
         }, TEST_TIMEOUT);
     }, TEST_TIMEOUT);
 
@@ -283,6 +299,8 @@ describe(`Component compatibility tests for HTTP`, function () {
 
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
+
+            console.error(`Spans: ${spans}`);
 
             expect(spans).toHaveLength(2);
 
@@ -304,6 +322,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.url': `http://localhost:${port}/amazon-sigv4`,
                 }
             );
+            console.error('Server span matches');
 
             const clientSpan = getSpanByKind(spans, 2);
             expect(clientSpan.attributes).toMatchObject(
@@ -326,6 +345,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.response.body': expect.any(String),
                 }
             );
+            console.error('Client span matches');
         }, TEST_TIMEOUT);
     }, TEST_TIMEOUT);
 
