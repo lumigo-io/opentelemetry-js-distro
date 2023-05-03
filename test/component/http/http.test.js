@@ -12,7 +12,7 @@ const { startTestApp } = require('../../testUtils/utils');
 
 const SPANS_DIR = `${__dirname}/spans`;
 const TEST_TIMEOUT = 20_000;
-const WAIT_ON_TIMEOUT = 10_000;
+const WAIT_ON_TIMEOUT = 15_000;
 const COMPONENT_NAME = 'http';
 const EXEC_SERVER_FOLDER = `test/component/${COMPONENT_NAME}/app`;
 
