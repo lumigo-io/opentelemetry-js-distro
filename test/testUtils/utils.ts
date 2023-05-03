@@ -4,7 +4,7 @@ import axios from 'axios';
 import { spawn } from 'child_process';
 import kill from 'tree-kill';
 
-export function getAppPort(data: Buffer, resolve, reject) {
+function getAppPort(data: Buffer, resolve, reject) {
     const dataStr = data.toString();
     const portRegex = new RegExp('.*(Listening on port )([0-9]*)', 'g');
 
@@ -19,6 +19,12 @@ export function getAppPort(data: Buffer, resolve, reject) {
         }
     }
 }
+
+export const callContainer = async (port: number, path: string, method = 'get', body = {}) => {
+    const httpResponse = await axios[method](`http://localhost:${port}/${path}`, body);
+    expect(httpResponse.status).toBeGreaterThan(199);
+    expect(httpResponse.status).toBeLessThan(300);
+};
 
 export function readSpans(filePath) {
     return readFileSync(filePath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));

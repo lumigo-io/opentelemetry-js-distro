@@ -9,7 +9,7 @@ const {
     getInstrumentationSpansFromFile, getSpanByName, getFilteredSpans, getExpectedResourceAttributes, getExpectedSpan,
     getExpectedSpanWithParent
 } = require('./mongodbTestUtils');
-const {callContainer, startTestApp, getAppPort} = require('../../testUtils/utils');
+const {callContainer, startTestApp} = require('../../testUtils/utils');
 
 const SPANS_DIR = `${__dirname}/spans`;
 const EXEC_SERVER_FOLDER = 'test/integration/mongodb/app';
@@ -63,14 +63,9 @@ describe({
                 timeout: TEST_TIMEOUT
             }
         }, async (exporterFile) => {
-            // start server
-            app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            app = testApp;
 
-            port = await new Promise((resolve, reject) => {
-                app.stdout.on('data', (data) => {
-                    getAppPort(data, resolve, reject);
-                });
-            });
             console.info(`port: ${port}`)
 
             const waited = new Promise((resolve, reject) => {
@@ -132,14 +127,9 @@ describe({
                 timeout: TEST_TIMEOUT
             }
         }, async (exporterFile) => {
-            // //start server
-            app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            app = testApp;
 
-            port = await new Promise((resolve, reject) => {
-                app.stdout.on('data', (data) => {
-                    getAppPort(data, resolve, reject);
-                });
-            });
             console.info(`port: ${port}`)
 
             const waited = new Promise((resolve, reject) => {

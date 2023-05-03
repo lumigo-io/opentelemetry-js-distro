@@ -5,7 +5,7 @@ const { join } = require('path');
 const kill = require('tree-kill');
 const waitOn = require('wait-on')
 
-const { getAppPort, readSpans, startTestApp, versionsToTest } = require('../../testUtils/utils');
+const { readSpans, startTestApp, versionsToTest } = require('../../testUtils/utils');
 
 const SPANS_DIR = join(__dirname, 'spans');
 const EXEC_SERVER_FOLDER = join(__dirname, 'app');
@@ -82,14 +82,9 @@ describe.each(versionsToTest('express', 'express'))(`Integration tests express`,
 
     test('basic', async () => {
         const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
-        // start server
-        app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
 
-        const port = await new Promise((resolve, reject) => {
-            app.stdout.on('data', (data) => {
-                getAppPort(data, resolve, reject);
-            });
-        });
+        const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
+        app = testApp;
 
         await waitOn({
             resources: [`http-get://localhost:${port}/basic`],
@@ -139,14 +134,9 @@ describe.each(versionsToTest('express', 'express'))(`Integration tests express`,
 
     test('secret masking requests', async () => {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
-        // start server
-        app = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
 
-        const port = await new Promise((resolve, reject) => {
-            app.stdout.on('data', (data) => {
-                getAppPort(data, resolve, reject);
-            });
-        });
+        const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
+        app = testApp;
 
         await waitOn({
             resources: [`http-get://localhost:${port}/test-scrubbing`],
