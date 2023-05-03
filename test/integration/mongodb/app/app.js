@@ -1,4 +1,4 @@
-const http = require("http");
+const http = require('http');
 const {initContainerDB, stopDbContainer} = require("./appUtils");
 const retry = require('async-await-retry');
 require('log-timestamp');

@@ -23,7 +23,7 @@ const expectedResourceAttributes = {
         framework: 'express',
         'process.environ': expect.jsonMatching(
             expect.objectContaining({
-                "OTEL_SERVICE_NAME": "express",
+                'OTEL_SERVICE_NAME': 'express',
             })),
         'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
         'process.pid': expect.any(Number),
@@ -33,7 +33,7 @@ const expectedResourceAttributes = {
     },
 };
 
-describe.each(versionsToTest('express', 'express'))(`Integration tests express`, (versionToTest) => {
+describe.each(versionsToTest('express', 'express'))('Integration tests express', (versionToTest) => {
 
     let app;
 
