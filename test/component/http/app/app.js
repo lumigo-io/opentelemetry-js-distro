@@ -10,7 +10,8 @@
     const { trace } = require('@opentelemetry/api');
 
     const host = 'localhost';
-    
+    const targetUrl = process.env.TARGET_URL;    
+
     const requestListener = async function (req, res) {
         switch (req.url) {
             case '/':
@@ -20,7 +21,7 @@
                 res.end(JSON.stringify('server is ready!'));
                 break
             case '/test1':
-                const result = await axios.get('https://api.chucknorris.io/jokes/categories', {
+                const result = await axios.get(`${targetUrl}/jokes/categories`, {
                     headers: {
                         header: 'a',
                     },
@@ -31,7 +32,7 @@
                 res.end(JSON.stringify(result.data));
                 break
             case '/large-response':
-                const big_result = await axios.get('http://universities.hipolabs.com/search?country=United+States', {
+                const big_result = await axios.get(`${targetUrl}/search`, {
                     headers: {
                         header: 'a',
                     },
@@ -43,7 +44,7 @@
                 res.end(JSON.stringify(big_result.data));
                 break
             case '/test2':
-                const dog_res = await axios.get('https://dog.ceo/api/breeds/image/random', {
+                const dog_res = await axios.get(`${targetUrl}/api/breeds/image/random`, {
                     headers: {
                         header: 'dog',
                     },
@@ -58,7 +59,7 @@
             case '/aws-credentials':
                 try {
                     // We expect this to throw due to the timeout + impossibility to connect
-                    await axios.get(`https://httpbin.org/status/201`, {
+                    await axios.get(`${targetUrl}/status/201`, {
                         timeout: 5_000, // Milliseconds
                     });
                     res.setHeader('Content-Type', 'application/json');
@@ -73,7 +74,7 @@
             case '/amazon-sigv4':
                 try {
                     // We expect this to throw due to the timeout + impossibility to connect
-                    await axios.get(`https://httpbin.org/status/201`, {
+                    await axios.post(`${targetUrl}/amazon-sigv4`, '', {
                         headers: {
                             'x-aMz-cOntEnt-sHa256': 'abcdefghi', // Creative upper-casing, but only marginally less insane than Amazon's :-)
                         },

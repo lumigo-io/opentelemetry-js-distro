@@ -6,6 +6,8 @@ const kill = require('tree-kill');
 const { getSpanByKind } = require('../../testUtils/spanUtils');
 const { startTestApp } = require('../../testUtils/utils');
 
+const ServerMock = require('mock-http-server');
+
 const SPANS_DIR = `${__dirname}/spans`;
 const TEST_TIMEOUT = 20_000;
 const WAIT_ON_TIMEOUT = 15_000;
@@ -13,6 +15,7 @@ const COMPONENT_NAME = 'http';
 const EXEC_SERVER_FOLDER = `test/component/${COMPONENT_NAME}/app`;
 
 const waitForExpect = require('wait-for-expect');
+const { join } = require('path');
 
 const expectedResourceAttributes = {
     attributes: {
@@ -36,7 +39,8 @@ const expectedResourceAttributes = {
 };
 
 describe(`Component compatibility tests for HTTP`, function () {
-    let app = undefined;
+    let app;
+    let server;
 
     beforeAll(() => {
         if (!fs.existsSync(SPANS_DIR)) {
@@ -46,8 +50,21 @@ describe(`Component compatibility tests for HTTP`, function () {
 
     afterEach(async () => {
         console.info('afterEach, stop child process')
+
+        if (server) {
+            var promiseResolve;
+            const p = new Promise(function(resolve) {
+                promiseResolve = resolve;
+            });
+
+            server.stop(promiseResolve);
+            await p;
+            server = undefined;
+        }
+
         if (app) {
             kill(app.pid, 'SIGHUP');
+            app = undefined;
             // Wait 100 ms to give the app time to shutdown
             await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -56,9 +73,24 @@ describe(`Component compatibility tests for HTTP`, function () {
     test('basic http test', async () => {
         const spanDumpLog = `${SPANS_DIR}/spans-${COMPONENT_NAME}-basic.json`;
 
+        const { targetServer, targetPort } = await startTargetServer();
+        targetServer.on({
+            method: 'GET',
+            path: '/jokes/categories',
+            reply: {
+                status: 200,
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify(['animal', 'career', 'celebrity', 'dev', 'explicit', 'fashion', 'food', 'history', 'money', 'movie', 'music', 'political', 'religion', 'science', 'sport', 'travel']),
+            }
+        });
+        server = targetServer;
+
         const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog, {
             LUMIGO_ENDPOINT: 'https://walle-edge-app-us-west-2.walle.golumigo.com',
-            LUMIGO_TRACER_TOKEN: 't_123321'
+            LUMIGO_TRACER_TOKEN: 't_123321',
+            TARGET_URL: `http://localhost:${targetPort}`,
         });
         app = testApp;
 
@@ -110,8 +142,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                 kind: 2,
                 attributes: {
                     'http.flavor': '1.1',
-                    'http.url': 'https://api.chucknorris.io/jokes/categories',
-                    'http.host': 'api.chucknorris.io:443',
+                    'http.url': `http://localhost:${targetPort}/jokes/categories`,
                     'http.method': 'GET',
                     'http.status_code': 200,
                     'http.status_text': 'OK',
@@ -133,7 +164,24 @@ describe(`Component compatibility tests for HTTP`, function () {
     test('http test - OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', async () => {
         const spanDumpLog = `${SPANS_DIR}/spans-${COMPONENT_NAME}-span-attr.json`;
 
-        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '1'});
+        const { targetServer, targetPort } = await startTargetServer();
+        targetServer.on({
+            method: 'GET',
+            path: '/api/breeds/image/random',
+            reply: {
+                status: 200,
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({"message":"https:\/\/images.dog.ceo\/breeds\/germanshepherd\/n02106662_13912.jpg","status":"success"}),
+            }
+        });
+        server = targetServer;
+
+        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog, {
+            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '1',
+            TARGET_URL: `http://localhost:${targetPort}`,
+        });
         app = testApp;
 
         await issueHttpRequest(
@@ -171,7 +219,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.method': 'G',
                     'http.target': '/',
                     'http.request.body': '"',
-                    'http.host': 'd',
+                    'http.host': 'l',
                     'http.status_code': 200,
                     'http.status_text': 'O',
                     'http.flavor': '1',
@@ -187,7 +235,24 @@ describe(`Component compatibility tests for HTTP`, function () {
     test('http test - OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', async () => {
         const spanDumpLog = `${SPANS_DIR}/spans-${COMPONENT_NAME}-otel-attr.json`;
 
-        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog, {OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: '3'});
+        const { targetServer, targetPort } = await startTargetServer();
+        targetServer.on({
+            method: 'GET',
+            path: '/search',
+            reply: {
+                status: 200,
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: fs.readFileSync(join(__dirname, 'test-resources', 'large-response.json')),
+            }
+        });
+        server = targetServer;
+
+        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog, {
+            OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: '3',
+            TARGET_URL: `http://localhost:${targetPort}`,
+        });
         app = testApp;
 
         await issueHttpRequest(
@@ -207,7 +272,6 @@ describe(`Component compatibility tests for HTTP`, function () {
             expect(serverSpan.attributes).toMatchObject(
                 {
                     'http.host': 'loc',
-                    'net.host.name': 'loc',
                     'http.method': 'GET',
                     'http.user_agent': 'axi',
                     'http.flavor': '1.1',
@@ -225,15 +289,14 @@ describe(`Component compatibility tests for HTTP`, function () {
                 {
                     'http.url': 'htt',
                     'http.method': 'GET',
+                    'http.host': `loc`,
                     'http.target': '/se',
-                    'net.peer.name': 'uni',
                     'http.request.body': '""',
-                    'http.host': 'uni',
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.flavor': '1.1',
                     'http.request.headers': '{"a',
-                    'http.response.headers': '{"s',
+                    'http.response.headers': '{"c',
                     'http.response.body': '"[{',
                 }
             );
@@ -242,9 +305,25 @@ describe(`Component compatibility tests for HTTP`, function () {
     }, TEST_TIMEOUT);
 
     test('http test - no attributes length environment variable is set, default value is set', async () => {
-        const spanDumpLog = `${SPANS_DIR}/spans-${COMPONENT_NAME}-default.json`;
+        const spanDumpLog = `${SPANS_DIR}/spans-${COMPONENT_NAME}-default-attr-length.json`;
 
-        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog);
+        const { targetServer, targetPort } = await startTargetServer();
+        targetServer.on({
+            method: 'GET',
+            path: '/search',
+            reply: {
+                status: 200,
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: fs.readFileSync(join(__dirname, 'test-resources', 'large-response.json')),
+            }
+        });
+        server = targetServer;
+
+        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog, {
+            TARGET_URL: `http://localhost:${targetPort}`,
+        });
         app = testApp;
 
         await issueHttpRequest(
@@ -278,12 +357,11 @@ describe(`Component compatibility tests for HTTP`, function () {
             const clientSpan = getSpanByKind(spans, 2);
             expect(clientSpan.attributes).toMatchObject(
                 {
-                    'http.url': 'http://universities.hipolabs.com/search?country=United+States',
+                    'http.url': `http://localhost:${targetPort}/search`,
                     'http.method': 'GET',
-                    'http.target': '/search?country=United+States',
-                    'net.peer.name': 'universities.hipolabs.com',
+                    'http.host': `localhost:${targetPort}`,
+                    'http.target': '/search',
                     'http.request.body': '""',
-                    'http.host': 'universities.hipolabs.com:80',
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.flavor': '1.1',
@@ -299,7 +377,24 @@ describe(`Component compatibility tests for HTTP`, function () {
     test('http test - no trace context set if Amazon Sigv4 header is present', async () => {
         const spanDumpLog = `${SPANS_DIR}/spans-${COMPONENT_NAME}-sigv4.json`;
 
-        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog);
+        const { targetServer, targetPort } = await startTargetServer();
+        targetServer.on({
+            method: 'POST',
+            path: '/amazon-sigv4',
+            reply: {
+                status: 201,
+                headers: {
+                    'content-type': 'text/plain',
+                },
+                body: '',
+            }
+        });
+        server = targetServer;
+
+        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, COMPONENT_NAME, spanDumpLog, {
+            TARGET_URL: `http://localhost:${targetPort}`,
+            LUMIGO_DEBUG: 'true',
+        });
         app = testApp;
 
         await issueHttpRequest(
@@ -331,17 +426,17 @@ describe(`Component compatibility tests for HTTP`, function () {
             const clientSpan = getSpanByKind(spans, 2);
             expect(clientSpan.attributes).toMatchObject(
                 {
-                    'http.url': 'https://httpbin.org/status/201',
-                    'http.method': 'GET',
-                    'http.target': '/status/201',
-                    'http.request.body': '""',
-                    'http.host': 'httpbin.org:443',
+                    'http.url': `http://localhost:${targetPort}/amazon-sigv4`,
+                    'http.method': 'POST',
+                    'http.target': '/amazon-sigv4',
+                    'http.host': `localhost:${targetPort}`,
                     'http.status_code': 201,
                     'http.status_text': 'CREATED',
                     'http.flavor': '1.1',
                     'http.request.headers': expect.not.stringMatching(/{.*traceparent.*}/),
-                    'http.response.headers': expect.stringMatching(/{.*}/),
-                    'http.response.body': expect.any(String),
+                    'http.request.body': '""',
+                    'http.response.headers': expect.any(String),
+                    'http.response.body': '""',
                 }
             );
             console.error('Client span matches');
@@ -350,12 +445,28 @@ describe(`Component compatibility tests for HTTP`, function () {
 
 });
 
+const startTargetServer = async () => {
+    var promiseResolve;
+    const p = new Promise(function(resolve) {
+        promiseResolve = resolve;
+    });
+
+    const targetPort = 9000;
+    var targetServer = new ServerMock({
+        host: 'localhost',
+        port: targetPort,
+    });
+    targetServer.start(promiseResolve);
+
+    await p;
+
+    return {
+        targetServer,
+        targetPort,
+    };
+}
+
 const issueHttpRequest = async (url) => await new Promise((resolve, reject) => {
-    /*
-     * TODO: Flakyness here! If the test app fails (e.g., a fimeout when invoking the
-     * internet (!!!) webserver, the test app will be invoked multiple times, and the
-     * spandump will contain more spans than we expect, falsifying the test assertions.
-     */
     waitOn(
         {
             resources: [`${url}`],

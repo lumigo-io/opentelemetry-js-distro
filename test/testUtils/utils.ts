@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { dirname } from 'path';
 import axios from 'axios';
 import { spawn } from 'child_process';
@@ -30,13 +30,17 @@ export function readSpans(filePath) {
     return readFileSync(filePath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
 }
 
-export async function startTestApp(cwd: string, serviceName: string, fileExporterName: string, env_vars = {}) {
+export async function startTestApp(cwd: string, serviceName: string, spanDumpPath: string, env_vars = {}) {
+    if (existsSync(spanDumpPath)) {
+        unlinkSync(spanDumpPath);
+    }
+
     let app = spawn('npm', ['run', `start:${serviceName}:injected`], {
         cwd,
         env: {
             ...process.env, ...{
                 OTEL_SERVICE_NAME: serviceName,
-                LUMIGO_DEBUG_SPANDUMP: fileExporterName,
+                LUMIGO_DEBUG_SPANDUMP: spanDumpPath,
                 LUMIGO_DEBUG: true,
                 ...env_vars
             }

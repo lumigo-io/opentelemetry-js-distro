@@ -75,6 +75,7 @@
     "jest-summarizing-reporter": "^1.1.4",
     "log-timestamp": "^0.3.0",
     "mock-fs": "^5.2.0",
+    "mock-http-server": "^1.4.5",
     "node-notifier": "^10.0.0",
     "npm-install-peers": "^1.2.2",
     "prettier": "^2.2.1",
