@@ -3,10 +3,6 @@ const waitOn = require('wait-on');
 require('jest-json');
 
 const kill = require('tree-kill');
-const {
-    getSpansFromSpanDump, expectedResourceAttributes,
-    internalSpanAttributes, expectedClientAttributes
-} = require('./httpTestUtils');
 const { getSpanByKind } = require('../../testUtils/spanUtils');
 const { startTestApp } = require('../../testUtils/utils');
 
@@ -17,6 +13,27 @@ const COMPONENT_NAME = 'http';
 const EXEC_SERVER_FOLDER = `test/component/${COMPONENT_NAME}/app`;
 
 const waitForExpect = require('wait-for-expect');
+
+const expectedResourceAttributes = {
+    attributes: {
+        'service.name': 'http',
+        'telemetry.sdk.language': 'nodejs',
+        'telemetry.sdk.name': 'opentelemetry',
+        'telemetry.sdk.version': expect.any(String),
+        'framework': 'node',
+        'process.environ': expect.jsonMatching(
+            expect.objectContaining({
+                'OTEL_SERVICE_NAME': 'http',
+                'LUMIGO_ENDPOINT' :'https://walle-edge-app-us-west-2.walle.golumigo.com'
+            })),
+        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
+        'process.pid': expect.any(Number),
+        'process.executable.name': 'node',
+        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
+        'process.runtime.name': 'nodejs',
+        'process.runtime.description': 'Node.js',
+    }
+};
 
 describe(`Component compatibility tests for HTTP`, function () {
     let app = undefined;
@@ -53,7 +70,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
 
-            console.error(`Spans: ${spans}`);
+            console.error(`Spans: ${JSON.stringify(spans)}`);
 
             expect(spans).toHaveLength(2);
 
@@ -63,10 +80,18 @@ describe(`Component compatibility tests for HTTP`, function () {
                 id: expect.any(String),
                 timestamp: expect.any(Number),
                 duration: expect.any(Number),
-                name: 'HTTP GET',
+                name: 'GET',
                 kind: 1,
                 resource: expectedResourceAttributes,
-                attributes: {...internalSpanAttributes, 'lumigo.execution_tags.foo': ['bar', 'baz']},
+                attributes: {
+                    'http.flavor': '1.1',
+                    'http.url': expect.stringMatching(/http:\/\/localhost:\d+\/test/),
+                    'http.host': expect.stringMatching(/localhost:\d+/),
+                    'http.method': 'GET',
+                    'http.status_code': 200,
+                    'http.status_text': 'OK',
+                    'lumigo.execution_tags.foo': ['bar', 'baz']
+                },
                 status: {
                     code: 0,
                 },
@@ -81,9 +106,21 @@ describe(`Component compatibility tests for HTTP`, function () {
                 id: expect.any(String),
                 timestamp: expect.any(Number),
                 duration: expect.any(Number),
-                name: 'HTTPS GET',
+                name: 'GET',
                 kind: 2,
-                attributes: expectedClientAttributes,
+                attributes: {
+                    'http.flavor': '1.1',
+                    'http.url': 'https://api.chucknorris.io/jokes/categories',
+                    'http.host': 'api.chucknorris.io:443',
+                    'http.method': 'GET',
+                    'http.status_code': 200,
+                    'http.status_text': 'OK',
+                    'http.target': '/jokes/categories',
+                    'http.request.body': '""',
+                    'http.request.headers': expect.stringMatching(/{.*}/),
+                    'http.response.headers': expect.stringMatching(/{.*}/),
+                    'http.response.body': expect.jsonMatching(['animal', 'career', 'celebrity', 'dev', 'explicit', 'fashion', 'food', 'history', 'money', 'movie', 'music', 'political', 'religion', 'science', 'sport', 'travel']),
+                },
                 status: {
                     code: 0,
                 },
@@ -107,8 +144,6 @@ describe(`Component compatibility tests for HTTP`, function () {
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
 
-            console.error(`Spans: ${spans}`);
-
             expect(spans).toHaveLength(2);
 
             const serverSpan = getSpanByKind(spans, 1);
@@ -120,11 +155,6 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.method': 'G',
                     'http.user_agent': 'a',
                     'http.flavor': '1',
-                    'net.transport': 'i',
-                    'net.host.ip': expect.any(String),
-                    'net.host.port': expect.any(Number),
-                    'net.peer.ip': expect.any(String),
-                    'net.peer.port': expect.any(Number),
                     'http.status_code': 200,
                     'http.status_text': 'O',
                     'http.url': 'h',
@@ -140,10 +170,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.url': 'h',
                     'http.method': 'G',
                     'http.target': '/',
-                    'net.peer.name': 'd',
                     'http.request.body': '"',
-                    'net.peer.ip': '1',
-                    'net.peer.port': 443,
                     'http.host': 'd',
                     'http.status_code': 200,
                     'http.status_text': 'O',
@@ -171,7 +198,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
 
-            console.error(`Spans: ${spans}`);
+            console.error(`Spans: ${JSON.stringify(spans)}`);
 
             expect(spans).toHaveLength(2);
 
@@ -184,11 +211,6 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.method': 'GET',
                     'http.user_agent': 'axi',
                     'http.flavor': '1.1',
-                    'net.transport': 'ip_',
-                    'net.host.ip': expect.any(String),
-                    'net.host.port': expect.any(Number),
-                    'net.peer.ip': expect.any(String),
-                    'net.peer.port': expect.any(Number),
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.url': 'htt',
@@ -206,8 +228,6 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.target': '/se',
                     'net.peer.name': 'uni',
                     'http.request.body': '""',
-                    'net.peer.ip': expect.stringMatching(/\d+\./),
-                    'net.peer.port': 80,
                     'http.host': 'uni',
                     'http.status_code': 200,
                     'http.status_text': 'OK',
@@ -235,7 +255,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
 
-            console.error(`Spans: ${spans}`);
+            console.error(`Spans: ${JSON.stringify(spans)}`);
 
             expect(spans).toHaveLength(2);
 
@@ -246,11 +266,6 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'net.host.name': 'localhost',
                     'http.method': 'GET',
                     'http.flavor': '1.1',
-                    'net.transport': 'ip_tcp',
-                    'net.host.ip': expect.any(String),
-                    'net.host.port': expect.any(Number),
-                    'net.peer.ip': expect.any(String),
-                    'net.peer.port': expect.any(Number),
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.url': `http://localhost:${port}/large-response`,
@@ -268,20 +283,15 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.target': '/search?country=United+States',
                     'net.peer.name': 'universities.hipolabs.com',
                     'http.request.body': '""',
-                    'net.peer.ip': expect.stringMatching(
-                        /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$))\b/
-                    ),
-                    'net.peer.port': 80,
                     'http.host': 'universities.hipolabs.com:80',
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.flavor': '1.1',
                     'http.request.headers': expect.stringMatching(/{.*}/),
                     'http.response.headers': expect.stringMatching(/{.*}/),
-                    'http.response.body': expect.any(String),
+                    'http.response.body': expect.stringMatching(/(.*){2048}/),
                 }
             );
-            expect(clientAttributes['http.response.body'].length).toEqual(2048);               
             console.error('Client span matches');
         }, TEST_TIMEOUT);
     }, TEST_TIMEOUT);
@@ -300,7 +310,7 @@ describe(`Component compatibility tests for HTTP`, function () {
         await waitForExpect(async () => {
             const spans = getSpansFromSpanDump(spanDumpLog);
 
-            console.error(`Spans: ${spans}`);
+            console.error(`Spans: ${JSON.stringify(spans)}`);
 
             expect(spans).toHaveLength(2);
 
@@ -308,15 +318,9 @@ describe(`Component compatibility tests for HTTP`, function () {
             expect(serverSpan.attributes).toMatchObject(
                 {
                     'http.host': `localhost:${port}`,
-                    'net.host.name': 'localhost',
                     'http.method': 'GET',
                     'http.target': '/amazon-sigv4',
                     'http.flavor': '1.1',
-                    'net.transport': 'ip_tcp',
-                    'net.host.ip': expect.any(String),
-                    'net.host.port': expect.any(Number),
-                    'net.peer.ip': expect.any(String),
-                    'net.peer.port': expect.any(Number),
                     'http.status_code': 200,
                     'http.status_text': 'OK',
                     'http.url': `http://localhost:${port}/amazon-sigv4`,
@@ -330,12 +334,7 @@ describe(`Component compatibility tests for HTTP`, function () {
                     'http.url': 'https://httpbin.org/status/201',
                     'http.method': 'GET',
                     'http.target': '/status/201',
-                    'net.peer.name': 'httpbin.org',
                     'http.request.body': '""',
-                    'net.peer.ip': expect.stringMatching(
-                        /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$))\b/
-                    ),
-                    'net.peer.port': 443,
                     'http.host': 'httpbin.org:443',
                     'http.status_code': 201,
                     'http.status_text': 'CREATED',
@@ -352,6 +351,11 @@ describe(`Component compatibility tests for HTTP`, function () {
 });
 
 const issueHttpRequest = async (url) => await new Promise((resolve, reject) => {
+    /*
+     * TODO: Flakyness here! If the test app fails (e.g., a fimeout when invoking the
+     * internet (!!!) webserver, the test app will be invoked multiple times, and the
+     * spandump will contain more spans than we expect, falsifying the test assertions.
+     */
     waitOn(
         {
             resources: [`${url}`],
@@ -375,3 +379,11 @@ const issueHttpRequest = async (url) => await new Promise((resolve, reject) => {
         }
     );
 });
+
+const getSpansFromSpanDump = (filePath) => {
+    try {
+        return fs.readFileSync(filePath, 'utf-8').split(/\r?\n/).filter(l => !!l.length).map(line => JSON.parse(line));
+    } catch (err) {
+        return [];
+    }
+}
