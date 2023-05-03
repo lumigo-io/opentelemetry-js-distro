@@ -17,12 +17,5 @@
     "optional-require": "^1.1.8",
     "async-await-retry": "^2.0.0",
     "denque": "^2.1.0"
-  },
-  "lumigo": {
-    "supportedDependencies": {
-      "mongodb": {
-        "satisfies": ">=3.6.6 <5"
-      }
-    }
   }
 }
