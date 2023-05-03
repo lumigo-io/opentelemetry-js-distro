@@ -335,12 +335,12 @@ const issueHttpRequest = async (url) => await new Promise((resolve, reject) => {
     waitOn(
         {
             resources: [`${url}`],
-            delay: 10_000,
+            delay: 0,
             timeout: WAIT_ON_TIMEOUT,
             simultaneous: 1,
             log: true,
             validateStatus: function (status) {
-                console.debug(`Server status: ${status}`);
+                console.debug(`Server response status: ${status}`);
                 return status >= 200 && status < 300; // default if not provided
             },
         },

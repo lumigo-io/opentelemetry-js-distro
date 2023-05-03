@@ -12,8 +12,6 @@
     const host = 'localhost';
     
     const requestListener = async function (req, res) {
-        console.log('in request');
-    
         switch (req.url) {
             case '/':
                 res.setHeader('Content-Type', 'application/json');
@@ -96,9 +94,9 @@
                 res.end(JSON.stringify({error: 'Resource not found'}));
         }
     };
-    
+
     const server = http.createServer(requestListener);
-    
+
     server.listen(0, host, () => {
         const port = server.address().port;
         console.info('Listening on port ' + port);
