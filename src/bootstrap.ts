@@ -36,6 +36,7 @@ declare global {
 export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
   readonly instrumentedModules: string[];
+  readonly reportDependencies: Promise<void | Object>;
 }
 
 const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
@@ -56,13 +57,13 @@ function reportInitError(err: Error) {
   );
 }
 
-const initDistro = async (): Promise<LumigoSdkInitialization> => {
+export const init = async (): Promise<LumigoSdkInitialization> => {
   if (isTraceInitialized) {
     const message =
       'The Lumigo OpenTelemetry Distro is already initialized: additional attempt to initialize has been ignored.';
     logger.debug(message);
 
-    return Promise.reject(new Error(message));
+    throw new Error(message);
   }
 
   isTraceInitialized = true;
@@ -203,17 +204,15 @@ const initDistro = async (): Promise<LumigoSdkInitialization> => {
       propagator: new LumigoW3CTraceContextPropagator(),
     });
 
-    logger.info(`Lumigo tracer v${distroVersion} started.`);
+    logger.info(`Lumigo OpenTelemetry Distro v${distroVersion} started.`);
 
-    return Promise.resolve({
+    return {
       tracerProvider,
       reportDependencies,
       instrumentedModules,
-    });
+    };
   } catch (err) {
     reportInitError(err);
-    return Promise.reject(err);
+    throw err;
   }
 };
-
-export const init = initDistro();

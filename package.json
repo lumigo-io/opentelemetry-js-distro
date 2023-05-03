@@ -4,7 +4,7 @@
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/distro.js",
   "private": false,
-  "types": "dist/src/distro-init.d.ts",
+  "types": "dist/src/bootstrap.d.ts",
   "scripts": {
     "build": "rm -rf dist distro.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" distro.tgz",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test:unit",

@@ -3,19 +3,19 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start:mongodb:injected": "node -r @lumigo/opentelemetry app.js",
-    "install-dependencies": "node installDependencies.js"
+    "start:mongodb:injected": "node -r @lumigo/opentelemetry app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
     "bson": "4.7.2",
+    "mongodb": "^3.6.6",
     "testcontainers": "8.9.0"
   },
   "devDependencies": {
-    "optional-require": "^1.1.8",
     "async-await-retry": "^2.0.0",
-    "denque": "^2.1.0"
+    "denque": "^2.1.0",
+    "optional-require": "^1.1.8"
   }
 }

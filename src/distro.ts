@@ -3,17 +3,17 @@
  * that allows us to check the version of Node.js before anything potentially dangerous (or missing, like
  * `fs/promises` in Node.js).
  *
- * In `package.json`, we actually point at `distro-init.d.ts` for the types, so that we can use OpenTelemetry
+ * In `package.json`, we actually point at `bootstrap.d.ts` for the types, so that we can use OpenTelemetry
  * types in there, without requiring them in this file.
  *
  * Is the Node.js version is not supported, the initialization logs an error and returns a resolved promise
- * with `undefined` as value; the promise is resolves, instead of rejected, to avoid UnhandledPromiseRejectionWarning
+ * with `undefined` as value; the promise is resolved, instead of rejected, to avoid UnhandledPromiseRejectionWarning
  * or errors affecting processes using unsupported Node.js versions.
  */
 import { LUMIGO_LOGGING_NAMESPACE } from './constants';
 import { minMajor, maxMajor } from './supportedVersions.json';
 
-const bootstrap = async (): Promise<any> => {
+export const init = (() => {
   const version = process.version;
   try {
     const nodeJsMajorVersion = parseInt(version.match(/v(\d+)\..*/)[1]);
@@ -35,7 +35,7 @@ const bootstrap = async (): Promise<any> => {
     }
   } catch (err) {
     console.error(
-      `${LUMIGO_LOGGING_NAMESPACE}: Cannot parse the Node.js version '${version}; skipping initialization of the Lumigo OpenTelemetry Distro`
+      `${LUMIGO_LOGGING_NAMESPACE}: Cannot parse the Node.js version '${version}'; skipping initialization of the Lumigo OpenTelemetry Distro`
     );
     /*
      * Return a resolve promise, as opposed to a rejected one, to avoid UnhandledPromiseRejectionWarning
@@ -44,8 +44,10 @@ const bootstrap = async (): Promise<any> => {
     return Promise.resolve();
   }
 
-  const { init } = await import('./distro-init');
-  return init;
-};
-
-export const init = bootstrap();
+  try {
+    const { init: bootstrapInit } = require('./bootstrap');
+    return Promise.resolve(bootstrapInit());
+  } catch (err) {
+    console.error(`${LUMIGO_LOGGING_NAMESPACE}: bootstrap failed: ${err}`);
+  }
+})();

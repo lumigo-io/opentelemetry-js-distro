@@ -1,12 +1,11 @@
 import * as fs from 'fs';
 import { join } from 'path';
+import { version } from '../package.json';
 
 const LUMIGO_ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
 const LUMIGO_TRACER_TOKEN = 't_10faa5e13e7844aaa1234';
 
 const ECS_CONTAINER_METADATA_URI = 'http://169.255.169.255/v3';
-
-const { version } = require('../package.json');
 
 describe('Distro initialization', () => {
   const ORIGINAL_PROCESS_ENV = process.env;
@@ -48,7 +47,7 @@ describe('Distro initialization', () => {
         const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
         jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const sdkInitialized = await init;
 
         expect(OTLPTraceExporter).not.toHaveBeenCalled();
@@ -66,7 +65,7 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_SECRET_MASKING_REGEX = '["VAR_TO_MASK"]';
         process.env.VAR_TO_MASK = 'some value';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
@@ -82,7 +81,7 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.AUTHORIZATION = 'some value';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
@@ -102,7 +101,7 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         await init;
 
         expect(OTLPTraceExporter).toHaveBeenCalledWith({
@@ -123,7 +122,7 @@ describe('Distro initialization', () => {
           const { FileSpanExporter } = require('./exporters');
           jest.mock('./exporters');
 
-          const { init } = jest.requireActual('./distro-init');
+          const { init } = jest.requireActual('./distro');
           await init;
 
           expect(FileSpanExporter).toHaveBeenCalledWith('/dev/stdout');
@@ -138,7 +137,7 @@ describe('Distro initialization', () => {
         const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
         jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         await init;
 
         expect(OTLPTraceExporter).not.toHaveBeenCalled();
@@ -152,7 +151,7 @@ describe('Distro initialization', () => {
 
           jest.mock('./exporters');
 
-          const { init } = jest.requireActual('./distro-init');
+          const { init } = jest.requireActual('./distro');
           await init;
 
           const { FileSpanExporter } = require('./exporters');
@@ -169,7 +168,7 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
@@ -205,7 +204,7 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
         const resource = tracerProvider.resource;
 
@@ -230,7 +229,7 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(1);
@@ -243,7 +242,7 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(50);
@@ -255,7 +254,7 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.OTEL_SERVICE_NAME = 'service-1';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(2048);
@@ -269,7 +268,7 @@ describe('Distro initialization', () => {
         process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
         process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { tracerProvider } = await init;
 
         expect(tracerProvider._config.spanLimits['attributeValueLengthLimit']).toBe(1);
@@ -285,7 +284,7 @@ describe('Distro initialization', () => {
 
         const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { reportDependencies } = await init;
 
         expect(reportDependencies).resolves.toEqual('No Lumigo token available');
@@ -303,7 +302,7 @@ describe('Distro initialization', () => {
 
         const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { reportDependencies } = await init;
 
         expect(reportDependencies).resolves.toEqual('Dependency reporting is turned off');
@@ -321,7 +320,7 @@ describe('Distro initialization', () => {
 
         const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { reportDependencies } = await init;
 
         const res = await reportDependencies;
@@ -355,7 +354,7 @@ describe('Distro initialization', () => {
           .spyOn(utils, 'postUri')
           .mockImplementation(() => Promise.reject(new Error('FAIL!')));
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { reportDependencies } = await init;
 
         const res = await reportDependencies;
@@ -391,7 +390,7 @@ describe('Distro initialization', () => {
         await fs.promises.mkdir(join(__dirname, 'node_modules', 'foo'), { recursive: true });
         await fs.promises.mkdir(join(__dirname, 'node_modules', 'bar'), { recursive: true });
 
-        const { init } = jest.requireActual('./distro-init');
+        const { init } = jest.requireActual('./distro');
         const { reportDependencies } = await init;
 
         const res = await reportDependencies;
@@ -418,7 +417,7 @@ describe('Distro initialization', () => {
     console.error = jest.fn();
 
     await jest.isolateModulesAsync(async () => {
-      const { init } = jest.requireActual('./distro-init');
+      const { init } = jest.requireActual('./distro');
 
       await init;
 
