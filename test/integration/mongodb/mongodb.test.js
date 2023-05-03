@@ -49,7 +49,8 @@ describe({
                 console.warn('afterEach, could not stop "mongodb" docker container', e)
             }
             kill(app.pid, 'SIGHUP');
-            console.info('afterEach, stop child process')
+            console.info('afterEach, stop child process');
+            app = undefined;
         }
     });
 
@@ -63,7 +64,7 @@ describe({
                 timeout: TEST_TIMEOUT
             }
         }, async (exporterFile) => {
-            const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
             app = testApp;
 
             console.info(`port: ${port}`)
@@ -127,7 +128,7 @@ describe({
                 timeout: TEST_TIMEOUT
             }
         }, async (exporterFile) => {
-            const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
+            const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
             app = testApp;
 
             console.info(`port: ${port}`)

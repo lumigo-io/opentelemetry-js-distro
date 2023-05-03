@@ -83,7 +83,7 @@ describe.each(versionsToTest('express', 'express'))(`Integration tests express`,
     test('basic', async () => {
         const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
 
-        const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
+        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
         app = testApp;
 
         await waitOn({
@@ -135,7 +135,7 @@ describe.each(versionsToTest('express', 'express'))(`Integration tests express`,
     test('secret masking requests', async () => {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
-        const { app: testApp, port } = startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
+        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
         app = testApp;
 
         await waitOn({
