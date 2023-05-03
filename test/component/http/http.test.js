@@ -335,7 +335,8 @@ const issueHttpRequest = async (url) => await new Promise((resolve, reject) => {
     waitOn(
         {
             resources: [`${url}`],
-            delay: 0,
+            delay: 500,
+            interval: 100,
             timeout: WAIT_ON_TIMEOUT,
             simultaneous: 1,
             log: true,
