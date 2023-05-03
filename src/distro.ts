@@ -45,7 +45,15 @@ export const init = (() => {
   }
 
   try {
+    /* eslint-disable */
+    /*
+     * Use `require` instead of a dynamic `import` to ensure that the distro is
+     * entirely bootstrapped before this function returns. Otherwise, instrumentation
+     * may be installed _after_ that the packages it instruments are required by the
+     * application, and that may cause loss of span data, or outright malfunction.
+     */
     const { init: bootstrapInit } = require('./bootstrap');
+    /* eslint-enable */
     return Promise.resolve(bootstrapInit());
   } catch (err) {
     console.error(`${LUMIGO_LOGGING_NAMESPACE}: bootstrap failed: ${err}`);
