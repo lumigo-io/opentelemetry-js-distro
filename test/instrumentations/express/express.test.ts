@@ -1,18 +1,16 @@
-const { spawnSync } = require('child_process');
-const { existsSync, mkdirSync } = require('fs');
-require('jest-json');
-const { join } = require('path');
-const kill = require('tree-kill');
-const waitOn = require('wait-on')
+import { ChildProcessWithoutNullStreams, spawnSync } from 'child_process';
+import { existsSync, mkdirSync, rmdirSync, unlinkSync } from 'fs';
+import 'jest-json';
+import { join } from 'path';
+import kill from 'tree-kill';
 
-const { readSpans, startTestApp, versionsToTest } = require('../../testUtils/utils');
+import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { versionsToTest } from '../../utils/versions';
 
 const SPANS_DIR = join(__dirname, 'spans');
-const EXEC_SERVER_FOLDER = join(__dirname, 'app');
+const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 20_000;
-const WAIT_ON_INITIAL_DELAY = 3_000;
-const WAIT_ON_TIMEOUT = 10_000;
-const INTEGRATION_NAME = `express`;
+const INSTRUMENTATION_NAME = `express`;
 
 const expectedResourceAttributes = {
     attributes: {
@@ -33,17 +31,28 @@ const expectedResourceAttributes = {
     },
 };
 
-describe.each(versionsToTest('express', 'express'))('Integration tests express', (versionToTest) => {
+describe.each(versionsToTest('express', 'express'))('Instrumentation tests for the express package', (versionToTest) => {
 
-    let app;
+    let app: ChildProcessWithoutNullStreams;
 
     beforeAll(() => {
-        const res = spawnSync('npm', ['install'], {
+        const appDir = `${__dirname}/app`;
+        if (existsSync(`${appDir}/node_modules`)) {
+            rmdirSync(`${appDir}/node_modules`, {
+                recursive: true,
+            });
+        }
+
+        if (existsSync(`${appDir}/package-lock.json`)) {
+            unlinkSync(`${appDir}/package-lock.json`);
+        }
+
+        const { error } = spawnSync('npm', ['install'], {
             cwd: join(__dirname, 'app'),
         });
 
-        if (res.error) {
-            throw new Error(res.error);
+        if (error) {
+            throw error;
         }
 
         if (!existsSync(SPANS_DIR)) {
@@ -52,52 +61,38 @@ describe.each(versionsToTest('express', 'express'))('Integration tests express',
     });
 
     beforeEach(() => {
-        console.info(`beforeEach '${versionToTest}': install dependencies`)
-
-        const res = spawnSync('npm', ['install', `express@${versionToTest}`], {
+        const { error } = spawnSync('npm', ['install', `express@${versionToTest}`], {
             cwd: join(__dirname, 'app'),
         });
 
-        if (res.error) {
-            throw new Error(res.error);
+        if (error) {
+            throw error;
         }
     });
 
     afterEach(() => {
-        console.info(`afterEach '${versionToTest}': stop test app`);
         if (app) {
-            kill(app.pid, 'SIGHUP');
+            kill(app.pid!, 'SIGHUP');
         }
 
-        console.info(`afterEach '${versionToTest}': uninstall tested version`);
-
-        const res = spawnSync('npm', ['uninstall', `express@${versionToTest}`], {
+        const { error } = spawnSync('npm', ['uninstall', `express@${versionToTest}`], {
             cwd: join(__dirname, 'app'),
         });
 
-        if (res.error) {
-            throw new Error(res.error);
+        if (error) {
+            throw error;
         }
     });
 
     test('basic', async () => {
         const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
 
-        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
+        const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
         app = testApp;
 
-        await waitOn({
-            resources: [`http-get://localhost:${port}/basic`],
-            delay: WAIT_ON_INITIAL_DELAY,
-            timeout: WAIT_ON_TIMEOUT,
-            simultaneous: 1,
-            log: true,
-            validateStatus: function (status) {
-                return status >= 200 && status < 300; // default if not provided
-            },
-        });
+        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/basic`, exporterFile);
 
-        const spans = readSpans(exporterFile);
+        expect(spans).toHaveLength(2); // WHY TWO SPANS?
         expect(spans[0]).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
@@ -135,21 +130,12 @@ describe.each(versionsToTest('express', 'express'))('Integration tests express',
     test('secret masking requests', async () => {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
-        const { app: testApp, port } = await startTestApp(EXEC_SERVER_FOLDER, INTEGRATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
+        const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
         app = testApp;
 
-        await waitOn({
-            resources: [`http-get://localhost:${port}/test-scrubbing`],
-            delay: WAIT_ON_INITIAL_DELAY,
-            timeout: WAIT_ON_TIMEOUT,
-            simultaneous: 1,
-            log: true,
-            validateStatus: function (status) {
-                return status >= 200 && status < 300; // default if not provided
-            },
-        });
+        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test-scrubbing`, exporterFile);
 
-        const spans = readSpans(exporterFile);
+        expect(spans).toHaveLength(2); // WHY TWO SPANS?
         expect(spans[0]).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),

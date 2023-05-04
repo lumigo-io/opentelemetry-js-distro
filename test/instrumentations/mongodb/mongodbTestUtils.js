@@ -1,22 +1,3 @@
-import fs from 'fs';
-
-export function getSpanByName(spans, spanName) {
-    return spans.find((span) => span.name === spanName);
-}
-
-export function getInstrumentationSpansFromFile(filePath) {
-    const allFileContents = fs.readFileSync(filePath, 'utf-8');
-    const lines = allFileContents.split(/\r?\n/).filter((l) => l !== '');
-    if (
-        lines.length > 2 &&
-        lines[0].startsWith('{"traceId"') &&
-        lines[1].startsWith('{"traceId"') &&
-        lines.filter((line) => line.includes('"name":"mongodb') && !line.includes('mongodb.isMaster')).length === 5
-    ) {
-        return lines
-    }
-}
-
 export function getExpectedResourceAttributes() {
     return {
         'service.name': 'mongodb',
@@ -86,6 +67,6 @@ export function getExpectedSpanWithParent(nameSpanAttr, resourceAttributes, dbSt
     };
 }
 
-export function getFilteredSpans(spans) {
+export function filterMongoSpans(spans) {
     return spans.filter(span => span.name.includes('mongodb') && !span.name.includes('mongodb.isMaster'));
 }

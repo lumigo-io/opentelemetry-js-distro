@@ -1,8 +1,8 @@
 module.exports = {
   testEnvironment: 'node',
-  testMatch: ['**/integration/**/*.test.js'],
+  testMatch: ['**/instrumentations/**/*.test.ts'],
   roots: ['./test'],
-  setupFilesAfterEnv: ['./jest.integration.setup.js', 'jest-json'],
+  setupFilesAfterEnv: ['./jest.instrumentations.setup.js', 'jest-json'],
   reporters: [
     'default',
     'jest-summarizing-reporter'

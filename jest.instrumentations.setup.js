@@ -15,12 +15,12 @@ afterEach(() => {
 
 beforeAll(() => {
   global.console = require('console');
-  require('console-stamp')(global.console)
+  require('console-stamp')(global.console);
 });
 
 afterAll(() => {
   console.info('Starting afterAll...');
-  const versions = instrumentationsVersionManager.getInstrumantaionsVersions();
+  const versions = instrumentationsVersionManager.getInstrumantationsVersions();
   const versions_keys = Object.keys(versions);
   if (versions_keys.length) {
     versions_keys.forEach((lib) => {

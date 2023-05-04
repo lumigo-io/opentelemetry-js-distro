@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start:http:injected": "node -r @lumigo/opentelemetry app.js"
+    "start": "node -r @lumigo/opentelemetry app.js"
   },
   "author": "",
   "license": "ISC",

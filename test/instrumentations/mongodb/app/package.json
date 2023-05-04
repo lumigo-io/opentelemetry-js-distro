@@ -1,16 +1,16 @@
 {
-  "name": "lumigo-mongodb-integration-test",
+  "name": "lumigo-mongodb-test",
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start:mongodb:injected": "node -r @lumigo/opentelemetry app.js"
+    "start": "node -r @lumigo/opentelemetry app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
     "bson": "4.7.2",
-    "mongodb": "^3.6.6",
+    "mongodb": "^4.14.0",
     "testcontainers": "8.9.0"
   },
   "devDependencies": {
