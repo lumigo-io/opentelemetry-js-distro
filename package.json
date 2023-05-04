@@ -6,7 +6,7 @@
   "private": false,
   "types": "dist/src/bootstrap.d.ts",
   "scripts": {
-    "build": "rm -rf dist distro.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" distro.tgz",
+    "build": "rm -rf dist *.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" distro.tgz && cp distro.tgz wrapper.tgz",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test:unit",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
