@@ -1,12 +1,13 @@
-import { ChildProcessWithoutNullStreams, spawnSync } from 'child_process';
-import { existsSync, mkdirSync, readFileSync, rmdirSync, unlinkSync } from 'fs';
+import { ChildProcessWithoutNullStreams } from 'child_process';
+import { readFileSync } from 'fs';
 import 'jest-json';
 import ServerMock from 'mock-http-server';
 import { join } from 'path';
-import kill from 'tree-kill';
 
 import { getSpanByKind } from '../../utils/spans';
 import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { ensureDirExists, reinstallPackages } from '../../utils/test-setup';
+import { sleep } from '../../utils/time';
 
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -35,32 +36,12 @@ const expectedResourceAttributes = {
 };
 
 describe('Instrumentation tests for the http package', function () {
-    let app: ChildProcessWithoutNullStreams | undefined;
+    let app: ChildProcessWithoutNullStreams;
     let server: Server | undefined;
 
     beforeAll(() => {
-        const appDir = `${__dirname}/app`;
-        if (existsSync(`${appDir}/node_modules`)) {
-            rmdirSync(`${appDir}/node_modules`, {
-                recursive: true,
-            });
-        }
-
-        if (existsSync(`${appDir}/package-lock.json`)) {
-            unlinkSync(`${appDir}/package-lock.json`);
-        }
-
-        const { error } = spawnSync('npm', ['install'], {
-            cwd: join(__dirname, 'app'),
-        });
-
-        if (error) {
-            throw error;
-        }
-
-        if (!existsSync(SPANS_DIR)) {
-            mkdirSync(SPANS_DIR);
-        }
+        reinstallPackages(TEST_APP_DIR);
+        ensureDirExists(SPANS_DIR);
     });
 
     afterEach(async () => {
@@ -75,12 +56,8 @@ describe('Instrumentation tests for the http package', function () {
             server = undefined;
         }
 
-        if (app) {
-            kill(app.pid!, 'SIGHUP');
-            app = undefined;
-            // Wait 100 ms to give the app time to shutdown
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
+        app?.kill('SIGHUP');
+        await sleep(200);
     });
 
     test('basic http test', async () => {

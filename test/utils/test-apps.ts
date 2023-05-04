@@ -1,6 +1,5 @@
 import { existsSync, unlinkSync } from 'fs';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
-import kill from 'tree-kill';
 import waitOn from 'wait-on';
 import { readSpanDump, Span } from './spans';
 
@@ -42,13 +41,13 @@ export async function startTestApp(cwd: string, serviceName: string, spanDumpPat
 
     // catch ctrl-c
     process.once('SIGINT', (_) => {
-        kill(app.pid!, 'SIGINT');
+        app.kill('SIGINT');
         process.exit();
     });
 
     // catch kill
     process.once('SIGTERM', (_) => {
-        kill(app.pid!, 'SIGTERM');
+        app.kill('SIGTERM');
         process.exit();
     });
 

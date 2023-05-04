@@ -1,13 +1,13 @@
-import { ChildProcessWithoutNullStreams, spawnSync } from 'child_process';
-import { existsSync, mkdirSync, rmdirSync, unlinkSync } from 'fs';
+import { ChildProcessWithoutNullStreams } from 'child_process';
 import { join } from 'path';
-import kill from 'tree-kill';
 import 'jest-json';
 
 import { filterMongoSpans, getExpectedResourceAttributes, getExpectedSpan, getExpectedSpanWithParent } from './mongodbTestUtils';
 import { getSpanByName } from '../../utils/spans';
 import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
 import { versionsToTest } from '../../utils/versions';
+import { ensureDirExists, installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
+import { sleep } from '../../utils/time';
 
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -25,52 +25,20 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Instrumentation tests for t
     let app: ChildProcessWithoutNullStreams;
 
     beforeAll(() => {
-        const appDir = `${__dirname}/app`;
-        if (existsSync(`${appDir}/node_modules`)) {
-            rmdirSync(`${appDir}/node_modules`, {
-                recursive: true,
-            });
-        }
-
-        if (existsSync(`${appDir}/package-lock.json`)) {
-            unlinkSync(`${appDir}/package-lock.json`);
-        }
-
-        const { error } = spawnSync('npm', ['install'], {
-            cwd: join(__dirname, 'app'),
-        });
-
-        if (error) {
-            throw error;
-        }
-
-        if (!existsSync(SPANS_DIR)) {
-            mkdirSync(SPANS_DIR);
-        }
+        reinstallPackages(TEST_APP_DIR);
+        ensureDirExists(SPANS_DIR);
     });
 
     beforeEach(() => {
-        const { error } = spawnSync('npm', ['install', `mongodb@${versionToTest}`], {
-            cwd: join(__dirname, 'app'),
-        });
-
-        if (error) {
-            throw error;
-        }
+        installPackage(TEST_APP_DIR, 'mongodb', versionToTest);
     });
 
-    afterEach(() => {
-        if (app) {
-            kill(app.pid!, 'SIGHUP');
-        }
+    afterEach(async () => {
+        app?.kill('SIGHUP');
 
-        const { error } = spawnSync('npm', ['uninstall', `mongodb@${versionToTest}`], {
-            cwd: join(__dirname, 'app'),
-        });
+        await sleep(200);
 
-        if (error) {
-            throw error;
-        }
+        uninstallPackage(TEST_APP_DIR, 'express', versionToTest);
     });
 
     test('basics', async () => {
