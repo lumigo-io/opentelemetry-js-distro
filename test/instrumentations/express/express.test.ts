@@ -9,7 +9,8 @@ import { SpanKind } from '@opentelemetry/api';
 
 import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
 import { versionsToTest } from '../../utils/versions';
-import { getSpanByKind } from '../../utils/spans';
+import { getSpanByKind, readSpanDump } from '../../utils/spans';
+import { sleep } from '../../utils/time';
 
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -94,9 +95,18 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
         const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
         app = testApp;
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/basic`, exporterFile);
+        let spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/basic`, exporterFile);
 
-        // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
+        /*
+         * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
+         * the Server span, so we must busy-poll.
+         */
+        while (spans.length < 2) {
+            await sleep(1_000);
+            spans = readSpanDump(exporterFile);
+        }
+
+        // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1); // See #174
         expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
@@ -137,9 +147,18 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
         const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
         app = testApp;
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test-scrubbing`, exporterFile);
+        let spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test-scrubbing`, exporterFile);
 
-        // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
+        /*
+         * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
+         * the Server span, so we must busy-poll.
+         */
+        while (spans.length < 2) {
+            await sleep(1_000);
+            spans = readSpanDump(exporterFile);
+        }
+
+        // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1); // See #174
         expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
