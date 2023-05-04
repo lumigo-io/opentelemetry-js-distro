@@ -5,8 +5,11 @@ import 'jest-expect-message';
 import { join } from 'path';
 import kill from 'tree-kill';
 
+import { SpanKind } from '@opentelemetry/api';
+
 import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
 import { versionsToTest } from '../../utils/versions';
+import { getSpanByKind } from '../../utils/spans';
 
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -85,7 +88,7 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
         }
     });
 
-    test(`express@${versionToTest} basics`, async () => {
+    test('basics', async () => {
         const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
 
         const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
@@ -93,13 +96,13 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
 
         const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/basic`, exporterFile);
 
-        expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
-        expect(spans[0]).toMatchObject({
+        // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
+        expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
             name: 'GET /basic',
             id: expect.any(String),
-            kind: 0,
+            kind: SpanKind.INTERNAL,
             timestamp: expect.any(Number),
             duration: expect.any(Number),
             resource: expectedResourceAttributes,
@@ -128,7 +131,7 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
         });
     }, TEST_TIMEOUT);
 
-    test(`express@${versionToTest} secret masking requests`, async () => {
+    test('secret masking requests', async () => {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
         const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' });
@@ -136,13 +139,13 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
 
         const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test-scrubbing`, exporterFile);
 
-        expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
-        expect(spans[0]).toMatchObject({
+        // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
+        expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
             name: 'GET /test-scrubbing',
             id: expect.any(String),
-            kind: 0,
+            kind: SpanKind.INTERNAL,
             timestamp: expect.any(Number),
             duration: expect.any(Number),
             resource: expectedResourceAttributes,

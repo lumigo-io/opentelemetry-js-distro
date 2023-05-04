@@ -73,7 +73,7 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Instrumentation tests for t
         }
     });
 
-    test(`mongodb@${versionToTest}`, async () => {
+    test('basics', async () => {
         const spanDumpPath = `${SPANS_DIR}/basic-v3-@${versionToTest}.json`;
 
         const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096'});
