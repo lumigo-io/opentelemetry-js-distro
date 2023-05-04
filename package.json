@@ -33,8 +33,7 @@
     "@opentelemetry/sdk-trace-node": "1.9.0",
     "@opentelemetry/semantic-conventions": "1.9.0",
     "opentelemetry-instrumentation-express": "0.35.0",
-    "shimmer": "^1.2.1",
-    "wait-for-expect": "^3.0.2"
+    "shimmer": "^1.2.1"
   },
   "homepage": "https://github.com/lumigo-io/opentelemetry-js-distro.git",
   "devDependencies": {
