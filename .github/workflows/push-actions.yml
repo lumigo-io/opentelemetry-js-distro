@@ -3,8 +3,13 @@ on: [push]
 jobs:
 
   build-package:
-    name: Build Lumigo OpenTelemetry for JS distro
+    name: Validation ${{ matrix.npm-task }}
     runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false # We don't want linting to prevent unit testing
+      matrix:
+        npm-task: ['prettier:ci', 'lint', 'test:unit']
     steps:
       - uses: actions/checkout@v3
       - name: Set up Node
@@ -14,11 +19,10 @@ jobs:
           architecture: x64
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
       - run: npm ci
-      - run: npm run prettier:ci
-      - run: npm run lint
-      - run: npm run build
+      - run: npm run ${{ matrix.npm-task }}
       - name: Upload distro as artifact
         uses: actions/upload-artifact@v3
+        if: ${{ matrix.npm-task == 'test:unit' }}
         with:
           name: distro-package
           path: distro.tgz
@@ -42,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-package, instrumentations-to-test]
     strategy:
+      fail-fast: false # We want to see all tests being tried, rather than stop when the first fails
       matrix:
         node_cimg_tag: [ 14, 16, 18, 20 ]
         instrumentations_to_test: ${{ fromJson(needs.instrumentations-to-test.outputs.instrumentations) }}
@@ -54,9 +59,6 @@ jobs:
           architecture: x64
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
       - run: npm ci
-      - run: npm run test:unit
-      # Build it again on this Node.js version: ensuring the Distro remains buildable on the latest supported Node.js
-      # will prevent bad surprises when changing the version we use to build the "official" package.
       - run: npm run test:instrumentations
         env:
           INSTRUMENTATION_UNDER_TEST: ${{ matrix.instrumentations_to_test }}
