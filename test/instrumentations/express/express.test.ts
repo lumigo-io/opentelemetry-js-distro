@@ -92,7 +92,7 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
 
         const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/basic`, exporterFile);
 
-        // expect(spans).toHaveLength(2); // TODO Why do we occasionally get two spans?
+        expect(spans).toHaveLength(1);
         expect(spans[0]).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
@@ -135,7 +135,7 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
 
         const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test-scrubbing`, exporterFile);
 
-        // expect(spans).toHaveLength(2); // TODO Why do we occasionally get two spans?
+        expect(spans).toHaveLength(1);
         expect(spans[0]).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
