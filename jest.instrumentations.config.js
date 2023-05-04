@@ -1,6 +1,10 @@
-module.exports = {
+const allInstrumentations = '**';
+const instrumentationToTest = process.env.INSTRUMENTATION_UNDER_TEST || allInstrumentations;
+
+/** @type {import('jest').Config} */
+const config = {
   testEnvironment: 'node',
-  testMatch: ['**/instrumentations/**/*.test.ts'],
+  testMatch: [`**/instrumentations/${instrumentationToTest}/*.test.ts`],
   roots: ['./test'],
   setupFilesAfterEnv: ['./jest.instrumentations.setup.js', 'jest-json'],
   reporters: [
@@ -8,3 +12,5 @@ module.exports = {
     'jest-summarizing-reporter'
   ]
 };
+
+module.exports = config;

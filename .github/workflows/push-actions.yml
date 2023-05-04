@@ -24,14 +24,26 @@ jobs:
           path: distro.tgz
           retention-days: 5
 
+  instrumentations-to-test:
+    name: List instrumentations to test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - id: list_instrumentations
+      run: |
+        instrumentations_as_json_list=$(ls -1 test/instrumentations | jq --raw-input --slurp 'split("\n") | map(select(. != ""))' | jq -r tostring)
+        echo "instrumentations=${instrumentations_as_json_list}" >> "${GITHUB_OUTPUT}"
+    outputs:
+      instrumentations: ${{ steps.list_instrumentations.outputs.instrumentations }}
+
   supported-node-versions-testing:
     name: 'Node ${{ matrix.node_cimg_tag }} ${{ matrix.npm_task }}'
     runs-on: ubuntu-latest
-    needs: [build-package]
+    needs: [build-package, instrumentations-to-test]
     strategy:
       matrix:
         node_cimg_tag: [ 14, 16, 18, 20 ]
-        npm_task: ['test:unit', 'test:instrumentations']
+        instrumentations_to_test: ${{ fromJson(needs.instrumentations-to-test.outputs.instrumentations) }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Node
@@ -40,11 +52,12 @@ jobs:
           node-version: ${{ matrix.node_cimg_tag }}
           architecture: x64
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
-      - run: npm ci
+      - run: npm run test:unit
       # Build it again on this Node.js version: ensuring the Distro remains buildable on the latest supported Node.js
       # will prevent bad surprises when changing the version we use to build the "official" package.
-      - run: npm run build
-      - run: npm run ${{ matrix.npm_task }}
+      - run: npm run test:instrumentations
+        env:
+          INSTRUMENTATION_UNDER_TEST: ${{ matrix.instrumentations_to_test }}
 
   unsupported-node-versions-testing:
     name: 'Node ${{ matrix.node_cimg_tag }} unsupported'
