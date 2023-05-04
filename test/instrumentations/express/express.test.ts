@@ -1,6 +1,7 @@
 import { ChildProcessWithoutNullStreams, spawnSync } from 'child_process';
 import { existsSync, mkdirSync, rmdirSync, unlinkSync } from 'fs';
 import 'jest-json';
+import 'jest-expect-message';
 import { join } from 'path';
 import kill from 'tree-kill';
 
@@ -92,7 +93,7 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
 
         const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/basic`, exporterFile);
 
-        expect(spans).toHaveLength(1);
+        expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
         expect(spans[0]).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
@@ -135,7 +136,7 @@ describe.each(versionsToTest('express', 'express'))('Instrumentation tests for t
 
         const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test-scrubbing`, exporterFile);
 
-        expect(spans).toHaveLength(1);
+        expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1);
         expect(spans[0]).toMatchObject({
             traceId: expect.any(String),
             parentId: expect.any(String),
