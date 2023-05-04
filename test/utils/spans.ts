@@ -25,5 +25,10 @@ export function getSpanByKind(spans: Span[] = [], spanKindValue: SpanKind): Span
 }
 
 export function readSpanDump(spanDumpPath: string): Span[] {
-    return readFileSync(spanDumpPath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
+    try {
+        return readFileSync(spanDumpPath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
+    } catch (err) {
+        // Might be we try to read as a new span is being written, and the JSON is still malformed
+        return [];
+    }
 }
