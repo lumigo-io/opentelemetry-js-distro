@@ -25,7 +25,7 @@ jobs:
           retention-days: 5
 
   supported-node-versions-testing:
-    name: 'Test Node ${{ matrix.node_cimg_tag }} support: ${{ matrix.npm_task }}'
+    name: 'Node ${{ matrix.node_cimg_tag }} ${{ matrix.npm_task }}'
     runs-on: ubuntu-latest
     needs: [build-package]
     strategy:
@@ -47,7 +47,7 @@ jobs:
       - run: npm run ${{ matrix.npm_task }}
 
   unsupported-node-versions-testing:
-    name: 'Test Node ${{ matrix.node_cimg_tag }} unsupported'
+    name: 'Node ${{ matrix.node_cimg_tag }} unsupported'
     runs-on: ubuntu-latest
     needs: [build-package]
     strategy:
