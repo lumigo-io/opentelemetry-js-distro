@@ -13,11 +13,10 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
-import { extractEnvVars, getMaxSize } from './utils';
+import { getMaxSize } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { LumigoDistroDetector, LumigoKubernetesDetector } from './resources/detectors';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
-import { CommonUtils } from '@lumigo/node-core';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -45,6 +44,7 @@ const DEFAULT_DEPENDENCIES_ENDPOINT =
 
 import { logger } from './logging';
 import { dirname, join } from 'path';
+import { ProcessEnvironmentDetector } from './resources/detectors/ProcessEnvironmentDetector';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
@@ -113,7 +113,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
     const lumigoReportDependencies =
       process.env.LUMIGO_REPORT_DEPENDENCIES?.toLowerCase() !== 'false';
 
-    const detectors = [
+    const infrastructureDetectors = [
       envDetector,
       processDetector,
       new LumigoDistroDetector(distroVersion),
@@ -125,24 +125,29 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
        * The ECS detector does not have a component logger we can suppress, to we need to
        * check whether we should try it at all.
        */
-      detectors.push(awsResourceDetectors.awsEcsDetector);
+      infrastructureDetectors.push(awsResourceDetectors.awsEcsDetector);
     }
 
-    const detectedResource = Resource.default().merge(
+    /*
+     * These are the resources describing the infrastructure and the runtime that will be
+     * sent along with the dependency reporting.
+     */
+    const infrastructureResource = Resource.default().merge(
       await detectResources({
-        detectors,
+        detectors: infrastructureDetectors,
       })
     );
 
     const framework = instrumentedModules.includes('express') ? 'express' : 'node';
 
+    const resource = new Resource({
+      framework,
+    })
+      .merge(infrastructureResource)
+      .merge(await new ProcessEnvironmentDetector().detect());
+
     const tracerProvider = new NodeTracerProvider({
-      resource: detectedResource.merge(
-        new Resource({
-          framework,
-          'process.environ': CommonUtils.payloadStringify(extractEnvVars(), 20_000),
-        })
-      ),
+      resource,
       spanLimits: {
         attributeValueLengthLimit: getMaxSize(),
       },
@@ -193,7 +198,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
         reportDependencies = report(
           DEFAULT_DEPENDENCIES_ENDPOINT,
           lumigoToken,
-          detectedResource.attributes
+          infrastructureResource.attributes
         );
       }
     } else {

@@ -34,11 +34,11 @@ describe.each(versionsToTest('mongodb', 'mongodb'))('Instrumentation tests for t
     });
 
     afterEach(async () => {
-        app?.kill('SIGHUP');
+        if (app?.kill('SIGHUP')) {
+            await sleep(200);
+        }
 
-        await sleep(200);
-
-        uninstallPackage(TEST_APP_DIR, 'express', versionToTest);
+        uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
     });
 
     test('basics', async () => {

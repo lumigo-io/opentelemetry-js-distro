@@ -1,3 +1,4 @@
+require('@lumigo/opentelemetry');
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
@@ -9,18 +10,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.get('/test-scrubbing', async (req, res) => {
-  res.send({
+app.get('/test-scrubbing', async (_, res) => {
+  res.status(200).send({
     "Authorization": "SECRET"
-  }, 200);
+  });
 });
 
-app.get('/', async (req, res) => {
-  res.send("server is ready").status(200);
+app.get('/', async (_, res) => {
+  res.status(200).send("server is ready");
 });
 
-app.get('/basic', async (req, res) => {
-  res.send('Hello world').status(200);
+app.get('/basic', async (_, res) => {
+  res.setHeader('contenty-type', 'text/plain').status(200).send('Hello world');
 });
 
 const server = app.listen(0, () => {

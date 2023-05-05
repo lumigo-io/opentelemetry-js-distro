@@ -1,5 +1,4 @@
 import { extractEnvVars, getMaxSize, safeRequire } from './utils';
-import http from 'http';
 
 describe('utils tests', () => {
   afterEach(() => {

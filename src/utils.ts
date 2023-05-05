@@ -5,7 +5,7 @@ import * as https from 'https';
 import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
 
-const DEFAULT_MAX_ENTRY_SIZE = 2048;
+export const DEFAULT_MAX_ENTRY_SIZE = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
 
 interface HttpHeaders {
