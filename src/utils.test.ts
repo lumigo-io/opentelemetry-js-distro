@@ -1,4 +1,4 @@
-import { getMaxSize, safeRequire } from './utils';
+import { getSpanAttributeMaxLength, safeRequire } from './utils';
 
 describe('utils tests', () => {
   afterEach(() => {
@@ -30,40 +30,42 @@ describe('utils tests', () => {
   });
 });
 
-describe('get max size value according to env. vars', () => {
-  beforeEach(() => {
-    jest.resetModules();
-    process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined;
-    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined;
-  });
+describe('getSpanAttributeMaxLength', () => {
+  describe('value according to env. vars', () => {
+    beforeEach(() => {
+      jest.resetModules();
+      process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined;
+      process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = undefined;
+    });
 
-  it('get max size when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', () => {
-    process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
-    const size = getMaxSize();
-    expect(size).toEqual(1);
-  });
+    it('when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', () => {
+      process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
+      const size = getSpanAttributeMaxLength();
+      expect(size).toEqual(1);
+    });
 
-  it('get max size when OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', () => {
-    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
-    const size = getMaxSize();
-    expect(size).toEqual(50);
-  });
+    it('when OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT is set', () => {
+      process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
+      const size = getSpanAttributeMaxLength();
+      expect(size).toEqual(50);
+    });
 
-  it('get max size when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT and OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT are set', () => {
-    process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
-    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
-    const size = getMaxSize();
-    expect(size).toEqual(1);
-  });
+    it('when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT and OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT are set', () => {
+      process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = '1';
+      process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT = '50';
+      const size = getSpanAttributeMaxLength();
+      expect(size).toEqual(1);
+    });
 
-  it('get max size when no env. vars are set, get default value', () => {
-    const size = getMaxSize();
-    expect(size).toEqual(2048);
-  });
+    it('when no env. vars are set, get default value', () => {
+      const size = getSpanAttributeMaxLength();
+      expect(size).toEqual(2048);
+    });
 
-  it('get max size when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set to NaN will return default value', () => {
-    process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = 'a';
-    const size = getMaxSize();
-    expect(size).toEqual(2048);
+    it('when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set to NaN will return default value', () => {
+      process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = 'a';
+      const size = getSpanAttributeMaxLength();
+      expect(size).toEqual(2048);
+    });
   });
 });
