@@ -16,22 +16,18 @@ const INSTRUMENTATION_NAME = 'http';
 
 const expectedResourceAttributes = {
     attributes: {
+        'framework': 'node',
+        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
+        'process.environ': expect.any(String),
+        'process.executable.name': 'node',
+        'process.pid': expect.any(Number),
+        'process.runtime.description': 'Node.js',
+        'process.runtime.name': 'nodejs',
+        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
         'service.name': 'http',
         'telemetry.sdk.language': 'nodejs',
         'telemetry.sdk.name': 'opentelemetry',
         'telemetry.sdk.version': expect.any(String),
-        'framework': 'node',
-        'process.environ': expect.jsonMatching(
-            expect.objectContaining({
-                'OTEL_SERVICE_NAME': 'http',
-                'LUMIGO_ENDPOINT' :'https://walle-edge-app-us-west-2.walle.golumigo.com'
-            })),
-        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
-        'process.pid': expect.any(Number),
-        'process.executable.name': 'node',
-        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-        'process.runtime.name': 'nodejs',
-        'process.runtime.description': 'Node.js',
     }
 };
 

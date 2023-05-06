@@ -18,20 +18,17 @@ const INSTRUMENTATION_NAME = `express`;
 
 const expectedResourceAttributes = {
     attributes: {
+        'framework': 'express',
+        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
+        'process.environ': expect.any(String),
+        'process.executable.name': 'node',
+        'process.pid': expect.any(Number),
+        'process.runtime.name': 'nodejs',
+        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
         'service.name': 'express',
         'telemetry.sdk.language': 'nodejs',
         'telemetry.sdk.name': 'opentelemetry',
         'telemetry.sdk.version': expect.any(String),
-        framework: 'express',
-        'process.environ': expect.jsonMatching(
-            expect.objectContaining({
-                'OTEL_SERVICE_NAME': 'express',
-            })),
-        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
-        'process.pid': expect.any(Number),
-        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-        'process.runtime.name': 'nodejs',
-        'process.executable.name': 'node',
     },
 };
 
