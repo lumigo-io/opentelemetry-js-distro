@@ -9,7 +9,12 @@ import { Span } from '@opentelemetry/api';
 import { InstrumentationIfc } from '../hooksIfc';
 import { logger } from '../../logging';
 import { getAwsServiceData } from '../../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, getMaxSize } from '../../utils';
+import {
+  isAwsService,
+  runOneTimeWrapper,
+  safeExecute,
+  getSpanAttributeMaxLength,
+} from '../../utils';
 import { contentType, scrubHttpPayload } from '../../tools/payloads';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -89,7 +94,7 @@ export const HttpHooks: InstrumentationIfc<
         const scrubbedHeaders = CommonUtils.payloadStringify(
           requestData.request.headers,
           ScrubContext.HTTP_REQUEST_HEADERS,
-          getMaxSize()
+          getSpanAttributeMaxLength()
         );
         span.setAttribute('http.request.headers', scrubbedHeaders);
         const emitWrapper = Http.httpRequestEmitBeforeHookWrapper(requestData, span);
@@ -121,7 +126,7 @@ export const HttpHooks: InstrumentationIfc<
     const scrubbedHeaders = CommonUtils.payloadStringify(
       response.headers,
       ScrubContext.HTTP_RESPONSE_HEADERS,
-      getMaxSize()
+      getSpanAttributeMaxLength()
     );
     if (response.headers) {
       span.setAttribute('http.response.headers', scrubbedHeaders);
@@ -257,7 +262,7 @@ export class Http {
     onRequestEnd: (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => void
   ) {
     let body = '';
-    const maxPayloadSize = getMaxSize();
+    const maxPayloadSize = getSpanAttributeMaxLength();
     return function (args) {
       let truncated = false;
       const { headers, statusCode } = response;

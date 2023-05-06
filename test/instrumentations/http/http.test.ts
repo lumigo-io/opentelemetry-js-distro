@@ -164,7 +164,8 @@ describe('Instrumentation tests for the http package', function () {
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);
-        expect(Object.values(JSON.parse(serverSpan.resource.attributes['process.environ'] as string)).join('').length).toBeLessThanOrEqual(5);
+        // process.environ is a resource attribute, therefore not affected by OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT
+        expect(Object.values(JSON.parse(serverSpan.resource.attributes['process.environ'] as string)).join('').length).toBeGreaterThan(5);
         expect(serverSpan.attributes).toMatchObject(
             {
                 'http.host': 'l',

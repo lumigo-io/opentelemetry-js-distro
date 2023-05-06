@@ -1,6 +1,6 @@
 import { payloadStringify, ScrubContext } from '@lumigo/node-core';
 import { logger } from '../logging';
-import { getMaxSize } from '../utils';
+import { getSpanAttributeMaxLength } from '../utils';
 
 export const contentType = (
   headers: NodeJS.Dict<number | string | string[]>
@@ -23,7 +23,7 @@ export const scrubHttpPayload = (
   payload: any,
   contentType = 'text/plain',
   scrubContext: ScrubContext,
-  maxScrubbedPayloadSize = getMaxSize()
+  maxScrubbedPayloadSize = getSpanAttributeMaxLength()
 ): string => {
   if (contentType?.startsWith('application/json')) {
     if (typeof payload === 'string') {

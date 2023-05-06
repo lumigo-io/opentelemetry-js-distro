@@ -13,7 +13,7 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
-import { getMaxSize } from './utils';
+import { getSpanAttributeMaxLength } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { LumigoDistroDetector, LumigoKubernetesDetector } from './resources/detectors';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
@@ -149,7 +149,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
     const tracerProvider = new NodeTracerProvider({
       resource,
       spanLimits: {
-        attributeValueLengthLimit: getMaxSize(),
+        attributeValueLengthLimit: getSpanAttributeMaxLength(),
       },
     });
 

@@ -5,7 +5,7 @@ import * as https from 'https';
 import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
 
-export const DEFAULT_MAX_ENTRY_SIZE = 2048;
+export const DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
 
 interface HttpHeaders {
@@ -227,10 +227,16 @@ export const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getMaxSize = () => {
+export const getSpanAttributeMaxLength = () => {
   return (
     parseInt(process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT) ||
     parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT) ||
-    DEFAULT_MAX_ENTRY_SIZE
+    DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT
+  );
+};
+
+export const getResourceAttributeMaxLength = () => {
+  return (
+    parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT) || DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT
   );
 };

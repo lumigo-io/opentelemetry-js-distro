@@ -3,7 +3,7 @@ import type express from 'express';
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { Span } from '@opentelemetry/api';
 
-import { getMaxSize, safeExecute } from '../../utils';
+import { getSpanAttributeMaxLength, safeExecute } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
 import { contentType, scrubHttpPayload } from '../../tools/payloads';
 
@@ -16,12 +16,20 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
     if (req.query)
       span.setAttribute(
         'http.request.query',
-        CommonUtils.payloadStringify(req.query, ScrubContext.HTTP_REQUEST_QUERY, getMaxSize())
+        CommonUtils.payloadStringify(
+          req.query,
+          ScrubContext.HTTP_REQUEST_QUERY,
+          getSpanAttributeMaxLength()
+        )
       );
     if (req.headers)
       span.setAttribute(
         'http.request.headers',
-        CommonUtils.payloadStringify(req.headers, ScrubContext.HTTP_REQUEST_HEADERS, getMaxSize())
+        CommonUtils.payloadStringify(
+          req.headers,
+          ScrubContext.HTTP_REQUEST_HEADERS,
+          getSpanAttributeMaxLength()
+        )
       );
     let response;
     res.send = function (data: any) {
@@ -40,7 +48,7 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
             CommonUtils.payloadStringify(
               res.getHeaders(),
               ScrubContext.HTTP_RESPONSE_HEADERS,
-              getMaxSize()
+              getSpanAttributeMaxLength()
             )
           ); // TODO This is not compliant with the HTTP semantic conventions
         if (response)

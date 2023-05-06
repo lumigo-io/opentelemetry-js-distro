@@ -1,16 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
-import { getMaxSize } from '../../utils';
+import { getResourceAttributeMaxLength } from '../../utils';
 
 export class ProcessEnvironmentDetector implements Detector {
   detect = async (_config?: ResourceDetectionConfig): Promise<Resource> =>
     Promise.resolve(
       new Resource({
         'process.environ': CommonUtils.payloadStringify(
-          process.env,
+          /*
+           * Stringify a shallow copy, as the OpenTelemetry SDK modifes the object
+           * in a way that does not play nice with the way we use Symbols in the
+           * scrubbing process.
+           */
+          Object.create(process.env),
           ScrubContext.PROCESS_ENVIRONMENT,
-          getMaxSize()
+          getResourceAttributeMaxLength()
         ),
       })
     );
