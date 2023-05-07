@@ -1,4 +1,5 @@
 import { diag, DiagLogLevel, DiagConsoleLogger } from '@opentelemetry/api';
+import { LUMIGO_LOGGING_NAMESPACE } from './constants';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -10,10 +11,11 @@ declare global {
 }
 
 export const logger = diag.createComponentLogger({
-  namespace: '@lumigo/opentelemetry',
+  namespace: LUMIGO_LOGGING_NAMESPACE,
 });
 
-diag.setLogger(
-  new DiagConsoleLogger(),
-  process.env.LUMIGO_DEBUG?.toLowerCase() === 'true' ? DiagLogLevel.DEBUG : DiagLogLevel.INFO
-);
+diag.setLogger(new DiagConsoleLogger(), {
+  logLevel:
+    process.env.LUMIGO_DEBUG?.toLowerCase() === 'true' ? DiagLogLevel.DEBUG : DiagLogLevel.INFO,
+  suppressOverrideMessage: true, // Suppress noise in logs
+});
