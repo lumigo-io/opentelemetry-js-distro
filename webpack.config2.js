@@ -2,7 +2,7 @@ const nodeExternals = require('webpack-node-externals');
 const path = require('path');
 
 module.exports = {
-  entry: './src/wrapper.ts',
+  entry: './src/distro.ts',
   mode: 'production',
   devtool: 'source-map',
   target: 'node',
@@ -45,8 +45,8 @@ module.exports = {
 
   output: {
     globalObject: 'this',
-    library: 'lumigoNodeWrapper',
-    filename: 'wrapper.js',
+    library: '@lumigo/opentelemetry',
+    filename: 'distro.js',
     libraryTarget: 'umd',
     umdNamedDefine: true,
     path: path.resolve(__dirname, 'dist'),
