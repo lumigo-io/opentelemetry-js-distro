@@ -4,6 +4,7 @@ import { Span } from '@opentelemetry/api';
 
 import { safeExecute } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
+import { CommonUtils } from '@lumigo/node-core';
 
 type ExpressRequestType = { req: express.Request; res: express.Response };
 
@@ -11,9 +12,9 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
   requestHook(span: Span, { req, res }: ExpressRequestType): void {
     const oldResEnd = res.end;
     const oldResSend = res.send;
-    if (req.query) span.setAttribute('http.request.query', JSON.stringify(req.query, undefined, 0));
+    if (req.query) span.setAttribute('http.request.query', CommonUtils.payloadStringify(req.query));
     if (req.headers)
-      span.setAttribute('http.request.headers', JSON.stringify(req.headers, undefined, 0));
+      span.setAttribute('http.request.headers', CommonUtils.payloadStringify(req.headers));
     let response;
     res.send = function (data: any) {
       response = data;
@@ -28,12 +29,12 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
         if (res.getHeaders())
           span.setAttribute(
             'http.response.headers',
-            JSON.stringify(res.getHeaders(), undefined, 0)
+            CommonUtils.payloadStringify(res.getHeaders())
           ); // TODO This is not compliant with the HTTP semantic conventions
         if (response)
-          span.setAttribute('http.response.body', JSON.stringify(response, undefined, 0));
+          span.setAttribute('http.response.body', CommonUtils.payloadStringify(response));
         if (req.body)
-          span.setAttribute('http.request.body', JSON.stringify(req.body, undefined, 0));
+          span.setAttribute('http.request.body', CommonUtils.payloadStringify(req.body));
         res.end = oldResEnd;
         return origRes;
       })();

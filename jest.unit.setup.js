@@ -1,9 +1,9 @@
 const oldEnv = Object.assign({}, process.env);
 
 beforeEach(() => {
- process.env = { ...oldEnv };
+    process.env = { ...oldEnv };
 });
 
 afterEach(() => {
- process.env = { ...oldEnv };
- });
+    process.env = { ...oldEnv };
+});
