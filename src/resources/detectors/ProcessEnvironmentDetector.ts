@@ -13,7 +13,7 @@ export class ProcessEnvironmentDetector implements Detector {
            * in a way that does not play nice with the way we use Symbols in the
            * scrubbing process.
            */
-          Object.create(process.env),
+          { ...process.env },
           ScrubContext.PROCESS_ENVIRONMENT,
           getResourceAttributeMaxLength()
         ),
