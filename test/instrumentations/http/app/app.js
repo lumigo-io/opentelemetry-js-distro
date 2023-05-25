@@ -27,7 +27,7 @@ const requestListener = async function (req, res) {
             res.end(JSON.stringify(result.data));
             break
         case '/large-response':
-            const big_result = await axios.get(`${targetUrl}/search`, {
+            const big_result = await axios.put(`${targetUrl}/search`, 'Some very awesome payload', {
                 headers: {
                     header: 'a',
                 },

@@ -74,6 +74,27 @@ describe('Distro initialization', () => {
       });
     });
 
+    describe.each(['LUMIGO_SECRET_MASKING_REGEX', 'LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT'])(
+      'should be redacted entirely',
+      (envVarName) => {
+        test(`with the ${envVarName} set to 'all'`, async () => {
+          await jest.isolateModulesAsync(async () => {
+            process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
+            process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
+            process.env.OTEL_SERVICE_NAME = 'service-1';
+            process.env[envVarName] = 'all';
+            process.env.VAR_TO_MASK = 'some value';
+
+            const { init } = jest.requireActual('./distro');
+            const { tracerProvider } = await init;
+            const resource = tracerProvider.resource;
+
+            expect(JSON.parse(resource.attributes['process.environ'])).toEqual('****');
+          });
+        });
+      }
+    );
+
     test('should be redacted from env vars', async () => {
       await jest.isolateModulesAsync(async () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';

@@ -31,6 +31,9 @@ import { logger } from '../logging';
  * exporter in production.
  */
 
+const PRINT_SPANS_TO_CONSOLE_LOG = 'console:log';
+const PRINT_SPANS_TO_CONSOLE_ERROR = 'console:error';
+
 /* eslint-disable no-console */
 export class FileSpanExporter implements SpanExporter {
   private readonly file: string;
@@ -39,8 +42,11 @@ export class FileSpanExporter implements SpanExporter {
 
   constructor(file: string) {
     this.file = file;
-    this._fd = openSync(file, 'w');
-    this._shutdownOnce = new BindOnceFuture(this._shutdown.bind(this), this);
+
+    if (![PRINT_SPANS_TO_CONSOLE_LOG, PRINT_SPANS_TO_CONSOLE_ERROR].includes(file)) {
+      this._fd = openSync(file, 'w');
+      this._shutdownOnce = new BindOnceFuture(this._shutdown.bind(this), this);
+    }
   }
 
   /**
@@ -59,7 +65,13 @@ export class FileSpanExporter implements SpanExporter {
       spans.map((span) => JSON.stringify(this._exportInfo(span), undefined, 0)).join('\n') + '\n';
 
     try {
-      appendFileSync(this._fd, spansJson);
+      if (this._fd) {
+        appendFileSync(this._fd, spansJson);
+      } else if (this.file === PRINT_SPANS_TO_CONSOLE_LOG) {
+        console.log(spansJson);
+      } else if (this.file === PRINT_SPANS_TO_CONSOLE_ERROR) {
+        console.error(spansJson);
+      }
     } catch (err) {
       return resultCallback({
         code: ExportResultCode.FAILED,
@@ -103,7 +115,7 @@ export class FileSpanExporter implements SpanExporter {
    * Shutdown the exporter.
    */
   shutdown(): Promise<void> {
-    return this._shutdownOnce.call();
+    return this._shutdownOnce?.call();
   }
 
   /**
@@ -136,12 +148,14 @@ export class FileSpanExporter implements SpanExporter {
 
   private _flushAll = async (): Promise<void> =>
     new Promise((resolve, reject) => {
-      try {
-        fsyncSync(this._fd);
-      } catch (err) {
-        logger.error(`An error occured while flushing the spandump to file '${this.file}'`, err);
-        reject(err);
-        return;
+      if (this._fd) {
+        try {
+          fsyncSync(this._fd);
+        } catch (err) {
+          logger.error(`An error occured while flushing the spandump to file '${this.file}'`, err);
+          reject(err);
+          return;
+        }
       }
 
       resolve();

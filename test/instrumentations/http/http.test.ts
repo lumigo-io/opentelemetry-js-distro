@@ -16,22 +16,18 @@ const INSTRUMENTATION_NAME = 'http';
 
 const expectedResourceAttributes = {
     attributes: {
+        'framework': 'node',
+        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
+        'process.environ': expect.any(String),
+        'process.executable.name': 'node',
+        'process.pid': expect.any(Number),
+        'process.runtime.description': 'Node.js',
+        'process.runtime.name': 'nodejs',
+        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
         'service.name': 'http',
         'telemetry.sdk.language': 'nodejs',
         'telemetry.sdk.name': 'opentelemetry',
         'telemetry.sdk.version': expect.any(String),
-        'framework': 'node',
-        'process.environ': expect.jsonMatching(
-            expect.objectContaining({
-                'OTEL_SERVICE_NAME': 'http',
-                'LUMIGO_ENDPOINT' :'https://walle-edge-app-us-west-2.walle.golumigo.com'
-            })),
-        'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
-        'process.pid': expect.any(Number),
-        'process.executable.name': 'node',
-        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-        'process.runtime.name': 'nodejs',
-        'process.runtime.description': 'Node.js',
     }
 };
 
@@ -56,8 +52,9 @@ describe('Instrumentation tests for the http package', function () {
             server = undefined;
         }
 
-        app?.kill('SIGHUP');
-        await sleep(200);
+        if (app?.kill('SIGHUP')) {
+            await sleep(200);
+        };
     });
 
     test('basic http test', async () => {
@@ -128,7 +125,6 @@ describe('Instrumentation tests for the http package', function () {
                 'http.status_code': 200,
                 'http.status_text': 'OK',
                 'http.target': '/jokes/categories',
-                'http.request.body': '""',
                 'http.request.headers': expect.stringMatching(/{.*}/),
                 'http.response.headers': expect.stringMatching(/{.*}/),
                 'http.response.body': expect.jsonMatching(['animal', 'career', 'celebrity', 'dev', 'explicit', 'fashion', 'food', 'history', 'money', 'movie', 'music', 'political', 'religion', 'science', 'sport', 'travel']),
@@ -168,7 +164,8 @@ describe('Instrumentation tests for the http package', function () {
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);
-        expect(Object.values(JSON.parse(serverSpan.resource.attributes['process.environ'] as string)).join('').length).toBeLessThanOrEqual(5);
+        // process.environ is a resource attribute, therefore not affected by OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT
+        expect(Object.values(JSON.parse(serverSpan.resource.attributes['process.environ'] as string)).join('').length).toBeGreaterThan(5);
         expect(serverSpan.attributes).toMatchObject(
             {
                 'http.host': 'l',
@@ -190,7 +187,6 @@ describe('Instrumentation tests for the http package', function () {
                 'http.url': 'h',
                 'http.method': 'G',
                 'http.target': '/',
-                'http.request.body': '"',
                 'http.host': 'l',
                 'http.status_code': 200,
                 'http.status_text': 'O',
@@ -207,7 +203,7 @@ describe('Instrumentation tests for the http package', function () {
 
         const { targetServer, targetPort } = await startTargetServer();
         targetServer.on({
-            method: 'GET',
+            method: 'PUT',
             path: '/search',
             reply: {
                 status: 200,
@@ -249,10 +245,10 @@ describe('Instrumentation tests for the http package', function () {
         expect(clientSpan.attributes).toMatchObject(
             {
                 'http.url': 'htt',
-                'http.method': 'GET',
+                'http.method': 'PUT',
                 'http.host': `loc`,
                 'http.target': '/se',
-                'http.request.body': '""',
+                'http.request.body': 'S✂',
                 'http.status_code': 200,
                 'http.status_text': 'OK',
                 'http.flavor': '1.1',
@@ -268,7 +264,7 @@ describe('Instrumentation tests for the http package', function () {
 
         const { targetServer, targetPort } = await startTargetServer();
         targetServer.on({
-            method: 'GET',
+            method: 'PUT',
             path: '/search',
             reply: {
                 status: 200,
@@ -308,16 +304,79 @@ describe('Instrumentation tests for the http package', function () {
         expect(clientSpan.attributes).toMatchObject(
             {
                 'http.url': `http://localhost:${targetPort}/search`,
-                'http.method': 'GET',
+                'http.method': 'PUT',
                 'http.host': `localhost:${targetPort}`,
                 'http.target': '/search',
-                'http.request.body': '""',
+                'http.request.body': '"Some very awesome payload"',
                 'http.status_code': 200,
                 'http.status_text': 'OK',
                 'http.flavor': '1.1',
                 'http.request.headers': expect.stringMatching(/{.*}/),
                 'http.response.headers': expect.stringMatching(/{.*}/),
                 'http.response.body': expect.stringMatching(/(.*){2048}/),
+            }
+        );
+    }, TEST_TIMEOUT);
+
+    test('http test - http secret scrubbing', async () => {
+        const spanDumpPath = `${SPANS_DIR}/spans-${INSTRUMENTATION_NAME}-default-attr-length.json`;
+
+        const { targetServer, targetPort } = await startTargetServer();
+        targetServer.on({
+            method: 'PUT',
+            path: '/search',
+            reply: {
+                status: 200,
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: readFileSync(join(__dirname, 'test-resources', 'large-response.json')),
+            }
+        });
+        server = targetServer;
+
+        const { app: testApp, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
+            TARGET_URL: `http://localhost:${targetPort}`,
+            LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES: 'all',
+            LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_HEADERS: 'all',
+            LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES: 'all',
+            LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS: 'all',
+        });
+        app = testApp;
+
+        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/large-response`, spanDumpPath);
+
+        expect(spans).toHaveLength(2);
+
+        const serverSpan = getSpanByKind(spans, 1);
+        expect(serverSpan.attributes).toMatchObject(
+            {
+                'http.host': `localhost:${port}`,
+                'net.host.name': 'localhost',
+                'http.method': 'GET',
+                'http.flavor': '1.1',
+                'http.status_code': 200,
+                'http.status_text': 'OK',
+                'http.url': `http://localhost:${port}/large-response`,
+                'lumigo.execution_tags.foo': 'bar',
+                'lumigo.execution_tags.date': 1234567
+            }
+        );
+
+        const clientSpan = getSpanByKind(spans, 2);
+        expect(clientSpan.attributes).toMatchObject(
+            {
+                'http.flavor': '1.1',
+                'http.url': `http://localhost:${targetPort}/search`,
+                'http.method': 'PUT',
+                'http.host': `localhost:${targetPort}`,
+                'http.request.body': '"****"',
+                'http.request.headers': '"****"',
+                'http.response.headers': '"****"',
+                'http.response.body': '"****"',
+                'http.status_code': 200,
+                'http.status_text': 'OK',
+                'http.target': '/search',
             }
         );
     }, TEST_TIMEOUT);
@@ -373,9 +432,7 @@ describe('Instrumentation tests for the http package', function () {
                 'http.status_text': 'CREATED',
                 'http.flavor': '1.1',
                 'http.request.headers': expect.not.stringMatching(/{.*traceparent.*}/),
-                'http.request.body': '""',
                 'http.response.headers': expect.any(String),
-                'http.response.body': '""',
             }
         );
     }, TEST_TIMEOUT);

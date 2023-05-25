@@ -5,16 +5,13 @@ export function getExpectedResourceAttributes() {
         'telemetry.sdk.name': 'opentelemetry',
         'telemetry.sdk.version':  expect.any(String),
         'framework': 'node',
-        'process.environ': expect.jsonMatching(
-            expect.objectContaining({
-                'OTEL_SERVICE_NAME': 'mongodb',
-            })),
+        'process.environ': expect.any(String),
         'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
         'process.pid': expect.any(Number),
         'process.executable.name': 'node',
-        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-        'process.runtime.name': 'nodejs',
         'process.runtime.description': 'Node.js',
+        'process.runtime.name': 'nodejs',
+        'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
     };
 }
 

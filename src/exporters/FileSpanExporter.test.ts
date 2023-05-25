@@ -1,6 +1,7 @@
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { Span, SpanKind } from '@opentelemetry/api';
 import mock from 'mock-fs';
+import mockConsole from 'jest-mock-console';
 
 import { FileSpanExporter } from './index';
 
@@ -49,6 +50,64 @@ describe('FileSpanExporter tests', () => {
         kind: SpanKind.INTERNAL,
       })
     );
+  });
+
+  test('should write one span to console.log', async () => {
+    const restoreConsole = mockConsole();
+    try {
+      const exporterUnderTest = new FileSpanExporter('console:log');
+
+      const provider = new BasicTracerProvider();
+      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+
+      const root: Span = provider.getTracer('default').startSpan('root');
+      root.setAttribute('foo', 'bar');
+      root.end();
+
+      await provider.shutdown();
+
+      expect(console.log).toHaveBeenCalledTimes(1);
+      const actualSpan = console.log.mock.calls[0][0];
+
+      expect(JSON.parse(actualSpan)).toEqual(
+        expect.objectContaining({
+          name: 'root',
+          attributes: { foo: 'bar' },
+          kind: SpanKind.INTERNAL,
+        })
+      );
+    } finally {
+      restoreConsole();
+    }
+  });
+
+  test('should write one span to console error', async () => {
+    const restoreConsole = mockConsole();
+    try {
+      const exporterUnderTest = new FileSpanExporter('console:error');
+
+      const provider = new BasicTracerProvider();
+      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+
+      const root: Span = provider.getTracer('default').startSpan('root');
+      root.setAttribute('foo', 'bar');
+      root.end();
+
+      await provider.shutdown();
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+      const actualSpan = console.error.mock.calls[0][0];
+
+      expect(JSON.parse(actualSpan)).toEqual(
+        expect.objectContaining({
+          name: 'root',
+          attributes: { foo: 'bar' },
+          kind: SpanKind.INTERNAL,
+        })
+      );
+    } finally {
+      restoreConsole();
+    }
   });
 
   test('should write two spans to file', async () => {

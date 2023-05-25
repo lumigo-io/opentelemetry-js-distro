@@ -5,7 +5,7 @@ import * as https from 'https';
 import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
 
-const DEFAULT_MAX_ENTRY_SIZE = 2048;
+export const DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
 
 interface HttpHeaders {
@@ -51,23 +51,6 @@ export const getConnectionTimeout = () => {
 
 export const getProtocolModuleForUri = (uri: string) => {
   return uri.indexOf('https') === 0 ? https : http;
-};
-
-/**
- * This function return the environment variables by total max size of the values of each environment variable key.
- * For example: if max size=2, environment variables ={"key_1": "value1", "key_2": "value_2"}, return {"key_1": "value1"}.
- */
-export const extractEnvVars = () => {
-  const res = {};
-  const maxSize = getMaxSize();
-  let length = 0;
-  Object.entries(process.env).forEach(([key, value]) => {
-    if (length + value.length <= maxSize) {
-      res[key] = value;
-      length += value.length;
-    }
-  });
-  return res;
 };
 
 export const postUri = async (
@@ -244,10 +227,16 @@ export const safeRequire = (libId) => {
   return undefined;
 };
 
-export const getMaxSize = () => {
+export const getSpanAttributeMaxLength = () => {
   return (
     parseInt(process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT) ||
     parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT) ||
-    DEFAULT_MAX_ENTRY_SIZE
+    DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT
+  );
+};
+
+export const getResourceAttributeMaxLength = () => {
+  return (
+    parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT) || DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT
   );
 };
