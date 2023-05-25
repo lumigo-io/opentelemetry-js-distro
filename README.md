@@ -98,7 +98,7 @@ Specifically supported are:
 
 * `LUMIGO_TRACER_TOKEN=<token>`: Configure the Lumigo token to enable to upload of telemetry to Lumigo; without this environment variable, your Node.js process will not send telemetry to Lumigo.
 * `LUMIGO_DEBUG=TRUE`: Enables debug logging
-* `LUMIGO_DEBUG_SPANDUMP=<path>`: Log all spans collected to the `<path>` file; this is an option intended only for debugging purposes and should *not* be used in production.
+* `LUMIGO_DEBUG_SPANDUMP=<path|console:log|console:error>`: Log all spans collected to the `<path>` file or, the value is `console:log` or `console:error`, to `console.log` or `console.error`; this is an option intended only for debugging purposes and should *not* be used in production.
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions in process environment data, HTTP headers, payloads and queries. All regular expressions are case-insensitive. The "magic" value `all` will redact everything. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`. More fine-grained settings can be applied via the following environment variables, which will override `LUMIGO_SECRET_MASKING_REGEX` for a specific type of data:
