@@ -2,14 +2,20 @@ import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import * as shimmer from 'shimmer';
 import { URL } from 'url';
 
-import { CommonUtils } from '@lumigo/node-core';
+import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
+import { InstrumentationIfc } from '../hooksIfc';
 import { logger } from '../../logging';
 import { getAwsServiceData } from '../../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, getMaxSize } from '../../utils';
-import { InstrumentationIfc } from '../hooksIfc';
+import {
+  isAwsService,
+  runOneTimeWrapper,
+  safeExecute,
+  getSpanAttributeMaxLength,
+} from '../../utils';
+import { contentType, scrubHttpPayload } from '../../tools/payloads';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
@@ -85,7 +91,11 @@ export const HttpHooks: InstrumentationIfc<
             headers: {},
           },
         };
-        const scrubbedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
+        const scrubbedHeaders = CommonUtils.payloadStringify(
+          requestData.request.headers,
+          ScrubContext.HTTP_REQUEST_HEADERS,
+          getSpanAttributeMaxLength()
+        );
         span.setAttribute('http.request.headers', scrubbedHeaders);
         const emitWrapper = Http.httpRequestEmitBeforeHookWrapper(requestData, span);
 
@@ -96,7 +106,11 @@ export const HttpHooks: InstrumentationIfc<
             if (isEmptyString(requestData.request.body)) {
               const body = Http.extractBodyFromWriteOrEndFunc(args);
               requestData.request.body += body;
-              const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
+              const scrubbed = scrubHttpPayload(
+                requestData.request.body,
+                contentType(requestData.request.headers),
+                ScrubContext.HTTP_REQUEST_BODY
+              );
               span.setAttribute('http.request.body', scrubbed);
             }
           };
@@ -109,7 +123,11 @@ export const HttpHooks: InstrumentationIfc<
     }
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
-    const scrubbedHeaders = CommonUtils.payloadStringify(response.headers);
+    const scrubbedHeaders = CommonUtils.payloadStringify(
+      response.headers,
+      ScrubContext.HTTP_RESPONSE_HEADERS,
+      getSpanAttributeMaxLength()
+    );
     if (response.headers) {
       span.setAttribute('http.response.headers', scrubbedHeaders);
     }
@@ -124,7 +142,11 @@ export class Http {
       requestRawData.response.headers = headers;
       requestRawData.response.statusCode = statusCode;
       requestRawData.response.truncated = truncated;
-      const scrubbed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
+      const scrubbed = scrubHttpPayload(
+        requestRawData.response.body,
+        contentType(headers),
+        ScrubContext.HTTP_RESPONSE_BODY
+      );
       span.setAttribute('http.response.body', scrubbed);
       try {
         if (isAwsService(requestRawData.request.host, requestRawData.response)) {
@@ -222,8 +244,14 @@ export class Http {
       if (isEmptyString(requestData.request.body)) {
         const body = Http.extractBodyFromWriteOrEndFunc(args);
         requestData.request.body += body;
-        const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
-        span.setAttribute('http.request.body', scrubbed);
+        const scrubbed = scrubHttpPayload(
+          requestData.request.body,
+          contentType(requestData.request.headers),
+          ScrubContext.HTTP_REQUEST_BODY
+        );
+        if (scrubbed) {
+          span.setAttribute('http.request.body', scrubbed);
+        }
       }
     };
   }
@@ -234,7 +262,7 @@ export class Http {
     onRequestEnd: (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => void
   ) {
     let body = '';
-    const maxPayloadSize = getMaxSize();
+    const maxPayloadSize = getSpanAttributeMaxLength();
     return function (args) {
       let truncated = false;
       const { headers, statusCode } = response;
@@ -284,8 +312,14 @@ export class Http {
         if (isEmptyString(requestData.request.body)) {
           const body = Http.extractBodyFromEmitSocketEvent(args[1]);
           requestData.request.body += body;
-          const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
-          span.setAttribute('http.request.body', scrubbed);
+          const scrubbed = scrubHttpPayload(
+            requestData.request.body,
+            contentType(requestData.request.headers),
+            ScrubContext.HTTP_REQUEST_BODY
+          );
+          if (scrubbed) {
+            span.setAttribute('http.request.body', scrubbed);
+          }
         }
       }
     };
