@@ -9,12 +9,7 @@ import { Span } from '@opentelemetry/api';
 import { InstrumentationIfc } from '../hooksIfc';
 import { logger } from '../../logging';
 import { getAwsServiceData } from '../../spans/awsSpan';
-import {
-  isAwsService,
-  runOneTimeWrapper,
-  safeExecute,
-  getSpanAttributeMaxLength,
-} from '../../utils';
+import { runOneTimeWrapper, safeExecute, getSpanAttributeMaxLength } from '../../utils';
 import { contentType, scrubHttpPayload } from '../../tools/payloads';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -149,9 +144,11 @@ export class Http {
       );
       span.setAttribute('http.response.body', scrubbed);
       try {
-        if (isAwsService(requestRawData.request.host, requestRawData.response)) {
-          span.setAttributes(getAwsServiceData(requestRawData.request, requestRawData.response));
-          span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
+        span.setAttributes(
+          getAwsServiceData(requestRawData.request, requestRawData.response, span)
+        );
+        if (span.attributes['http.host']?.includes('.')) {
+          span.setAttribute('aws.region', span.attributes['http.host'].split('.')[1]);
         }
       } catch (e) {
         logger.debug('Failed to parse aws service data', e);
