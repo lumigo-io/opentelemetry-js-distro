@@ -143,12 +143,11 @@ export class Http {
         ScrubContext.HTTP_RESPONSE_BODY
       );
       span.setAttribute('http.response.body', scrubbed);
+
       try {
-        span.setAttributes(
-          getAwsServiceData(requestRawData.request, requestRawData.response, span)
-        );
-        if (span.attributes['http.host']?.includes('.')) {
-          span.setAttribute('aws.region', span.attributes['http.host'].split('.')[1]);
+        const serviceAttributes = getAwsServiceData(requestRawData.request, requestRawData.response, span);
+        if (serviceAttributes) {
+          span.setAttributes(serviceAttributes);
         }
       } catch (e) {
         logger.debug('Failed to parse aws service data', e);
