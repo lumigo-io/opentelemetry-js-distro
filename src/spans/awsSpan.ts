@@ -15,7 +15,7 @@ import {
 export enum AwsOtherService {
   ApiGateway,
   ExternalService,
-  ElasticBeanstalkSqsDaemon
+  ElasticBeanstalkSqsDaemon,
 }
 
 export enum AwsParsedService {
@@ -29,7 +29,7 @@ export enum AwsParsedService {
 
 const AMAZON_REQUESTID_HEADER_NAME = 'x-amzn-requestid';
 
-export const getAwsServiceFromHost = (host = ''): (AwsParsedService | AwsOtherService) => {
+export const getAwsServiceFromHost = (host = ''): AwsParsedService | AwsOtherService => {
   if (host?.includes('.execute-api.')) {
     // E.g. `my_happy_api.execute-api.eu-central-1.amazonaws.com`
     return AwsOtherService.ApiGateway;
@@ -41,7 +41,7 @@ export const getAwsServiceFromHost = (host = ''): (AwsParsedService | AwsOtherSe
    */
   const service = host.split('.')[0];
 
-  for (let awsParsedService in AwsParsedService) {
+  for (const awsParsedService in AwsParsedService) {
     if (AwsParsedService[awsParsedService].includes(service)) {
       return AwsParsedService[awsParsedService];
     }
@@ -74,11 +74,14 @@ export const getAwsServiceData = (
     /*
      * Workaround for Elastic Beanstalk, where a local proxy called "AWS SQS Daemon"
      * is used to fetch SQS messages, causing the hostname to be `localhost`.
-     * 
+     *
      * See https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features-managing-env-tiers.html#worker-daemon
      */
     awsService = AwsOtherService.ElasticBeanstalkSqsDaemon;
-  } else if (responseData?.headers[AMAZON_REQUESTID_HEADER_NAME] || responseData?.headers[AMAZON_REQUESTID_HEADER_NAME]) {
+  } else if (
+    responseData?.headers[AMAZON_REQUESTID_HEADER_NAME] ||
+    responseData?.headers[AMAZON_REQUESTID_HEADER_NAME]
+  ) {
     awsService = AwsOtherService.ExternalService;
   } else {
     // not an aws service
@@ -95,7 +98,11 @@ export const getAwsServiceData = (
   return serviceData;
 };
 
-const getServiceAttributes = (awsService: AwsParsedService | AwsOtherService, requestData, responseData) => {
+const getServiceAttributes = (
+  awsService: AwsParsedService | AwsOtherService,
+  requestData,
+  responseData
+) => {
   switch (awsService) {
     case AwsOtherService.ApiGateway:
       return apigwParser(requestData, responseData);
@@ -107,6 +114,7 @@ const getServiceAttributes = (awsService: AwsParsedService | AwsOtherService, re
       return lambdaParser(requestData, responseData);
     case AwsOtherService.ElasticBeanstalkSqsDaemon:
       // Same as AwsParsedService.SQS
+      return sqsParser(requestData, responseData);
     case AwsParsedService.SQS:
       return sqsParser(requestData, responseData);
     case AwsParsedService.Kinesis:
@@ -116,4 +124,4 @@ const getServiceAttributes = (awsService: AwsParsedService | AwsOtherService, re
     default:
       return awsParser(requestData, responseData);
   }
-}
+};

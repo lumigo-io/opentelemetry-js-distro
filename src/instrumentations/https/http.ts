@@ -145,7 +145,11 @@ export class Http {
       span.setAttribute('http.response.body', scrubbed);
 
       try {
-        const serviceAttributes = getAwsServiceData(requestRawData.request, requestRawData.response, span);
+        const serviceAttributes = getAwsServiceData(
+          requestRawData.request,
+          requestRawData.response,
+          span
+        );
         if (serviceAttributes) {
           span.setAttributes(serviceAttributes);
         }
