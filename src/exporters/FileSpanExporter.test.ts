@@ -1,9 +1,7 @@
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { Span, SpanKind } from '@opentelemetry/api';
-
-import fs from 'fs';
-
-jest.mock('fs');
+import mock from 'mock-fs';
+import mockConsole from 'jest-mock-console';
 
 import { FileSpanExporter } from './index';
 
@@ -11,28 +9,28 @@ describe('FileSpanExporter tests', () => {
   afterEach(() => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
+    mock.restore();
   });
 
-  let provider: BasicTracerProvider;
-
-  it('should not write anything to file when there is no span', () => {
+  test('should not write anything to file when there is no span', () => {
     const tmpFile = './test-spans.json';
 
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
 
-    provider = new BasicTracerProvider();
+    const provider = new BasicTracerProvider();
     provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
 
     expect(spyExport).not.toHaveBeenCalled();
   });
 
-  it('should write one span to file', async () => {
+  test('should write one span to file', async () => {
     const tmpFile = './test-spans.json';
 
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
-    provider = new BasicTracerProvider();
+
+    const provider = new BasicTracerProvider();
     provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
 
     const root: Span = provider.getTracer('default').startSpan('root');
@@ -54,12 +52,71 @@ describe('FileSpanExporter tests', () => {
     );
   });
 
-  it('should write two spans to file', async () => {
+  test('should write one span to console.log', async () => {
+    const restoreConsole = mockConsole();
+    try {
+      const exporterUnderTest = new FileSpanExporter('console:log');
+
+      const provider = new BasicTracerProvider();
+      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+
+      const root: Span = provider.getTracer('default').startSpan('root');
+      root.setAttribute('foo', 'bar');
+      root.end();
+
+      await provider.shutdown();
+
+      expect(console.log).toHaveBeenCalledTimes(1);
+      const actualSpan = console.log.mock.calls[0][0];
+
+      expect(JSON.parse(actualSpan)).toEqual(
+        expect.objectContaining({
+          name: 'root',
+          attributes: { foo: 'bar' },
+          kind: SpanKind.INTERNAL,
+        })
+      );
+    } finally {
+      restoreConsole();
+    }
+  });
+
+  test('should write one span to console error', async () => {
+    const restoreConsole = mockConsole();
+    try {
+      const exporterUnderTest = new FileSpanExporter('console:error');
+
+      const provider = new BasicTracerProvider();
+      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+
+      const root: Span = provider.getTracer('default').startSpan('root');
+      root.setAttribute('foo', 'bar');
+      root.end();
+
+      await provider.shutdown();
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+      const actualSpan = console.error.mock.calls[0][0];
+
+      expect(JSON.parse(actualSpan)).toEqual(
+        expect.objectContaining({
+          name: 'root',
+          attributes: { foo: 'bar' },
+          kind: SpanKind.INTERNAL,
+        })
+      );
+    } finally {
+      restoreConsole();
+    }
+  });
+
+  test('should write two spans to file', async () => {
     const tmpFile = './test-spans.json';
 
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
-    provider = new BasicTracerProvider();
+
+    const provider = new BasicTracerProvider();
     provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
 
     const tracer = provider.getTracer('default');
@@ -104,59 +161,11 @@ describe('FileSpanExporter tests', () => {
     );
   });
 
-  test.each`
-    fd           | expectedFdatasyncSync | expectedCloseSync
-    ${undefined} | ${0}                  | ${0}
-    ${null}      | ${0}                  | ${0}
-    ${29}        | ${1}                  | ${1}
-  `(
-    'Call shutdown when this._fd is $fd',
-    async ({ fd, expectedFdatasyncSync, expectedCloseSync }) => {
-      const tmpFile = './test-spans.json';
-
-      fs.openSync.mockReturnValue(fd);
-      const spyFdatasyncSync = jest.spyOn(fs, 'fdatasyncSync').mockReturnValue(undefined);
-      const spyCloseSync = jest.spyOn(fs, 'closeSync').mockImplementation((fd) => {
-        return fd;
-      });
-
-      const exporterUnderTest = new FileSpanExporter(tmpFile);
-      const spyShutdown = jest.spyOn(exporterUnderTest, 'shutdown');
-      provider = new BasicTracerProvider();
-      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
-
-      await exporterUnderTest.shutdown();
-
-      expect(spyShutdown).toHaveBeenCalledTimes(1);
-      expect(spyFdatasyncSync).toHaveBeenCalledTimes(expectedFdatasyncSync);
-      expect(spyCloseSync).toHaveBeenCalledTimes(expectedCloseSync);
-    }
-  );
-
-  it('should write log error message when fdatasyncSync throw error', async () => {
-    const tmpFile = './test-spans.json';
-    const error = new Error('EINVAL: invalid argument, fdatasync');
-
-    fs.openSync.mockReturnValue(28);
-    const spyFdatasyncSync = jest.spyOn(fs, 'fdatasyncSync').mockImplementation(() => {
-      throw error;
-    });
-    const spyCloseSync = jest.spyOn(fs, 'closeSync').mockImplementation((fd) => {
-      return fd;
-    });
-    const utils = jest.requireActual('../utils');
-    const spyLogger = jest.spyOn(utils.logger, 'error');
-
-    const exporterUnderTest = new FileSpanExporter(tmpFile);
-    const spyShutdown = jest.spyOn(exporterUnderTest, 'shutdown');
-    provider = new BasicTracerProvider();
-    provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
-
-    await exporterUnderTest.shutdown();
-
-    expect(spyShutdown).toHaveBeenCalledTimes(1);
-    expect(spyFdatasyncSync).toHaveBeenCalledTimes(1);
-    expect(spyCloseSync).toHaveBeenCalledTimes(1);
-    expect(spyLogger.mock.calls[0][0]).toEqual(error);
+  test('should log an error when provided an invalid file path', async () => {
+    expect(() => {
+      new FileSpanExporter('\0');
+    }).toThrowError(
+      "The argument 'path' must be a string or Uint8Array without null bytes. Received '\\x00'"
+    );
   });
 });

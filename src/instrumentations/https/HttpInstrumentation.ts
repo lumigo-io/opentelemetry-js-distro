@@ -1,4 +1,5 @@
-import { HttpInstrumentation, IgnoreMatcher } from '@opentelemetry/instrumentation-http';
+import { RequestOptions } from 'https';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 
 import { HttpHooks } from './http';
 import { Instrumentor } from '../instrumentor';
@@ -22,33 +23,24 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
     );
   }
 
-  getInstrumentationId(): string {
-    return 'http';
-  }
+  getInstrumentedModule = () => 'http';
 
-  getInstrumentation(): HttpInstrumentation {
-    const ignoreConfig = this.getIgnoreConfig();
+  getInstrumentation = () =>
+    new HttpInstrumentation({
+      ignoreOutgoingRequestHook: (request: RequestOptions) => {
+        /*
+         * Some requests, like towards the ECS Credentials endpoints, do not have the
+         * hostname set, but they do have the host
+         */
+        const requestHostname = request.hostname || request.host;
+        const isRequestIgnored =
+          this.ignoredHostnames.includes(requestHostname) ||
+          // Unroutable addresses, used by metadata and credential services on all clouds
+          /169\.254\.\d+\.\d+.*/gm.test(requestHostname);
 
-    return new HttpInstrumentation({
-      ignoreOutgoingUrls: ignoreConfig,
-      ignoreIncomingPaths: [],
+        return isRequestIgnored;
+      },
       requestHook: HttpHooks.requestHook,
       responseHook: HttpHooks.responseHook,
     });
-  }
-
-  private getIgnoreConfig(): IgnoreMatcher[] {
-    return [
-      (url: string) => {
-        try {
-          return this.ignoredHostnames.includes(new URL(url).hostname);
-        } catch (err) {
-          // Invalid hostname means no match
-          return false;
-        }
-      },
-      // Unroutable addresses, used by metadata services on all clouds
-      /169\.254\.\d+\.\d+.*/gm,
-    ];
-  }
 }

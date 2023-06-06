@@ -2,13 +2,20 @@ import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import * as shimmer from 'shimmer';
 import { URL } from 'url';
 
-import { CommonUtils } from '@lumigo/node-core';
+import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import { Span } from '@opentelemetry/api';
 
-import { getAwsServiceData } from '../../spans/awsSpan';
-import { isAwsService, runOneTimeWrapper, safeExecute, logger, getMaxSize } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
+import { logger } from '../../logging';
+import { getAwsServiceData } from '../../spans/awsSpan';
+import {
+  isAwsService,
+  runOneTimeWrapper,
+  safeExecute,
+  getSpanAttributeMaxLength,
+} from '../../utils';
+import { contentType, scrubHttpPayload } from '../../tools/payloads';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
@@ -37,7 +44,7 @@ const hook = (module, funcName, options: HookOptions = {}, shimmerLib = shimmer)
     };
     shimmerLib.wrap(module, funcName, wrapper);
   } catch (e) {
-    console.warn(`Wrapping of function ${funcName} failed`, options);
+    logger.warn(`Wrapping of function ${funcName} failed`, options);
   }
 };
 
@@ -69,7 +76,6 @@ export const HttpHooks: InstrumentationIfc<
 > = {
   requestHook(span: Span & { attributes: Record<string, string> }, request: RequestType) {
     if (request instanceof ClientRequest) {
-      logger.debug('@opentelemetry/instrumentation-http on requestHook()');
       safeExecute(() => {
         const requestData: RequestRawData = {
           request: {
@@ -85,7 +91,11 @@ export const HttpHooks: InstrumentationIfc<
             headers: {},
           },
         };
-        const scrubbedHeaders = CommonUtils.payloadStringify(requestData.request.headers);
+        const scrubbedHeaders = CommonUtils.payloadStringify(
+          requestData.request.headers,
+          ScrubContext.HTTP_REQUEST_HEADERS,
+          getSpanAttributeMaxLength()
+        );
         span.setAttribute('http.request.headers', scrubbedHeaders);
         const emitWrapper = Http.httpRequestEmitBeforeHookWrapper(requestData, span);
 
@@ -96,7 +106,11 @@ export const HttpHooks: InstrumentationIfc<
             if (isEmptyString(requestData.request.body)) {
               const body = Http.extractBodyFromWriteOrEndFunc(args);
               requestData.request.body += body;
-              const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
+              const scrubbed = scrubHttpPayload(
+                requestData.request.body,
+                contentType(requestData.request.headers),
+                ScrubContext.HTTP_REQUEST_BODY
+              );
               span.setAttribute('http.request.body', scrubbed);
             }
           };
@@ -109,8 +123,11 @@ export const HttpHooks: InstrumentationIfc<
     }
   },
   responseHook(span: Span, response: IncomingMessage | (ServerResponse & { headers?: any })) {
-    logger.debug('@opentelemetry/instrumentation-http on responseHook()');
-    const scrubbedHeaders = CommonUtils.payloadStringify(response.headers);
+    const scrubbedHeaders = CommonUtils.payloadStringify(
+      response.headers,
+      ScrubContext.HTTP_RESPONSE_HEADERS,
+      getSpanAttributeMaxLength()
+    );
     if (response.headers) {
       span.setAttribute('http.response.headers', scrubbedHeaders);
     }
@@ -125,7 +142,11 @@ export class Http {
       requestRawData.response.headers = headers;
       requestRawData.response.statusCode = statusCode;
       requestRawData.response.truncated = truncated;
-      const scrubbed = CommonUtils.scrubRequestDataPayload(requestRawData.response);
+      const scrubbed = scrubHttpPayload(
+        requestRawData.response.body,
+        contentType(headers),
+        ScrubContext.HTTP_RESPONSE_BODY
+      );
       span.setAttribute('http.response.body', scrubbed);
       try {
         if (isAwsService(requestRawData.request.host, requestRawData.response)) {
@@ -133,8 +154,8 @@ export class Http {
           span.setAttribute('aws.region', span.attributes?.['http.host'].split('.')[1]);
         }
       } catch (e) {
-        console.warn('Failed to parse aws service data', e);
-        console.warn('getHttpSpan args', { requestData: requestRawData });
+        logger.debug('Failed to parse aws service data', e);
+        logger.debug('getHttpSpan args', { requestData: requestRawData });
       }
     };
   }
@@ -162,8 +183,7 @@ export class Http {
         }
       },
       'failed to extractBodyFromEmitSocketEvent',
-      'warn',
-      ''
+      'warn'
     )();
   }
 
@@ -176,8 +196,8 @@ export class Http {
       if (isValidHttpRequestBody(writeEventArgs[0])) {
         const encoding = isEncodingType(writeEventArgs[1]) ? writeEventArgs[1] : 'utf8';
         return typeof writeEventArgs[0] === 'string'
-          ? new Buffer(writeEventArgs[0]).toString(encoding)
-          : writeEventArgs[0].toString();
+          ? Buffer.from(writeEventArgs[0]).toString(encoding)
+          : writeEventArgs[0].toString(encoding);
       }
     })();
   };
@@ -224,8 +244,14 @@ export class Http {
       if (isEmptyString(requestData.request.body)) {
         const body = Http.extractBodyFromWriteOrEndFunc(args);
         requestData.request.body += body;
-        const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
-        span.setAttribute('http.request.body', scrubbed);
+        const scrubbed = scrubHttpPayload(
+          requestData.request.body,
+          contentType(requestData.request.headers),
+          ScrubContext.HTTP_REQUEST_BODY
+        );
+        if (scrubbed) {
+          span.setAttribute('http.request.body', scrubbed);
+        }
       }
     };
   }
@@ -236,7 +262,7 @@ export class Http {
     onRequestEnd: (requestRawData: RequestRawData, options: OnRequestEndOptionsType) => void
   ) {
     let body = '';
-    const maxPayloadSize = getMaxSize();
+    const maxPayloadSize = getSpanAttributeMaxLength();
     return function (args) {
       let truncated = false;
       const { headers, statusCode } = response;
@@ -286,8 +312,14 @@ export class Http {
         if (isEmptyString(requestData.request.body)) {
           const body = Http.extractBodyFromEmitSocketEvent(args[1]);
           requestData.request.body += body;
-          const scrubbed = CommonUtils.scrubRequestDataPayload(requestData.request);
-          span.setAttribute('http.request.body', scrubbed);
+          const scrubbed = scrubHttpPayload(
+            requestData.request.body,
+            contentType(requestData.request.headers),
+            ScrubContext.HTTP_REQUEST_BODY
+          );
+          if (scrubbed) {
+            span.setAttribute('http.request.body', scrubbed);
+          }
         }
       }
     };

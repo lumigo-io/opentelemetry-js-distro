@@ -1,6 +1,6 @@
 # Lumigo OpenTelemetry Distro for Node.js
 
-[![CircleCI](https://circleci.com/gh/lumigo-io/opentelemetry-js-distro/tree/main.svg?style=svg&circle-token=488f0e5cc37e20e9a85123a3afe3457a5efdcc55)](https://circleci.com/gh/lumigo-io/opentelemetry-js-distro/tree/main)
+[![Tracer Testing](https://github.com/lumigo-io/opentelemetry-js-distro/actions/workflows/push-actions.yml/badge.svg)](https://github.com/lumigo-io/opentelemetry-js-distro/actions/workflows/push-actions.yml)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 This is the source repository of [`@lumigo/opentelemetry`](https://npm.io/package/@lumigo/opentelemetry), Lumigo OpenTelemetry Distribution for Node.js, intended for use with containerized applications.
@@ -98,10 +98,16 @@ Specifically supported are:
 
 * `LUMIGO_TRACER_TOKEN=<token>`: Configure the Lumigo token to enable to upload of telemetry to Lumigo; without this environment variable, your Node.js process will not send telemetry to Lumigo.
 * `LUMIGO_DEBUG=TRUE`: Enables debug logging
-* `LUMIGO_DEBUG_SPANDUMP=<path>`: Log all spans collected to the `<path>` file; this is an option intended only for debugging purposes and should *not* be used in production.
+* `LUMIGO_DEBUG_SPANDUMP=<path|console:log|console:error>`: Log all spans collected to the `<path>` file or, the value is `console:log` or `console:error`, to `console.log` or `console.error`; this is an option intended only for debugging purposes and should *not* be used in production.
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
-* `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions. All regular expressions are case-insensitive. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`.
+* `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions in process environment data, HTTP headers, payloads and queries. All regular expressions are case-insensitive. The "magic" value `all` will redact everything. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`. More fine-grained settings can be applied via the following environment variables, which will override `LUMIGO_SECRET_MASKING_REGEX` for a specific type of data:
+  * `LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES` applies secret redaction to HTTP request bodies
+  * `LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_HEADERS` applies secret redaction to HTTP request headers
+  * `LUMIGO_SECRET_MASKING_REGEX_HTTP_QUERY_PARAMS` applies secret redaction to HTTP query parameters
+  * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES` applies secret redaction to HTTP response bodies
+  * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS` applies secret redaction to HTTP response bodies
+  * `LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` applies secret redaction to process environment variables (that is, the content of `process.env`)
 * `LUMIGO_REPORT_DEPENDENCIES=false`: This option disables the built-in dependency reporting to Lumigo SaaS. For more information, refer to the [Automated dependency reporting](#automated-dependency-reporting) section.
 
 ### Execution Tags
@@ -232,7 +238,7 @@ In case your execution tags on different spans appear on different invocations t
 
 ## Supported runtimes
 
-* Node.js: 14.x, 16.x, 18.x
+* Node.js: 14.x, 16.x, 18.x, 20.x
 
 ## Supported packages
 
@@ -240,7 +246,7 @@ In case your execution tags on different spans appear on different invocations t
 | --- | --- | --- |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
-| | | 4.0.0~4.13.0 |
+| | | 4.0.0~4.14.0 |
 
 ## Automated dependency reporting
 
@@ -256,9 +262,37 @@ If you are using the Lumigo OpenTelemetry Distro for JS with another OpenTelemet
 
 ## Baseline setup
 
-The Lumigo OpenTelemetry Distro will automatically create the following OpenTelemetry constructs provided to a [`NodeTraceProvider`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-node/src/NodeTracerProvider.ts):
+The Lumigo OpenTelemetry Distro will automatically create the following OpenTelemetry constructs provided to a [`NodeTraceProvider`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-node/src/NodeTracerProvider.ts).
 
-* A `Resource` built from the default OpenTelemetry resource with the `sdk...` attributes
+### Resources
+
+A `Resource` built from the default OpenTelemetry resource with the `sdk...` attributes, plus:
+* The `lumigo.distro.version` documenting the version of this package
+
+Additional resource attributes depending on the compute platform.
+
+#### Amazon Elastic Container Service
+
+* `cloud.provider` with value `aws`
+* `cloud.platform` with value `aws_ecs`
+* `container.name` with, as value, the container name as defined in the task definition
+* `container.id` with, as value, the container id as defined by the underpinning Docker runtime
+
+If the [Task Metadata endpoint v4](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-metadata-endpoint-v4-fargate.html) is available (`ECS_CONTAINER_METADATA_URI_V4` env var is set), the following resource attributes as specified in the [AWS ECS Resource Semantic conventions](https://opentelemetry.io/docs/reference/specification/resource/semantic_conventions/cloud_provider/aws/ecs/) are also set:
+
+* `aws.ecs.container.arn`
+* `aws.ecs.cluster.arn`
+* `aws.ecs.launchtype`
+* `aws.ecs.task.arn`
+* `aws.ecs.task.family`
+* `aws.ecs.task.revision`
+
+#### Kubernetes resource attributes
+
+* `k8s.pod.uid` with the Pod identifier, supported for both cgroups v1 and v2
+
+### Exporters
+
 * If the `LUMIGO_TRACER_TOKEN` environment variable is set: a [`BatchSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/BatchSpanProcessorBase.ts), which uses an [`OTLPTraceExporter`](https://github.com/open-telemetry/opentelemetry-js/blob/main/experimental/packages/exporter-trace-otlp-http/src/platform/node/OTLPTraceExporter.ts) to push tracing data to Lumigo
 * If the `LUMIGO_DEBUG_SPANDUMP` environment variable is set: a [`SimpleSpanProcessor`](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/export/SimpleSpanProcessor.ts), which uses an [`FileSpanExporter`](src/exporters/FileSpanExporter.ts) to save to file the spans collected. **Do not use this in production!**
 
@@ -270,7 +304,7 @@ The Lumigo OpenTelemetry Distro will automatically create the following OpenTele
   * `process.runtime.version`
 
 
-* A non-standard `process.environ` resource attribute, containing a stringified representation of the process environment, with environment variables scrubbed based on the [`LUMIGO_SECRET_MASKING_REGEX`](#lumigo-specific-configurations) configuration.
+* A non-standard `process.environ` resource attribute, containing a stringified representation of the process environment, with environment variables scrubbed based on the [`LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` and `LUMIGO_SECRET_MASKING_REGEX`](#lumigo-specific-configurations) environment variables.
 
 
 ### SDK configuration

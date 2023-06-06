@@ -1,20 +1,36 @@
 import type express from 'express';
 
+import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { Span } from '@opentelemetry/api';
-import { PatchedRequest } from '@opentelemetry/instrumentation-express/build/src/types';
 
-import { safeExecute, logger } from '../../utils';
+import { getSpanAttributeMaxLength, safeExecute } from '../../utils';
 import { InstrumentationIfc } from '../hooksIfc';
+import { contentType, scrubHttpPayload } from '../../tools/payloads';
 
-type ExpressRequestType = { req: PatchedRequest; res: express.Response };
+type ExpressRequestType = { req: express.Request; res: express.Response };
 
 export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
   requestHook(span: Span, { req, res }: ExpressRequestType): void {
-    logger.debug('opentelemetry-instrumentation-express on requestHook()');
     const oldResEnd = res.end;
     const oldResSend = res.send;
-    if (req.query) span.setAttribute('http.request.query', JSON.stringify(req.query));
-    if (req.headers) span.setAttribute('http.request.headers', JSON.stringify(req.headers));
+    if (req.query)
+      span.setAttribute(
+        'http.request.query',
+        CommonUtils.payloadStringify(
+          req.query,
+          ScrubContext.HTTP_REQUEST_QUERY,
+          getSpanAttributeMaxLength()
+        )
+      );
+    if (req.headers)
+      span.setAttribute(
+        'http.request.headers',
+        CommonUtils.payloadStringify(
+          req.headers,
+          ScrubContext.HTTP_REQUEST_HEADERS,
+          getSpanAttributeMaxLength()
+        )
+      );
     let response;
     res.send = function (data: any) {
       response = data;
@@ -23,21 +39,37 @@ export const ExpressHooks: InstrumentationIfc<ExpressRequestType, any> = {
       return oldResSend.apply(res, arguments);
     };
     res.end = function () {
-      logger.debug('opentelemetry-instrumentation-express on end()');
       return safeExecute(() => {
         // eslint-disable-next-line prefer-rest-params
         const origRes = oldResEnd.apply(res, arguments);
         if (res.getHeaders())
-          span.setAttribute('http.response.headers', JSON.stringify(res.getHeaders()));
-        if (response) span.setAttribute('http.response.body', JSON.stringify(response));
-        if (req.body) span.setAttribute('http.request.body', JSON.stringify(req.body));
+          span.setAttribute(
+            'http.response.headers',
+            CommonUtils.payloadStringify(
+              res.getHeaders(),
+              ScrubContext.HTTP_RESPONSE_HEADERS,
+              getSpanAttributeMaxLength()
+            )
+          ); // TODO This is not compliant with the HTTP semantic conventions
+        if (response)
+          span.setAttribute(
+            'http.response.body',
+            scrubHttpPayload(
+              response,
+              contentType(res.getHeaders()),
+              ScrubContext.HTTP_RESPONSE_BODY
+            )
+          );
+        if (req.body)
+          span.setAttribute(
+            'http.request.body',
+            scrubHttpPayload(req.body, contentType(req.headers), ScrubContext.HTTP_REQUEST_BODY)
+          );
         res.end = oldResEnd;
         return origRes;
       })();
     };
   },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  responseHook(span: Span, response: any): void {
-    logger.debug('opentelemetry-instrumentation-express on responseHook()');
-  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+  responseHook(span: Span, response: any): void {},
 };

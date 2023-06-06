@@ -1,4 +1,5 @@
 import { LumigoDistroDetector } from './LumigoDistroDetector';
+import mock from 'mock-fs';
 
 describe('LumigoDistroDetector', () => {
   const OLD_ENV = process.env;
@@ -18,15 +19,7 @@ describe('LumigoDistroDetector', () => {
     });
 
     it('detects resource attributes correctly', async () => {
-      jest.mock(
-        '../../../package.json',
-        () => ({
-          name: '__name__',
-          version: '1.0.1',
-        }),
-        { virtual: true }
-      );
-      const resource = await new LumigoDistroDetector(`${__dirname}/../`).detect();
+      const resource = await new LumigoDistroDetector('1.0.1').detect();
       expect(resource.attributes).toEqual({
         'lumigo.distro.version': '1.0.1',
       });

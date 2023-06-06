@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
-import { ExportResult, ExportResultCode, hrTimeToMicroseconds } from '@opentelemetry/core';
+import { appendFileSync, closeSync, fsyncSync, openSync } from 'fs';
+import { realpath, lstat } from 'fs/promises';
+import {
+  BindOnceFuture,
+  ExportResult,
+  ExportResultCode,
+  hrTimeToMicroseconds,
+} from '@opentelemetry/core';
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
-import { logger } from '../utils';
+import { logger } from '../logging';
 
 /**
  * This is implementation of {@link SpanExporter} that prints spans to a file.
@@ -26,18 +31,22 @@ import { logger } from '../utils';
  * exporter in production.
  */
 
+const PRINT_SPANS_TO_CONSOLE_LOG = 'console:log';
+const PRINT_SPANS_TO_CONSOLE_ERROR = 'console:error';
+
 /* eslint-disable no-console */
 export class FileSpanExporter implements SpanExporter {
+  private readonly file: string;
   private _fd: number;
-  private readonly _file: string;
-  private _shutdownOnce: BindOnceFuture<void>;
+  private readonly _shutdownOnce: BindOnceFuture<void>;
 
   constructor(file: string) {
-    this._file = file;
-    this._fd = fs.openSync(file, 'w');
+    this.file = file;
 
-    this.shutdown = this.shutdown.bind(this);
-    this._shutdownOnce = new BindOnceFuture(this._shutdown, this);
+    if (![PRINT_SPANS_TO_CONSOLE_LOG, PRINT_SPANS_TO_CONSOLE_ERROR].includes(file)) {
+      this._fd = openSync(file, 'w');
+      this._shutdownOnce = new BindOnceFuture(this._shutdown.bind(this), this);
+    }
   }
 
   /**
@@ -46,7 +55,33 @@ export class FileSpanExporter implements SpanExporter {
    * @param resultCallback
    */
   export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): void {
-    return this._sendSpans(spans, resultCallback);
+    if (!spans || !spans.length) {
+      return resultCallback({
+        code: ExportResultCode.SUCCESS,
+      });
+    }
+
+    const spansJson =
+      spans.map((span) => JSON.stringify(this._exportInfo(span), undefined, 0)).join('\n') + '\n';
+
+    try {
+      if (this._fd) {
+        appendFileSync(this._fd, spansJson);
+      } else if (this.file === PRINT_SPANS_TO_CONSOLE_LOG) {
+        console.log(spansJson);
+      } else if (this.file === PRINT_SPANS_TO_CONSOLE_ERROR) {
+        console.error(spansJson);
+      }
+    } catch (err) {
+      return resultCallback({
+        code: ExportResultCode.FAILED,
+        error: err,
+      });
+    }
+
+    return resultCallback({
+      code: ExportResultCode.SUCCESS,
+    });
   }
 
   /**
@@ -69,34 +104,6 @@ export class FileSpanExporter implements SpanExporter {
     };
   }
 
-  /**
-   * Store spans in file
-   * @param spans
-   * @param done
-   */
-  private _sendSpans(spans: ReadableSpan[], done?: (result: ExportResult) => void): void {
-    let json = '';
-    for (const span of spans) {
-      json += JSON.stringify(this._exportInfo(span));
-      json += '\n';
-    }
-
-    fs.appendFile(this._fd, json, async (err) => {
-      if (done) {
-        if (err) {
-          return done({
-            code: ExportResultCode.FAILED,
-            error: err,
-          });
-        } else {
-          fs.closeSync(this._fd);
-          this._fd = fs.openSync(this._file, 'a');
-          return done({ code: ExportResultCode.SUCCESS });
-        }
-      }
-    });
-  }
-
   forceFlush(): Promise<void> {
     if (this._shutdownOnce.isCalled) {
       return this._shutdownOnce.promise;
@@ -108,90 +115,49 @@ export class FileSpanExporter implements SpanExporter {
    * Shutdown the exporter.
    */
   shutdown(): Promise<void> {
-    return this._shutdownOnce.call();
+    return this._shutdownOnce?.call();
   }
 
   /**
    * Called by _shutdownOnce with BindOnceFuture
    */
-  private _shutdown(): Promise<void> {
-    return Promise.resolve()
-      .then(() => {
-        return this._flushAll();
-      })
-      .finally(() => {
-        if (this._fd) {
-          fs.closeSync(this._fd);
+  private async _shutdown(): Promise<void> {
+    return await this._flushAll().finally(async () => {
+      if (this._fd) {
+        /*
+         * Do not close block and character devices like `/dev/stdout` or `/dev/stderr`.
+         * We need to resolve symbolic links until we get to the actual file, e.g.,
+         * `/dev/stdout` -> `/proc/self/fd/1` -> `/dev/pts/0`.
+         */
+        try {
+          const realPath = await realpath(this.file);
+          const stats = await lstat(realPath);
+
+          if (stats.isFile()) {
+            closeSync(this._fd);
+          }
+        } catch (err) {
+          logger.error(
+            `An error occured while shutting down the spandump exporter to file '${this.file}'`,
+            err
+          );
         }
-      });
+      }
+    });
   }
 
-  private _flushAll(): Promise<void> {
-    return Promise.resolve().then(() => {
+  private _flushAll = async (): Promise<void> =>
+    new Promise((resolve, reject) => {
       if (this._fd) {
         try {
-          return fs.fdatasyncSync(this._fd);
-        } catch (e) {
-          logger.error(e);
+          fsyncSync(this._fd);
+        } catch (err) {
+          logger.error(`An error occured while flushing the spandump to file '${this.file}'`, err);
+          reject(err);
+          return;
         }
       }
+
+      resolve();
     });
-  }
-}
-
-// From https://github.com/open-telemetry/opentelemetry-js/blob/d61f7bee0f7f60fed794d956e122decd0ce6748f/packages/opentelemetry-core/src/utils/callback.ts,
-// TODO Replace with the opentelemetry-js SDK version when we upgrade
-class BindOnceFuture<R, This = unknown, T extends (this: This, ...args: unknown[]) => R = () => R> {
-  private _isCalled = false;
-  private _deferred = new Deferred<R>();
-  constructor(private _callback: T, private _that: This) {}
-
-  get isCalled() {
-    return this._isCalled;
-  }
-
-  get promise() {
-    return this._deferred.promise;
-  }
-
-  call(...args: Parameters<T>): Promise<R> {
-    if (!this._isCalled) {
-      this._isCalled = true;
-      try {
-        Promise.resolve(this._callback.call(this._that, ...args)).then(
-          (val) => this._deferred.resolve(val),
-          (err) => this._deferred.reject(err)
-        );
-      } catch (err) {
-        this._deferred.reject(err);
-      }
-    }
-    return this._deferred.promise;
-  }
-}
-
-// From https://github.com/open-telemetry/opentelemetry-js/blob/d61f7bee0f7f60fed794d956e122decd0ce6748f/packages/opentelemetry-core/src/utils/promise.ts,
-// TODO Replace with the opentelemetry-js SDK version when we upgrade
-class Deferred<T> {
-  private _promise: Promise<T>;
-  private _resolve!: (val: T) => void;
-  private _reject!: (error: unknown) => void;
-  constructor() {
-    this._promise = new Promise((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
-    });
-  }
-
-  get promise() {
-    return this._promise;
-  }
-
-  resolve(val: T) {
-    this._resolve(val);
-  }
-
-  reject(err: unknown) {
-    this._reject(err);
-  }
 }

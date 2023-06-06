@@ -1,2 +1,2 @@
-export { AwsEcsDetector } from './AwsEcsDetector';
 export { LumigoDistroDetector } from './LumigoDistroDetector';
+export { LumigoKubernetesDetector } from './LumigoKubernetesDetector';

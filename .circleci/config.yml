@@ -3,6 +3,14 @@ version: 2.1
 orbs:
   lumigo-orb: &lumigo_orb_version lumigo/lumigo-orb@volatile
 
+defaults: &defaults
+  docker:
+  - image: lumigo/ci-ubuntu2204:latest
+    auth:
+      username: lumigo
+      password: $DOCKERHUB_PASSWORD
+  working_directory: ~/opentelemetry-js-distro
+
 workflows:
   test-deploy:
     jobs:
@@ -14,28 +22,50 @@ workflows:
         filters:
           branches:
             ignore: main
+
     - lumigo-orb/is_environment_available:
         context: common
         filters:
           branches:
             ignore: main
+
     - lumigo-orb/be-deploy:
         context: common
         requires:
           - lumigo-orb/is_environment_available
+
     - lumigo-orb/integration-test-prep:
         context: common
+        run_test_cleanup: false
         requires:
           - lumigo-orb/be-deploy
-    - lumigo-orb/integration-test-limited-flows:
+
+    - lumigo-orb/integration-test-cleanup:
+        name: pre-test-cleanup
         context: common
         requires:
           - lumigo-orb/integration-test-prep
+
+    - lumigo-orb/integration-test-limited-flows:
+        context: common
+        run_test_cleanup: false
+        requires:
+          - pre-test-cleanup
+
     - lumigo-orb/integration-test-parallel:
         context: common
+        run_test_cleanup: false
         requires:
           - lumigo-orb/integration-test-limited-flows
+
+    - lumigo-orb/integration-test-cleanup:
+        name: post-test-cleanup
+        context: common
+        requires:
+          - lumigo-orb/integration-test-parallel
+
     - lumigo-orb/workflow-completed-successfully:
+        context: common
         requires:
           - test
           - lumigo-orb/integration-test-parallel
@@ -50,16 +80,11 @@ workflows:
 
 jobs:
   test:
-    docker:
-      - image: lumigo/ci:latest
-        auth:
-          username: lumigo
-          password: $DOCKERHUB_PASSWORD
+    <<: *defaults
     environment:
       - TZ: Asia/Jerusalem
       - NODE_OPTIONS: --max_old_space_size=1500
     resource_class: medium+
-    working_directory: ~/opentelemetry-js-distro
     steps:
       - checkout
       - restore_cache:
@@ -91,15 +116,10 @@ jobs:
           prefix: coverage
 
   deploy:
-    docker:
-      - image: lumigo/ci:latest
-        auth:
-          username: lumigo
-          password: $DOCKERHUB_PASSWORD
+    <<: *defaults
     environment:
       - TZ: Asia/Jerusalem
     resource_class: medium+
-    working_directory: ~/opentelemetry-js-distro
     steps:
       - lumigo-orb/checkout_utils
       - checkout
