@@ -4,6 +4,7 @@ import * as https from 'https';
 
 import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
+import { Span } from '@opentelemetry/api';
 
 export const DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
@@ -134,17 +135,6 @@ export const safeGet = (obj, arr, dflt = null) => {
     current = current[arr[i]];
   }
   return current || dflt;
-};
-
-export const isAwsService = (host, responseData = undefined): boolean => {
-  if (host && host.includes('amazonaws.com')) {
-    return true;
-  }
-  return !!(
-    responseData &&
-    responseData.headers &&
-    (responseData.headers['x-amzn-requestid'] || responseData.headers['x-amz-request-id'])
-  );
 };
 
 export const parseQueryParams = (queryParams) => {
