@@ -15,7 +15,11 @@ import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentat
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { getSpanAttributeMaxLength } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
-import { LumigoDistroDetector, LumigoKubernetesDetector, LumigoTagDetector } from './resources/detectors';
+import {
+  LumigoDistroDetector,
+  LumigoKubernetesDetector,
+  LumigoTagDetector,
+} from './resources/detectors';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 
 declare global {

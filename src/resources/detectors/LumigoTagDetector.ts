@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
-import {logger} from "../../logging";
+import { logger } from '../../logging';
 
 export const LUMIGO_TAG_ATTRIBUTE = 'lumigo.tag';
 export const LUMIGO_TAG_ENV_VAR = 'LUMIGO_TAG';
@@ -10,7 +10,7 @@ export const LUMIGO_TAG_ENV_VAR = 'LUMIGO_TAG';
  * set by the application in env var
  */
 export class LumigoTagDetector implements Detector {
-  readonly tag: string | undefined
+  readonly tag: string | undefined;
 
   constructor() {
     this.tag = process.env[LUMIGO_TAG_ENV_VAR];
@@ -21,12 +21,17 @@ export class LumigoTagDetector implements Detector {
       if (!this.tag) {
         resolve(Resource.empty());
       } else if (this.tag.includes(';')) {
-        logger.warn(`Lumigo tag contains a semicolon, which is not allowed. The tag will be ignored.`, { tag: this.tag });
+        logger.warn(
+          `Lumigo tag contains a semicolon, which is not allowed. The tag will be ignored.`,
+          { tag: this.tag }
+        );
         resolve(Resource.empty());
       } else {
-        resolve(new Resource({
-          [LUMIGO_TAG_ATTRIBUTE]: this.tag,
-        }));
+        resolve(
+          new Resource({
+            [LUMIGO_TAG_ATTRIBUTE]: this.tag,
+          })
+        );
       }
     });
   }
