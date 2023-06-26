@@ -15,7 +15,11 @@ import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentat
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { getSpanAttributeMaxLength } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
-import { LumigoDistroDetector, LumigoKubernetesDetector } from './resources/detectors';
+import {
+  LumigoDistroDetector,
+  LumigoKubernetesDetector,
+  LumigoTagDetector,
+} from './resources/detectors';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 
 declare global {
@@ -118,6 +122,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       processDetector,
       new LumigoDistroDetector(distroVersion),
       new LumigoKubernetesDetector(),
+      new LumigoTagDetector(),
     ];
 
     if (process.env.ECS_CONTAINER_METADATA_URI || process.env.ECS_CONTAINER_METADATA_URI_V4) {
