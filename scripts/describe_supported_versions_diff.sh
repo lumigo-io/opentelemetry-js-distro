@@ -5,7 +5,7 @@ set -eu
 readonly SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
 readonly ROOT_DIR="$(dirname ${SCRIPT_DIR})"
 
-echo "feat: Test additional package versions"
+echo "feat: Test additional package versions [auto-test-update]"
 
 git diff --name-only -- "${ROOT_DIR}/src/" | \
     sort | \

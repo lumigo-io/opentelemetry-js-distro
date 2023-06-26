@@ -6,7 +6,7 @@
 This is the source repository of [`@lumigo/opentelemetry`](https://npm.io/package/@lumigo/opentelemetry), Lumigo OpenTelemetry Distribution for Node.js, intended for use with containerized applications.
 
 The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream OpenTelemetry packaged, additional automated quality-assurance and customizations that **optimize for no-code injection**, meaning that you should need to update exactly zero lines of code in your application in order to make use of the Lumigo OpenTelemetry Distribution.
-(See the [No-code instrumentation](#no-code-instrumentation) section for auto-instrumentation instructions)
+(See the [No-code activation](#no-code-activation) section for auto-instrumentation instructions)
 
 **Note:** If you are looking for the Lumigo Node.js tracer for AWS Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is the package you should use instead.
 
@@ -288,7 +288,7 @@ Lumigo's only goal for these analytics data is to be able to give you the instru
 
 This behavior is opt-out using the `LUMIGO_REPORT_DEPENDENCIES=false` environment variable.
 Additionally, the dependencies data is sent only when the Lumigo endpoint is the default one (as to avoid issues when tracing data is sent through proxies like OpenTelemetry collectors), and it active only when a `LUMIGO_TRACER_TOKEN` is present in the process environment.
-If you are using the Lumigo OpenTelemetry Distro for JS with another OpenTelemetry-compatible backend, no dependency data will be transmitted (as this is not a standard OpenTelemetry Protocol functionality). 
+If you are using the Lumigo OpenTelemetry Distro for JS with another OpenTelemetry-compatible backend, no dependency data will be transmitted (as this is not a standard OpenTelemetry Protocol functionality).
 
 ## Baseline setup
 
@@ -297,6 +297,7 @@ The Lumigo OpenTelemetry Distro will automatically create the following OpenTele
 ### Resources
 
 A `Resource` built from the default OpenTelemetry resource with the `sdk...` attributes, plus:
+
 * The `lumigo.distro.version` documenting the version of this package
 
 Additional resource attributes depending on the compute platform.
@@ -333,9 +334,7 @@ If the [Task Metadata endpoint v4](https://docs.aws.amazon.com/AmazonECS/latest/
   * `process.runtime.name`
   * `process.runtime.version`
 
-
 * A non-standard `process.environ` resource attribute, containing a stringified representation of the process environment, with environment variables scrubbed based on the [`LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` and `LUMIGO_SECRET_MASKING_REGEX`](#lumigo-specific-configurations) environment variables.
-
 
 ### SDK configuration
 
@@ -343,8 +342,7 @@ If the [Task Metadata endpoint v4](https://docs.aws.amazon.com/AmazonECS/latest/
   * `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`
   * `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 
-  ** If the `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` environment variable is not set, the span attribute size limit will be taken from `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT` environment variable. The default size limit when both are not set is 2048.  
-
+  ** If the `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` environment variable is not set, the span attribute size limit will be taken from `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT` environment variable. The default size limit when both are not set is 2048.
 
 ## Advanced use cases
 
@@ -410,7 +408,7 @@ const resource: Resource = tracerProvider.resource;
 
 ### Ensure spans are flushed to Lumigo before shutdown
 
-For short-running processes, the `BatchProcessor` configured by the Lumigo OpenTelemetry Distro may not ensure that the tracing data are sent to Lumigo (see the [Baseline setup](#baseline_setup) section for more information).
+For short-running processes, the `BatchProcessor` configured by the Lumigo OpenTelemetry Distro may not ensure that the tracing data are sent to Lumigo (see the [baseline setup](#baseline-setup) section for more information).
 Through the access to the `tracerProvider`, however, it is possible to ensure that all spans are flushed to Lumigo as follows:
 
 ```typescript
