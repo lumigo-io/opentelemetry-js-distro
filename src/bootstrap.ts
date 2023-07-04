@@ -82,8 +82,13 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       require(join(__dirname, 'package.json')) ||
       'unknown';
 
+    const ignoredHostnames = [new URL(lumigoEndpoint).hostname];
+    if (lumigoEndpoint != DEFAULT_LUMIGO_ENDPOINT) {
+      ignoredHostnames.push(new URL(DEFAULT_DEPENDENCIES_ENDPOINT).hostname);
+    }
+
     const instrumentationsToInstall = [
-      new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
+      new LumigoHttpInstrumentation(...ignoredHostnames),
       new LumigoExpressInstrumentation(),
       new LumigoMongoDBInstrumentation(),
     ].filter((i) => i.isApplicable());
