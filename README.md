@@ -286,9 +286,7 @@ The data uploaded to Lumigo is a set of key-value pairs with package name and ve
 Similar is available through the tracing data sent to Lumigo, except that this aims at covering dependencies for which the Lumigo OpenTelemetry Distro for JS does not have instrumentation (yet?).
 Lumigo's only goal for these analytics data is to be able to give you the instrumentations you need without you needing to tell us!
 
-This behavior is opt-out using the `LUMIGO_REPORT_DEPENDENCIES=false` environment variable.
-Additionally, the dependencies data is sent only when the Lumigo endpoint is the default one (as to avoid issues when tracing data is sent through proxies like OpenTelemetry collectors), and it active only when a `LUMIGO_TRACER_TOKEN` is present in the process environment.
-If you are using the Lumigo OpenTelemetry Distro for JS with another OpenTelemetry-compatible backend, no dependency data will be transmitted (as this is not a standard OpenTelemetry Protocol functionality).
+The dependencies data is sent only when a `LUMIGO_TRACER_TOKEN` is present in the process environment, and it can be opted out via the `LUMIGO_REPORT_DEPENDENCIES=false` environment variable.
 
 ## Baseline setup
 
