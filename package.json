@@ -14,7 +14,8 @@
     "semantic-release": "semantic-release",
     "test:unit": "npm run build && NODE_OPTIONS=--unhandled-rejections=strict jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
     "test:instrumentations": "npm run build && jest -c jest.instrumentations.config.js --detectOpenHandles --runInBand --forceExit --silent=false",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "update:instrumentations": "node scripts/update_tested_versions.js"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
   "author": "Lumigo",
@@ -87,16 +88,8 @@
     "webpack-cli": "^4.10.0"
   },
   "release": {
-    "branches": [
-      "main"
-    ],
-    "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      "@semantic-release/npm",
-      "@semantic-release/git",
-      "@semantic-release/github"
-    ]
+    "branches": ["main"],
+    "plugins": ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator", "@semantic-release/npm", "@semantic-release/git", "@semantic-release/github"]
   },
   "husky": {
     "hooks": {
