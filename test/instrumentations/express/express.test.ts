@@ -33,9 +33,11 @@ const expectedResourceAttributes = {
   },
 };
 
+// if the test is run locally, only test the earliest and latest versions
+const allVersions = versionsToTest('express', 'express');
 const versionsList = process.env['GITHUB_ACTIONS']?.length
-  ? versionsToTest('express', 'express')
-  : ['4.18.2'];
+  ? allVersions
+  : [allVersions[0], allVersions[allVersions.length - 1]];
 
 describe.each(versionsList)(
   'Instrumentation tests for the express package',

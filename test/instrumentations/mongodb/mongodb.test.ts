@@ -29,9 +29,11 @@ const expectedIndexStatement = expect.stringMatching(
   /"createIndexes":"insertOne","indexes":\[{"name":"a_1","key"/
 );
 
+// if the test is run locally, only test the earliest and latest versions
+const allVersions = versionsToTest('mongodb', 'mongodb');
 const versionsList = process.env['GITHUB_ACTIONS']?.length
-  ? versionsToTest('mongodb', 'mongodb')
-  : ['4.14.0'];
+  ? allVersions
+  : [allVersions[0], allVersions[allVersions.length - 1]];
 
 describe.each(versionsList)(
   "Instrumentation tests for the 'mongodb' package",
