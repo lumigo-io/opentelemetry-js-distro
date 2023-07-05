@@ -62,7 +62,7 @@ describe.each(versionsList)(
     });
 
     test(
-      'basics',
+      `basics: ${versionToTest}`,
       async function () {
         const spanDumpPath = `${SPANS_DIR}/basic-v3-@${versionToTest}.json`;
 

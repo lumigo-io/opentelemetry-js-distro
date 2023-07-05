@@ -66,7 +66,7 @@ describe.each(versionsList)(
     });
 
     test(
-      'basics',
+      `basics: ${versionToTest}`,
       async function () {
         const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
 
@@ -126,7 +126,7 @@ describe.each(versionsList)(
     );
 
     test(
-      'secret masking requests',
+      `secret masking requests: ${versionToTest}`,
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
@@ -185,7 +185,7 @@ describe.each(versionsList)(
     );
 
     test(
-      'secret masking requests - complete redaction',
+      `secret masking requests - complete redaction: ${versionToTest}`,
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 

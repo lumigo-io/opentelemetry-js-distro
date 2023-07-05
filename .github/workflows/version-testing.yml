@@ -58,17 +58,17 @@ jobs:
         continue-on-error: true  # when there aren't changes the artifact won't be uploaded and this step will fail
         with:
           name: 14
-          path: versions_artifacts/12
-      - uses: actions/download-artifact@v2
-        continue-on-error: true
-        with:
-          name: 16
           path: versions_artifacts/14
       - uses: actions/download-artifact@v2
         continue-on-error: true
         with:
-          name: 18
+          name: 16
           path: versions_artifacts/16
+      - uses: actions/download-artifact@v2
+        continue-on-error: true
+        with:
+          name: 18
+          path: versions_artifacts/18
       - run: python3 -m pip install -r ./requirements-ci.txt
       - run: PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m gather_version_artifacts
       - run: git --no-pager diff
