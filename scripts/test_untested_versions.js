@@ -6,7 +6,7 @@ const {
   deleteBackupPackageVersions,
   loadPackageVersions,
   restorePackageVersionsFromBackup,
-} = require('./tested-versions');
+} = require('./tested-versions-file-utils');
 
 const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(function (package) {
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();

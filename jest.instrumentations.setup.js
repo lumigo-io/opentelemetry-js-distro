@@ -2,7 +2,10 @@ require('jest-json');
 require('jest-chain');
 const { instrumentationsVersionManager } = require('./test/helpers/InstrumentationsVersionManager');
 const fs = require('fs');
-const { compareVersions, loadPackageVersionsFromBackup } = require('./scripts/tested-versions');
+const {
+  compareVersions,
+  loadPackageVersionsFromBackup,
+} = require('./scripts/tested-versions-file-utils');
 
 const oldEnv = Object.assign({}, process.env);
 beforeEach(() => {
