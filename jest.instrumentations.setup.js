@@ -35,7 +35,6 @@ afterAll(() => {
         .concat(loadPackageVersionsFromBackup(pkg))
         .sort(compareVersions)
         .join('\n');
-      console.info('Updating supported versions file', versionStrings);
       fs.writeFileSync(testVersionsFile, versionStrings);
       console.info('Finish afterAll, supported version files were updated.');
     });

@@ -16,8 +16,11 @@ const backupPackageVersions = function (pkg) {
   if (!fs.existsSync(versionsFile)) {
     return;
   }
-  const backupVersionsFile = getBackupFileName(pkg);
-  fs.copyFileSync(versionsFile, backupVersionsFile);
+  fs.copyFileSync(versionsFile, getBackupFileName(pkg));
+};
+
+const deleteBackupPackageVersions = function (pkg) {
+  fs.unlinkSync(getBackupFileName(pkg));
 };
 
 const loadPackageVersions = function (pkg, versionsFile) {
@@ -38,12 +41,11 @@ const loadPackageVersionsFromBackup = function (pkg) {
 };
 
 const restorePackageVersionsFromBackup = function (pkg) {
-  const versionsFile = getFileName(pkg);
   const backupVersionsFile = getBackupFileName(pkg);
   if (!fs.existsSync(backupVersionsFile)) {
     return;
   }
-  fs.copyFileSync(backupVersionsFile, versionsFile);
+  fs.copyFileSync(backupVersionsFile, getFileName(pkg));
   fs.unlinkSync(backupVersionsFile);
 };
 
@@ -51,6 +53,7 @@ const restorePackageVersionsFromBackup = function (pkg) {
 module.exports = {
   backupPackageVersions,
   compareVersions,
+  deleteBackupPackageVersions,
   loadPackageVersions,
   loadPackageVersionsFromBackup,
   restorePackageVersionsFromBackup,

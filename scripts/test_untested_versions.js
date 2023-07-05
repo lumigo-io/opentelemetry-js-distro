@@ -3,6 +3,7 @@ const { execSync } = require('child_process');
 const {
   backupPackageVersions,
   compareVersions,
+  deleteBackupPackageVersions,
   loadPackageVersions,
   restorePackageVersionsFromBackup,
 } = require('./tested-versions');
@@ -62,8 +63,15 @@ for (const package of instrumentationsFolders) {
       console.warn();
       `Testing of ${package} failed.`;
     } finally {
-      console.info(`\nResetting versions of ${package}...`);
-      restorePackageVersionsFromBackup(package);
+      if (process.env['GITHUB_ACTIONS']?.length) {
+        // we don't want the backup files to be committed on ci runs
+        console.info(`\nDeleting backup files of instrumentation versions for ${package}...`);
+        deleteBackupPackageVersions(package);
+      } else {
+        // we don't want the updates committed on local runs
+        console.info(`\nRestoring instrumentation versions for ${package}...`);
+        restorePackageVersionsFromBackup(package);
+      }
     }
   }
 }
