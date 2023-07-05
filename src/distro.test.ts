@@ -2,7 +2,10 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { version } from '../package.json';
 
-const LUMIGO_ENDPOINT = 'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
+import { DEFAULT_DEPENDENCIES_ENDPOINT, DEFAULT_LUMIGO_ENDPOINT } from './constants';
+
+const OTHER_LUMIGO_ENDPOINT =
+  'http://ec2-34-215-6-94.us-west-2.compute.amazonaws.com:55681/v1/trace';
 const LUMIGO_TRACER_TOKEN = 't_10faa5e13e7844aaa1234';
 
 const ECS_CONTAINER_METADATA_URI = 'http://169.255.169.255/v3';
@@ -118,7 +121,7 @@ describe('Distro initialization', () => {
         const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
         jest.mock('@opentelemetry/exporter-trace-otlp-http');
 
-        process.env.LUMIGO_ENDPOINT = LUMIGO_ENDPOINT;
+        process.env.LUMIGO_ENDPOINT = OTHER_LUMIGO_ENDPOINT;
         process.env.LUMIGO_TRACER_TOKEN = LUMIGO_TRACER_TOKEN;
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
@@ -129,7 +132,7 @@ describe('Distro initialization', () => {
           headers: {
             Authorization: 'LumigoToken t_10faa5e13e7844aaa1234',
           },
-          url: LUMIGO_ENDPOINT,
+          url: OTHER_LUMIGO_ENDPOINT,
         });
       });
     });
@@ -331,37 +334,48 @@ describe('Distro initialization', () => {
       });
     });
 
-    test('submits dependencies to the backend', async () => {
-      await jest.isolateModulesAsync(async () => {
-        const lumigoToken = 'abcdef';
-        process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
+    describe.each([DEFAULT_LUMIGO_ENDPOINT, OTHER_LUMIGO_ENDPOINT])(
+      'submits dependencies to the backend',
+      (endpoint) => {
+        test(`when the Lumigo endpoint is ${
+          endpoint == DEFAULT_LUMIGO_ENDPOINT ? '' : 'not '
+        }the default`, async () => {
+          process.env.LUMIGO_ENDPOINT = endpoint;
 
-        const utils = require('./utils');
-        jest.mock('./utils');
+          await jest.isolateModulesAsync(async () => {
+            const lumigoToken = 'abcdef';
+            process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
-        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
+            const utils = require('./utils');
+            jest.mock('./utils');
 
-        const { init } = jest.requireActual('./distro');
-        const { reportDependencies } = await init;
+            const postUri = jest
+              .spyOn(utils, 'postUri')
+              .mockImplementation(() => Promise.resolve());
 
-        const res = await reportDependencies;
-        expect(res).toBeUndefined();
+            const { init } = jest.requireActual('./distro');
+            const { reportDependencies } = await init;
 
-        expect(postUri.mock.calls.length).toBe(1);
+            const res = await reportDependencies;
+            expect(res).toBeUndefined();
 
-        const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
+            expect(postUri.mock.calls.length).toBe(1);
 
-        const payload = data as {
-          resourceAttributes: Object;
-          packages: string;
-        };
+            const [dependenciesEndpoint, data, headers] = postUri.mock.calls[0];
 
-        expect(dependenciesEndpoint).not.toBeFalsy();
-        expect(payload.resourceAttributes['lumigo.distro.version']).toBe(version);
-        expect(payload.packages.length).toBeGreaterThan(0);
-        expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
-      });
-    });
+            const payload = data as {
+              resourceAttributes: Object;
+              packages: string;
+            };
+
+            expect(dependenciesEndpoint).toBe(DEFAULT_DEPENDENCIES_ENDPOINT);
+            expect(payload.resourceAttributes['lumigo.distro.version']).toBe(version);
+            expect(payload.packages.length).toBeGreaterThan(0);
+            expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
+          });
+        });
+      }
+    );
 
     test('does not fail if dependency submission fails', async () => {
       await jest.isolateModulesAsync(async () => {

@@ -8,6 +8,7 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
+import { DEFAULT_DEPENDENCIES_ENDPOINT, DEFAULT_LUMIGO_ENDPOINT } from './constants';
 import { report } from './dependencies';
 import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
@@ -41,10 +42,6 @@ export interface LumigoSdkInitialization {
   readonly instrumentedModules: string[];
   readonly reportDependencies: Promise<void | Object>;
 }
-
-const DEFAULT_LUMIGO_ENDPOINT = 'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/traces';
-const DEFAULT_DEPENDENCIES_ENDPOINT =
-  'https://ga-otlp.lumigo-tracer-edge.golumigo.com/v1/dependencies';
 
 import { logger } from './logging';
 import { dirname, join } from 'path';
@@ -85,8 +82,13 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       require(join(__dirname, 'package.json')) ||
       'unknown';
 
+    const ignoredHostnames = [new URL(lumigoEndpoint).hostname];
+    if (lumigoEndpoint != DEFAULT_LUMIGO_ENDPOINT) {
+      ignoredHostnames.push(new URL(DEFAULT_DEPENDENCIES_ENDPOINT).hostname);
+    }
+
     const instrumentationsToInstall = [
-      new LumigoHttpInstrumentation(new URL(lumigoEndpoint).hostname),
+      new LumigoHttpInstrumentation(...ignoredHostnames),
       new LumigoExpressInstrumentation(),
       new LumigoMongoDBInstrumentation(),
     ].filter((i) => i.isApplicable());
@@ -188,14 +190,8 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
        */
       if (!lumigoReportDependencies) {
         reportDependencies = Promise.resolve('Dependency reporting is turned off');
-      } else if (lumigoEndpoint === DEFAULT_LUMIGO_ENDPOINT) {
+      } else {
         /*
-         * If the trace endpoint is different than the default, it could be
-         * that this application does not have egress to Lumigo SaaS or it is
-         * reporting to a backend that is not Lumigo, and thus does not have
-         * the facilities to process the dependencies anyways. In this case,
-         * skip the reporting, as it might not work and cause noise in the logs.
-         *
          * We pass `detectedResource` as opposed to `tracerProvider.resource`
          * because we want only the infrastructure-related resource attributes
          * like ARNs, and specifically we do not need the process environment.
