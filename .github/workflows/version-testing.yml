@@ -1,5 +1,6 @@
 name: Version Testing
 on:
+  push:
   schedule:
     - cron: "0 7 * * *"
 jobs:
@@ -15,10 +16,20 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_cimg_tag }}
-      - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
+      - run: |
+          sudo apt-get update
+          sudo apt-get install \
+            build-essential \
+            libcairo2-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev
+          sudo apt-get install \
+            libpango1.0-dev \
+            libsdl-pango-dev || true # Node.js 18 does not carry pango
       - run: npm ci
       - run: npm run build
-      - run: npm run test:component
+      - run: npm run test:instrumentations
       - run: npm run test:integration:version
         continue-on-error: true
       - run: git --no-pager diff
@@ -78,4 +89,4 @@ jobs:
           body: ${{ env.new_versions }}
           base: main
           labels: version-testing, automerge
-          reviewers: nirLumigo,GuyMoses,saartochner,shanishiri,mmanciop
+          reviewers: GuyMoses,saartochner,shanishiri,mmanciop
