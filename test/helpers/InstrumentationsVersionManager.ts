@@ -18,7 +18,7 @@ class InstrumentationsVersionsManager {
         this.instrumentationsVersions[packageName].unsupported.push(version);
     }
 
-    getInstrumantationsVersions(): InstrumentationsVersions {
+    getInstrumentationsVersions(): InstrumentationsVersions {
         return this.instrumentationsVersions;
     }
 

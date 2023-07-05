@@ -20,7 +20,7 @@ beforeAll(() => {
 
 afterAll(() => {
   console.info('Starting afterAll...');
-  const versions = instrumentationsVersionManager.getInstrumantationsVersions();
+  const versions = instrumentationsVersionManager.getInstrumentationsVersions();
   const versions_keys = Object.keys(versions);
   if (versions_keys.length) {
     versions_keys.forEach((lib) => {

@@ -6,7 +6,7 @@ require('log-timestamp');
 const APP_TIMEOUT = 10_000;
 
 const host = 'localhost';
-let db = null;
+let db;
 let server;
 let timeout;
 
@@ -16,8 +16,9 @@ function resetTimeout() {
       clearTimeout(timeout);
     }
     console.info(`resetting timeout for another ${APP_TIMEOUT}ms...`);
-    timeout = setTimeout(() => {
+    timeout = setTimeout(async () => {
       console.info(`Shutting down server after ${APP_TIMEOUT}ms`);
+      await stopDbContainer();
       server.close();
     }, APP_TIMEOUT);
   }
