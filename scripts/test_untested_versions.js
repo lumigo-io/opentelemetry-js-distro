@@ -1,23 +1,11 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
-
-const compareVersions = function (a, b) {
-  if (!a) return -1;
-  if (!b) return 1;
-  const aParts = a.split('.');
-  const bParts = b.split('.');
-  for (let i = 0; i < 3; i++) {
-    const aPart = parseInt(aParts[i]);
-    const bPart = parseInt(bParts[i]);
-    if (aPart < bPart) {
-      return -1;
-    }
-    if (aPart > bPart) {
-      return 1;
-    }
-  }
-  return 0;
-};
+const {
+  backupPackageVersions,
+  compareVersions,
+  loadPackageVersions,
+  restorePackageVersionsFromBackup,
+} = require('./tested-versions');
 
 const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(function (package) {
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();
@@ -29,20 +17,16 @@ const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(fu
 
 for (const package of instrumentationsFolders) {
   console.info(`\nDiscovering untested versions of ${package}...`);
-  const existingVersions = fs
-    .readFileSync(`src/instrumentations/${package}/tested_versions/${package}`, 'utf8')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .sort(compareVersions);
+  const existingVersions = loadPackageVersions(package);
   const highestExistingVersion = existingVersions[existingVersions.length - 1];
 
-  const untestedVersions = Object.keys(
+  let untestedVersions = Object.keys(
     JSON.parse(execSync(`npm show ${package} time --json`, { encoding: 'utf8' }))
   )
     .filter((version) => {
       const isValidVersion = version.match(/^\d+\.\d+\.\d+$/);
-      const isNewerThanExistingVersion = compareVersions(version, highestExistingVersion) > 0;
+      const isNewerThanExistingVersion =
+        isValidVersion && compareVersions(version, highestExistingVersion) > 0;
       return isValidVersion && isNewerThanExistingVersion;
     })
     .sort(compareVersions);
@@ -54,6 +38,14 @@ for (const package of instrumentationsFolders) {
     console.info(
       `\nTesting ${untestedVersions.length} untested versions of ${package} since ${highestExistingVersion}...`
     );
+    backupPackageVersions(package);
+
+    // if this is run locally, only test the first and last versions
+    untestedVersions =
+      process.env['GITHUB_ACTIONS']?.length || untestedVersions.length < 3
+        ? untestedVersions
+        : [untestedVersions[0], untestedVersions[untestedVersions.length - 1]];
+
     fs.writeFileSync(
       `src/instrumentations/${package}/tested_versions/${package}`,
       untestedVersions.join('\n') + '\n'
@@ -71,10 +63,7 @@ for (const package of instrumentationsFolders) {
       `Testing of ${package} failed.`;
     } finally {
       console.info(`\nResetting versions of ${package}...`);
-      fs.writeFileSync(
-        `src/instrumentations/${package}/tested_versions/${package}`,
-        existingVersions.join('\n') + '\n'
-      );
+      restorePackageVersionsFromBackup(package);
     }
   }
 }

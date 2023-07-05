@@ -6,6 +6,7 @@ import { join } from 'path';
 
 import { SpanKind } from '@opentelemetry/api';
 
+import { itTest } from '../../integration/setup';
 import { getSpanByKind, readSpanDump } from '../../utils/spans';
 import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
@@ -33,13 +34,7 @@ const expectedResourceAttributes = {
   },
 };
 
-// if the test is run locally, only test the earliest and latest versions
-const allVersions = versionsToTest('express', 'express');
-const versionsList = process.env['GITHUB_ACTIONS']?.length
-  ? allVersions
-  : [allVersions[0], allVersions[allVersions.length - 1]];
-
-describe.each(versionsList)(
+describe.each(versionsToTest('express', 'express'))(
   'Instrumentation tests for the express package',
   function (versionToTest) {
     let testApp: ChildProcessWithoutNullStreams;
@@ -47,26 +42,30 @@ describe.each(versionsList)(
     beforeAll(function () {
       reinstallPackages(TEST_APP_DIR);
       fs.mkdirSync(SPANS_DIR, { recursive: true });
-    });
-
-    beforeEach(function () {
       installPackage(TEST_APP_DIR, 'express', versionToTest);
     });
 
     afterEach(async function () {
-      console.info('killing test app...');
+      console.info('Killing test app...');
       if (testApp?.kill('SIGHUP')) {
         console.info('Waiting for test app to exit...');
         await sleep(200);
       } else {
         console.warn('Test app not found, nothing to kill.');
       }
+    });
 
+    afterAll(function () {
       uninstallPackage(TEST_APP_DIR, 'express', versionToTest);
     });
 
-    test(
-      `basics: ${versionToTest}`,
+    itTest(
+      {
+        testName: `basics: ${versionToTest}`,
+        packageName: 'express',
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
       async function () {
         const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
 
@@ -121,12 +120,16 @@ describe.each(versionsList)(
           },
           events: [],
         });
-      },
-      TEST_TIMEOUT
+      }
     );
 
-    test(
-      `secret masking requests: ${versionToTest}`,
+    itTest(
+      {
+        testName: `secret masking requests: ${versionToTest}`,
+        packageName: 'express',
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
@@ -180,12 +183,16 @@ describe.each(versionsList)(
           },
           events: [],
         });
-      },
-      TEST_TIMEOUT
+      }
     );
 
-    test(
-      `secret masking requests - complete redaction: ${versionToTest}`,
+    itTest(
+      {
+        testName: `secret masking requests - complete redaction: ${versionToTest}`,
+        packageName: 'express',
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
@@ -240,8 +247,7 @@ describe.each(versionsList)(
           },
           events: [],
         });
-      },
-      TEST_TIMEOUT
+      }
     );
   }
 );

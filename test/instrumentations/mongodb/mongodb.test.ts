@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import 'jest-json';
 import { join } from 'path';
 
+import { itTest } from '../../integration/setup';
 import { getSpanByName } from '../../utils/spans';
 import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
@@ -29,40 +30,38 @@ const expectedIndexStatement = expect.stringMatching(
   /"createIndexes":"insertOne","indexes":\[{"name":"a_1","key"/
 );
 
-// if the test is run locally, only test the earliest and latest versions
-const allVersions = versionsToTest('mongodb', 'mongodb');
-const versionsList = process.env['GITHUB_ACTIONS']?.length
-  ? allVersions
-  : [allVersions[0], allVersions[allVersions.length - 1]];
-
-describe.each(versionsList)(
+describe.each(versionsToTest('mongodb', 'mongodb'))(
   "Instrumentation tests for the 'mongodb' package",
   function (versionToTest) {
     let testApp: ChildProcessWithoutNullStreams;
 
-    beforeAll(() => {
+    beforeAll(function () {
       reinstallPackages(TEST_APP_DIR);
       fs.mkdirSync(SPANS_DIR, { recursive: true });
-    });
-
-    beforeEach(() => {
       installPackage(TEST_APP_DIR, 'mongodb', versionToTest);
     });
 
-    afterEach(async () => {
-      console.info('killing test app...');
+    afterEach(async function () {
+      console.info('Killing test app...');
       if (testApp?.kill('SIGHUP')) {
         console.info('Waiting for test app to exit...');
         await sleep(200);
       } else {
         console.warn('Test app not found, nothing to kill.');
       }
+    });
 
+    afterAll(function () {
       uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
     });
 
-    test(
-      `basics: ${versionToTest}`,
+    itTest(
+      {
+        testName: `basics: ${versionToTest}`,
+        packageName: 'mongodb',
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
       async function () {
         const spanDumpPath = `${SPANS_DIR}/basic-v3-@${versionToTest}.json`;
 
@@ -136,8 +135,7 @@ describe.each(versionsList)(
             '$cmd'
           )
         );
-      },
-      TEST_TIMEOUT
+      }
     );
   }
 );

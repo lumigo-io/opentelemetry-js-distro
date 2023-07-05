@@ -31,12 +31,15 @@ jobs:
             libsdl-pango-dev || true # Node.js 18 does not carry pango
       - run: npm ci
       - run: npm run build
-      - run: npm run test:untested-instrumentations
-      - run: npm run test:integration:version
-        continue-on-error: true
-      - run: git --no-pager diff
       - run: mkdir versions_artifact
-      - run: for path in `git diff --name-only`; do cp "$path" versions_artifact; done
+      - run: npm run test:untested-instrumentations
+      - run: git --no-pager diff
+      - run: |
+          for path in `git diff --name-only`; do
+            if [[ $path == *"tested_versions"* ]]; then
+              cp "$path" versions_artifact;
+            fi
+          done
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.node_cimg_tag }}
@@ -69,6 +72,7 @@ jobs:
           name: 18
           path: versions_artifacts/18
       - run: python3 -m pip install -r ./requirements-ci.txt
+        # TODO replace this with a node.js script
       - run: PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m gather_version_artifacts
       - run: git --no-pager diff
       - run: rm -rf versions_artifacts  # the artifacts shouldn't be committed
