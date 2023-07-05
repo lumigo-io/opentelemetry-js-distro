@@ -37,8 +37,7 @@ afterAll(() => {
       fs.writeFileSync(`${TESTED_VERSIONS_PATH}/${lib}`, versionStrings);
       console.info('Finish afterAll, supported version files were updated.');
     });
-  }
-  else {
+  } else {
     console.info('Finish afterAll, no versions to update.');
   }
 });

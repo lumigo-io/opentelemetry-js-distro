@@ -7,10 +7,7 @@ const config = {
   testMatch: [`**/instrumentations/${instrumentationToTest}/*.test.ts`],
   roots: ['./test'],
   setupFilesAfterEnv: ['./jest.instrumentations.setup.js', 'jest-json', 'jest-expect-message'],
-  reporters: [
-    'default',
-    'jest-summarizing-reporter'
-  ]
+  reporters: ['default', 'jest-summarizing-reporter'],
 };
 
 module.exports = config;
