@@ -14,8 +14,8 @@
     "semantic-release": "semantic-release",
     "test:unit": "npm run build && NODE_OPTIONS=--unhandled-rejections=strict jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
     "test:instrumentations": "npm run build && jest -c jest.instrumentations.config.js --detectOpenHandles --runInBand --forceExit --silent=false",
-    "tsc": "tsc",
-    "update:instrumentations": "node scripts/update_tested_versions.js"
+    "test:untested-instrumentations": "node scripts/test_untested_versions.js",
+    "tsc": "tsc"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
   "author": "Lumigo",

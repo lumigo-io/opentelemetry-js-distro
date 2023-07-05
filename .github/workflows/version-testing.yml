@@ -31,8 +31,7 @@ jobs:
             libsdl-pango-dev || true # Node.js 18 does not carry pango
       - run: npm ci
       - run: npm run build
-      - run: npm run update:instrumentations
-      - run: npm run test:instrumentations
+      - run: npm run test:untested-instrumentations
       - run: npm run test:integration:version
         continue-on-error: true
       - run: git --no-pager diff

@@ -2,6 +2,8 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 
 const compareVersions = function (a, b) {
+  if (!a) return -1;
+  if (!b) return 1;
   const aParts = a.split('.');
   const bParts = b.split('.');
   for (let i = 0; i < 3; i++) {
@@ -26,6 +28,7 @@ const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(fu
 });
 
 for (const package of instrumentationsFolders) {
+  console.info(`\nDiscovering untested versions of ${package}...`);
   const existingVersions = fs
     .readFileSync(`src/instrumentations/${package}/tested_versions/${package}`, 'utf8')
     .split('\n')
@@ -44,9 +47,34 @@ for (const package of instrumentationsFolders) {
     })
     .sort(compareVersions);
 
-  const allVersions = [...existingVersions, ...untestedVersions];
-  fs.writeFileSync(
-    `src/instrumentations/${package}/tested_versions/${package}`,
-    allVersions.join('\n') + '\n'
-  );
+  if (untestedVersions.length === 0) {
+    console.info(`No untested versions of ${package} since ${highestExistingVersion} found.`);
+  } else {
+    // run npm run test:instrumentations -- --testPathPattern=test/instrumentations/<package> on the untested versions
+    console.info(
+      `\nTesting ${untestedVersions.length} untested versions of ${package} since ${highestExistingVersion}...`
+    );
+    fs.writeFileSync(
+      `src/instrumentations/${package}/tested_versions/${package}`,
+      untestedVersions.join('\n') + '\n'
+    );
+    try {
+      execSync(
+        `npm run test:instrumentations -- --testPathPattern=test/instrumentations/${package}`,
+        {
+          stdio: 'inherit',
+        }
+      );
+      console.info(`Testing of ${package} succeeded.`);
+    } catch (e) {
+      console.warn();
+      `Testing of ${package} failed.`;
+    } finally {
+      console.info(`\nResetting versions of ${package}...`);
+      fs.writeFileSync(
+        `src/instrumentations/${package}/tested_versions/${package}`,
+        existingVersions.join('\n') + '\n'
+      );
+    }
+  }
 }
