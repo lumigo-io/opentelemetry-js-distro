@@ -1,48 +1,47 @@
 import { spawnSync } from 'child_process';
-import { existsSync, mkdirSync, rmdirSync, unlinkSync } from 'fs';
+import { existsSync, rmdirSync, unlinkSync } from 'fs';
 
 export const reinstallPackages = (appDir: string) => {
-    if (existsSync(`${appDir}/node_modules`)) {
-        rmdirSync(`${appDir}/node_modules`, {
-            recursive: true,
-        });
-    }
-
-    if (existsSync(`${appDir}/package-lock.json`)) {
-        unlinkSync(`${appDir}/package-lock.json`);
-    }
-
-    const { error } = spawnSync('npm', ['install'], {
-        cwd: appDir,
+  console.log('removing node packages...');
+  if (existsSync(`${appDir}/node_modules`)) {
+    rmdirSync(`${appDir}/node_modules`, {
+      recursive: true,
     });
+  }
 
-    if (error) {
-        throw error;
-    }
-}
+  console.log('removing package-lock.json...');
+  if (existsSync(`${appDir}/package-lock.json`)) {
+    unlinkSync(`${appDir}/package-lock.json`);
+  }
+
+  console.log('installing node packages...');
+  const { error } = spawnSync('npm', ['install', '--quiet'], {
+    cwd: appDir,
+  });
+
+  if (error) {
+    throw error;
+  }
+};
 
 export const installPackage = (appDir: string, packageName: string, packageVersion: string) => {
-    const { error } = spawnSync('npm', ['install', `${packageName}@${packageVersion}`], {
-        cwd: appDir,
-    });
+  console.log(`installing ${packageName}@${packageVersion}...`);
+  const { error } = spawnSync('npm', ['install', '--quiet', `${packageName}@${packageVersion}`], {
+    cwd: appDir,
+  });
 
-    if (error) {
-        throw error;
-    }
-}
+  if (error) {
+    throw error;
+  }
+};
 
 export const uninstallPackage = (appDir: string, packageName: string, packageVersion: string) => {
-    const { error } = spawnSync('npm', ['uninstall', `${packageName}@${packageVersion}`], {
-        cwd: appDir,
-    });
+  console.log(`uninstalling ${packageName}@${packageVersion}...`);
+  const { error } = spawnSync('npm', ['uninstall', `${packageName}@${packageVersion}`], {
+    cwd: appDir,
+  });
 
-    if (error) {
-        throw error;
-    }
-}
-
-export const ensureDirExists = (dirPath: string) => {
-    if (!existsSync(dirPath)) {
-        mkdirSync(dirPath);
-    }
-}
+  if (error) {
+    throw error;
+  }
+};

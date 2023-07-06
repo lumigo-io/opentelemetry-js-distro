@@ -2,7 +2,10 @@ require('jest-json');
 require('jest-chain');
 const { instrumentationsVersionManager } = require('./test/helpers/InstrumentationsVersionManager');
 const fs = require('fs');
-const semver = require('semver');
+const {
+  compareVersions,
+  loadPackageVersionsFromBackup,
+} = require('./scripts/tested-versions-file-utils');
 
 const oldEnv = Object.assign({}, process.env);
 beforeEach(() => {
@@ -20,25 +23,25 @@ beforeAll(() => {
 
 afterAll(() => {
   console.info('Starting afterAll...');
-  const versions = instrumentationsVersionManager.getInstrumantationsVersions();
+  const versions = instrumentationsVersionManager.getInstrumentationsVersions();
+  console.info('Adding tested versions', JSON.stringify(versions));
   const versions_keys = Object.keys(versions);
   if (versions_keys.length) {
-    versions_keys.forEach((lib) => {
+    versions_keys.forEach((pkg) => {
       // updated supported versions file
-      const TESTED_VERSIONS_PATH = `./src/instrumentations/${lib}/tested_versions`;
-      if (!fs.existsSync(TESTED_VERSIONS_PATH)) {
-        fs.mkdirSync(TESTED_VERSIONS_PATH);
-      }
-      const versionStrings = versions[lib].unsupported
+      const testedVersionFolder = `./src/instrumentations/${pkg}/tested_versions`;
+      const testVersionsFile = `${testedVersionFolder}/${pkg}`;
+      fs.mkdirSync(testedVersionFolder, { recursive: true });
+      const versionStrings = versions[pkg].unsupported
         .map((v) => `!${v}`)
-        .concat(versions[lib].supported)
-        .sort((v1, v2) => semver.compare(v1.replace('!', ''), v2.replace('!', '')))
+        .concat(versions[pkg].supported)
+        .concat(loadPackageVersionsFromBackup(pkg))
+        .sort(compareVersions)
         .join('\n');
-      fs.writeFileSync(`${TESTED_VERSIONS_PATH}/${lib}`, versionStrings);
+      fs.writeFileSync(testVersionsFile, versionStrings);
       console.info('Finish afterAll, supported version files were updated.');
     });
-  }
-  else {
+  } else {
     console.info('Finish afterAll, no versions to update.');
   }
 });

@@ -1,16 +1,23 @@
-import { existsSync, unlinkSync } from 'fs';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { existsSync, unlinkSync } from 'fs';
 import waitOn from 'wait-on';
-import { readSpanDump, Span } from './spans';
+import { Span, readSpanDump } from './spans';
 
 const WAIT_ON_INITIAL_DELAY = 1_000;
 const WAIT_ON_TIMEOUT = 10_000;
 
-export async function startTestApp(cwd: string, serviceName: string, spanDumpPath: string, env_vars = {}): Promise<{app: ChildProcessWithoutNullStreams, port: number}> {
+export async function startTestApp(
+    cwd: string,
+    serviceName: string,
+    spanDumpPath: string,
+    env_vars = {}
+): Promise<{app: ChildProcessWithoutNullStreams, port: number}> {
     if (existsSync(spanDumpPath)) {
+        console.info('removing previous span dump file...')
         unlinkSync(spanDumpPath);
     }
 
+    console.info('starting test app...');
     const app = spawn('npm', ['run', 'start'], {
         cwd,
         env: {
@@ -33,6 +40,7 @@ export async function startTestApp(cwd: string, serviceName: string, spanDumpPat
 
     app.on('exit', function (_, signal) {
         const pid = `${this.pid ? this.pid : undefined}`;
+        console.info(`app with pid: ${pid} exited with signal: ${signal}`);
         //we kill the app with 'SIGHUP' in the afterEach, we want to throw error only when it's real app issue
         if (signal && signal !== 'SIGHUP') {
             throw new Error(`app with pid: ${pid} exit unexpectedly!`);
@@ -63,7 +71,7 @@ export async function startTestApp(cwd: string, serviceName: string, spanDumpPat
             }
         });
     });
-    
+
     return {
         app,
         port,
@@ -84,6 +92,7 @@ function getAppPort(data: Buffer): number | undefined{
 // TODO Rewrite without wait-on
 export async function invokeHttpAndGetSpanDump(url: string, spanDumpPath: string): Promise<Span[]> {
     return new Promise<Span[]>((resolve, reject) => {
+        console.info(`invoking url: ${url} and waiting for span dump...`);
         waitOn(
             {
                 resources: [url],
@@ -92,6 +101,7 @@ export async function invokeHttpAndGetSpanDump(url: string, spanDumpPath: string
                 simultaneous: 1,
                 log: true,
                 validateStatus: function (status: number) {
+                    console.info(`received status: ${status}`);
                     return status >= 200 && status < 300; // default if not provided
                 },
             },
