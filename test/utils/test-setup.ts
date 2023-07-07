@@ -1,10 +1,10 @@
 import { spawnSync } from 'child_process';
-import { existsSync, rmdirSync, unlinkSync } from 'fs';
+import { existsSync, rmSync, unlinkSync } from 'fs';
 
 export const reinstallPackages = (appDir: string) => {
   console.log('removing node packages...');
   if (existsSync(`${appDir}/node_modules`)) {
-    rmdirSync(`${appDir}/node_modules`, {
+    rmSync(`${appDir}/node_modules`, {
       recursive: true,
     });
   }
@@ -15,12 +15,16 @@ export const reinstallPackages = (appDir: string) => {
   }
 
   console.log('installing node packages...');
-  const { error } = spawnSync('npm', ['install', '--quiet'], {
+  const { stderr, status, error } = spawnSync('npm', ['install', '--quiet'], {
     cwd: appDir,
   });
 
   if (error) {
     throw error;
+  }
+
+  if (Number.isInteger(status) && status! > 0) {
+    throw new Error(`The installation of app dependencies failed with exit code '${status}'; stderr: ${stderr.toString()}`)
   }
 };
 

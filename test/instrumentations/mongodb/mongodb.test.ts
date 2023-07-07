@@ -1,13 +1,12 @@
-import { ChildProcessWithoutNullStreams } from 'child_process';
-import * as fs from 'fs';
-import 'jest-json';
+import { mkdirSync } from 'fs';
 import { join } from 'path';
+import 'jest-json';
 
+import { startMongoContainer, stopMongoContainer } from './appUtils';
 import { itTest } from '../../integration/setup';
 import { getSpanByName } from '../../utils/spans';
-import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
-import { sleep } from '../../utils/time';
 import { versionsToTest } from '../../utils/versions';
 import {
   filterMongoSpans,
@@ -31,28 +30,45 @@ const expectedIndexStatement = expect.stringMatching(
 );
 
 describe.each(versionsToTest('mongodb', 'mongodb'))(
-  "Instrumentation tests for the 'mongodb' package",
-  function (versionToTest) {
-    let testApp: ChildProcessWithoutNullStreams;
+  'Instrumentation tests for the mongodb package',
+  (versionToTest) => {
+    let testApp: TestApp;
+    let mongoDbUrl: string;
 
-    beforeAll(function () {
+    beforeAll(async () => {
+      mongoDbUrl = ensureIPv4(
+        // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
+        await startMongoContainer()
+      );
+
+      console.info(`Mongo container started, URL: ${mongoDbUrl}`);
+
       reinstallPackages(TEST_APP_DIR);
-      fs.mkdirSync(SPANS_DIR, { recursive: true });
+
+      mkdirSync(SPANS_DIR, { recursive: true });
+    });
+    
+    beforeEach(async () => {
       installPackage(TEST_APP_DIR, 'mongodb', versionToTest);
+      
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, `${SPANS_DIR}/basic-@${versionToTest}.json`, {
+        MONGODB_URL: mongoDbUrl,
+        OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+      });
     });
 
-    afterEach(async function () {
-      console.info('Killing test app...');
-      if (testApp?.kill('SIGHUP')) {
-        console.info('Waiting for test app to exit...');
-        await sleep(200);
-      } else {
-        console.warn('Test app not found, nothing to kill.');
+    afterEach(async () => {
+      if (testApp) {
+        console.info('Killing test app...');
+        const exitStatus = await testApp.kill();
+        console.info(`Test app exited with code '${exitStatus}'`);
       }
+
+      uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
     });
 
-    afterAll(function () {
-      uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
+    afterAll(async () => {
+      await stopMongoContainer();
     });
 
     itTest(
@@ -62,18 +78,8 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
-      async function () {
-        const spanDumpPath = `${SPANS_DIR}/basic-v3-@${versionToTest}.json`;
-
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
-        testApp = app;
-
-        const spans = await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/test-mongodb`,
-          spanDumpPath
-        );
+      async ()=> {
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/test-mongodb`);
 
         expect(filterMongoSpans(spans)).toHaveLength(5);
 
@@ -139,3 +145,9 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
     );
   }
 );
+
+function ensureIPv4(mongoUrl: string) {
+  const url = new URL(mongoUrl);
+  url.hostname = '127.0.0.1';
+  return url.toString();  
+}
