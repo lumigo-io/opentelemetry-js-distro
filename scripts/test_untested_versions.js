@@ -16,7 +16,13 @@ const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(fu
   return isDirectory && hasTestedVersionsFile;
 });
 
-for (const package of instrumentationsFolders) {
+let instrumentationToTest = instrumentationsFolders.filter(instrumentation => {
+  return !process.env.INSTRUMENTATION_UNDER_TEST || process.env.INSTRUMENTATION_UNDER_TEST === instrumentation
+});
+
+console.info(`\nDiscovering untested versions of: ${instrumentationToTest.join(', ')}`);
+
+for (const package of instrumentationToTest) {
   console.info(`\nDiscovering untested versions of ${package}...`);
   const existingVersions = loadPackageVersions(package);
   const highestExistingVersion = existingVersions[existingVersions.length - 1];

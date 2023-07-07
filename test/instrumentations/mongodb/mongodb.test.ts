@@ -2,7 +2,8 @@ import { mkdirSync } from 'fs';
 import { join } from 'path';
 import 'jest-json';
 
-import { startMongoContainer, stopMongoContainer } from './appUtils';
+import { MongoDBContainer, StartedMongoDBContainer } from 'testcontainers';
+
 import { itTest } from '../../integration/setup';
 import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
@@ -17,7 +18,7 @@ import {
 
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
-const TEST_TIMEOUT = 300000;
+const TEST_TIMEOUT = 600000;
 const INSTRUMENTATION_NAME = `mongodb`;
 const INSERT_CMD = 'mongodb.insert';
 const FIND_CMD = 'mongodb.find';
@@ -33,29 +34,38 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
   'Instrumentation tests for the mongodb package',
   (versionToTest) => {
     let testApp: TestApp;
-    let mongoDbUrl: string;
+    let mongoContainer: StartedMongoDBContainer;
 
     beforeAll(async () => {
-      mongoDbUrl = ensureIPv4(
-        // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
-        await startMongoContainer()
-      );
-
-      console.info(`Mongo container started, URL: ${mongoDbUrl}`);
-
       reinstallPackages(TEST_APP_DIR);
 
       mkdirSync(SPANS_DIR, { recursive: true });
-    });
+    }, 30_000 /* Long timeout, this might have to pull Docker images */);
     
     beforeEach(async () => {
       installPackage(TEST_APP_DIR, 'mongodb', versionToTest);
-      
+
+      mongoContainer = await new MongoDBContainer().start();
+
+      let mongoDbUrl = new URL(mongoContainer.getConnectionString());
+      // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
+      mongoDbUrl.hostname = '127.0.0.1';
+
+      if (!versionToTest.startsWith('3.')) {
+        /*
+         * Prevent `MongoServerSelectionError: getaddrinfo EAI_AGAIN` errors
+         * by disabling MongoDB topology.
+         */
+        mongoDbUrl.searchParams.set('directConnection', 'true');
+      }
+
+      console.info(`Mongo container started, URL: ${mongoDbUrl}`);
+
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, `${SPANS_DIR}/basic-@${versionToTest}.json`, {
-        MONGODB_URL: mongoDbUrl,
+        MONGODB_URL: mongoDbUrl.toString(),
         OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
       });
-    });
+    }, 15_000);
 
     afterEach(async () => {
       if (testApp) {
@@ -64,11 +74,14 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
         console.info(`Test app exited with code '${exitStatus}'`);
       }
 
-      uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
-    });
+      if (mongoContainer) {
+        await mongoContainer.stop();
+        console.log('Mongo container stopped successfully');
+      } else {
+          console.log('Mongo container was not initialized');
+      }
 
-    afterAll(async () => {
-      await stopMongoContainer();
+      uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
     });
 
     itTest(
@@ -145,9 +158,3 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
     );
   }
 );
-
-function ensureIPv4(mongoUrl: string) {
-  const url = new URL(mongoUrl);
-  url.hostname = '127.0.0.1';
-  return url.toString();  
-}

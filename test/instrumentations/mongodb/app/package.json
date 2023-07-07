@@ -9,8 +9,7 @@
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
-    "bson": "4.7.2",
-    "mongodb": "^3.6.6"
+    "bson": "4.7.2"
   },
   "devDependencies": {
     "async-await-retry": "^2.0.0",
