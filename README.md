@@ -275,8 +275,9 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | Instrumentation | Package | Supported Versions |
 | --- | --- | --- |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
-| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
-| | | 4.0.0~4.14.0 |
+| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.9~3.7.3 |
+| | | 4.0.0~4.16.0 |
+| | | 5.0.0~5.7.0 |
 
 ## Automated dependency reporting
 
