@@ -42,10 +42,8 @@ export class TestApp {
         this.spanDumpPath = spanDumpPath;
 
         let portResolveFunction: Function;
-        let portRejectFunction: Function;
-        this.portPromise = new Promise((resolve, reject) => {
+        this.portPromise = new Promise((resolve) => {
             portResolveFunction = resolve;
-            portRejectFunction = reject;
         })
 
         let portPromiseResolved = false;
