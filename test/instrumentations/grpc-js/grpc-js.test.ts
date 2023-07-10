@@ -1,4 +1,3 @@
-import { ChildProcessWithoutNullStreams } from 'child_process';
 import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
@@ -8,7 +7,7 @@ import { SpanKind } from '@opentelemetry/api';
 
 import { itTest } from '../../integration/setup';
 import { getSpanByKind, readSpanDump } from '../../utils/spans';
-import { invokeHttp, invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { sleep } from '../../utils/time';
 
@@ -42,7 +41,7 @@ describe.each(['1.8.17'])(
   //versionsToTest('grpc-js', '@grpc/grpc-js'))(
   'Instrumentation tests for the @grpc/grpc-js package',
   function (versionToTest) {
-    let testApp: ChildProcessWithoutNullStreams;
+    let testApp: TestApp;
 
     beforeAll(function () {
       for (let app in TEST_APPS) {
@@ -56,12 +55,7 @@ describe.each(['1.8.17'])(
 
     afterEach(async function () {
       console.info('Killing test app...');
-      if (testApp?.kill('SIGHUP')) {
-        console.info('Waiting for test app to exit...');
-        await sleep(200);
-      } else {
-        console.warn('Test app not found, nothing to kill.');
-      }
+      await testApp.kill();
     });
 
     afterAll(function () {
@@ -80,33 +74,19 @@ describe.each(['1.8.17'])(
       async function () {
         const exporterFile = `${SPANS_DIR}/server-roundtrip-grpc-js@${versionToTest}.json`;
 
-        const { app, port } = await startTestApp(
-          TEST_APPS.ROUNDTRIP,
-          INSTRUMENTATION_NAME,
-          exporterFile,
-          {
-            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-          }
-        );
-        testApp = app;
+        testApp = new TestApp(TEST_APPS.ROUNDTRIP, INSTRUMENTATION_NAME, exporterFile, {
+          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+        });
 
-        let url = `http://localhost:${port}/start-server?port=${DEFAULT_GRPC_PORT}`;
-        console.error(`Making request to ${url} ...`);
-        let response = await invokeHttp(url);
+        const grpcPort = DEFAULT_GRPC_PORT;
 
-        expect(response.status).toBe(200);
-        expect(response.data).toBe('OK');
+        await testApp.invokeGetPath(`/start-server?port=${grpcPort}`);
 
         const greetingName = 'Siri';
 
-        response = await invokeHttp(
-          `http://localhost:${port}/make-client-request?port=${DEFAULT_GRPC_PORT}&name=${greetingName}`
-        );
+        await testApp.invokeGetPath(`/make-client-request?port=${grpcPort}&name=${greetingName}`);
 
-        let spans = await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/stop-server`,
-          exporterFile
-        );
+        let spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/stop-server`);
 
         /*
          * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than

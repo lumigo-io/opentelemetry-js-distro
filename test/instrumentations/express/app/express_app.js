@@ -15,7 +15,7 @@ function resetTimeout() {
       clearTimeout(timeout);
     }
     timeout = setTimeout(() => {
-      console.log(`Shutting down server after ${APP_TIMEOUT}ms`);
+      console.error(`Shutting down server after ${APP_TIMEOUT}ms`);
       server.close();
     }, APP_TIMEOUT);
   }
@@ -47,7 +47,7 @@ app.get('/basic', async (_, res) => {
 
 server = app.listen(0, () => {
   const port = server.address().port;
-  console.error('Listening on port ' + port);
+  console.error(`HTTP server listening on port ${port}`);
   if (process.send) {
     process.send(port);
   }

@@ -22,11 +22,12 @@ function sayHello(call, callback) {
 class GreeterServer {
   constructor(port) {
     this.port = port;
-    this.server = new grpc.Server();
-    this.server.addService(hello_proto.Greeter.service, { sayHello: sayHello });
-    this.server.bindAsync(`0.0.0.0:${this.port}`, grpc.ServerCredentials.createInsecure(), () => {
-      this.server.start();
-      console.info(`gRPC server listening on port ${port}`);
+    let server = new grpc.Server();
+    this.server = server;
+    server.addService(hello_proto.Greeter.service, { sayHello: sayHello });
+    server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), () => {
+      server.start();
+      console.error(`gRPC server listening on port ${port}`);
     });
   }
 

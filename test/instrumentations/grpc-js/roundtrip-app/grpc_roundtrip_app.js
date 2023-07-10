@@ -19,7 +19,7 @@ function resetTimeout() {
     }
     console.info(`resetting timeout for another ${APP_TIMEOUT}ms...`);
     timeout = setTimeout(async () => {
-      console.info(`Shutting down servers after ${APP_TIMEOUT}ms`);
+      console.error(`Shutting down servers after ${APP_TIMEOUT}ms`);
       if (grpcServer) {
         grpcServer.stop();
       }
@@ -33,7 +33,7 @@ const requestListener = function (req, res) {
   resetTimeout();
 
   const requestUrl = url.parse(req.url, true);
-  const [port] = requestUrl.query.port || DEFAULT_GRPC_PORT;
+  const port = requestUrl?.query?.port || DEFAULT_GRPC_PORT;
   switch (requestUrl.pathname) {
     case '/start-server':
       grpcServer = new GreeterServer(port);
@@ -67,12 +67,10 @@ const requestListener = function (req, res) {
 };
 
 httpServer = http.createServer(requestListener);
-console.error(`Starting HTTP server...`);
 httpServer.listen(0, host, () => {
   const port = httpServer.address().port;
-  console.info(`HTTP server listening on port ${port}`);
+  console.error(`HTTP server listening on port ${port}`);
   if (process.send) {
-    console.error(`Sending port ${port} to parent process...`);
     process.send(port);
   }
 });

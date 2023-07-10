@@ -5,7 +5,7 @@ import { Span, readSpanDump } from './spans';
 
 const WAIT_ON_INITIAL_DELAY = 1_000;
 const WAIT_ON_TIMEOUT = 10_000;
-const PORT_REGEX = new RegExp('.*(Listening on port )([0-9]*)', 'g');
+const PORT_REGEX = new RegExp('.*([Ll]istening on port )([0-9]*)', 'g');
 
 export class TestApp {
 
@@ -90,6 +90,35 @@ export class TestApp {
         return await this.portPromise;
     }
 
+    public async invokeGetPath(path: string): Promise<void> {
+        const port = await this.port()
+
+        const url = `http-get://localhost:${port}/${path.replace(/^\/+/, '')}`;
+
+        return new Promise<void>((resolve, reject) => {
+            console.info(`invoking url: ${url} ...`);
+            waitOn(
+                {
+                    resources: [url],
+                    delay: WAIT_ON_INITIAL_DELAY,
+                    timeout: WAIT_ON_TIMEOUT,
+                    simultaneous: 1,
+                    log: true,
+                    validateStatus: function (status: number) {
+                        console.info(`received status: ${status}`);
+                        return status >= 200 && status < 300; // default if not provided
+                    },
+                },
+                async function (err: Error) {
+                    if (err) {
+                        return reject(err)
+                    } else {
+                        resolve();
+                    }
+                }
+            );
+        });
+    }
     public async invokeGetPathAndRetrieveSpanDump(path: string): Promise<Span[]> {
         const port = await this.port()
 

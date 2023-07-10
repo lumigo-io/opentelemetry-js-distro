@@ -18,7 +18,7 @@ function resetTimeout() {
       clearTimeout(timeout);
     }
     timeout = setTimeout(() => {
-      console.log(`Shutting down server after ${APP_TIMEOUT}ms`);
+      console.error(`Shutting down server after ${APP_TIMEOUT}ms`);
       server.close();
     }, APP_TIMEOUT);
   }
@@ -113,7 +113,7 @@ server = http.createServer(requestListener);
 
 server.listen(0, host, () => {
   const port = server.address().port;
-  console.error('Listening on port ' + port);
+  console.error(`HTPP server listening on port ${port}`);
   if (process.send) {
     process.send(port);
   }
