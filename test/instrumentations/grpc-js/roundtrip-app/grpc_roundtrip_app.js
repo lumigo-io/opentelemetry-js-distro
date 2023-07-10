@@ -1,5 +1,5 @@
-const { sayHello } = require('../greeter_client');
-const { GreeterServer } = require('../greeter_server');
+const { sayHello } = require('./greeter_client');
+const { GreeterServer } = require('./greeter_server');
 const http = require('http');
 const url = require('url');
 require('log-timestamp');
@@ -13,7 +13,7 @@ let httpServer;
 let timeout;
 
 function resetTimeout() {
-  if (server) {
+  if (httpServer) {
     if (timeout) {
       clearTimeout(timeout);
     }
@@ -28,7 +28,8 @@ function resetTimeout() {
   }
 }
 
-const requestListener = async function (req, res) {
+const requestListener = function (req, res) {
+  console.error(`Received request: ${req.method} ${req.url}`);
   resetTimeout();
 
   const requestUrl = url.parse(req.url, true);
@@ -52,6 +53,7 @@ const requestListener = async function (req, res) {
           res.writeHead(500);
           res.end(JSON.stringify({ error: err }));
         });
+      break;
     case '/stop-server':
       grpcServer.stop();
       grpcServer = null;
@@ -65,10 +67,12 @@ const requestListener = async function (req, res) {
 };
 
 httpServer = http.createServer(requestListener);
+console.error(`Starting HTTP server...`);
 httpServer.listen(0, host, () => {
   const port = httpServer.address().port;
   console.info(`HTTP server listening on port ${port}`);
   if (process.send) {
+    console.error(`Sending port ${port} to parent process...`);
     process.send(port);
   }
 });

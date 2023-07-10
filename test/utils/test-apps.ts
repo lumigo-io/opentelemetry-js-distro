@@ -24,7 +24,7 @@ export class TestApp {
             console.info('removing previous span dump file...')
             unlinkSync(spanDumpPath);
         }
-    
+
         console.info('starting test app...');
         this.app = spawn('npm', ['run', 'start'], {
             cwd,
@@ -38,7 +38,7 @@ export class TestApp {
             },
             shell: true,
         });
-    
+
         this.spanDumpPath = spanDumpPath;
 
         let portResolveFunction: Function;
@@ -52,23 +52,23 @@ export class TestApp {
 
             if (!portPromiseResolved) {
                 const portRegexMatch = PORT_REGEX.exec(dataStr);
-            
+
                 if (portRegexMatch && portRegexMatch.length >= 3) {
                     portPromiseResolved = true;
                     portResolveFunction(parseInt(portRegexMatch[2]));
                 }
             }
-        
+
             console.info('spawn data stderr: ', dataStr);
         });
-        
+
         let closeResolveFunction: Function;
         let closeRejectFunction: Function;
         this.closePromise = new Promise((resolve, reject) => {
             closeResolveFunction = resolve;
             closeRejectFunction = reject;
         });
-        
+
         this.app.on('error', (error) => {
             closeRejectFunction(error);
         });
@@ -79,7 +79,7 @@ export class TestApp {
                 console.info(`app with pid '${this.pid}' exited with signal '${signal}' and exit code '${exitCode}'`);
                 closeResolveFunction();
             }
-        }); 
+        });
     }
 
     public pid(): Number {

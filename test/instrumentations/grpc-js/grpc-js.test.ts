@@ -8,7 +8,7 @@ import { SpanKind } from '@opentelemetry/api';
 
 import { itTest } from '../../integration/setup';
 import { getSpanByKind, readSpanDump } from '../../utils/spans';
-import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { invokeHttp, invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { sleep } from '../../utils/time';
 
@@ -90,16 +90,17 @@ describe.each(['1.8.17'])(
         );
         testApp = app;
 
-        await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/start-server?port=${DEFAULT_GRPC_PORT}`,
-          exporterFile
-        );
+        let url = `http://localhost:${port}/start-server?port=${DEFAULT_GRPC_PORT}`;
+        console.error(`Making request to ${url} ...`);
+        let response = await invokeHttp(url);
+
+        expect(response.status).toBe(200);
+        expect(response.data).toBe('OK');
 
         const greetingName = 'Siri';
 
-        await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/make-client-request?port=${DEFAULT_GRPC_PORT}&name=${greetingName}`,
-          exporterFile
+        response = await invokeHttp(
+          `http://localhost:${port}/make-client-request?port=${DEFAULT_GRPC_PORT}&name=${greetingName}`
         );
 
         let spans = await invokeHttpAndGetSpanDump(
