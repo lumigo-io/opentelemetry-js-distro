@@ -1,11 +1,10 @@
-import { ChildProcessWithoutNullStreams } from 'child_process';
 import * as fs from 'fs';
 import 'jest-json';
 import ServerMock from 'mock-http-server';
 import { join } from 'path';
 
 import { getSpanByKind } from '../../utils/spans';
-import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { TestApp } from '../../utils/test-apps';
 import { reinstallPackages } from '../../utils/test-setup';
 import { sleep } from '../../utils/time';
 
@@ -32,12 +31,13 @@ const expectedResourceAttributes = {
 };
 
 describe('Instrumentation tests for the http package', function () {
-    let testApp: ChildProcessWithoutNullStreams;
+    let testApp: TestApp;
     let server: Server | undefined;
 
     beforeAll(function () {
         reinstallPackages(TEST_APP_DIR);
         fs.mkdirSync(SPANS_DIR, { recursive: true });
+
     });
 
     afterEach(async () => {
@@ -53,12 +53,7 @@ describe('Instrumentation tests for the http package', function () {
         }
 
         console.info('killing test app...');
-        if (testApp?.kill('SIGHUP')) {
-            console.info('Waiting for test app to exit...');
-            await sleep(200);
-        } else {
-            console.warn('Test app not found, nothing to kill.');
-        }
+        await testApp.kill();
     });
 
     test('basic http test', async function () {
@@ -78,14 +73,13 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
             LUMIGO_ENDPOINT: 'https://walle-edge-app-us-west-2.walle.golumigo.com',
             LUMIGO_TRACER_TOKEN: 't_123321',
             TARGET_URL: `http://localhost:${targetPort}`,
         });
-        testApp = app;
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test1`, spanDumpPath);
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test1');
 
         expect(spans).toHaveLength(2);
 
@@ -157,13 +151,12 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
             OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '1',
             TARGET_URL: `http://localhost:${targetPort}`,
         });
-        testApp = app;
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/test2`, spanDumpPath);
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test2');
 
         expect(spans).toHaveLength(2);
 
@@ -219,13 +212,12 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
             OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: '3',
             TARGET_URL: `http://localhost:${targetPort}`,
         });
-        testApp = app;
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/large-response`, spanDumpPath);
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
 
         expect(spans).toHaveLength(2);
 
@@ -280,12 +272,12 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
             TARGET_URL: `http://localhost:${targetPort}`,
         });
-        testApp = app;
+        const port = await testApp.port();
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/large-response`, spanDumpPath);
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
 
         expect(spans).toHaveLength(2);
 
@@ -339,16 +331,16 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
             TARGET_URL: `http://localhost:${targetPort}`,
             LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES: 'all',
             LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_HEADERS: 'all',
             LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES: 'all',
             LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS: 'all',
         });
-        testApp = app;
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/large-response`, spanDumpPath);
+        const port = await testApp.port();
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
 
         expect(spans).toHaveLength(2);
 
@@ -402,13 +394,13 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
             TARGET_URL: `http://localhost:${targetPort}`,
             LUMIGO_DEBUG: 'true',
         });
-        testApp = app;
+        const port = await testApp.port();
 
-        const spans = await invokeHttpAndGetSpanDump(`http-get://localhost:${port}/amazon-sigv4`, spanDumpPath);
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/amazon-sigv4');
 
         expect(spans).toHaveLength(2);
 

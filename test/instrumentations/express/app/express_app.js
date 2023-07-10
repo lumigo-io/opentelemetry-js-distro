@@ -47,7 +47,7 @@ app.get('/basic', async (_, res) => {
 
 server = app.listen(0, () => {
   const port = server.address().port;
-  console.info('Listening on port ' + port);
+  console.error('Listening on port ' + port);
   if (process.send) {
     process.send(port);
   }

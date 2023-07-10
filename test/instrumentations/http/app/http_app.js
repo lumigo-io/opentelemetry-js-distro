@@ -113,7 +113,7 @@ server = http.createServer(requestListener);
 
 server.listen(0, host, () => {
   const port = server.address().port;
-  console.info('Listening on port ' + port);
+  console.error('Listening on port ' + port);
   if (process.send) {
     process.send(port);
   }

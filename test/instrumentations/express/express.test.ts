@@ -1,4 +1,3 @@
-import { ChildProcessWithoutNullStreams } from 'child_process';
 import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
@@ -8,7 +7,7 @@ import { SpanKind } from '@opentelemetry/api';
 
 import { itTest } from '../../integration/setup';
 import { getSpanByKind, readSpanDump } from '../../utils/spans';
-import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { sleep } from '../../utils/time';
 import { versionsToTest } from '../../utils/versions';
@@ -37,7 +36,7 @@ const expectedResourceAttributes = {
 describe.each(versionsToTest('express', 'express'))(
   'Instrumentation tests for the express package',
   function (versionToTest) {
-    let testApp: ChildProcessWithoutNullStreams;
+    let testApp: TestApp;
 
     beforeAll(function () {
       reinstallPackages(TEST_APP_DIR);
@@ -47,12 +46,7 @@ describe.each(versionsToTest('express', 'express'))(
 
     afterEach(async function () {
       console.info('Killing test app...');
-      if (testApp?.kill('SIGHUP')) {
-        console.info('Waiting for test app to exit...');
-        await sleep(200);
-      } else {
-        console.warn('Test app not found, nothing to kill.');
-      }
+      await testApp.kill();
     });
 
     afterAll(function () {
@@ -69,15 +63,11 @@ describe.each(versionsToTest('express', 'express'))(
       async function () {
         const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
-        testApp = app;
 
-        let spans = await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/basic`,
-          exporterFile
-        );
+        let spans = await testApp.invokeGetPathAndRetrieveSpanDump('/basic');
 
         /*
          * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
@@ -133,15 +123,11 @@ describe.each(versionsToTest('express', 'express'))(
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
-        testApp = app;
 
-        let spans = await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/test-scrubbing`,
-          exporterFile
-        );
+        let spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test-scrubbing');
 
         /*
          * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
@@ -196,16 +182,12 @@ describe.each(versionsToTest('express', 'express'))(
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
 
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
           LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES: 'all',
         });
-        testApp = app;
 
-        let spans = await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/test-scrubbing`,
-          exporterFile
-        );
+        let spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test-scrubbing');
 
         /*
          * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than

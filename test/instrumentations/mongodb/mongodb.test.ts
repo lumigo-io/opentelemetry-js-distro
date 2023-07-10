@@ -1,13 +1,13 @@
-import { ChildProcessWithoutNullStreams } from 'child_process';
-import * as fs from 'fs';
-import 'jest-json';
+import { mkdirSync } from 'fs';
 import { join } from 'path';
+import 'jest-json';
+
+import { MongoDBContainer, StartedMongoDBContainer } from 'testcontainers';
 
 import { itTest } from '../../integration/setup';
 import { getSpanByName } from '../../utils/spans';
-import { invokeHttpAndGetSpanDump, startTestApp } from '../../utils/test-apps';
+import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
-import { sleep } from '../../utils/time';
 import { versionsToTest } from '../../utils/versions';
 import {
   filterMongoSpans,
@@ -18,7 +18,7 @@ import {
 
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
-const TEST_TIMEOUT = 300000;
+const TEST_TIMEOUT = 600000;
 const INSTRUMENTATION_NAME = `mongodb`;
 const INSERT_CMD = 'mongodb.insert';
 const FIND_CMD = 'mongodb.find';
@@ -31,27 +31,69 @@ const expectedIndexStatement = expect.stringMatching(
 );
 
 describe.each(versionsToTest('mongodb', 'mongodb'))(
-  "Instrumentation tests for the 'mongodb' package",
+  'Instrumentation tests for the mongodb package',
   function (versionToTest) {
-    let testApp: ChildProcessWithoutNullStreams;
+    let testApp: TestApp;
+    let mongoContainer: StartedMongoDBContainer;
 
-    beforeAll(function () {
+    beforeAll(async function () {
       reinstallPackages(TEST_APP_DIR);
-      fs.mkdirSync(SPANS_DIR, { recursive: true });
+
+      /*
+       * Warm up container infra, download images, etc.
+       * This prevents spurious failures of early tests.
+       */
+      try {
+        mongoContainer = await new MongoDBContainer().start();
+      } finally {
+        if (mongoContainer) {
+          mongoContainer.stop()
+        }
+      }
+
+
+      mkdirSync(SPANS_DIR, { recursive: true });
+    }, 30_000 /* Long timeout, this might have to pull Docker images */);
+    
+    beforeEach(async function () {
       installPackage(TEST_APP_DIR, 'mongodb', versionToTest);
-    });
+
+      mongoContainer = await new MongoDBContainer().start();
+
+      let mongoConnectionUrl = new URL(mongoContainer.getConnectionString());
+      // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
+      mongoConnectionUrl.hostname = '127.0.0.1';
+
+      if (!versionToTest.startsWith('3.')) {
+        /*
+         * Prevent `MongoServerSelectionError: getaddrinfo EAI_AGAIN` errors
+         * by disabling MongoDB topology.
+         */
+        mongoConnectionUrl.searchParams.set('directConnection', 'true');
+      }
+
+      console.info(`Mongo container started, URL: ${mongoConnectionUrl}`);
+
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, `${SPANS_DIR}/basic-@${versionToTest}.json`, {
+        MONGODB_URL: mongoConnectionUrl.toString(),
+        OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+      });
+    }, 15_000);
 
     afterEach(async function () {
-      console.info('Killing test app...');
-      if (testApp?.kill('SIGHUP')) {
-        console.info('Waiting for test app to exit...');
-        await sleep(200);
-      } else {
-        console.warn('Test app not found, nothing to kill.');
+      if (testApp) {
+        console.info('Killing test app...');
+        const exitStatus = await testApp.kill();
+        console.info(`Test app exited with code '${exitStatus}'`);
       }
-    });
 
-    afterAll(function () {
+      if (mongoContainer) {
+        await mongoContainer.stop();
+        console.log('Mongo container stopped successfully');
+      } else {
+          console.log('Mongo container was not initialized');
+      }
+
       uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
     });
 
@@ -63,17 +105,7 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const spanDumpPath = `${SPANS_DIR}/basic-v3-@${versionToTest}.json`;
-
-        const { app, port } = await startTestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
-        testApp = app;
-
-        const spans = await invokeHttpAndGetSpanDump(
-          `http-get://localhost:${port}/test-mongodb`,
-          spanDumpPath
-        );
+        const spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/test-mongodb`);
 
         expect(filterMongoSpans(spans)).toHaveLength(5);
 
