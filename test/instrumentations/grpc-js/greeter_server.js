@@ -18,8 +18,7 @@ function sayHello(call, callback) {
   callback(null, { message: `Hello ${call.request.name}` });
 }
 
-// export the default GreeterServer class
-export class GreeterServer {
+class GreeterServer {
   constructor(port) {
     this.port = port;
     this.server = new grpc.Server();
@@ -34,3 +33,7 @@ export class GreeterServer {
     this.server.forceShutdown();
   }
 }
+
+module.exports = {
+  GreeterServer,
+};

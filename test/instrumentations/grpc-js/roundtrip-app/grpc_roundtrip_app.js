@@ -1,4 +1,4 @@
-const sayHello = require('../greeter_client');
+const { sayHello } = require('../greeter_client');
 const { GreeterServer } = require('../greeter_server');
 const http = require('http');
 const url = require('url');

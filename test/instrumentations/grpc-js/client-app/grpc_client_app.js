@@ -1,4 +1,4 @@
-const sayHello = require('../greeter_client');
+const { sayHello } = require('../greeter_client');
 const http = require('http');
 const url = require('url');
 require('log-timestamp');

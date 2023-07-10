@@ -11,7 +11,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 
-export default function sayHello(port, name) {
+function sayHello(port, name) {
   const client = new hello_proto.Greeter(`localhost:${port}`, grpc.credentials.createInsecure());
   return new Promise((resolve, reject) => {
     client.sayHello({ name }, (err, response) => {
@@ -23,3 +23,7 @@ export default function sayHello(port, name) {
     });
   });
 }
+
+module.exports = {
+  sayHello,
+};
