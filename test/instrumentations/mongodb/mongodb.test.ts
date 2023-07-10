@@ -32,11 +32,11 @@ const expectedIndexStatement = expect.stringMatching(
 
 describe.each(versionsToTest('mongodb', 'mongodb'))(
   'Instrumentation tests for the mongodb package',
-  (versionToTest) => {
+  function (versionToTest) {
     let testApp: TestApp;
     let mongoContainer: StartedMongoDBContainer;
 
-    beforeAll(async () => {
+    beforeAll(async function () {
       reinstallPackages(TEST_APP_DIR);
 
       /*
@@ -55,32 +55,32 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
       mkdirSync(SPANS_DIR, { recursive: true });
     }, 30_000 /* Long timeout, this might have to pull Docker images */);
     
-    beforeEach(async () => {
+    beforeEach(async function () {
       installPackage(TEST_APP_DIR, 'mongodb', versionToTest);
 
       mongoContainer = await new MongoDBContainer().start();
 
-      let mongoDbUrl = new URL(mongoContainer.getConnectionString());
+      let mongoConnectionUrl = new URL(mongoContainer.getConnectionString());
       // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
-      mongoDbUrl.hostname = '127.0.0.1';
+      mongoConnectionUrl.hostname = '127.0.0.1';
 
       if (!versionToTest.startsWith('3.')) {
         /*
          * Prevent `MongoServerSelectionError: getaddrinfo EAI_AGAIN` errors
          * by disabling MongoDB topology.
          */
-        mongoDbUrl.searchParams.set('directConnection', 'true');
+        mongoConnectionUrl.searchParams.set('directConnection', 'true');
       }
 
-      console.info(`Mongo container started, URL: ${mongoDbUrl}`);
+      console.info(`Mongo container started, URL: ${mongoConnectionUrl}`);
 
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, `${SPANS_DIR}/basic-@${versionToTest}.json`, {
-        MONGODB_URL: mongoDbUrl.toString(),
+        MONGODB_URL: mongoConnectionUrl.toString(),
         OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
       });
     }, 15_000);
 
-    afterEach(async () => {
+    afterEach(async function () {
       if (testApp) {
         console.info('Killing test app...');
         const exitStatus = await testApp.kill();
@@ -104,7 +104,7 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
-      async ()=> {
+      async function () {
         const spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/test-mongodb`);
 
         expect(filterMongoSpans(spans)).toHaveLength(5);
