@@ -39,6 +39,19 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
     beforeAll(async () => {
       reinstallPackages(TEST_APP_DIR);
 
+      /*
+       * Warm up container infra, download images, etc.
+       * This prevents spurious failures of early tests.
+       */
+      try {
+        mongoContainer = await new MongoDBContainer().start();
+      } finally {
+        if (mongoContainer) {
+          mongoContainer.stop()
+        }
+      }
+
+
       mkdirSync(SPANS_DIR, { recursive: true });
     }, 30_000 /* Long timeout, this might have to pull Docker images */);
     
