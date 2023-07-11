@@ -21,11 +21,11 @@ export class TestApp {
         env_vars = {}
     ) {
         if (existsSync(spanDumpPath)) {
-            console.info('removing previous span dump file...')
+            console.info(`removing previous span dump file ${spanDumpPath}...`)
             unlinkSync(spanDumpPath);
         }
 
-        console.info('starting test app...');
+        console.info(`starting test app with span dump file ${spanDumpPath}...`);
         this.app = spawn('npm', ['run', 'start'], {
             cwd,
             env: {
@@ -88,6 +88,10 @@ export class TestApp {
 
     public async port(): Promise<Number> {
         return await this.portPromise;
+    }
+
+    public async waitUntilReady(): Promise<void> {
+        await this.port();
     }
 
     public async invokeGetPath(path: string): Promise<void> {

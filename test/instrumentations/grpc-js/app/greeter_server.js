@@ -44,10 +44,13 @@ function sayHelloStreamStream(call) {
 }
 
 class GreeterServer {
+  isRunning = false;
+
   constructor(port) {
-    this.port = port;
+    let self = this;
+    self.port = port;
     let server = new grpc.Server();
-    this.server = server;
+    self.server = server;
 
     server.addService(hello_proto.Greeter.service, {
       sayHelloUnaryUnary,
@@ -58,12 +61,21 @@ class GreeterServer {
 
     server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), () => {
       server.start();
+      self.isRunning = true;
       console.error(`gRPC server listening on port ${port}`);
     });
   }
 
   stop() {
     this.server.forceShutdown();
+    this.isRunning = false;
+  }
+
+  waitUntilReady() {
+    return new Promise((resolve, reject) => {
+      while (this.isRunning);
+      resolve();
+    });
   }
 }
 

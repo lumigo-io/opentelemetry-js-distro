@@ -9,29 +9,11 @@ const http = require('http');
 const url = require('url');
 require('log-timestamp');
 
-const APP_TIMEOUT = 10_000;
 const DEFAULT_GRPC_PORT = 50051;
 
 const host = 'localhost';
 let grpcServer;
 let httpServer;
-let timeout;
-
-function resetTimeout() {
-  if (httpServer) {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    console.info(`resetting timeout for another ${APP_TIMEOUT}ms...`);
-    timeout = setTimeout(async () => {
-      console.error(`Shutting down servers after ${APP_TIMEOUT}ms`);
-      if (grpcServer) {
-        grpcServer.stop();
-      }
-      httpServer.close();
-    }, APP_TIMEOUT);
-  }
-}
 
 function respond(res, status, body) {
   console.log(`responding with ${status} ${JSON.stringify(body)}`);
@@ -41,9 +23,8 @@ function respond(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-const requestListener = function (req, res) {
+const requestListener = async function (req, res) {
   console.error(`Received request: ${req.method} ${req.url}`);
-  resetTimeout();
 
   const requestUrl = url.parse(req.url, true);
   const name = requestUrl?.query?.name || 'world';
@@ -51,6 +32,7 @@ const requestListener = function (req, res) {
   switch (requestUrl.pathname) {
     case '/start-server':
       grpcServer = new GreeterServer(port);
+      await grpcServer.waitUntilReady();
       respond(res, 200, { port });
       break;
 
@@ -113,5 +95,3 @@ httpServer.listen(0, host, () => {
     process.send(port);
   }
 });
-
-resetTimeout();
