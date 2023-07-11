@@ -13,11 +13,7 @@ import { sleep } from '../../utils/time';
 
 const DEFAULT_GRPC_PORT = 50051;
 const SPANS_DIR = join(__dirname, 'spans');
-const TEST_APPS = {
-  CLIENT: join(__dirname, 'client-app'),
-  ROUNDTRIP: join(__dirname, 'roundtrip-app'),
-  SERVER: join(__dirname, 'server-app'),
-};
+const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 20_000;
 const INSTRUMENTATION_NAME = `grpc-js`;
 
@@ -44,13 +40,9 @@ describe.each(['1.8.17'])(
     let testApp: TestApp;
 
     beforeAll(function () {
-      for (let app in TEST_APPS) {
-        reinstallPackages(TEST_APPS[app]);
-      }
+      reinstallPackages(TEST_APP_DIR);
       fs.mkdirSync(SPANS_DIR, { recursive: true });
-      for (let app in TEST_APPS) {
-        installPackage(TEST_APPS[app], 'grpc-js', versionToTest);
-      }
+      installPackage(TEST_APP_DIR, 'grpc-js', versionToTest);
     });
 
     afterEach(async function () {
@@ -59,22 +51,20 @@ describe.each(['1.8.17'])(
     });
 
     afterAll(function () {
-      for (let app in TEST_APPS) {
-        uninstallPackage(TEST_APPS[app], '@grpc/grpc-js', versionToTest);
-      }
+      uninstallPackage(TEST_APP_DIR, '@grpc/grpc-js', versionToTest);
     });
 
     itTest(
       {
-        testName: `roundtrip basics: ${versionToTest}`,
+        testName: `roundtrip unary/unary: ${versionToTest}`,
         packageName: '@grpc/grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const exporterFile = `${SPANS_DIR}/server-roundtrip-grpc-js@${versionToTest}.json`;
+        const exporterFile = `${SPANS_DIR}/server-roundtrip-unary-unary-grpc-js@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APPS.ROUNDTRIP, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
 
@@ -84,7 +74,9 @@ describe.each(['1.8.17'])(
 
         const greetingName = 'Siri';
 
-        await testApp.invokeGetPath(`/make-client-request?port=${grpcPort}&name=${greetingName}`);
+        await testApp.invokeGetPath(
+          `/make-unary-unary-request?port=${grpcPort}&name=${greetingName}`
+        );
 
         let spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/stop-server`);
 

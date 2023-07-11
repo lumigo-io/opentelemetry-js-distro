@@ -1,4 +1,5 @@
-const { GreeterServer } = require('../greeter_server');
+const { sayHelloUnaryUnary } = require('./greeter_client');
+const { GreeterServer } = require('./greeter_server');
 const http = require('http');
 const url = require('url');
 require('log-timestamp');
@@ -12,13 +13,13 @@ let httpServer;
 let timeout;
 
 function resetTimeout() {
-  if (server) {
+  if (httpServer) {
     if (timeout) {
       clearTimeout(timeout);
     }
     console.info(`resetting timeout for another ${APP_TIMEOUT}ms...`);
     timeout = setTimeout(async () => {
-      console.info(`Shutting down servers after ${APP_TIMEOUT}ms`);
+      console.error(`Shutting down servers after ${APP_TIMEOUT}ms`);
       if (grpcServer) {
         grpcServer.stop();
       }
@@ -27,11 +28,12 @@ function resetTimeout() {
   }
 }
 
-const requestListener = async function (req, res) {
+const requestListener = function (req, res) {
+  console.error(`Received request: ${req.method} ${req.url}`);
   resetTimeout();
 
   const requestUrl = url.parse(req.url, true);
-  const [port] = requestUrl.query.port || DEFAULT_GRPC_PORT;
+  const port = requestUrl?.query?.port || DEFAULT_GRPC_PORT;
   switch (requestUrl.pathname) {
     case '/start-server':
       grpcServer = new GreeterServer(port);
@@ -39,6 +41,18 @@ const requestListener = async function (req, res) {
       res.setHeader('access-control-allow-origin', '*');
       res.writeHead(200);
       res.end(JSON.stringify({ port: port }));
+      break;
+    case '/make-unary-unary-request':
+      let name = requestUrl?.query?.name || 'world';
+      sayHelloUnaryUnary(port, name)
+        .then((message) => {
+          res.writeHead(200);
+          res.end(JSON.stringify({ port: port, name: name, response: message }));
+        })
+        .catch((err) => {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: err }));
+        });
       break;
     case '/stop-server':
       grpcServer.stop();

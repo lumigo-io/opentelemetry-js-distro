@@ -1,5 +1,5 @@
 const path = require('path');
-const PROTO_PATH = path.join(__dirname, '../protos/helloworld.proto');
+const PROTO_PATH = path.join(__dirname, './helloworld.proto');
 
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
@@ -15,7 +15,7 @@ const hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 /**
  * Implements the SayHello RPC method.
  */
-function sayHello(call, callback) {
+function sayHelloUnaryUnary(call, callback) {
   callback(null, { message: `Hello ${call.request.name}` });
 }
 
@@ -24,7 +24,7 @@ class GreeterServer {
     this.port = port;
     let server = new grpc.Server();
     this.server = server;
-    server.addService(hello_proto.Greeter.service, { sayHello: sayHello });
+    server.addService(hello_proto.Greeter.service, { sayHelloUnaryUnary });
     server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), () => {
       server.start();
       console.error(`gRPC server listening on port ${port}`);

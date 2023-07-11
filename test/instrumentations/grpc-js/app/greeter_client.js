@@ -1,5 +1,5 @@
 const path = require('path');
-const PROTO_PATH = path.join(__dirname, '../protos/helloworld.proto');
+const PROTO_PATH = path.join(__dirname, './helloworld.proto');
 
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
@@ -12,10 +12,10 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 
-function sayHello(port, name) {
+function sayHelloUnaryUnary(port, name) {
   const client = new hello_proto.Greeter(`localhost:${port}`, grpc.credentials.createInsecure());
   return new Promise((resolve, reject) => {
-    client.sayHello({ name }, (err, response) => {
+    client.sayHelloUnaryUnary({ name }, (err, response) => {
       if (err) {
         reject(err);
       } else {
@@ -26,5 +26,5 @@ function sayHello(port, name) {
 }
 
 module.exports = {
-  sayHello,
+  sayHelloUnaryUnary,
 };
