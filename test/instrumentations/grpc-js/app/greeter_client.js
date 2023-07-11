@@ -46,7 +46,26 @@ function sayHelloUnaryStream(port, name) {
   });
 }
 
+function sayHelloStreamUnary(port, names) {
+  names = Array.isArray(names) ? names : [names];
+  const client = new hello_proto.Greeter(`localhost:${port}`, grpc.credentials.createInsecure());
+  return new Promise((resolve, reject) => {
+    let call = client.sayHelloStreamUnary((err, response) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(response.message);
+      }
+    });
+    for (let name in names) {
+      call.write({ name });
+    }
+    call.end();
+  });
+}
+
 module.exports = {
   sayHelloUnaryUnary,
   sayHelloUnaryStream,
+  sayHelloStreamUnary,
 };

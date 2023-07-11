@@ -23,13 +23,27 @@ function sayHelloUnaryStream(call) {
   call.end();
 }
 
+function SayHelloStreamUnary(call, callback) {
+  let names = [];
+  call.on('data', function (request) {
+    names.push(request.name);
+  });
+  call.on('end', function () {
+    callback(null, { message: `Hello ${names.join(', ')}` });
+  });
+}
+
 class GreeterServer {
   constructor(port) {
     this.port = port;
     let server = new grpc.Server();
     this.server = server;
 
-    server.addService(hello_proto.Greeter.service, { sayHelloUnaryUnary, sayHelloUnaryStream });
+    server.addService(hello_proto.Greeter.service, {
+      sayHelloUnaryUnary,
+      sayHelloUnaryStream,
+      SayHelloStreamUnary,
+    });
 
     server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), () => {
       server.start();
