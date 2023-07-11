@@ -23,13 +23,23 @@ function sayHelloUnaryStream(call) {
   call.end();
 }
 
-function SayHelloStreamUnary(call, callback) {
+function sayHelloStreamUnary(call, callback) {
   let names = [];
   call.on('data', function (request) {
     names.push(request.name);
   });
   call.on('end', function () {
     callback(null, { message: `Hello ${names.join(', ')}` });
+  });
+}
+
+function sayHelloStreamStream(call) {
+  let counter = 0;
+  call.on('data', function (request) {
+    call.write({ message: `Hello ${request.name} ${++counter}` });
+  });
+  call.on('end', function () {
+    call.end();
   });
 }
 
@@ -42,7 +52,8 @@ class GreeterServer {
     server.addService(hello_proto.Greeter.service, {
       sayHelloUnaryUnary,
       sayHelloUnaryStream,
-      SayHelloStreamUnary,
+      sayHelloStreamUnary,
+      sayHelloStreamStream,
     });
 
     server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), () => {

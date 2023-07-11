@@ -2,6 +2,7 @@ const {
   sayHelloUnaryUnary,
   sayHelloUnaryStream,
   sayHelloStreamUnary,
+  sayHelloStreamStream,
 } = require('./greeter_client');
 const { GreeterServer } = require('./greeter_server');
 const http = require('http');
@@ -75,6 +76,16 @@ const requestListener = function (req, res) {
 
     case '/make-stream-unary-request':
       sayHelloStreamUnary(port, name)
+        .then((message) => {
+          respond(res, 200, { port, name, response: message });
+        })
+        .catch((err) => {
+          respond(res, 500, { error: err });
+        });
+      break;
+
+    case '/make-stream-stream-request':
+      sayHelloStreamStream(port, name)
         .then((message) => {
           respond(res, 200, { port, name, response: message });
         })
