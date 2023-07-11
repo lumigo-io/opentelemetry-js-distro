@@ -12,11 +12,15 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 
-/**
- * Implements the SayHello RPC method.
- */
 function sayHelloUnaryUnary(call, callback) {
   callback(null, { message: `Hello ${call.request.name}` });
+}
+
+function sayHelloUnaryStream(call) {
+  for (let i = 0; i < 5; i++) {
+    call.write({ message: `Hello ${call.request.name} ${i}` });
+  }
+  call.end();
 }
 
 class GreeterServer {
@@ -24,7 +28,9 @@ class GreeterServer {
     this.port = port;
     let server = new grpc.Server();
     this.server = server;
-    server.addService(hello_proto.Greeter.service, { sayHelloUnaryUnary });
+
+    server.addService(hello_proto.Greeter.service, { sayHelloUnaryUnary, sayHelloUnaryStream });
+
     server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), () => {
       server.start();
       console.error(`gRPC server listening on port ${port}`);

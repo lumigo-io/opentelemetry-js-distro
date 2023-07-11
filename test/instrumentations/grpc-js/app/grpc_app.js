@@ -1,4 +1,4 @@
-const { sayHelloUnaryUnary } = require('./greeter_client');
+const { sayHelloUnaryUnary, sayHelloUnaryStream } = require('./greeter_client');
 const { GreeterServer } = require('./greeter_server');
 const http = require('http');
 const url = require('url');
@@ -28,41 +28,55 @@ function resetTimeout() {
   }
 }
 
+function respond(res, status, body) {
+  console.log(`responding with ${status} ${JSON.stringify(body)}`);
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('access-control-allow-origin', '*');
+  res.writeHead(status);
+  res.end(JSON.stringify(body));
+}
+
 const requestListener = function (req, res) {
   console.error(`Received request: ${req.method} ${req.url}`);
   resetTimeout();
 
   const requestUrl = url.parse(req.url, true);
+  const name = requestUrl?.query?.name || 'world';
   const port = requestUrl?.query?.port || DEFAULT_GRPC_PORT;
   switch (requestUrl.pathname) {
     case '/start-server':
       grpcServer = new GreeterServer(port);
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('access-control-allow-origin', '*');
-      res.writeHead(200);
-      res.end(JSON.stringify({ port: port }));
+      respond(res, 200, { port });
       break;
+
     case '/make-unary-unary-request':
-      let name = requestUrl?.query?.name || 'world';
       sayHelloUnaryUnary(port, name)
         .then((message) => {
-          res.writeHead(200);
-          res.end(JSON.stringify({ port: port, name: name, response: message }));
+          respond(res, 200, { port, name, response: message });
         })
         .catch((err) => {
-          res.writeHead(500);
-          res.end(JSON.stringify({ error: err }));
+          respond(res, 500, { error: err });
         });
       break;
+
+    case '/make-unary-stream-request':
+      sayHelloUnaryStream(port, name)
+        .then((message) => {
+          respond(res, 200, { port, name, response: message });
+        })
+        .catch((err) => {
+          respond(res, 500, { error: err });
+        });
+      break;
+
     case '/stop-server':
       grpcServer.stop();
       grpcServer = null;
-      res.writeHead(200);
-      res.end(JSON.stringify('done'));
+      respond(res, 200, 'done');
       break;
+
     default:
-      res.writeHead(404);
-      res.end(JSON.stringify({ error: 'Resource not found' }));
+      respond(res, 404, { error: 'Resource not found' });
   }
 };
 
