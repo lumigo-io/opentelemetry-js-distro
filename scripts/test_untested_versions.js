@@ -66,8 +66,7 @@ for (const package of instrumentationToTest) {
       );
       console.info(`Testing of ${package} succeeded.`);
     } catch (e) {
-      console.warn();
-      `Testing of ${package} failed.`;
+      console.warn(`Testing of ${package} failed.`);
     } finally {
       if (process.env['GITHUB_ACTIONS']?.length) {
         // we don't want the backup files to be committed on ci runs
