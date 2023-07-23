@@ -29,7 +29,7 @@ describe('LumigoContainerNameDetector', () => {
   describe('no container name found', () => {
     it('detects resource attributes correctly', async () => {
       const resource = await new LumigoContainerNameDetector().detect();
-      expect(resource.attributes).not.toHaveProperty('k8s.node.name');
+      expect(resource.attributes).not.toHaveProperty('k8s.container.name');
     });
   });
 });
