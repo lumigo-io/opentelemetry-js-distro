@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 import { logger } from '../../logging';
-import {SemanticResourceAttributes} from "@opentelemetry/semantic-conventions";
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export const LUMIGO_CONTAINER_NAME_ENV_VAR = 'LUMIGO_CONTAINER_NAME';
 
