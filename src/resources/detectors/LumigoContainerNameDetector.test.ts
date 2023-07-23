@@ -21,7 +21,7 @@ describe('LumigoContainerNameDetector', () => {
     it('detects resource attributes correctly', async () => {
       const resource = await new LumigoContainerNameDetector().detect();
       expect(resource.attributes).toEqual({
-        'k8s.node.name': 'some_container_name',
+        'k8s.container.name': 'some_container_name',
       });
     });
   });
