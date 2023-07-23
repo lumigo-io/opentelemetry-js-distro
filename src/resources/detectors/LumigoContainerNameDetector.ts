@@ -3,7 +3,6 @@ import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/reso
 import { logger } from '../../logging';
 import {SemanticResourceAttributes} from "@opentelemetry/semantic-conventions";
 
-export const LUMIGO_CONTAINER_NAME_ATTRIBUTE = 'lumigo.tag';
 export const LUMIGO_CONTAINER_NAME_ENV_VAR = 'LUMIGO_CONTAINER_NAME';
 
 /**
