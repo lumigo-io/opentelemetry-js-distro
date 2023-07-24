@@ -17,6 +17,7 @@ import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInst
 import { getSpanAttributeMaxLength } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import {
+  LumigoContainerNameDetector,
   LumigoDistroDetector,
   LumigoKubernetesDetector,
   LumigoTagDetector,
@@ -125,6 +126,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoDistroDetector(distroVersion),
       new LumigoKubernetesDetector(),
       new LumigoTagDetector(),
+      new LumigoContainerNameDetector(),
     ];
 
     if (process.env.ECS_CONTAINER_METADATA_URI || process.env.ECS_CONTAINER_METADATA_URI_V4) {
