@@ -34,9 +34,7 @@ const newHandleServerFunction = (originalPatcher) => {
 
     const clientStreamAndUnaryHandlerPrefix = (): void => {
       call.on('data', (res) => {
-        safeExecute(() => {
-          clientStreamAggData += JSON.stringify(res);
-        })();
+        clientStreamAggData = concatenatePayload(clientStreamAggData, res);
       });
     };
 
