@@ -28,7 +28,7 @@ const newHandleServerFunction = (originalPatcher) => {
         safeExecute(() => {
           span.setAttribute(
             'rpc.request.payload',
-            // @ts-ignore
+            // @ts-ignore - `request` is not always a member of `ServerCallWithMeta`
             serverStreamAggData || JSON.stringify(call?.request)
           );
         })();

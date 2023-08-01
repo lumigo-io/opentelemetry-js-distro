@@ -10,7 +10,10 @@ import { Span } from '@opentelemetry/api';
 import { safeExecute } from '@lumigo/node-core/lib/utils';
 import { concatenatePayload } from './utils';
 
-const wrapCallback = (span: Span, original: GrpcClientFunc, args): void => {
+const wrapCallback = (span: Span, original: GrpcClientFunc, args: unknown[]): void => {
+  // args are the parameters that were passed to GrpcClientFunc.
+  // We parse them to find the callback function and the request payload.
+
   if (!original.responseStream) {
     const callbackFuncIndex = args.findIndex((arg) => {
       return typeof arg === 'function';
@@ -22,6 +25,7 @@ const wrapCallback = (span: Span, original: GrpcClientFunc, args): void => {
           span.setAttribute('rpc.request.payload', JSON.stringify(args[0]));
           span.setAttribute('rpc.response.payload', JSON.stringify(res));
         })();
+        // @ts-ignore - we assume that originalCallback has this signature (the type of args is unfortunately broad)
         return originalCallback(err, res);
       };
     }

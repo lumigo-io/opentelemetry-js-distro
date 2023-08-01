@@ -34,7 +34,7 @@ const expectedResourceAttributes = {
   },
 };
 
-describe.each(versionsToTest('grpc', 'grpc'))(
+describe.each(versionsToTest('grpc-js', 'grpc-js'))(
   'Instrumentation tests for the @grpc/grpc-js package',
   function (versionToTest) {
     let testApp: TestApp;
@@ -93,7 +93,7 @@ describe.each(versionsToTest('grpc', 'grpc'))(
     itTest(
       {
         testName: `roundtrip unary/unary: ${versionToTest}`,
-        packageName: 'grpc',
+        packageName: 'grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -125,7 +125,7 @@ describe.each(versionsToTest('grpc', 'grpc'))(
     itTest(
       {
         testName: `roundtrip unary/stream: ${versionToTest}`,
-        packageName: 'grpc',
+        packageName: 'grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -158,7 +158,7 @@ describe.each(versionsToTest('grpc', 'grpc'))(
     itTest(
       {
         testName: `roundtrip stream/unary: ${versionToTest}`,
-        packageName: 'grpc',
+        packageName: 'grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -195,7 +195,7 @@ describe.each(versionsToTest('grpc', 'grpc'))(
     itTest(
       {
         testName: `roundtrip stream/stream: ${versionToTest}`,
-        packageName: 'grpc',
+        packageName: 'grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
