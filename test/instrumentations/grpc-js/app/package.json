@@ -8,7 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@grpc/grpc-js": "^1.8.17",
+    "@grpc/grpc-js": "^1.8.21",
     "@lumigo/opentelemetry": "file:../../../../distro.tgz"
   }
 }

@@ -96,7 +96,7 @@ server = http.createServer(requestListener);
 
 server.listen(0, host, () => {
   const port = server.address().port;
-  console.error(`HTPP server listening on port ${port}`);
+  console.error(`HTTP server listening on port ${port}`);
   if (process.send) {
     process.send(port);
   }

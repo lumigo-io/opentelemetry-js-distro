@@ -56,7 +56,7 @@ describe.each(['1.8.17'])(
       uninstallPackage(TEST_APP_DIR, '@grpc/grpc-js', versionToTest);
     });
 
-    const checkSpans = async (exporterFile: string, method: string, requestPayload: string, responsePayload: string) => {
+    const checkSpans = async (exporterFile: string, method: string) => {
         let spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/stop-server`);
 
         /*
@@ -82,11 +82,12 @@ describe.each(['1.8.17'])(
         expect(clientSpan["traceId"]).toEqual(serverSpan["traceId"]);
         expect(clientSpan["spanId"]).toEqual(serverSpan["parentSpanId"]);
 
-        // TODO - add payload
-        // expect(serverSpan.attributes["rpc.request.payload"]).toEqual(requestPayload);
-        // expect(clientSpan.attributes["rpc.request.payload"]).toEqual(requestPayload);
-        // expect(serverSpan.attributes["rpc.response.payload"]).toEqual(responsePayload);
-        // expect(clientSpan.attributes["rpc.response.payload"]).toEqual(responsePayload);
+        return [
+            serverSpan.attributes["rpc.request.payload"],
+            clientSpan.attributes["rpc.request.payload"],
+            serverSpan.attributes["rpc.response.payload"],
+            clientSpan.attributes["rpc.response.payload"]
+        ];
     }
 
     itTest(
@@ -113,7 +114,11 @@ describe.each(['1.8.17'])(
           `/make-unary-unary-request?port=${grpcPort}&name=${greetingName}`
         );
 
-        await checkSpans(exporterFile, "SayHelloUnaryUnary", "", "");
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloUnaryUnary");
+        expect(serverRequest).toEqual('{"name":"Siri"}');
+        expect(clientRequest).toEqual('{"name":"Siri"}');
+        expect(serverResponse).toEqual('{"message":"Hello Siri"}');
+        expect(clientResponse).toEqual('{"message":"Hello Siri"}');
       }
     );
 
@@ -140,7 +145,13 @@ describe.each(['1.8.17'])(
         await testApp.invokeGetPath(
           `/make-unary-stream-request?port=${grpcPort}&name=${greetingName}`
         );
-        await checkSpans(exporterFile, "SayHelloUnaryStream", "", "");
+
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloUnaryStream");
+        expect(serverRequest).toEqual('{"name":"Siri"}');
+        expect(clientRequest).toEqual('{"name":"Siri"}');
+        // TODO: collect the response stream from the server - RD-11068
+        // expect(serverResponse).toEqual('{"message":"Hello Siri 0"}{"message":"Hello Siri 1"}{"message":"Hello Siri 2"}{"message":"Hello Siri 3"}{"message":"Hello Siri 4"}');
+        expect(clientResponse).toEqual('{"message":"Hello Siri 0"}{"message":"Hello Siri 1"}{"message":"Hello Siri 2"}{"message":"Hello Siri 3"}{"message":"Hello Siri 4"}');
       }
     );
 
@@ -171,7 +182,13 @@ describe.each(['1.8.17'])(
         await testApp.invokeGetPath(
           `/make-stream-unary-request?port=${grpcPort}${greetingNamesQueryString}`
         );
-        await checkSpans(exporterFile, "SayHelloStreamUnary", "", "");
+
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloStreamUnary");
+        expect(serverRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
+        // TODO: collect the request stream from the client - RD-11068
+        // expect(clientRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
+        expect(serverResponse).toEqual('{"message":"Hello 0, 1, 2"}');
+        expect(clientResponse).toEqual('{"message":"Hello 0, 1, 2"}');
       }
     );
 
@@ -202,7 +219,14 @@ describe.each(['1.8.17'])(
         await testApp.invokeGetPath(
           `/make-stream-stream-request?port=${grpcPort}${greetingNamesQueryString}`
         );
-        await checkSpans(exporterFile, "SayHelloStreamStream", "", "");
+
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloStreamStream");
+        expect(serverRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
+        // TODO: collect the request stream from the client - RD-11068
+        // expect(clientRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
+        // TODO: collect the response stream from the server - RD-11068
+        // expect(serverResponse).toEqual('{"message":"Hello 0 1"}{"message":"Hello 1 2"}{"message":"Hello 2 3"}');
+        expect(clientResponse).toEqual('{"message":"Hello 0 1"}{"message":"Hello 1 2"}{"message":"Hello 2 3"}');
       }
     );
   }
