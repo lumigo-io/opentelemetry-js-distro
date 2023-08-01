@@ -20,14 +20,14 @@ const newHandleServerFunction = (originalPatcher) => {
     let clientStreamAggData = '';
 
     const serverStreamAndBidiHandlerPrefix = (): void => {
-      let aggData = '';
+      let serverStreamAggData = '';
       call.on('data', (res) => {
-        aggData = concatenatePayload(aggData, res);
+        serverStreamAggData = concatenatePayload(serverStreamAggData, res);
       });
       call.on('finish', () => {
         safeExecute(() => {
           // @ts-ignore
-          span.setAttribute('rpc.request.payload', aggData || JSON.stringify(call?.request));
+          span.setAttribute('rpc.request.payload', serverStreamAggData || JSON.stringify(call?.request));
         })();
       });
     };
