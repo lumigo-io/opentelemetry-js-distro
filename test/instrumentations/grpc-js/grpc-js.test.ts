@@ -10,6 +10,7 @@ import { getSpanByKind, readSpanDump } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { sleep } from '../../utils/time';
+import {versionsToTest} from "../../utils/versions";
 
 const DEFAULT_GRPC_PORT = 50051;
 const SPANS_DIR = join(__dirname, 'spans');
@@ -33,8 +34,7 @@ const expectedResourceAttributes = {
   },
 };
 
-describe.each(['1.8.17'])(
-  //versionsToTest('grpc-js', '@grpc/grpc-js'))(
+describe.each(versionsToTest('grpc-js', '@grpc/grpc-js'))(
   'Instrumentation tests for the @grpc/grpc-js package',
   function (versionToTest) {
     let testApp: TestApp;
