@@ -34,7 +34,7 @@ const expectedResourceAttributes = {
   },
 };
 
-describe.each(versionsToTest('grpc', 'grpc-js'))(
+describe.each(versionsToTest('grpc', 'grpc'))(
   'Instrumentation tests for the @grpc/grpc-js package',
   function (versionToTest) {
     let testApp: TestApp;
@@ -43,7 +43,7 @@ describe.each(versionsToTest('grpc', 'grpc-js'))(
     beforeAll(function () {
       reinstallPackages(TEST_APP_DIR);
       fs.mkdirSync(SPANS_DIR, { recursive: true });
-      installPackage(TEST_APP_DIR, 'grpc-js', versionToTest);
+      installPackage(TEST_APP_DIR, '@grpc/grpc-js', versionToTest);
     });
 
     afterEach(async function () {
@@ -93,7 +93,7 @@ describe.each(versionsToTest('grpc', 'grpc-js'))(
     itTest(
       {
         testName: `roundtrip unary/unary: ${versionToTest}`,
-        packageName: '@grpc/grpc-js',
+        packageName: 'grpc',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -125,7 +125,7 @@ describe.each(versionsToTest('grpc', 'grpc-js'))(
     itTest(
       {
         testName: `roundtrip unary/stream: ${versionToTest}`,
-        packageName: '@grpc/grpc-js',
+        packageName: 'grpc',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -158,7 +158,7 @@ describe.each(versionsToTest('grpc', 'grpc-js'))(
     itTest(
       {
         testName: `roundtrip stream/unary: ${versionToTest}`,
-        packageName: '@grpc/grpc-js',
+        packageName: 'grpc',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -195,7 +195,7 @@ describe.each(versionsToTest('grpc', 'grpc-js'))(
     itTest(
       {
         testName: `roundtrip stream/stream: ${versionToTest}`,
-        packageName: '@grpc/grpc-js',
+        packageName: 'grpc',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
