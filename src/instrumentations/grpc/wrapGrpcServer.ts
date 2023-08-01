@@ -27,7 +27,10 @@ const newHandleServerFunction = (originalPatcher) => {
       call.on('finish', () => {
         safeExecute(() => {
           // @ts-ignore
-          span.setAttribute('rpc.request.payload', serverStreamAggData || JSON.stringify(call?.request));
+          span.setAttribute(
+            'rpc.request.payload',
+            serverStreamAggData || JSON.stringify(call?.request)
+          );
         })();
       });
     };
