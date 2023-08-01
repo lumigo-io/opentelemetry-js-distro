@@ -8,6 +8,7 @@ import {
 import type { Client, Metadata } from '@grpc/grpc-js';
 import { Span } from '@opentelemetry/api';
 import { safeExecute } from '@lumigo/node-core/lib/utils';
+import { concatenatePayload } from './utils';
 
 const wrapCallback = (span: Span, original: GrpcClientFunc, args): void => {
   if (!original.responseStream) {
@@ -38,7 +39,7 @@ const wrapResponseStream = (
     let aggData = '';
     call.on('data', (res) =>
       safeExecute(() => {
-        aggData += JSON.stringify(res);
+        aggData = concatenatePayload(aggData, res);
         span.setAttribute('rpc.response.payload', aggData);
       })()
     );

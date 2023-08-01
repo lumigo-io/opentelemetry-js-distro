@@ -7,6 +7,7 @@ import {
   ServerCallWithMeta,
 } from '@opentelemetry/instrumentation-grpc/build/src/grpc-js/types';
 import { safeExecute } from '@lumigo/node-core/lib/utils';
+import { concatenatePayload } from './utils';
 
 const newHandleServerFunction = (originalPatcher) => {
   return function <RequestType, ResponseType>(
@@ -21,9 +22,7 @@ const newHandleServerFunction = (originalPatcher) => {
     const serverStreamAndBidiHandlerPrefix = (): void => {
       let aggData = '';
       call.on('data', (res) => {
-        safeExecute(() => {
-          aggData += JSON.stringify(res);
-        })();
+        aggData = concatenatePayload(aggData, res);
       });
       call.on('finish', () => {
         safeExecute(() => {
