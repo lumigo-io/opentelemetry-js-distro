@@ -8,6 +8,13 @@ const {
   restorePackageVersionsFromBackup,
 } = require('./tested-versions-file-utils');
 
+const instrumentationFolderToPackage = (folder) => {
+  if (folder === 'grpc-js') {
+    return '@grpc/grpc-js';
+  }
+  return folder;
+}
+
 const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(function (package) {
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();
   const hasTestedVersionsFile =
@@ -22,7 +29,8 @@ let instrumentationToTest = instrumentationsFolders.filter(instrumentation => {
 
 console.info(`\nDiscovering untested versions of: ${instrumentationToTest.join(', ')}`);
 
-for (const package of instrumentationToTest) {
+for (const folder of instrumentationToTest) {
+  const package = instrumentationFolderToPackage(folder);
   console.info(`\nDiscovering untested versions of ${package}...`);
   const existingVersions = loadPackageVersions(package);
   const highestExistingVersion = existingVersions[existingVersions.length - 1];
