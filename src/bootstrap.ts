@@ -14,7 +14,7 @@ import { FileSpanExporter } from './exporters';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
-import LumigoGrpcInstrumentation from './instrumentations/grpc-js/GrpcInstrumentation';
+import LumigoGrpcInstrumentation from './instrumentations/@grpc/grpc-js/GrpcInstrumentation';
 import { getSpanAttributeMaxLength } from './utils';
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import {

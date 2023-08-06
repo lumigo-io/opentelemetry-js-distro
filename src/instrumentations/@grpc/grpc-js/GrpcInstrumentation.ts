@@ -1,5 +1,5 @@
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
-import { Instrumentor } from '../instrumentor';
+import { Instrumentor } from '../../instrumentor';
 import { wrapServer } from './wrapGrpcServer';
 import { wrapClient } from './wrapGrpcClient';
 
