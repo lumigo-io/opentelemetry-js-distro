@@ -93,7 +93,7 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     itTest(
       {
         testName: `roundtrip unary/unary: ${versionToTest}`,
-        packageName: 'grpc-js',
+        packageName: '@grpc/grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -125,7 +125,7 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     itTest(
       {
         testName: `roundtrip unary/stream: ${versionToTest}`,
-        packageName: 'grpc-js',
+        packageName: '@grpc/grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -158,7 +158,7 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     itTest(
       {
         testName: `roundtrip stream/unary: ${versionToTest}`,
-        packageName: 'grpc-js',
+        packageName: '@grpc/grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
@@ -195,7 +195,7 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     itTest(
       {
         testName: `roundtrip stream/stream: ${versionToTest}`,
-        packageName: 'grpc-js',
+        packageName: '@grpc/grpc-js',
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
