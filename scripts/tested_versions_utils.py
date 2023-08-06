@@ -311,11 +311,13 @@ def _generate_support_matrix_markdown_row(
     res = []
     if len(packages) == 1:
         package = packages[0]
+        file_path = os.path.join(tested_versions_directory, packages[0])
+        if os.path.isdir(file_path):
+            # The case of @grpc/grpc-js, where the package is a subdirectory
+            file_path = os.path.join(file_path, os.listdir(file_path)[0])
 
         supported_version_ranges = _get_supported_version_ranges(
-            TestedVersions.from_file(
-                os.path.join(tested_versions_directory, packages[0])
-            )
+            TestedVersions.from_file(file_path)
         )
 
         res.append(
