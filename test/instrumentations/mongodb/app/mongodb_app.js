@@ -47,8 +47,8 @@ const requestListener = async (req, res) => {
   const server = http.createServer(requestListener);
   server.listen(0, 'localhost', () => {
     const port = server.address().port;
-    console.error('Listening on port ' + port);
-  
+    console.error(`HTTP server listening on port ${port}`);
+
     if (process.send) {
       process.send(port);
     }
