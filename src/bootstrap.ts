@@ -1,6 +1,6 @@
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { registerInstrumentations, Instrumentation } from '@opentelemetry/instrumentation';
-import { detectResources, envDetector, processDetector, Resource } from '@opentelemetry/resources';
+import { Instrumentation, registerInstrumentations } from '@opentelemetry/instrumentation';
+import { Resource, detectResources, envDetector, processDetector } from '@opentelemetry/resources';
 import {
   BasicTracerProvider,
   BatchSpanProcessor,
@@ -8,22 +8,23 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
+import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { DEFAULT_DEPENDENCIES_ENDPOINT, DEFAULT_LUMIGO_ENDPOINT } from './constants';
 import { report } from './dependencies';
 import { FileSpanExporter } from './exporters';
+import LumigoGrpcInstrumentation from './instrumentations/@grpc/grpc-js/GrpcInstrumentation';
+import LumigoAmqplibInstrumentation from './instrumentations/amqplib/AmqplibInstrumentation';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
-import LumigoGrpcInstrumentation from './instrumentations/@grpc/grpc-js/GrpcInstrumentation';
-import { getSpanAttributeMaxLength } from './utils';
-import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
+import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
   LumigoContainerNameDetector,
   LumigoDistroDetector,
   LumigoKubernetesDetector,
   LumigoTagDetector,
 } from './resources/detectors';
-import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
+import { getSpanAttributeMaxLength } from './utils';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -45,8 +46,8 @@ export interface LumigoSdkInitialization {
   readonly reportDependencies: Promise<void | Object>;
 }
 
-import { logger } from './logging';
 import { dirname, join } from 'path';
+import { logger } from './logging';
 import { ProcessEnvironmentDetector } from './resources/detectors/ProcessEnvironmentDetector';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
@@ -90,10 +91,11 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
     }
 
     const instrumentationsToInstall = [
-      new LumigoHttpInstrumentation(...ignoredHostnames),
+      new LumigoAmqplibInstrumentation(),
       new LumigoExpressInstrumentation(),
-      new LumigoMongoDBInstrumentation(),
       new LumigoGrpcInstrumentation(),
+      new LumigoHttpInstrumentation(...ignoredHostnames),
+      new LumigoMongoDBInstrumentation(),
     ].filter((i) => i.isApplicable());
 
     /*
