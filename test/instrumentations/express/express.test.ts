@@ -12,10 +12,10 @@ import { installPackage, reinstallPackages, uninstallPackage } from '../../utils
 import { sleep } from '../../utils/time';
 import { versionsToTest } from '../../utils/versions';
 
+const INSTRUMENTATION_NAME = `express`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 20_000;
-const INSTRUMENTATION_NAME = `express`;
 
 const expectedResourceAttributes = {
   attributes: {
@@ -33,7 +33,7 @@ const expectedResourceAttributes = {
   },
 };
 
-describe.each(versionsToTest('express', 'express'))(
+describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   'Instrumentation tests for the express package',
   function (versionToTest) {
     let testApp: TestApp;
@@ -41,7 +41,7 @@ describe.each(versionsToTest('express', 'express'))(
     beforeAll(function () {
       reinstallPackages(TEST_APP_DIR);
       fs.mkdirSync(SPANS_DIR, { recursive: true });
-      installPackage(TEST_APP_DIR, 'express', versionToTest);
+      installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
     });
 
     afterEach(async function () {
@@ -50,18 +50,18 @@ describe.each(versionsToTest('express', 'express'))(
     });
 
     afterAll(function () {
-      uninstallPackage(TEST_APP_DIR, 'express', versionToTest);
+      uninstallPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
     });
 
     itTest(
       {
         testName: `basics: ${versionToTest}`,
-        packageName: 'express',
+        packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const exporterFile = `${SPANS_DIR}/basic-express@${versionToTest}.json`;
+        const exporterFile = `${SPANS_DIR}/basics.express@${versionToTest}.json`;
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
@@ -121,7 +121,7 @@ describe.each(versionsToTest('express', 'express'))(
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
+        const exporterFile = `${SPANS_DIR}/secret-masking-requests.express@${versionToTest}.json`;
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
@@ -180,7 +180,7 @@ describe.each(versionsToTest('express', 'express'))(
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const exporterFile = `${SPANS_DIR}/secret-masking-express@${versionToTest}.json`;
+        const exporterFile = `${SPANS_DIR}/secret-masking-requests-complete-redaction.express@${versionToTest}.json`;
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
