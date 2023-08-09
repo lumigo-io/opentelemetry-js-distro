@@ -5,19 +5,39 @@ require('log-timestamp');
 
 const DEFAULT_RABBITMQ_HOST = 'localhost';
 const DEFAULT_RABBITMQ_PORT = 5672;
+const MESSAGE_CONSUME_TIMEOUT = 3000;
 
 const host = 'localhost';
 let httpServer;
 
-async function receiveMessage(conn, queue, message) {
+function waitForMessage(channel, queue, timeoutInMs) {
+  return new Promise(async (resolve, reject) => {
+    const timeout = setTimeout(() => {
+      console.error(`waitForMessage timed out after ${timeoutInMs}ms`);
+      channel.close();
+      reject(new Error(`Consume error: no message after ${timeoutInMs}ms`));
+    }, timeoutInMs);
+
+    await channel.consume(queue, (message) => {
+      clearTimeout(timeout);
+      let receivedMessage = null;
+      if (message !== null) {
+        channel.ack(message);
+        receivedMessage = message.content.toString();
+      }
+      resolve(receivedMessage);
+      channel.close();
+    });
+  });
+}
+
+async function receiveMessage(conn, queue, expectedMessage) {
   const channel = await conn.createChannel();
   await channel.assertExchange(queue, 'fanout', { durable: false });
   await channel.assertQueue(queue, { durable: false });
-  const receivedMessage = await channel.get(queue);
-  if (message != receivedMessage.content.toString()) {
-    throw new Error(
-      `Expected message '${message}' but received '${receivedMessage.content.toString()}'`
-    );
+  const receivedMessage = await waitForMessage(channel, queue, MESSAGE_CONSUME_TIMEOUT);
+  if (receivedMessage != expectedMessage) {
+    throw new Error(`Expected message '${expectedMessage}' but received '${receivedMessage}'`);
   }
 }
 
@@ -45,33 +65,35 @@ const requestListener = async function (req, res) {
   const message = requestUrl?.query?.message || 'Hello World!';
   const host = requestUrl?.query?.host || DEFAULT_RABBITMQ_HOST;
   const port = requestUrl?.query?.port || DEFAULT_RABBITMQ_PORT;
-  const conn = await amqp.connect(`amqp://${host}:${port}`);
 
+  let conn;
   switch (requestUrl.pathname) {
     case '/invoke-amqp-producer':
       try {
+        conn = await amqp.connect(`amqp://${host}:${port}`);
         await sendMessage(conn, topic, message);
         respond(res, 200, { port });
       } catch (err) {
         respond(res, 500, { error: err });
-      } finally {
-        await conn.close();
       }
       break;
 
     case '/invoke-amqp-consumer':
       try {
+        conn = await amqp.connect(`amqp://${host}:${port}`);
         await receiveMessage(conn, topic, message);
         respond(res, 200, { port });
       } catch (err) {
         respond(res, 500, { error: err });
-      } finally {
-        await conn.close();
       }
       break;
 
     default:
       respond(res, 404, { error: 'Resource not found' });
+  }
+
+  if (conn) {
+    await conn.close();
   }
 };
 

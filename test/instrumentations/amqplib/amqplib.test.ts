@@ -100,8 +100,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
 
-        const topic = 'test-topic-basics';
-        const message = 'test-message-basics';
+        const topic = 'test-topic-roundtrip';
+        const message = 'test-message-roundtrip';
         const host = rabbitmqContainer.getHost();
         const port = rabbitmqContainer.getMappedPort(DEFAULT_RABBITMQ_PORT);
         await testApp.invokeGetPath(
