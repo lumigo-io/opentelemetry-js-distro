@@ -1,3 +1,5 @@
+import { SpanKind } from '@opentelemetry/api';
+
 export function getExpectedResourceAttributes() {
   return {
     'service.name': 'amqplib',
@@ -21,9 +23,17 @@ export function getExpectedSpan({
   resourceAttributes,
   host,
   topic,
-  messageKey,
   message,
 }) {
+  let messageKey = 'invalid-message-key';
+  switch (spanKind) {
+    case SpanKind.PRODUCER:
+      messageKey = 'messaging.publish.body';
+      break;
+    case SpanKind.CONSUMER:
+      messageKey = 'messaging.consume.body';
+      break;
+  }
   return {
     traceId: expect.any(String),
     id: expect.any(String),

@@ -123,7 +123,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             resourceAttributes,
             host,
             topic,
-            messageKey: 'messaging.publish.body',
             message,
           })
         );
@@ -137,7 +136,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             resourceAttributes,
             host,
             topic,
-            messageKey: 'messaging.consume.body',
             message,
           })
         );
