@@ -44,37 +44,6 @@ export function getExpectedSpan({ nameSpanAttr, spanKind, resourceAttributes, ho
   };
 }
 
-export function getExpectedSpanWithParent(
-  nameSpanAttr,
-  spanKind,
-  resourceAttributes,
-  dbStatement,
-  dbCollection = 'insertOne'
-) {
-  return {
-    traceId: expect.any(String),
-    parentId: expect.any(String),
-    id: expect.any(String),
-    timestamp: expect.any(Number),
-    duration: expect.any(Number),
-    name: nameSpanAttr,
-    kind: spanKind,
-    resource: {
-      attributes: resourceAttributes,
-    },
-    attributes: {
-      'db.system': 'mongodb',
-      'db.name': 'myProject',
-      'db.mongodb.collection': dbCollection,
-      'db.statement': dbStatement,
-    },
-    status: {
-      code: 0,
-    },
-    events: [],
-  };
-}
-
 export function filterAmqplibSpans(spans, topic) {
   return spans.filter((span) => span.name.includes(topic));
 }
