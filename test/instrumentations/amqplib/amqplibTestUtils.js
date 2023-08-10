@@ -33,7 +33,8 @@ export function getExpectedSpan({ nameSpanAttr, spanKind, resourceAttributes, ho
       'messaging.protocol_version': '0.9.1',
       'messaging.rabbitmq.routing_key': 'test-topic-roundtrip',
       'messaging.system': 'rabbitmq',
-      'messaging.url': expect.stringContaining(`amqp://${host}:`), //`amqp://${host}:${port}`,
+      // the port is reported inconsistently, ignore it
+      'messaging.url': expect.stringContaining(`amqp://${host}:`),
       'net.peer.name': host,
       'net.peer.port': expect.any(Number),
     },
