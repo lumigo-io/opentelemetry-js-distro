@@ -1,39 +1,27 @@
+import { SpanKind } from '@opentelemetry/api';
 import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
 import { join } from 'path';
-
 import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
-
 import { itTest } from '../../integration/setup';
-import { readSpanDump } from '../../utils/spans';
+import { getSpanByName, readSpanDump } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { sleep } from '../../utils/time';
 import { versionsToTest } from '../../utils/versions';
+import {
+  filterAmqplibSpans,
+  getExpectedResourceAttributes,
+  getExpectedSpan,
+} from './amqplibTestUtils';
 
 const DEFAULT_RABBITMQ_PORT = 5672;
 const INSTRUMENTATION_NAME = `amqplib`;
 const SPANS_DIR = join(__dirname, 'spans');
 const STARTUP_TIMEOUT = 30_000;
 const TEST_APP_DIR = join(__dirname, 'app');
-const TEST_TIMEOUT = 30_000;
-
-const expectedResourceAttributes = {
-  attributes: {
-    framework: 'express',
-    'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
-    'process.environ': expect.any(String),
-    'process.executable.name': 'node',
-    'process.pid': expect.any(Number),
-    'process.runtime.name': 'nodejs',
-    'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
-    'service.name': 'express',
-    'telemetry.sdk.language': 'nodejs',
-    'telemetry.sdk.name': 'opentelemetry',
-    'telemetry.sdk.version': expect.any(String),
-  },
-};
+const TEST_TIMEOUT = 600_000;
 
 const startRabbitMqContainer = async () => {
   return await new GenericContainer('rabbitmq:latest')
@@ -116,43 +104,39 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
          * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
          * the Server span, so we must busy-poll.
          */
-        while (spans.length < 2) {
+        while (spans.length < 4) {
           await sleep(1_000);
           spans = readSpanDump(exporterFile);
         }
 
-        // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1); // See #174
-        /*expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
-          traceId: expect.any(String),
-          parentId: expect.any(String),
-          name: 'GET /basic',
-          id: expect.any(String),
-          kind: SpanKind.INTERNAL,
-          timestamp: expect.any(Number),
-          duration: expect.any(Number),
-          resource: expectedResourceAttributes,
-          attributes: {
-            'http.method': 'GET',
-            'http.target': '/basic',
-            'http.flavor': '1.1',
-            'http.host': expect.stringMatching(/localhost:\d+/),
-            'http.scheme': 'http',
-            'net.peer.ip': expect.any(String),
-            'http.request.query': '{}',
-            'http.request.headers': expect.stringMatching(/\{.*\}/),
-            'http.response.headers': expect.stringMatching(/\{.*\}/),
-            'http.response.body': '"Hello world"',
-            'http.route': '/basic',
-            'express.route.full': '/basic',
-            'express.route.configured': '/basic',
-            'express.route.params': '{}',
-            'http.status_code': 200,
-          },
-          status: {
-            code: 1,
-          },
-          events: [],
-        });*/
+        const amqplibSpans = filterAmqplibSpans(spans, topic);
+        expect(amqplibSpans).toHaveLength(2);
+
+        let resourceAttributes = getExpectedResourceAttributes();
+
+        const expectedSendSpanName = `<default> -> ${topic} send`;
+        const sendSpan = getSpanByName(amqplibSpans, expectedSendSpanName);
+        expect(sendSpan).toMatchObject(
+          getExpectedSpan({
+            nameSpanAttr: expectedSendSpanName,
+            spanKind: SpanKind.PRODUCER,
+            resourceAttributes,
+            host,
+            port,
+          })
+        );
+
+        const expectedReceiveSpanName = `${topic} process`;
+        const receiveSpan = getSpanByName(amqplibSpans, expectedReceiveSpanName);
+        expect(receiveSpan).toMatchObject(
+          getExpectedSpan({
+            nameSpanAttr: expectedReceiveSpanName,
+            spanKind: SpanKind.CONSUMER,
+            resourceAttributes,
+            host,
+            port,
+          })
+        );
       }
     );
   }
