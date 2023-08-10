@@ -122,7 +122,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             spanKind: SpanKind.PRODUCER,
             resourceAttributes,
             host,
-            port,
+            topic,
+            messageKey: 'messaging.publish.body',
+            message,
           })
         );
 
@@ -134,7 +136,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             spanKind: SpanKind.CONSUMER,
             resourceAttributes,
             host,
-            port,
+            topic,
+            messageKey: 'messaging.consume.body',
+            message,
           })
         );
       }

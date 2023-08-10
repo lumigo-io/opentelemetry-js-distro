@@ -15,7 +15,15 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan({ nameSpanAttr, spanKind, resourceAttributes, host, port }) {
+export function getExpectedSpan({
+  nameSpanAttr,
+  spanKind,
+  resourceAttributes,
+  host,
+  topic,
+  messageKey,
+  message,
+}) {
   return {
     traceId: expect.any(String),
     id: expect.any(String),
@@ -31,7 +39,8 @@ export function getExpectedSpan({ nameSpanAttr, spanKind, resourceAttributes, ho
       'messaging.destination_kind': 'topic',
       'messaging.protocol': 'AMQP',
       'messaging.protocol_version': '0.9.1',
-      'messaging.rabbitmq.routing_key': 'test-topic-roundtrip',
+      'messaging.rabbitmq.routing_key': topic,
+      [messageKey]: message,
       'messaging.system': 'rabbitmq',
       // the port is reported inconsistently, ignore it
       'messaging.url': expect.stringContaining(`amqp://${host}:`),
