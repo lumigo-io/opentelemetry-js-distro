@@ -52,7 +52,7 @@ export function getExpectedSpan({
       'messaging.protocol': 'AMQP',
       'messaging.protocol_version': '0.9.1',
       'messaging.rabbitmq.routing_key': topic,
-      [messageKey]: message,
+      [messageKey]: JSON.stringify(message),
       'messaging.system': 'rabbitmq',
       // the port is reported inconsistently, ignore it
       'messaging.url': expect.stringContaining(`amqp://${host}:`),
