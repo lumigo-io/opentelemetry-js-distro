@@ -16,6 +16,7 @@ import {
   getExpectedSpanWithParent,
 } from './mongodbTestUtils';
 
+const DOCKER_WARMUP_TIMEOUT = 30_000;
 const INSTRUMENTATION_NAME = `mongodb`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -41,11 +42,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     beforeAll(async function () {
       reinstallPackages(TEST_APP_DIR);
 
-      /*
-       * Warm up container infra, download images, etc.
-       * This prevents spurious failures of early tests.
-       */
       try {
+        console.warn(
+          `Warming up MongoDB container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+        );
         mongoContainer = await new MongoDBContainer().start();
       } finally {
         if (mongoContainer) {
@@ -54,7 +54,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       }
 
       mkdirSync(SPANS_DIR, { recursive: true });
-    }, 30_000 /* Long timeout, this might have to pull Docker images */);
+    }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
       installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);

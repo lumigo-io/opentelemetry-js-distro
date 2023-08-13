@@ -2,6 +2,7 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { existsSync, unlinkSync } from 'fs';
 import waitOn from 'wait-on';
 import { Span, readSpanDump } from './spans';
+import { sleep } from './time';
 
 const WAIT_ON_INITIAL_DELAY = 1_000;
 const WAIT_ON_TIMEOUT = 10_000;
@@ -152,6 +153,26 @@ export class TestApp {
                 }
             );
         });
+    }
+
+    public async getFinalSpans(expectedNumberOfSpans: number | null = null, timeout: number | null = 3_000): Promise<Span[]> {
+            const spanDumpPath = this.spanDumpPath;
+
+            let spans = readSpanDump(spanDumpPath)
+
+            if (!expectedNumberOfSpans) {
+                return spans;
+            }
+
+            const sleepTime = 500;
+            let timeoutRemaining = timeout || 10_000;
+            while (spans.length < expectedNumberOfSpans && timeoutRemaining > 0) {
+                await sleep(sleepTime);
+                timeoutRemaining -= sleepTime;
+                spans = readSpanDump(spanDumpPath);
+            }
+
+            return spans;
     }
 
     public async kill(): Promise<number | null> {

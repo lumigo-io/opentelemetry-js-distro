@@ -11,7 +11,7 @@ describe('LumigoMongoDBInstrumentation', () => {
     expect(lumigoMongoDBInstrumentation.getInstrumentedModule()).toEqual('mongodb');
   });
 
-  test.skip('requireIfAvailable should return required name', () => {
+  test('requireIfAvailable should return required name', () => {
     const child_process = require('child_process');
     child_process.execSync('npm install mongodb', { stdio: 'inherit' });
     const mongodb = require('mongodb');

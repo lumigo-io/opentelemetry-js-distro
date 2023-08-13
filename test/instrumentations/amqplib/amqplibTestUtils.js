@@ -25,7 +25,7 @@ export function getExpectedSpan({
   topic,
   message,
 }) {
-  let messageKey = 'invalid-message-key';
+  let messageKey;
   switch (spanKind) {
     case SpanKind.PRODUCER:
       messageKey = 'messaging.publish.body';
@@ -33,6 +33,8 @@ export function getExpectedSpan({
     case SpanKind.CONSUMER:
       messageKey = 'messaging.consume.body';
       break;
+    default:
+      throw new Error('spanKind must be either SpanKind.PRODUCER or SpanKind.CONSUMER');
   }
   return {
     traceId: expect.any(String),

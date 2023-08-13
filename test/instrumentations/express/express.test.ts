@@ -6,10 +6,9 @@ import { join } from 'path';
 import { SpanKind } from '@opentelemetry/api';
 
 import { itTest } from '../../integration/setup';
-import { getSpanByKind, readSpanDump } from '../../utils/spans';
+import { getSpanByKind } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
-import { sleep } from '../../utils/time';
 import { versionsToTest } from '../../utils/versions';
 
 const INSTRUMENTATION_NAME = `express`;
@@ -67,16 +66,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
 
-        let spans = await testApp.invokeGetPathAndRetrieveSpanDump('/basic');
+        await testApp.invokeGetPath('/basic');
 
-        /*
-         * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
-         * the Server span, so we must busy-poll.
-         */
-        while (spans.length < 2) {
-          await sleep(1_000);
-          spans = readSpanDump(exporterFile);
-        }
+        const spans = await testApp.getFinalSpans(2);
 
         // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1); // See #174
         expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
@@ -127,16 +119,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
 
-        let spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test-scrubbing');
+        await testApp.invokeGetPath('/test-scrubbing');
 
-        /*
-         * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
-         * the Server span, so we must busy-poll.
-         */
-        while (spans.length < 2) {
-          await sleep(1_000);
-          spans = readSpanDump(exporterFile);
-        }
+        const spans = await testApp.getFinalSpans(2);
 
         // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1); // See #174
         expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
@@ -187,16 +172,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES: 'all',
         });
 
-        let spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test-scrubbing');
+        await testApp.invokeGetPath('/test-scrubbing');
 
-        /*
-         * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
-         * the Server span, so we must busy-poll.
-         */
-        while (spans.length < 2) {
-          await sleep(1_000);
-          spans = readSpanDump(exporterFile);
-        }
+        const spans = await testApp.getFinalSpans(2);
 
         // expect(spans, `More than 1 span! ${JSON.stringify(spans)}`).toHaveLength(1); // See #174
         expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({

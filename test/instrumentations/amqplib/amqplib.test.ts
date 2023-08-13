@@ -5,10 +5,9 @@ import 'jest-json';
 import { join } from 'path';
 import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
 import { itTest } from '../../integration/setup';
-import { getSpanByName, readSpanDump } from '../../utils/spans';
+import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
-import { sleep } from '../../utils/time';
 import { versionsToTest } from '../../utils/versions';
 import {
   filterAmqplibSpans,
@@ -17,9 +16,9 @@ import {
 } from './amqplibTestUtils';
 
 const DEFAULT_RABBITMQ_PORT = 5672;
+const DOCKER_WARMUP_TIMEOUT = 30_000;
 const INSTRUMENTATION_NAME = `amqplib`;
 const SPANS_DIR = join(__dirname, 'spans');
-const STARTUP_TIMEOUT = 30_000;
 const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
@@ -27,7 +26,7 @@ const startRabbitMqContainer = async () => {
   return await new GenericContainer('rabbitmq:latest')
     .withExposedPorts(DEFAULT_RABBITMQ_PORT)
     .withWaitStrategy(Wait.forLogMessage('Server startup complete'))
-    .withStartupTimeout(STARTUP_TIMEOUT)
+    .withStartupTimeout(DOCKER_WARMUP_TIMEOUT)
     .start();
 };
 
@@ -42,18 +41,17 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       fs.mkdirSync(SPANS_DIR, { recursive: true });
       installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
 
-      /*
-       * Warm up container infra, download images, etc.
-       * This prevents spurious failures of early tests.
-       */
       try {
+        console.warn(
+          `Warming up RabbitMQ container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+        );
         rabbitmqContainer = await startRabbitMqContainer();
       } finally {
         if (rabbitmqContainer) {
           rabbitmqContainer.stop();
         }
       }
-    }, STARTUP_TIMEOUT /* Long timeout, this might have to pull Docker images */);
+    }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
       rabbitmqContainer = await startRabbitMqContainer();
@@ -96,18 +94,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           `/invoke-amqp-producer?topic=${topic}&message=${message}&host=${host}&port=${port}`
         );
 
-        let spans = await testApp.invokeGetPathAndRetrieveSpanDump(
+        await testApp.invokeGetPath(
           `/invoke-amqp-consumer?topic=${topic}&message=${message}&host=${host}&port=${port}`
         );
 
-        /*
-         * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
-         * the Server span, so we must busy-poll.
-         */
-        while (spans.length < 4) {
-          await sleep(1_000);
-          spans = readSpanDump(exporterFile);
-        }
+        const spans = await testApp.getFinalSpans(4);
 
         const amqplibSpans = filterAmqplibSpans(spans, topic);
         expect(amqplibSpans).toHaveLength(2);

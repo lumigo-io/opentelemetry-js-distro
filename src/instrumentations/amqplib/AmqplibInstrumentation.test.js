@@ -11,7 +11,7 @@ describe('LumigoAmqplibInstrumentation', () => {
     expect(lumigoAmqplibInstrumentation.getInstrumentedModule()).toEqual('amqplib');
   });
 
-  test.skip('requireIfAvailable should return required name', () => {
+  test('requireIfAvailable should return required name', () => {
     const child_process = require('child_process');
     child_process.execSync('npm install amqplib', { stdio: 'inherit' });
     const amqplib = require('amqplib');
