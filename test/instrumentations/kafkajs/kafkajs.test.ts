@@ -8,7 +8,7 @@ import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
 
-const DEFAULT_KAFKA_PORT = 9092;
+const DEFAULT_KAFKA_PORT = 9093;
 const DOCKER_START_TIMEOUT = 30_000;
 const DOCKER_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `kafkajs`;
@@ -17,7 +17,9 @@ const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
 const startKafkaContainer = async () => {
-  return await new KafkaContainer().withExposedPorts(DEFAULT_KAFKA_PORT).start();
+  return await new KafkaContainer('confluentinc/cp-kafka:latest')
+    .withExposedPorts(DEFAULT_KAFKA_PORT)
+    .start();
 };
 
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(

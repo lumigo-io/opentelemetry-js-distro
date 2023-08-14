@@ -74,6 +74,7 @@ const requestListener = async function (req, res) {
         await sendMessage(conn, topic, message);
         respond(res, 200, { port });
       } catch (err) {
+        console.error(`Error producing message`, err);
         respond(res, 500, { error: err });
       }
       break;
@@ -84,6 +85,7 @@ const requestListener = async function (req, res) {
         await receiveMessage(conn, topic, message);
         respond(res, 200, { port });
       } catch (err) {
+        console.error(`Error consuming message`, err);
         respond(res, 500, { error: err });
       }
       break;
