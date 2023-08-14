@@ -6,11 +6,10 @@ import { join } from 'path';
 import { SpanKind } from '@opentelemetry/api';
 
 import { itTest } from '../../integration/setup';
-import { getSpanByKind, readSpanDump } from '../../utils/spans';
+import { getSpanByKind } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
-import { sleep } from '../../utils/time';
-import {versionsToTest} from "../../utils/versions";
+import { versionsToTest } from '../../utils/versions';
 
 const DEFAULT_GRPC_PORT = 50051;
 const SPANS_DIR = join(__dirname, 'spans');
@@ -57,38 +56,31 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     });
 
     const checkSpans = async (exporterFile: string, method: string) => {
-        let spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/stop-server`);
+      await testApp.invokeGetPath(`/stop-server`);
+      const spans = (await testApp.getFinalSpans(2)).filter(
+        (s) => s.name === `grpc.helloworld.Greeter/${method}`
+      );
 
-        /*
-         * TODO: HORRIBLE WORKAROUND: The internal span we are looking for seems to be closed LATER than
-         * the Server span, so we must busy-poll.
-         */
-        while (spans.length < 2) {
-          await sleep(1_000);
-          spans = readSpanDump(exporterFile);
-        }
-        spans = spans.filter(s => s.name === `grpc.helloworld.Greeter/${method}`);
+      const serverSpan = getSpanByKind(spans, SpanKind.SERVER);
+      expect(serverSpan.attributes['rpc.system']).toEqual('grpc');
+      expect(serverSpan.attributes['rpc.service']).toEqual('helloworld.Greeter');
+      expect(serverSpan.attributes['rpc.method']).toEqual(method);
 
-        const serverSpan = getSpanByKind(spans, SpanKind.SERVER);
-        expect(serverSpan.attributes["rpc.system"]).toEqual("grpc");
-        expect(serverSpan.attributes["rpc.service"]).toEqual("helloworld.Greeter");
-        expect(serverSpan.attributes["rpc.method"]).toEqual(method);
+      const clientSpan = getSpanByKind(spans, SpanKind.CLIENT);
+      expect(clientSpan.attributes['rpc.system']).toEqual('grpc');
+      expect(clientSpan.attributes['rpc.service']).toEqual('helloworld.Greeter');
+      expect(clientSpan.attributes['rpc.method']).toEqual(method);
 
-        const clientSpan = getSpanByKind(spans, SpanKind.CLIENT);
-        expect(clientSpan.attributes["rpc.system"]).toEqual("grpc");
-        expect(clientSpan.attributes["rpc.service"]).toEqual("helloworld.Greeter");
-        expect(clientSpan.attributes["rpc.method"]).toEqual(method);
+      expect(clientSpan['traceId']).toEqual(serverSpan['traceId']);
+      expect(clientSpan['spanId']).toEqual(serverSpan['parentSpanId']);
 
-        expect(clientSpan["traceId"]).toEqual(serverSpan["traceId"]);
-        expect(clientSpan["spanId"]).toEqual(serverSpan["parentSpanId"]);
-
-        return [
-            serverSpan.attributes["rpc.request.payload"],
-            clientSpan.attributes["rpc.request.payload"],
-            serverSpan.attributes["rpc.response.payload"],
-            clientSpan.attributes["rpc.response.payload"]
-        ];
-    }
+      return [
+        serverSpan.attributes['rpc.request.payload'],
+        clientSpan.attributes['rpc.request.payload'],
+        serverSpan.attributes['rpc.response.payload'],
+        clientSpan.attributes['rpc.response.payload'],
+      ];
+    };
 
     itTest(
       {
@@ -114,7 +106,10 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
           `/make-unary-unary-request?port=${grpcPort}&name=${greetingName}`
         );
 
-        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloUnaryUnary");
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(
+          exporterFile,
+          'SayHelloUnaryUnary'
+        );
         expect(serverRequest).toEqual('{"name":"Siri"}');
         expect(clientRequest).toEqual('{"name":"Siri"}');
         expect(serverResponse).toEqual('{"message":"Hello Siri"}');
@@ -146,12 +141,17 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
           `/make-unary-stream-request?port=${grpcPort}&name=${greetingName}`
         );
 
-        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloUnaryStream");
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(
+          exporterFile,
+          'SayHelloUnaryStream'
+        );
         expect(serverRequest).toEqual('{"name":"Siri"}');
         expect(clientRequest).toEqual('{"name":"Siri"}');
         // TODO: collect the response stream from the server - RD-11068
         // expect(serverResponse).toEqual('{"message":"Hello Siri 0"}{"message":"Hello Siri 1"}{"message":"Hello Siri 2"}{"message":"Hello Siri 3"}{"message":"Hello Siri 4"}');
-        expect(clientResponse).toEqual('{"message":"Hello Siri 0"}{"message":"Hello Siri 1"}{"message":"Hello Siri 2"}{"message":"Hello Siri 3"}{"message":"Hello Siri 4"}');
+        expect(clientResponse).toEqual(
+          '{"message":"Hello Siri 0"}{"message":"Hello Siri 1"}{"message":"Hello Siri 2"}{"message":"Hello Siri 3"}{"message":"Hello Siri 4"}'
+        );
       }
     );
 
@@ -183,7 +183,10 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
           `/make-stream-unary-request?port=${grpcPort}${greetingNamesQueryString}`
         );
 
-        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloStreamUnary");
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(
+          exporterFile,
+          'SayHelloStreamUnary'
+        );
         expect(serverRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
         // TODO: collect the request stream from the client - RD-11068
         // expect(clientRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
@@ -220,13 +223,18 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
           `/make-stream-stream-request?port=${grpcPort}${greetingNamesQueryString}`
         );
 
-        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(exporterFile, "SayHelloStreamStream");
+        const [serverRequest, clientRequest, serverResponse, clientResponse] = await checkSpans(
+          exporterFile,
+          'SayHelloStreamStream'
+        );
         expect(serverRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
         // TODO: collect the request stream from the client - RD-11068
         // expect(clientRequest).toEqual('{"name":"0"}{"name":"1"}{"name":"2"}');
         // TODO: collect the response stream from the server - RD-11068
         // expect(serverResponse).toEqual('{"message":"Hello 0 1"}{"message":"Hello 1 2"}{"message":"Hello 2 3"}');
-        expect(clientResponse).toEqual('{"message":"Hello 0 1"}{"message":"Hello 1 2"}{"message":"Hello 2 3"}');
+        expect(clientResponse).toEqual(
+          '{"message":"Hello 0 1"}{"message":"Hello 1 2"}{"message":"Hello 2 3"}'
+        );
       }
     );
   }

@@ -236,7 +236,6 @@ In case your execution tags on different spans appear on different invocations t
 * Each execution tag key can be at most 50 characters long; the `lumigo.execution_tags.` prefix does _not_ count against the 50 characters limit.
 * Each execution tag value can be at most 70 characters long.
 
-
 ### Programmatic Errors
 
 [Programmatic Errors](https://docs.lumigo.io/docs/programmatic-errors) allow you to customize errors, monitor and troubleshoot issues that should not necessarily interfere with the service.
@@ -274,8 +273,9 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 
 | Instrumentation | Package | Supported Versions |
 | --- | --- | --- |
-| grpc-js | [@grpc](https://www.npmjs.com/package/@grpc) | 1.8.0~1.8.20 |
+| amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.9.1 |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
+| grpc-js | [@grpc](https://www.npmjs.com/package/@grpc) | 1.8.0~1.8.20 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
 | | | 4.0.0~4.16.0 |
 
