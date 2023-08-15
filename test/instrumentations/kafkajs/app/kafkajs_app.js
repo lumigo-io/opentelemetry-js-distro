@@ -23,6 +23,34 @@ async function sendMessage({ kafka, topic, key, message, useCompression }) {
   await producer.disconnect();
 }
 
+async function receiveMessage({ kafka, topic, expectedMessage }) {
+  const consumer = kafka.consumer({ groupId: 'consumer-group' });
+  await consumer.connect();
+  await consumer.subscribe({ topics: [topic], fromBeginning: true });
+
+  let isTimedOut = false;
+  const consumerTimeout = setTimeout(async () => {
+    console.error(`Consumer timed out after ${MESSAGE_CONSUME_TIMEOUT}ms`);
+    isTimedOut = true;
+    await consumer.disconnect();
+  }, MESSAGE_CONSUME_TIMEOUT);
+  let receivedMessage;
+  await consumer.run({
+    eachMessage: async ({ topic, message }) => {
+      clearTimeout(consumerTimeout);
+      receivedMessage = message.value.toString();
+      console.error(`Received message: ${receivedMessage}`);
+      await consumer.disconnect();
+    },
+  });
+  while (!receivedMessage && !isTimedOut) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  if (receivedMessage != expectedMessage) {
+    throw new Error(`Expected message '${expectedMessage}' but received '${receivedMessage}'`);
+  }
+}
+
 function respond(res, status, body) {
   console.log(`responding with ${status} ${JSON.stringify(body)}`);
   res.setHeader('Content-Type', 'application/json');
@@ -82,27 +110,7 @@ const requestListener = async function (req, res) {
           brokers: [`${host}:${port}`],
         });
         await ensureTopicCreated(kafka, topic);
-        const consumer = kafka.consumer({ groupId: 'consumer-group' });
-        await consumer.connect();
-        await consumer.subscribe({ topics: [topic], fromBeginning: true });
-        const consumerTimeout = setTimeout(async () => {
-          console.error(`Consumer timed out after ${MESSAGE_CONSUME_TIMEOUT}ms`);
-          await consumer.disconnect();
-        }, MESSAGE_CONSUME_TIMEOUT);
-        const expectedMessage = message;
-        await consumer.run({
-          eachMessage: async ({ topic, message }) => {
-            clearTimeout(consumerTimeout);
-            await consumer.disconnect();
-            const receivedMessage = message.value.toString();
-            console.error(`Received message: ${receivedMessage}`);
-            if (receivedMessage != expectedMessage) {
-              throw new Error(
-                `Expected message '${expectedMessage}' but received '${receivedMessage}'`
-              );
-            }
-          },
-        });
+        await receiveMessage({ kafka, topic, expectedMessage: message });
         respond(res, 200, { port });
       } catch (err) {
         console.error(`Error consuming message`, err);
