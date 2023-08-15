@@ -35,16 +35,17 @@ async function receiveMessage({ kafka, topic, expectedMessage }) {
     await consumer.disconnect();
   }, MESSAGE_CONSUME_TIMEOUT);
   let receivedMessage;
+  // NOTE: the message received must be committed before the consumer is
+  //      disconnected if we want spans to be produced. autocommit is supposed
+  //      to be on by default, but kafkajs 2.0.0 doesn't behave properly so we
+  //      need to commit manually.
   await consumer.run({
-    eachMessage: async ({ topic, message }) => {
+    autoCommit: false,
+    eachMessage: async ({ topic, partition, message }) => {
       clearTimeout(consumerTimeout);
       receivedMessage = message.value.toString();
-      console.error(`Received message: ${receivedMessage}`);
-      // commit message
-      await consumer.commitOffsets([
-        { topic, partition: message.partition, offset: message.offset },
-      ]);
-      await consumer.disconnect();
+      console.error(`Received message: '${receivedMessage}' with key '${message.key}'`);
+      await consumer.commitOffsets([{ topic, partition, offset: message.offset }]);
     },
   });
   while (!receivedMessage && !isTimedOut) {
@@ -53,6 +54,8 @@ async function receiveMessage({ kafka, topic, expectedMessage }) {
   if (receivedMessage != expectedMessage) {
     throw new Error(`Expected message '${expectedMessage}' but received '${receivedMessage}'`);
   }
+  // add a delay to ensure commit recorded and span created
+  await new Promise((resolve) => setTimeout(resolve, 500));
 }
 
 function respond(res, status, body) {

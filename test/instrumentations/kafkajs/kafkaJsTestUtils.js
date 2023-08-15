@@ -19,15 +19,12 @@ export function getExpectedResourceAttributes() {
 
 export function getExpectedSpan({ spanKind, resourceAttributes, host, topic, message }) {
   let messageKey;
-  let expectedStatusCode;
   switch (spanKind) {
     case SpanKind.PRODUCER:
       messageKey = 'messaging.produce.body';
-      expectedStatusCode = SpanStatusCode.UNSET;
       break;
     case SpanKind.CONSUMER:
       messageKey = 'messaging.consume.body';
-      expectedStatusCode = SpanStatusCode.ERROR;
       break;
     default:
       throw new Error('spanKind must be either SpanKind.PRODUCER or SpanKind.CONSUMER');
@@ -49,7 +46,7 @@ export function getExpectedSpan({ spanKind, resourceAttributes, host, topic, mes
       'messaging.system': 'kafka',
     },
     status: {
-      code: expectedStatusCode,
+      code: SpanStatusCode.UNSET,
     },
     events: [],
   };
