@@ -27,7 +27,7 @@ export default class LumigoKafkaJsInstrumentation extends Instrumentor<KafkaJsIn
           'messaging.consume.body',
           CommonUtils.payloadStringify(
             message.value.toString(),
-            ScrubContext.HTTP_REQUEST_QUERY,
+            ScrubContext.HTTP_RESPONSE_BODY,
             getSpanAttributeMaxLength()
           )
         );

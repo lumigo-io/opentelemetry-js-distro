@@ -30,7 +30,7 @@ export default class LumigoAmqplibInstrumentation extends Instrumentor<AmqplibIn
           'messaging.consume.body',
           CommonUtils.payloadStringify(
             consumeInfo.msg.content.toString(),
-            ScrubContext.HTTP_REQUEST_QUERY,
+            ScrubContext.HTTP_RESPONSE_BODY,
             getSpanAttributeMaxLength()
           )
         );
