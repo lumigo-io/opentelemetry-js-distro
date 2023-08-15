@@ -1,12 +1,19 @@
+import { SpanKind } from '@opentelemetry/api';
 import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
 import { join } from 'path';
 import { KafkaContainer, StartedKafkaContainer } from 'testcontainers';
 import { itTest } from '../../integration/setup';
+import { getSpanByKind } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
+import {
+  filterKafkaJsSpans,
+  getExpectedResourceAttributes,
+  getExpectedSpan,
+} from './kafkaJsTestUtils';
 
 const DEFAULT_KAFKA_PORT = 9093;
 const DOCKER_START_TIMEOUT = 30_000;
@@ -102,16 +109,14 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         const spans = await testApp.getFinalSpans(4);
 
-        /*const amqplibSpans = filterAmqplibSpans(spans, topic);
-        expect(amqplibSpans).toHaveLength(2);
+        const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
+        expect(kafkaJsSpans).toHaveLength(2);
 
         let resourceAttributes = getExpectedResourceAttributes();
 
-        const expectedSendSpanName = `<default> -> ${topic} send`;
-        const sendSpan = getSpanByName(amqplibSpans, expectedSendSpanName);
+        const sendSpan = getSpanByKind(kafkaJsSpans, SpanKind.PRODUCER);
         expect(sendSpan).toMatchObject(
           getExpectedSpan({
-            nameSpanAttr: expectedSendSpanName,
             spanKind: SpanKind.PRODUCER,
             resourceAttributes,
             host,
@@ -120,18 +125,16 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           })
         );
 
-        const expectedReceiveSpanName = `${topic} process`;
-        const receiveSpan = getSpanByName(amqplibSpans, expectedReceiveSpanName);
+        const receiveSpan = getSpanByKind(kafkaJsSpans, SpanKind.CONSUMER);
         expect(receiveSpan).toMatchObject(
           getExpectedSpan({
-            nameSpanAttr: expectedReceiveSpanName,
             spanKind: SpanKind.CONSUMER,
             resourceAttributes,
             host,
             topic,
             message,
           })
-        );*/
+        );
       }
     );
   }

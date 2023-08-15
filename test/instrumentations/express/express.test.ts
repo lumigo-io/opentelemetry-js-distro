@@ -3,7 +3,7 @@ import 'jest-expect-message';
 import 'jest-json';
 import { join } from 'path';
 
-import { SpanKind } from '@opentelemetry/api';
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 import { itTest } from '../../integration/setup';
 import { getSpanByKind } from '../../utils/spans';
@@ -98,7 +98,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             'http.status_code': 200,
           },
           status: {
-            code: 1,
+            code: SpanStatusCode.OK,
           },
           events: [],
         });
@@ -150,7 +150,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             'express.route.params': '{}',
           },
           status: {
-            code: 1,
+            code: SpanStatusCode.OK,
           },
           events: [],
         });
@@ -203,7 +203,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             'express.route.params': '{}',
           },
           status: {
-            code: 1,
+            code: SpanStatusCode.OK,
           },
           events: [],
         });

@@ -1,4 +1,8 @@
+import { CommonUtils, ScrubContext } from '@lumigo/node-core';
+import { Span } from '@opentelemetry/api';
+import { Message } from 'kafkajs';
 import { KafkaJsInstrumentation } from 'opentelemetry-instrumentation-kafkajs';
+import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoKafkaJsInstrumentation extends Instrumentor<KafkaJsInstrumentation> {
@@ -8,26 +12,26 @@ export default class LumigoKafkaJsInstrumentation extends Instrumentor<KafkaJsIn
 
   getInstrumentation(): KafkaJsInstrumentation {
     return new KafkaJsInstrumentation({
-      /*publishHook: (span: Span, publishInfo: PublishInfo) => {
+      producerHook: (span: Span, topic: string, message: Message) => {
         span.setAttribute(
-          'messaging.publish.body',
+          'messaging.produce.body',
           CommonUtils.payloadStringify(
-            publishInfo.content.toString(),
+            message.value.toString(),
             ScrubContext.HTTP_REQUEST_QUERY,
             getSpanAttributeMaxLength()
           )
         );
       },
-      consumeHook: (span: Span, consumeInfo: ConsumeInfo) => {
+      consumerHook: (span: Span, topic: string, message: Message) => {
         span.setAttribute(
           'messaging.consume.body',
           CommonUtils.payloadStringify(
-            consumeInfo.msg.content.toString(),
+            message.value.toString(),
             ScrubContext.HTTP_REQUEST_QUERY,
             getSpanAttributeMaxLength()
           )
         );
-      },*/
+      },
     });
   }
 }

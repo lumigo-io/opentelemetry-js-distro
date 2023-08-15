@@ -40,6 +40,10 @@ async function receiveMessage({ kafka, topic, expectedMessage }) {
       clearTimeout(consumerTimeout);
       receivedMessage = message.value.toString();
       console.error(`Received message: ${receivedMessage}`);
+      // commit message
+      await consumer.commitOffsets([
+        { topic, partition: message.partition, offset: message.offset },
+      ]);
       await consumer.disconnect();
     },
   });

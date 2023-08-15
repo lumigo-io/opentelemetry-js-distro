@@ -2,7 +2,7 @@ import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 export function getExpectedResourceAttributes() {
   return {
-    'service.name': 'amqplib',
+    'service.name': 'kafkajs',
     'telemetry.sdk.language': 'nodejs',
     'telemetry.sdk.name': 'opentelemetry',
     'telemetry.sdk.version': expect.any(String),
@@ -17,21 +17,17 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan({
-  nameSpanAttr,
-  spanKind,
-  resourceAttributes,
-  host,
-  topic,
-  message,
-}) {
+export function getExpectedSpan({ spanKind, resourceAttributes, host, topic, message }) {
   let messageKey;
+  let expectedStatusCode;
   switch (spanKind) {
     case SpanKind.PRODUCER:
-      messageKey = 'messaging.publish.body';
+      messageKey = 'messaging.produce.body';
+      expectedStatusCode = SpanStatusCode.UNSET;
       break;
     case SpanKind.CONSUMER:
       messageKey = 'messaging.consume.body';
+      expectedStatusCode = SpanStatusCode.ERROR;
       break;
     default:
       throw new Error('spanKind must be either SpanKind.PRODUCER or SpanKind.CONSUMER');
@@ -41,31 +37,34 @@ export function getExpectedSpan({
     id: expect.any(String),
     timestamp: expect.any(Number),
     duration: expect.any(Number),
-    name: nameSpanAttr,
+    name: topic,
     kind: spanKind,
     resource: {
       attributes: resourceAttributes,
     },
     attributes: {
-      'messaging.destination': '',
+      'messaging.destination': topic,
       'messaging.destination_kind': 'topic',
-      'messaging.protocol': 'AMQP',
-      'messaging.protocol_version': '0.9.1',
-      'messaging.rabbitmq.routing_key': topic,
       [messageKey]: JSON.stringify(message),
-      'messaging.system': 'rabbitmq',
-      // the port is reported inconsistently, ignore it
-      'messaging.url': expect.stringContaining(`amqp://${host}:`),
-      'net.peer.name': host,
-      'net.peer.port': expect.any(Number),
+      'messaging.system': 'kafka',
     },
     status: {
-      code: SpanStatusCode.UNSET,
+      code: expectedStatusCode,
     },
     events: [],
   };
 }
 
-export function filterAmqplibSpans(spans, topic) {
-  return spans.filter((span) => span.name.includes(topic));
+export function filterKafkaJsSpans(spans, topic) {
+  return spans.filter((span) => {
+    return span.name == topic && span.attributes['messaging.destination'] == topic;
+  });
+}
+
+export function filterKafkaJsProduceSpans(spans) {
+  return spans.filter((span) => span.kind == SpanKind.PRODUCER);
+}
+
+export function filterKakfkaConsumeSpans(spans) {
+  return spans.filter((span) => span.kind == SpanKind.CONSUMER);
 }
