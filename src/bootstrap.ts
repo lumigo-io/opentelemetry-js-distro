@@ -16,6 +16,7 @@ import LumigoGrpcInstrumentation from './instrumentations/@grpc/grpc-js/GrpcInst
 import LumigoAmqplibInstrumentation from './instrumentations/amqplib/AmqplibInstrumentation';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
+import LumigoKafkaJsInstrumentation from './instrumentations/kafkajs/KafkaJsInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
@@ -95,6 +96,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoExpressInstrumentation(),
       new LumigoGrpcInstrumentation(),
       new LumigoHttpInstrumentation(...ignoredHostnames),
+      new LumigoKafkaJsInstrumentation(),
       new LumigoMongoDBInstrumentation(),
     ].filter((i) => i.isApplicable());
 

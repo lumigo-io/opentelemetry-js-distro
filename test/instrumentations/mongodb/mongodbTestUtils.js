@@ -1,4 +1,4 @@
-import { SpanKind } from '@opentelemetry/api';
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 export function getExpectedResourceAttributes() {
   return {
@@ -35,7 +35,7 @@ export function getExpectedSpan(nameSpanAttr, resourceAttributes, dbStatement) {
       'db.statement': dbStatement,
     },
     status: {
-      code: 0,
+      code: SpanStatusCode.UNSET,
     },
     events: [],
   };
@@ -65,7 +65,7 @@ export function getExpectedSpanWithParent(
       'db.statement': dbStatement,
     },
     status: {
-      code: 0,
+      code: SpanStatusCode.UNSET,
     },
     events: [],
   };

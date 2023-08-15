@@ -3,30 +3,29 @@ import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
 import { join } from 'path';
-import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
+import { KafkaContainer, StartedKafkaContainer } from 'testcontainers';
 import { itTest } from '../../integration/setup';
-import { getSpanByName } from '../../utils/spans';
+import { getSpanByKind } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
 import {
-  filterAmqplibSpans,
+  filterKafkaJsSpans,
   getExpectedResourceAttributes,
   getExpectedSpan,
-} from './amqplibTestUtils';
+} from './kafkaJsTestUtils';
 
-const DEFAULT_RABBITMQ_PORT = 5672;
-const DOCKER_WARMUP_TIMEOUT = 30_000;
-const INSTRUMENTATION_NAME = `amqplib`;
+const DEFAULT_KAFKA_PORT = 9093;
+const DOCKER_START_TIMEOUT = 30_000;
+const DOCKER_WARMUP_TIMEOUT = 60_000;
+const INSTRUMENTATION_NAME = `kafkajs`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
-const startRabbitMqContainer = async () => {
-  return await new GenericContainer('rabbitmq:latest')
-    .withExposedPorts(DEFAULT_RABBITMQ_PORT)
-    .withWaitStrategy(Wait.forLogMessage('Server startup complete'))
-    .withStartupTimeout(DOCKER_WARMUP_TIMEOUT)
+const startKafkaContainer = async () => {
+  return await new KafkaContainer('confluentinc/cp-kafka:latest')
+    .withExposedPorts(DEFAULT_KAFKA_PORT)
     .start();
 };
 
@@ -34,7 +33,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
     let testApp: TestApp;
-    let rabbitmqContainer: StartedTestContainer;
+    let kafkaContainer: StartedKafkaContainer;
 
     beforeAll(async function () {
       reinstallPackages(TEST_APP_DIR);
@@ -43,24 +42,24 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
       try {
         console.warn(
-          `Warming up RabbitMQ container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+          `Warming up Kafka container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
         );
-        rabbitmqContainer = await startRabbitMqContainer();
+        kafkaContainer = await startKafkaContainer();
       } finally {
-        if (rabbitmqContainer) {
-          await rabbitmqContainer.stop();
+        if (kafkaContainer) {
+          await kafkaContainer.stop();
         }
       }
     }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
-      rabbitmqContainer = await startRabbitMqContainer();
+      kafkaContainer = await startKafkaContainer();
 
-      const host = rabbitmqContainer.getHost();
-      const port = rabbitmqContainer.getMappedPort(DEFAULT_RABBITMQ_PORT);
+      const host = kafkaContainer.getHost();
+      const port = kafkaContainer.getMappedPort(DEFAULT_KAFKA_PORT);
 
-      console.info(`RabbitMQ container started on ${host}:${port}...`);
-    }, 15_000);
+      console.info(`Kafka container started on ${host}:${port}...`);
+    }, DOCKER_START_TIMEOUT);
 
     afterEach(async function () {
       if (testApp) {
@@ -69,11 +68,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       } else {
         console.warn('Test app was not run.');
       }
-      if (rabbitmqContainer) {
-        console.info('Stopping RabbitMQ container...');
-        await rabbitmqContainer.stop();
+      if (kafkaContainer) {
+        console.info('Stopping Kafka container...');
+        await kafkaContainer.stop();
       } else {
-        console.warn('RabbitMQ container was not started.');
+        console.warn('Kafka container was not started.');
       }
     });
 
@@ -83,42 +82,41 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
     itTest(
       {
-        testName: `amqp roundtrip: ${versionToTest}`,
+        testName: `kafka roundtrip: ${versionToTest}`,
         packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const exporterFile = `${SPANS_DIR}/amqp-roundtrip.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
+        const exporterFile = `${SPANS_DIR}/kafka-roundtrip.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
 
         const topic = 'test-topic-roundtrip';
+        const key = 'test-key-roundtrip';
         const message = 'test-message-roundtrip';
-        const host = rabbitmqContainer.getHost();
-        const port = rabbitmqContainer.getMappedPort(DEFAULT_RABBITMQ_PORT);
+        const host = kafkaContainer.getHost();
+        const port = kafkaContainer.getMappedPort(DEFAULT_KAFKA_PORT);
         await testApp.invokeGetPath(
-          `/invoke-amqp-producer?topic=${topic}&message=${message}&host=${host}&port=${port}`
+          `/invoke-kafka-producer?topic=${topic}&key=${key}&message=${message}&host=${host}&port=${port}`
         );
 
         await testApp.invokeGetPath(
-          `/invoke-amqp-consumer?topic=${topic}&message=${message}&host=${host}&port=${port}`
+          `/invoke-kafka-consumer?topic=${topic}&message=${message}&host=${host}&port=${port}`
         );
 
         const spans = await testApp.getFinalSpans(4);
 
-        const amqplibSpans = filterAmqplibSpans(spans, topic);
-        expect(amqplibSpans).toHaveLength(2);
+        const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
+        expect(kafkaJsSpans).toHaveLength(2);
 
         let resourceAttributes = getExpectedResourceAttributes();
 
-        const expectedSendSpanName = `<default> -> ${topic} send`;
-        const sendSpan = getSpanByName(amqplibSpans, expectedSendSpanName);
+        const sendSpan = getSpanByKind(kafkaJsSpans, SpanKind.PRODUCER);
         expect(sendSpan).toMatchObject(
           getExpectedSpan({
-            nameSpanAttr: expectedSendSpanName,
             spanKind: SpanKind.PRODUCER,
             resourceAttributes,
             host,
@@ -127,11 +125,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           })
         );
 
-        const expectedReceiveSpanName = `${topic} process`;
-        const receiveSpan = getSpanByName(amqplibSpans, expectedReceiveSpanName);
+        const receiveSpan = getSpanByKind(kafkaJsSpans, SpanKind.CONSUMER);
         expect(receiveSpan).toMatchObject(
           getExpectedSpan({
-            nameSpanAttr: expectedReceiveSpanName,
             spanKind: SpanKind.CONSUMER,
             resourceAttributes,
             host,

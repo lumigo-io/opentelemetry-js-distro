@@ -1,35 +1,32 @@
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { Span } from '@opentelemetry/api';
-import {
-  AmqplibInstrumentation,
-  ConsumeInfo,
-  PublishInfo,
-} from '@opentelemetry/instrumentation-amqplib';
+import { Message } from 'kafkajs';
+import { KafkaJsInstrumentation } from 'opentelemetry-instrumentation-kafkajs';
 import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
-export default class LumigoAmqplibInstrumentation extends Instrumentor<AmqplibInstrumentation> {
+export default class LumigoKafkaJsInstrumentation extends Instrumentor<KafkaJsInstrumentation> {
   getInstrumentedModule(): string {
-    return 'amqplib';
+    return 'kafkajs';
   }
 
-  getInstrumentation(): AmqplibInstrumentation {
-    return new AmqplibInstrumentation({
-      publishHook: (span: Span, publishInfo: PublishInfo) => {
+  getInstrumentation(): KafkaJsInstrumentation {
+    return new KafkaJsInstrumentation({
+      producerHook: (span: Span, topic: string, message: Message) => {
         span.setAttribute(
-          'messaging.publish.body',
+          'messaging.produce.body',
           CommonUtils.payloadStringify(
-            publishInfo.content.toString(),
+            message.value.toString(),
             ScrubContext.HTTP_REQUEST_QUERY,
             getSpanAttributeMaxLength()
           )
         );
       },
-      consumeHook: (span: Span, consumeInfo: ConsumeInfo) => {
+      consumerHook: (span: Span, topic: string, message: Message) => {
         span.setAttribute(
           'messaging.consume.body',
           CommonUtils.payloadStringify(
-            consumeInfo.msg.content.toString(),
+            message.value.toString(),
             ScrubContext.HTTP_RESPONSE_BODY,
             getSpanAttributeMaxLength()
           )
