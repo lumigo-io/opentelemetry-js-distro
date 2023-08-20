@@ -18,11 +18,13 @@ function waitForMessage(channel, queue, timeoutInMs) {
       reject(new Error(`Consume error: no message after ${timeoutInMs}ms`));
     }, timeoutInMs);
 
-    await channel.consume(queue, (message) => {
+    await channel.consume(queue, async (message) => {
       clearTimeout(timeout);
       let receivedMessage = null;
       if (message !== null) {
         channel.ack(message);
+        // wait for 500ms for ack to persist
+        await new Promise((resolve) => setTimeout(resolve, 500));
         receivedMessage = message.content.toString();
       }
       resolve(receivedMessage);
