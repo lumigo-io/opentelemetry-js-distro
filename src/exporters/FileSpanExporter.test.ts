@@ -1,7 +1,7 @@
-import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { Span, SpanKind } from '@opentelemetry/api';
-import mock from 'mock-fs';
+import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import mockConsole from 'jest-mock-console';
+import mock from 'mock-fs';
 
 import { FileSpanExporter } from './index';
 
@@ -13,7 +13,7 @@ describe('FileSpanExporter tests', () => {
   });
 
   test('should not write anything to file when there is no span', () => {
-    const tmpFile = './test-spans.json';
+    const tmpFile = './test-spans-no-spans.json';
 
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
@@ -25,7 +25,7 @@ describe('FileSpanExporter tests', () => {
   });
 
   test('should write one span to file', async () => {
-    const tmpFile = './test-spans.json';
+    const tmpFile = './test-spans-one-span.json';
 
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
@@ -111,7 +111,7 @@ describe('FileSpanExporter tests', () => {
   });
 
   test('should write two spans to file', async () => {
-    const tmpFile = './test-spans.json';
+    const tmpFile = './test-spans-two-spans.json';
 
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');

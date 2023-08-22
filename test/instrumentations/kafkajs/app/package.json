@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-kafkajs-roundtrip-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry kafkajs_app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
+    "kafkajs": "^2.0.0"
+  }
+}

@@ -109,3 +109,5 @@ test/component/node/spans-test*.json
 
 # Local VSCode settings
 .vscode
+
+test-spans*.json

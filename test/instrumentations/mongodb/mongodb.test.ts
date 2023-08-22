@@ -1,6 +1,6 @@
 import { mkdirSync } from 'fs';
-import { join } from 'path';
 import 'jest-json';
+import { join } from 'path';
 
 import { MongoDBContainer, StartedMongoDBContainer } from 'testcontainers';
 
@@ -16,21 +16,24 @@ import {
   getExpectedSpanWithParent,
 } from './mongodbTestUtils';
 
+const DOCKER_WARMUP_TIMEOUT = 30_000;
+const INSTRUMENTATION_NAME = `mongodb`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
-const TEST_TIMEOUT = 600000;
-const INSTRUMENTATION_NAME = `mongodb`;
+const TEST_TIMEOUT = 600_000;
+
 const INSERT_CMD = 'mongodb.insert';
 const FIND_CMD = 'mongodb.find';
 const UPDATE_CMD = 'mongodb.update';
 const REMOVE_CMD = 'mongodb.remove';
 const CREATE_INDEX_CMD = 'mongodb.createIndexes';
 const DELETE_CMD = 'mongodb.delete';
+
 const expectedIndexStatement = expect.stringMatching(
   /"createIndexes":"insertOne","indexes":\[{"name":"a_1","key"/
 );
 
-describe.each(versionsToTest('mongodb', 'mongodb'))(
+describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   'Instrumentation tests for the mongodb package',
   function (versionToTest) {
     let testApp: TestApp;
@@ -39,24 +42,22 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
     beforeAll(async function () {
       reinstallPackages(TEST_APP_DIR);
 
-      /*
-       * Warm up container infra, download images, etc.
-       * This prevents spurious failures of early tests.
-       */
       try {
+        console.warn(
+          `Warming up MongoDB container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+        );
         mongoContainer = await new MongoDBContainer().start();
       } finally {
         if (mongoContainer) {
-          mongoContainer.stop()
+          mongoContainer.stop();
         }
       }
 
-
       mkdirSync(SPANS_DIR, { recursive: true });
-    }, 30_000 /* Long timeout, this might have to pull Docker images */);
-    
+    }, DOCKER_WARMUP_TIMEOUT);
+
     beforeEach(async function () {
-      installPackage(TEST_APP_DIR, 'mongodb', versionToTest);
+      installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
 
       mongoContainer = await new MongoDBContainer().start();
 
@@ -74,10 +75,15 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
 
       console.info(`Mongo container started, URL: ${mongoConnectionUrl}`);
 
-      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, `${SPANS_DIR}/basic-@${versionToTest}.json`, {
-        MONGODB_URL: mongoConnectionUrl.toString(),
-        OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-      });
+      testApp = new TestApp(
+        TEST_APP_DIR,
+        INSTRUMENTATION_NAME,
+        `${SPANS_DIR}/basic-@${versionToTest}.json`,
+        {
+          MONGODB_URL: mongoConnectionUrl.toString(),
+          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+        }
+      );
     }, 15_000);
 
     afterEach(async function () {
@@ -91,16 +97,16 @@ describe.each(versionsToTest('mongodb', 'mongodb'))(
         await mongoContainer.stop();
         console.log('Mongo container stopped successfully');
       } else {
-          console.log('Mongo container was not initialized');
+        console.log('Mongo container was not initialized');
       }
 
-      uninstallPackage(TEST_APP_DIR, 'mongodb', versionToTest);
+      uninstallPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
     });
 
     itTest(
       {
         testName: `basics: ${versionToTest}`,
-        packageName: 'mongodb',
+        packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },

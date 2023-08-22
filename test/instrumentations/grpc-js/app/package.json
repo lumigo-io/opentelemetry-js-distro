@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-grpc-roundtrip-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry grpc_app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.8.2",
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz"
+  }
+}

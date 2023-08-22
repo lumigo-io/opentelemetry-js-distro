@@ -3,10 +3,10 @@ import 'jest-json';
 import ServerMock from 'mock-http-server';
 import { join } from 'path';
 
+import { SpanStatusCode } from '@opentelemetry/api';
 import { getSpanByKind } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { reinstallPackages } from '../../utils/test-setup';
-import { sleep } from '../../utils/time';
 
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -102,7 +102,7 @@ describe('Instrumentation tests for the http package', function () {
                 'lumigo.execution_tags.foo': ['bar', 'baz']
             },
             status: {
-                code: 0,
+                code: SpanStatusCode.UNSET,
             },
             events: [],
         });
@@ -128,7 +128,7 @@ describe('Instrumentation tests for the http package', function () {
                 'http.response.body': expect.jsonMatching(['animal', 'career', 'celebrity', 'dev', 'explicit', 'fashion', 'food', 'history', 'money', 'movie', 'music', 'political', 'religion', 'science', 'sport', 'travel']),
             },
             status: {
-                code: 0,
+                code: SpanStatusCode.UNSET
             },
             events: [],
         });

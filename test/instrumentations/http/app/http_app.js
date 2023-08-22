@@ -4,26 +4,10 @@ const axios = require('axios');
 const http = require('http');
 const { trace } = require('@opentelemetry/api');
 
-const APP_TIMEOUT = 10_000;
-
 const host = 'localhost';
 const targetUrl = process.env.TARGET_URL;
 
 let server;
-let timeout;
-
-function resetTimeout() {
-  if (server) {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => {
-      console.log(`Shutting down server after ${APP_TIMEOUT}ms`);
-      server.close();
-    }, APP_TIMEOUT);
-  }
-}
-
 const requestListener = async function (req, res) {
   switch (req.url) {
     case '/':
@@ -106,17 +90,14 @@ const requestListener = async function (req, res) {
       res.writeHead(404);
       res.end(JSON.stringify({ error: 'Resource not found' }));
   }
-  resetTimeout();
 };
 
 server = http.createServer(requestListener);
 
 server.listen(0, host, () => {
   const port = server.address().port;
-  console.error('Listening on port ' + port);
+  console.error(`HTTP server listening on port ${port}`);
   if (process.send) {
     process.send(port);
   }
 });
-
-resetTimeout();
