@@ -28,7 +28,7 @@ const requestListener = async function (req, res) {
 
   const requestUrl = url.parse(req.url, true);
   const name = requestUrl?.query?.name || 'world';
-  const port = requestUrl?.query?.port || DEFAULT_GRPC_PORT;
+  const port = Number(requestUrl?.query?.port || DEFAULT_GRPC_PORT);
   switch (requestUrl.pathname) {
     case '/start-server':
       grpcServer = new GreeterServer(port);

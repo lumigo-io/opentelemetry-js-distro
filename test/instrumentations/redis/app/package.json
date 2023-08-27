@@ -1,14 +1,14 @@
 {
-  "name": "lumigo-amqplib-test",
+  "name": "lumigo-redis-test",
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node -r @lumigo/opentelemetry amqplib_app.js"
+    "start": "node -r @lumigo/opentelemetry redis_app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
-    "amqplib": "^0.10.3"
+    "redis": "^4.0.0"
   }
 }

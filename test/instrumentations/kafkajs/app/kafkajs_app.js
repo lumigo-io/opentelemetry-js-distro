@@ -91,7 +91,7 @@ const requestListener = async function (req, res) {
   const message = requestUrl?.query?.message || 'Hello World!';
   const useCompression = requestUrl?.query?.compression?.toLowerCase() == 'true';
   const host = requestUrl?.query?.host || DEFAULT_KAFKA_HOST;
-  const port = requestUrl?.query?.port || DEFAULT_KAFKA_PORT;
+  const port = Number(requestUrl?.query?.port || DEFAULT_KAFKA_PORT);
 
   let kafka;
   switch (requestUrl.pathname) {
@@ -103,7 +103,7 @@ const requestListener = async function (req, res) {
         });
         await ensureTopicCreated(kafka, topic);
         await sendMessage({ kafka, topic, key, message, useCompression });
-        respond(res, 200, { port });
+        respond(res, 200, {});
       } catch (err) {
         console.error(`Error producing message`, err);
         respond(res, 500, { error: err });
@@ -118,7 +118,7 @@ const requestListener = async function (req, res) {
         });
         await ensureTopicCreated(kafka, topic);
         await receiveMessage({ kafka, topic, expectedMessage: message });
-        respond(res, 200, { port });
+        respond(res, 200, {});
       } catch (err) {
         console.error(`Error consuming message`, err);
         respond(res, 500, { error: err });
