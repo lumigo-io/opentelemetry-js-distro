@@ -24,7 +24,7 @@ beforeAll(() => {
 afterAll(() => {
   console.info('Starting afterAll...');
 
-  if (process.env.DISABLE_SUPPORTED_VERSIONS_UPDATE.toLowerCase() === 'true') {
+  if (process.env.DISABLE_SUPPORTED_VERSIONS_UPDATE?.toLowerCase() === 'true') {
     console.info('DISABLE_SUPPORTED_VERSIONS_UPDATE is set to true, skipping post-test update.');
   } else {
     const versions = instrumentationsVersionManager.getInstrumentationsVersions();
