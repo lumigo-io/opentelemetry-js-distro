@@ -30,6 +30,32 @@ const startRabbitMqContainer = async () => {
     .start();
 };
 
+let warmupState = {
+  warmupInitiated: false,
+  warmupCompleted: false,
+};
+
+const warmupContainer = async () => {
+  if (!warmupState.warmupInitiated) {
+    warmupState.warmupInitiated = true;
+    console.warn(
+      `Warming up RabbitMQ container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+    );
+    let warmupContainer: StartedTestContainer;
+    try {
+      warmupContainer = await startRabbitMqContainer();
+      await warmupContainer.stop();
+    } catch (err) {
+      console.warn(`Failed to warmup RabbitMQ container: ${err}`);
+    }
+    warmupState.warmupCompleted = true;
+  } else {
+    while (!warmupState.warmupCompleted) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+};
+
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
@@ -41,16 +67,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       fs.mkdirSync(SPANS_DIR, { recursive: true });
       installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
 
-      try {
-        console.warn(
-          `Warming up RabbitMQ container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
-        );
-        rabbitmqContainer = await startRabbitMqContainer();
-      } finally {
-        if (rabbitmqContainer) {
-          await rabbitmqContainer.stop();
-        }
-      }
+      await warmupContainer();
     }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {

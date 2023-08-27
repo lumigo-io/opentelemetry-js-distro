@@ -29,6 +29,32 @@ const startKafkaContainer = async () => {
     .start();
 };
 
+let warmupState = {
+  warmupInitiated: false,
+  warmupCompleted: false,
+};
+
+const warmupContainer = async () => {
+  if (!warmupState.warmupInitiated) {
+    warmupState.warmupInitiated = true;
+    console.warn(
+      `Warming up Kafka container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+    );
+    let warmupContainer: StartedKafkaContainer;
+    try {
+      warmupContainer = await startKafkaContainer();
+      await warmupContainer.stop();
+    } catch (err) {
+      console.warn(`Failed to warmup Kafka container: ${err}`);
+    }
+    warmupState.warmupCompleted = true;
+  } else {
+    while (!warmupState.warmupCompleted) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+};
+
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
@@ -40,16 +66,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       fs.mkdirSync(SPANS_DIR, { recursive: true });
       installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
 
-      try {
-        console.warn(
-          `Warming up Kafka container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
-        );
-        kafkaContainer = await startKafkaContainer();
-      } finally {
-        if (kafkaContainer) {
-          await kafkaContainer.stop();
-        }
-      }
+      await warmupContainer();
     }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {

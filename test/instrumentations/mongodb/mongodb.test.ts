@@ -33,6 +33,36 @@ const expectedIndexStatement = expect.stringMatching(
   /"createIndexes":"insertOne","indexes":\[{"name":"a_1","key"/
 );
 
+const startMongoDbContainer = async () => {
+  return await new MongoDBContainer().start();
+};
+
+let warmupState = {
+  warmupInitiated: false,
+  warmupCompleted: false,
+};
+
+const warmupContainer = async () => {
+  if (!warmupState.warmupInitiated) {
+    warmupState.warmupInitiated = true;
+    console.warn(
+      `Warming up MongoDB container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+    );
+    let warmupContainer: StartedMongoDBContainer;
+    try {
+      warmupContainer = await startMongoDbContainer();
+      await warmupContainer.stop();
+    } catch (err) {
+      console.warn(`Failed to warmup MongoDB container: ${err}`);
+    }
+    warmupState.warmupCompleted = true;
+  } else {
+    while (!warmupState.warmupCompleted) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+};
+
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   'Instrumentation tests for the mongodb package',
   function (versionToTest) {
@@ -42,24 +72,14 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     beforeAll(async function () {
       reinstallPackages(TEST_APP_DIR);
 
-      try {
-        console.warn(
-          `Warming up MongoDB container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
-        );
-        mongoContainer = await new MongoDBContainer().start();
-      } finally {
-        if (mongoContainer) {
-          mongoContainer.stop();
-        }
-      }
-
+      await warmupContainer();
       mkdirSync(SPANS_DIR, { recursive: true });
     }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
       installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
 
-      mongoContainer = await new MongoDBContainer().start();
+      mongoContainer = await startMongoDbContainer();
 
       let mongoConnectionUrl = new URL(mongoContainer.getConnectionString());
       // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
