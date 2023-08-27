@@ -114,7 +114,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         await testApp.invokeGetPath(`/get?key=${key}&value=${value}&host=${host}&port=${port}`);
 
-        const spans = await testApp.getFinalSpans(4);
+        const spans = await testApp.getFinalSpans(6);
 
         const redisSpans = filterRedisSpans(spans);
         expect(redisSpans).toHaveLength(4);
@@ -157,5 +157,132 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         );
       }
     );
-  }
+
+    itTest(
+      {
+        testName: `redis hset and hgetall: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile = `${SPANS_DIR}/redis-hset-and-hgetall.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
+
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+        });
+
+        const key = 'test:hset-and-hgetall';
+        const field = 'test-field';
+        const value = 'test-value';
+        const host = redisContainer.getHost();
+        const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
+
+        await testApp.invokeGetPath(
+          `/hset?key=${key}&field=${field}&value=${value}&host=${host}&port=${port}`
+        );
+
+        await testApp.invokeGetPath(
+          `/hgetall?key=${key}&field=${field}&value=${value}&host=${host}&port=${port}`
+        );
+
+        const spans = await testApp.getFinalSpans(6);
+
+        const redisSpans = filterRedisSpans(spans);
+        expect(redisSpans).toHaveLength(4);
+
+        let resourceAttributes = getExpectedResourceAttributes();
+
+        const expectedConnectSpanName = `redis-connect`;
+        const connectSpans = redisSpans.filter(
+          (span) => span.name.indexOf(expectedConnectSpanName) == 0
+        );
+        expect(connectSpans).toHaveLength(2);
+        for (const connectSpan of connectSpans) {
+          expect(connectSpan).toMatchObject(
+            getExpectedSpan({
+              nameSpanAttr: expectedConnectSpanName,
+              resourceAttributes,
+              host,
+            })
+          );
+        }
+
+        const expectedHSetSpanName = `redis-HSET`;
+        const hSetSpan = getSpanByName(redisSpans, expectedHSetSpanName);
+        expect(hSetSpan).toMatchObject(
+          getExpectedSpan({
+            nameSpanAttr: expectedHSetSpanName,
+            resourceAttributes,
+            host,
+          })
+        );
+
+        const expectedHGetAllSpanName = `redis-HGETALL`;
+        const hGetAllSpan = getSpanByName(redisSpans, expectedHGetAllSpanName);
+        expect(hGetAllSpan).toMatchObject(
+          getExpectedSpan({
+            nameSpanAttr: expectedHGetAllSpanName,
+            resourceAttributes,
+            host,
+          })
+        );
+      }
+    );
+
+    itTest(
+      {
+        testName: `redis transaction: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile = `${SPANS_DIR}/redis-transaction.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
+
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+        });
+
+        const key = 'test:transaction:set-and-get';
+        const value = 'test-value';
+        const host = redisContainer.getHost();
+        const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
+
+        await testApp.invokeGetPath(
+          `/transaction-set-and-get?key=${key}&value=${value}&host=${host}&port=${port}`
+        );
+
+        const spans = await testApp.getFinalSpans(7);
+
+        const redisSpans = filterRedisSpans(spans);
+        expect(redisSpans).toHaveLength(6);
+
+        let resourceAttributes = getExpectedResourceAttributes();
+
+        const expectedConnectSpanName = `redis-connect`;
+        const connectSpans = redisSpans.filter(
+          (span) => span.name.indexOf(expectedConnectSpanName) == 0
+        );
+        expect(connectSpans).toHaveLength(1);
+        for (const connectSpan of connectSpans) {
+          expect(connectSpan).toMatchObject(
+            getExpectedSpan({
+              nameSpanAttr: expectedConnectSpanName,
+              resourceAttributes,
+              host,
+            })
+          );
+        }
+
+        const expectedSetSpanName = `redis-SET`;
+        const setSpans = redisSpans.filter((span) => span.name.indexOf(expectedSetSpanName) == 0);
+        expect(setSpans).toHaveLength(2);
+
+        const expectedGetSpanName = `redis-GET`;
+        const getSpans = redisSpans.filter((span) => span.name.indexOf(expectedGetSpanName) == 0);
+        expect(getSpans).toHaveLength(3);
+      }
+    );
+  } // describe function
 );

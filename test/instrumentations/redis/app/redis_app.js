@@ -42,7 +42,8 @@ const requestListener = async function (req, res) {
   const requestUrl = url.parse(req.url, true);
   const host = requestUrl?.query?.host || DEFAULT_REDIS_HOST;
   const port = Number(requestUrl?.query?.port || DEFAULT_REDIS_PORT);
-  const key = requestUrl?.query?.key || 'test:default';
+  const key = requestUrl?.query?.key || 'test:key:default';
+  const field = requestUrl?.query?.field || 'test:field:default';
   const value = requestUrl?.query?.value || 'Hello World!';
 
   let client;
@@ -51,6 +52,17 @@ const requestListener = async function (req, res) {
       try {
         client = await openRedisConnection(host, port);
         await client.set(key, value);
+        respond(res, 200, {});
+      } catch (err) {
+        console.error(`Error setting key value`, err);
+        respond(res, 500, { error: err });
+      }
+      break;
+
+    case '/hset':
+      try {
+        client = await openRedisConnection(host, port);
+        await client.hSet(key, field, value);
         respond(res, 200, {});
       } catch (err) {
         console.error(`Error setting key value`, err);
@@ -70,6 +82,61 @@ const requestListener = async function (req, res) {
         respond(res, 200, {});
       } catch (err) {
         console.error(`Error getting key value`, err);
+        respond(res, 500, { error: err });
+      }
+      break;
+
+    case '/hgetall':
+      try {
+        client = await openRedisConnection(host, port);
+        const retrievedObject = await client.hGetAll(key);
+        const retrievedValue = retrievedObject[field];
+        if (retrievedValue !== value) {
+          throw new Error(
+            `Retrieved value '${retrievedValue}' does not match expected value '${value}'`
+          );
+        }
+        respond(res, 200, {});
+      } catch (err) {
+        console.error(`Error getting key value`, err);
+        respond(res, 500, { error: err });
+      }
+      break;
+
+    case '/transaction-set-and-get':
+      try {
+        client = await openRedisConnection(host, port);
+        const preKeyValue = `pre-${value}`;
+        const unknownKey = `unknown-${key}`;
+        const [setPreKeyReply, getPreKeyValue, setKeyReply, getKeyValue, getUnknownKeyValue] =
+          await client
+            .multi()
+            .set(key, preKeyValue)
+            .get(key)
+            .set(key, value)
+            .get(key)
+            .get(unknownKey)
+            .exec();
+        if (setPreKeyReply != 'OK') {
+          throw new Error(`Set pre-key failed with response '${setPreKeyReply}'`);
+        }
+        if (getPreKeyValue != preKeyValue) {
+          throw new Error(
+            `Get pre-key value returned '${getPreKeyValue}' when '${preKeyValue}' was expected`
+          );
+        }
+        if (setKeyReply != 'OK') {
+          throw new Error(`Set key reply failed with response '${setKeyReply}'`);
+        }
+        if (getKeyValue != value) {
+          throw new Error(`Get key value returned '${getKeyValue}' when '${value}' was expected`);
+        }
+        if (getUnknownKeyValue) {
+          throw new Error(`Unexpected value '${getUnknownKeyValue}' for unknown key`);
+        }
+        respond(res, 200, {});
+      } catch (err) {
+        console.error(`Error in transaction`, err);
         respond(res, 500, { error: err });
       }
       break;
