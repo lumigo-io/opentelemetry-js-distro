@@ -143,6 +143,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             nameSpanAttr: expectedSetSpanName,
             resourceAttributes,
             host,
+            dbStatement: `SET ${key} ${value}`,
           })
         );
 
@@ -153,6 +154,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             nameSpanAttr: expectedGetSpanName,
             resourceAttributes,
             host,
+            dbStatement: `GET ${key}`,
           })
         );
       }
@@ -215,6 +217,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             nameSpanAttr: expectedHSetSpanName,
             resourceAttributes,
             host,
+            dbStatement: `HSET ${key} ${field} ${value}`,
           })
         );
 
@@ -225,6 +228,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             nameSpanAttr: expectedHGetAllSpanName,
             resourceAttributes,
             host,
+            dbStatement: `HGETALL ${key}`,
           })
         );
       }

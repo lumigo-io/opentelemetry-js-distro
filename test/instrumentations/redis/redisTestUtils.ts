@@ -17,8 +17,18 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan({ nameSpanAttr, resourceAttributes, host }) {
-  return {
+export function getExpectedSpan({
+  nameSpanAttr,
+  resourceAttributes,
+  host,
+  dbStatement = undefined,
+}: {
+  nameSpanAttr: string,
+  resourceAttributes: any,
+  host: string,
+  dbStatement?: string,
+}) {
+  const expectedSpan = {
     traceId: expect.any(String),
     id: expect.any(String),
     timestamp: expect.any(Number),
@@ -38,6 +48,11 @@ export function getExpectedSpan({ nameSpanAttr, resourceAttributes, host }) {
     },
     events: [],
   };
+  if (dbStatement) {
+    expectedSpan.attributes['db.statement'] = JSON.stringify(dbStatement);
+  }
+
+  return expectedSpan;
 }
 
 export function filterRedisSpans(spans) {
