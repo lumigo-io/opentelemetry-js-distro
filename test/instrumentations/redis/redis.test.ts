@@ -144,6 +144,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             resourceAttributes,
             host,
             dbStatement: `SET ${key} ${value}`,
+            responseBody: 'OK',
           })
         );
 
@@ -155,6 +156,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             resourceAttributes,
             host,
             dbStatement: `GET ${key}`,
+            responseBody: value,
           })
         );
       }
@@ -162,36 +164,40 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
     itTest(
       {
-        testName: `redis hset and hgetall: ${versionToTest}`,
+        testName: `redis hash: ${versionToTest}`,
         packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const exporterFile = `${SPANS_DIR}/redis-hset-and-hgetall.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
+        const exporterFile = `${SPANS_DIR}/redis-hash.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         });
 
-        const key = 'test:hset-and-hgetall';
-        const field = 'test-field';
-        const value = 'test-value';
+        const key = 'test:hash';
+        const fieldA = 'test-field-a';
+        const valueA = 'test-value-a';
+        const fieldB = 'test-field-b';
+        const valueB = 'test-value-b';
         const host = redisContainer.getHost();
         const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
 
         await testApp.invokeGetPath(
-          `/hset?key=${key}&field=${field}&value=${value}&host=${host}&port=${port}`
+          `/hset?key=${key}&field=${fieldA}&value=${valueA}&host=${host}&port=${port}`
         );
 
         await testApp.invokeGetPath(
-          `/hgetall?key=${key}&field=${field}&value=${value}&host=${host}&port=${port}`
+          `/hmset?key=${key}&fieldA=${fieldA}&valueA=${valueA}&fieldB=${fieldB}&valueB=${valueB}&host=${host}&port=${port}`
         );
 
-        const spans = await testApp.getFinalSpans(6);
+        await testApp.invokeGetPath(`/hgetall?key=${key}&host=${host}&port=${port}`);
+
+        const spans = await testApp.getFinalSpans(8);
 
         const redisSpans = filterRedisSpans(spans);
-        expect(redisSpans).toHaveLength(4);
+        expect(redisSpans).toHaveLength(6);
 
         let resourceAttributes = getExpectedResourceAttributes();
 
@@ -199,7 +205,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         const connectSpans = redisSpans.filter(
           (span) => span.name.indexOf(expectedConnectSpanName) == 0
         );
-        expect(connectSpans).toHaveLength(2);
+        expect(connectSpans).toHaveLength(3);
         for (const connectSpan of connectSpans) {
           expect(connectSpan).toMatchObject(
             getExpectedSpan({
@@ -210,14 +216,25 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           );
         }
 
-        const expectedHSetSpanName = `redis-HSET`;
-        const hSetSpan = getSpanByName(redisSpans, expectedHSetSpanName);
-        expect(hSetSpan).toMatchObject(
+        const expectedSetSpanName = `redis-HSET`;
+        const setSpans = redisSpans.filter((span) => span.name.indexOf(expectedSetSpanName) == 0);
+        expect(setSpans).toHaveLength(2);
+        expect(setSpans[0]).toMatchObject(
           getExpectedSpan({
-            nameSpanAttr: expectedHSetSpanName,
+            nameSpanAttr: expectedSetSpanName,
             resourceAttributes,
             host,
-            dbStatement: `HSET ${key} ${field} ${value}`,
+            dbStatement: `HSET ${key} ${fieldA} ${valueA}`,
+            responseBody: 1,
+          })
+        );
+        expect(setSpans[1]).toMatchObject(
+          getExpectedSpan({
+            nameSpanAttr: expectedSetSpanName,
+            resourceAttributes,
+            host,
+            dbStatement: `HSET ${key} ${fieldA} ${valueA} ${fieldB} ${valueB}`,
+            responseBody: 1,
           })
         );
 
@@ -229,6 +246,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             resourceAttributes,
             host,
             dbStatement: `HGETALL ${key}`,
+            responseBody: { [fieldA]: valueA, [fieldB]: valueB },
           })
         );
       }

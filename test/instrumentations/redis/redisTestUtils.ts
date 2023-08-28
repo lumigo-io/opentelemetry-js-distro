@@ -22,11 +22,13 @@ export function getExpectedSpan({
   resourceAttributes,
   host,
   dbStatement = undefined,
+  responseBody = undefined,
 }: {
   nameSpanAttr: string,
   resourceAttributes: any,
   host: string,
   dbStatement?: string,
+  responseBody?: unknown,
 }) {
   const expectedSpan = {
     traceId: expect.any(String),
@@ -50,6 +52,9 @@ export function getExpectedSpan({
   };
   if (dbStatement) {
     expectedSpan.attributes['db.statement'] = JSON.stringify(dbStatement);
+  }
+  if (responseBody) {
+    expectedSpan.attributes['redis.response.body'] = JSON.stringify(responseBody);
   }
 
   return expectedSpan;

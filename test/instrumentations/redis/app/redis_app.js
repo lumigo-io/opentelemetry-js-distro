@@ -70,6 +70,21 @@ const requestListener = async function (req, res) {
       }
       break;
 
+    case '/hmset':
+      try {
+        client = await openRedisConnection(host, port);
+        const obj = {
+          [requestUrl?.query?.fieldA]: requestUrl?.query?.valueA,
+          [requestUrl?.query?.fieldB]: requestUrl?.query?.valueB,
+        };
+        await client.hSet(key, [...Object.entries(obj).flat()]);
+        respond(res, 200, {});
+      } catch (err) {
+        console.error(`Error setting key value`, err);
+        respond(res, 500, { error: err });
+      }
+      break;
+
     case '/get':
       try {
         client = await openRedisConnection(host, port);
@@ -89,13 +104,7 @@ const requestListener = async function (req, res) {
     case '/hgetall':
       try {
         client = await openRedisConnection(host, port);
-        const retrievedObject = await client.hGetAll(key);
-        const retrievedValue = retrievedObject[field];
-        if (retrievedValue !== value) {
-          throw new Error(
-            `Retrieved value '${retrievedValue}' does not match expected value '${value}'`
-          );
-        }
+        await client.hGetAll(key);
         respond(res, 200, {});
       } catch (err) {
         console.error(`Error getting key value`, err);
