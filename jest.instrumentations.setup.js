@@ -23,25 +23,30 @@ beforeAll(() => {
 
 afterAll(() => {
   console.info('Starting afterAll...');
-  const versions = instrumentationsVersionManager.getInstrumentationsVersions();
-  console.info('Adding tested versions', JSON.stringify(versions));
-  const versions_keys = Object.keys(versions);
-  if (versions_keys.length) {
-    versions_keys.forEach((pkg) => {
-      // updated supported versions file
-      const testedVersionFolder = `./src/instrumentations/${pkg}/tested_versions`;
-      const testVersionsFile = `${testedVersionFolder}/${pkg}`;
-      fs.mkdirSync(testedVersionFolder, { recursive: true });
-      const versionStrings = versions[pkg].unsupported
-        .map((v) => `!${v}`)
-        .concat(versions[pkg].supported)
-        .concat(loadPackageVersionsFromBackup(pkg))
-        .sort(compareVersions)
-        .join('\n');
-      fs.writeFileSync(testVersionsFile, versionStrings);
-      console.info('Finish afterAll, supported version files were updated.');
-    });
+
+  if (process.env.DISABLE_SUPPORTED_VERSIONS_UPDATE?.toLowerCase() === 'true') {
+    console.info('DISABLE_SUPPORTED_VERSIONS_UPDATE is set to true, skipping post-test update.');
   } else {
-    console.info('Finish afterAll, no versions to update.');
+    const versions = instrumentationsVersionManager.getInstrumentationsVersions();
+    console.info('Adding tested versions', JSON.stringify(versions));
+    const versions_keys = Object.keys(versions);
+    if (versions_keys.length) {
+      versions_keys.forEach((pkg) => {
+        // updated supported versions file
+        const testedVersionFolder = `./src/instrumentations/${pkg}/tested_versions`;
+        const testVersionsFile = `${testedVersionFolder}/${pkg}`;
+        fs.mkdirSync(testedVersionFolder, { recursive: true });
+        const versionStrings = versions[pkg].unsupported
+          .map((v) => `!${v}`)
+          .concat(versions[pkg].supported)
+          .concat(loadPackageVersionsFromBackup(pkg))
+          .sort(compareVersions)
+          .join('\n');
+        fs.writeFileSync(testVersionsFile, versionStrings);
+        console.info('Finish afterAll, supported version files were updated.');
+      });
+    } else {
+      console.info('Finish afterAll, no versions to update.');
+    }
   }
 });

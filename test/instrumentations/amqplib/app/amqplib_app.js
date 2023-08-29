@@ -66,7 +66,7 @@ const requestListener = async function (req, res) {
   const topic = requestUrl?.query?.topic || 'test-amqplib-topic';
   const message = requestUrl?.query?.message || 'Hello World!';
   const host = requestUrl?.query?.host || DEFAULT_RABBITMQ_HOST;
-  const port = requestUrl?.query?.port || DEFAULT_RABBITMQ_PORT;
+  const port = Number(requestUrl?.query?.port || DEFAULT_RABBITMQ_PORT);
 
   let conn;
   switch (requestUrl.pathname) {
@@ -74,7 +74,7 @@ const requestListener = async function (req, res) {
       try {
         conn = await amqp.connect(`amqp://${host}:${port}`);
         await sendMessage(conn, topic, message);
-        respond(res, 200, { port });
+        respond(res, 200, {});
       } catch (err) {
         console.error(`Error producing message`, err);
         respond(res, 500, { error: err });
@@ -85,7 +85,7 @@ const requestListener = async function (req, res) {
       try {
         conn = await amqp.connect(`amqp://${host}:${port}`);
         await receiveMessage(conn, topic, message);
-        respond(res, 200, { port });
+        respond(res, 200, {});
       } catch (err) {
         console.error(`Error consuming message`, err);
         respond(res, 500, { error: err });

@@ -1,5 +1,5 @@
 {
-  "name": "lumigo-kafkajs-roundtrip-test",
+  "name": "lumigo-kafkajs-test",
   "version": "1.0.0",
   "description": "",
   "scripts": {

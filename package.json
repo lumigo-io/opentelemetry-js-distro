@@ -29,6 +29,7 @@
     "@opentelemetry/instrumentation-grpc": "^0.41.0",
     "@opentelemetry/instrumentation-http": "0.38.0",
     "@opentelemetry/instrumentation-mongodb": "0.34.2",
+    "@opentelemetry/instrumentation-redis-4": "^0.35.1",
     "@opentelemetry/resource-detector-aws": "1.2.1",
     "@opentelemetry/resources": "1.9.0",
     "@opentelemetry/sdk-trace-base": "1.9.0",
@@ -54,7 +55,7 @@
     "@types/express": "^4.17.8",
     "@types/jest": "^29.5.1",
     "@types/kafkajs": "^1.9.0",
-    "@types/node": "^17.0.23",
+    "@types/node": "^20.5.7",
     "@typescript-eslint/eslint-plugin": "^5.59.2",
     "@typescript-eslint/parser": "^5.59.2",
     "aws-config": "^1.4.0",
@@ -94,16 +95,8 @@
     "webpack-cli": "^4.10.0"
   },
   "release": {
-    "branches": [
-      "main"
-    ],
-    "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      "@semantic-release/npm",
-      "@semantic-release/git",
-      "@semantic-release/github"
-    ]
+    "branches": ["main"],
+    "plugins": ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator", "@semantic-release/npm", "@semantic-release/git", "@semantic-release/github"]
   },
   "husky": {
     "hooks": {
