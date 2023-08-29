@@ -77,9 +77,12 @@ export class TestApp {
             if (signal && signal !== 'SIGTERM') {
                 closeRejectFunction(new Error(`app with pid '${this.pid}' terminated unexpectedly!`));
             } else {
-                console.info(`app with pid '${this.pid}' exited with signal '${signal}' and exit code '${exitCode}'`);
+                const appExitMessage = `app with pid '${this.pid}' exited with signal '${signal}' and exit code '${exitCode}'`;
+                console.info(appExitMessage);
                 closeResolveFunction();
             }
+            portPromiseResolved = true;
+            portResolveFunction(-1);
         });
     }
 
@@ -88,7 +91,11 @@ export class TestApp {
     }
 
     public async port(): Promise<Number> {
-        return await this.portPromise;
+        const port = Number(await this.portPromise);
+        if (port < 0) {
+            throw new Error(`app with pid '${this.pid()}' exited unexpectedly!`);
+        }
+        return port;
     }
 
     public async waitUntilReady(): Promise<void> {
