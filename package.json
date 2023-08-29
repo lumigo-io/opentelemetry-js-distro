@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.28.0",
+  "version": "1.29.0",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/distro.js",
   "private": false,
@@ -95,8 +95,16 @@
     "webpack-cli": "^4.10.0"
   },
   "release": {
-    "branches": ["main"],
-    "plugins": ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator", "@semantic-release/npm", "@semantic-release/git", "@semantic-release/github"]
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm",
+      "@semantic-release/git",
+      "@semantic-release/github"
+    ]
   },
   "husky": {
     "hooks": {
