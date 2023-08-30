@@ -18,6 +18,7 @@ import LumigoExpressInstrumentation from './instrumentations/express/ExpressInst
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoKafkaJsInstrumentation from './instrumentations/kafkajs/KafkaJsInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
+import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
@@ -99,6 +100,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoHttpInstrumentation(...ignoredHostnames),
       new LumigoKafkaJsInstrumentation(),
       new LumigoMongoDBInstrumentation(),
+      new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
     ].filter((i) => i.isApplicable());
 

@@ -1,5 +1,13 @@
 # Contributing to the Lumigo OpenTelemetry Distro for JS
 
+Please note that to ensure compatibility with all supported Node.js versions,
+the lowest supported Node.js version must be used for any actions that update
+the `package-lock.json` file.
+
+For this reason we have included the `nvm` configuration file `.nvmrc` set to
+the lowest supported version, if you're using `nvm` then just type `nvm use`
+to switch to it.
+
 ## Tests
 
 Unit tests are run with:
