@@ -15,6 +15,7 @@ import { versionsToTest } from '../../utils/versions';
 
 type EngineType = {
   name: string,
+  appDir: string,
   buildConnectionUrl: (host: string, port: number) => string,
   provider: string,
   port: number,
@@ -29,12 +30,12 @@ type StartedContainer = StartedPostgreSqlContainer | StartedMySqlContainer;
 const INSTRUMENTATION_NAME = `prisma`;
 const INSTRUMENTATION_CLIENT_NAME = `@prisma/client`;
 const SPANS_DIR = join(__dirname, 'spans');
-const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
 const engines: EngineType[] = [
   {
     name: 'postgres',
+    appDir: join(__dirname, 'postgres_app'),
     buildConnectionUrl: (host: string, port: number) =>
       `postgresql://postgres:postgres@${host}:${port}/postgres`,
     provider: 'postgresql',
@@ -46,6 +47,7 @@ const engines: EngineType[] = [
   },
   {
     name: 'mysql',
+    appDir: join(__dirname, 'mysql_app'),
     buildConnectionUrl: (host: string, port: number) => `mysql://root:root@${host}:${port}/mysql`,
     provider: 'mysql',
     port: 3306,
@@ -116,7 +118,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         let containerPort: number;
 
         beforeAll(async function () {
-          reinstallPackages({ appDir: TEST_APP_DIR });
+          reinstallPackages({ appDir: engine.appDir });
           fs.mkdirSync(SPANS_DIR, { recursive: true });
 
           await warmupContainer(engine);
@@ -126,12 +128,13 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           [container, containerHost, containerPort] = await startContainer(engine);
 
           // packages must be installed after the container has been started so that
-          // we can provide the correct host and port
+          // the correct connection url is available for the client generation
           installPackages({
-            appDir: TEST_APP_DIR,
+            appDir: engine.appDir,
             packageNames: [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME],
             packageVersion: versionToTest,
             environmentVariables: {
+              DATABASE_PROVIDER: engine.provider,
               DATABASE_URL: engine.buildConnectionUrl(containerHost, containerPort),
             },
           });
@@ -154,7 +157,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         afterAll(function () {
           uninstallPackages({
-            appDir: TEST_APP_DIR,
+            appDir: engine.appDir,
             packageNames: [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME],
             packageVersion: versionToTest,
           });
@@ -170,9 +173,15 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           async function () {
             const exporterFile = `${SPANS_DIR}/${engine.name}-basics.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
 
-            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+            testApp = new TestApp(engine.appDir, INSTRUMENTATION_NAME, exporterFile, {
               OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+              DATABASE_URL: engine.buildConnectionUrl(containerHost, containerPort),
             });
+
+            await testApp.invokeGetPath(`/add-user?name=Alice&email=alice@prisma.io`);
+
+            const spans = await testApp.getFinalSpans(2);
+            expect(spans).toHaveLength(2);
 
             /*const topic = 'test-topic-roundtrip';
               const key = 'test-key-roundtrip';

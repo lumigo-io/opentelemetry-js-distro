@@ -14,7 +14,7 @@ export const reinstallPackages = ({appDir}: {appDir: string}) => {
     unlinkSync(`${appDir}/package-lock.json`);
   }
 
-  console.log(`installing node packages from ${appDir}...`);
+  console.log(`installing node packages into ${appDir}...`);
   const { stderr, status, error } = spawnSync('npm', ['install', '--quiet'], {
     cwd: appDir,
   });

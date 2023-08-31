@@ -1,9 +1,9 @@
 {
-  "name": "lumigo-prisma-test",
+  "name": "lumigo-prisma-mysql-test",
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node -r @lumigo/opentelemetry prisma_app.js"
+    "start": "prisma generate && node -r @lumigo/opentelemetry prisma_mysql_app.js"
   },
   "author": "",
   "license": "ISC",

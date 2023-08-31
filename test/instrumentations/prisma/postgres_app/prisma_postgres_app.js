@@ -1,3 +1,7 @@
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+
 const http = require('http');
 const url = require('url');
 require('log-timestamp');
@@ -17,12 +21,25 @@ const requestListener = async function (req, res) {
   console.error(`Received request: ${req.method} ${req.url}`);
 
   const requestUrl = url.parse(req.url, true);
-  const host = requestUrl?.query?.host;
-  const port = Number(requestUrl?.query?.port);
+  const name = requestUrl?.query?.name;
+  const email = requestUrl?.query?.email;
 
   switch (requestUrl.pathname) {
-    case '/basics':
-      response(res, 200, {});
+    case '/add-user':
+      try {
+        const newUser = await prisma.user.create({
+          data: {
+            name,
+            email,
+          },
+        });
+
+        console.error('Created new user:', newUser);
+        respond(res, 200, newUser);
+      } catch (err) {
+        console.error(`Error creating new user`, err);
+        respond(res, 500, { error: err });
+      }
       break;
 
     default:
@@ -38,3 +55,20 @@ httpServer.listen(0, host, () => {
     process.send(port);
   }
 });
+
+/*async function main() {
+  const newUser = await prisma.user.create({
+    data: {
+      name: 'Alice',
+      email: 'alice@prisma.io',
+    },
+  });
+
+  console.error('Created new user:', newUser);
+
+  const users = await prisma.user.findMany();
+
+  console.error('Selected all users:', users);
+}
+
+main();*/
