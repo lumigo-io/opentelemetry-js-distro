@@ -2,77 +2,103 @@ import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
 import { join } from 'path';
-import { MySqlContainer, PostgreSqlContainer, StartedMySqlContainer, StartedPostgreSqlContainer } from 'testcontainers';
+import {
+  MySqlContainer,
+  PostgreSqlContainer,
+  StartedMySqlContainer,
+  StartedPostgreSqlContainer,
+} from 'testcontainers';
 import { itTest } from '../../integration/setup';
 import { TestApp } from '../../utils/test-apps';
 import { installPackages, reinstallPackages, uninstallPackages } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
 
-const DEFAULT_POSTGRES_PORT = 5432;
-const DEFAULT_MYSQL_PORT = 3306;
-const DOCKER_START_TIMEOUT = 30_000;
-const DOCKER_WARMUP_TIMEOUT = 60_000;
+type EngineType = {
+  name: string,
+  buildConnectionUrl: (host: string, port: number) => string,
+  provider: string,
+  port: number,
+  startupTimeout: number,
+  testContainerConstructor: typeof PostgreSqlContainer | typeof MySqlContainer,
+  testContainerImage: string,
+  warmupTimeout: number,
+};
+
+type StartedContainer = StartedPostgreSqlContainer | StartedMySqlContainer;
+
 const INSTRUMENTATION_NAME = `prisma`;
 const INSTRUMENTATION_CLIENT_NAME = `@prisma/client`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
-const enum ContainerType {
-  POSTGRES = 'Postgres',
-  MYSQL = 'MySQL',
-};
+const engines: EngineType[] = [
+  {
+    name: 'postgres',
+    buildConnectionUrl: (host: string, port: number) =>
+      `postgresql://postgres:postgres@${host}:${port}/postgres`,
+    provider: 'postgresql',
+    port: 5432,
+    startupTimeout: 30_000,
+    testContainerConstructor: PostgreSqlContainer,
+    testContainerImage: 'postgres:latest',
+    warmupTimeout: 60_000,
+  },
+  {
+    name: 'mysql',
+    buildConnectionUrl: (host: string, port: number) => `mysql://root:root@${host}:${port}/mysql`,
+    provider: 'mysql',
+    port: 3306,
+    startupTimeout: 30_000,
+    testContainerConstructor: MySqlContainer,
+    testContainerImage: 'mysql:latest',
+    warmupTimeout: 60_000,
+  },
+];
 
-const startPostgresContainer = async (): Promise<[StartedPostgreSqlContainer, string, number]> => {
-  const container: StartedPostgreSqlContainer = await new PostgreSqlContainer('postgres:latest')
-    .withExposedPorts(DEFAULT_POSTGRES_PORT)
-    .withStartupTimeout(DOCKER_START_TIMEOUT)
+const startContainer = async (
+  engine: EngineType,
+  timeout: number = engine.startupTimeout
+): Promise<[StartedContainer, string, number]> => {
+  const container: StartedContainer = await new engine.testContainerConstructor(
+    engine.testContainerImage
+  )
+    .withExposedPorts(engine.port)
+    .withStartupTimeout(timeout)
     .start();
   const host = container.getHost();
-  const port = container.getMappedPort(DEFAULT_POSTGRES_PORT);
-  console.info(`Postgres container started on ${host}:${port}...`);
-  return [container, host, port];
-};
-
-const mySqlContainer = async (): Promise<[StartedMySqlContainer, string, number]> => {
-  const container: StartedMySqlContainer = await new MySqlContainer('mysql:latest')
-    .withExposedPorts(DEFAULT_MYSQL_PORT)
-    .withStartupTimeout(DOCKER_START_TIMEOUT)
-    .start();
-  const host = container.getHost();
-  const port = container.getMappedPort(DEFAULT_MYSQL_PORT);
-  console.info(`MySQL container started on ${host}:${port}...`);
+  const port = container.getMappedPort(engine.port);
+  console.info(`${engine.name} container started on ${host}:${port}...`);
   return [container, host, port];
 };
 
 let warmupState = {
-  [ContainerType.POSTGRES]: {
+  postgres: {
     warmupInitiated: false,
     warmupCompleted: false,
   },
-  [ContainerType.MYSQL]: {
+  mysql: {
     warmupInitiated: false,
     warmupCompleted: false,
   },
 };
 
-const warmupContainer = async (containerType: ContainerType): Promise<boolean> => {
-  if (!warmupState[containerType].warmupInitiated) {
-    warmupState[containerType].warmupInitiated = true;
+const warmupContainer = async (engine: EngineType): Promise<boolean> => {
+  if (!warmupState[engine.name].warmupInitiated) {
+    warmupState[engine.name].warmupInitiated = true;
     console.warn(
-      `Warming up ${containerType} container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+      `Warming up ${engine.name} container loading, timeout of ${engine.warmupTimeout}ms to account for Docker image pulls...`
     );
     let warmupContainer: StartedPostgreSqlContainer | StartedMySqlContainer;
     try {
-      [ warmupContainer ] = containerType == ContainerType.POSTGRES ?
-        await startPostgresContainer() : await mySqlContainer();
+      [warmupContainer] = await startContainer(engine, engine.warmupTimeout);
       await warmupContainer.stop();
     } catch (err) {
-      console.warn(`Failed to warmup ${containerType} container: ${err}`);
+      console.warn(`Failed to warmup ${engine.name} container: ${err}`);
     }
-    warmupState[containerType].warmupCompleted = true;
+    warmupState[engine.name].warmupCompleted = true;
   } else {
-    while (!warmupState[containerType].warmupCompleted) {
+    while (!warmupState[engine.name].warmupCompleted) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
@@ -82,63 +108,117 @@ const warmupContainer = async (containerType: ContainerType): Promise<boolean> =
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
-    let testApp: TestApp;
-    let postgresContainer: StartedPostgreSqlContainer;
-    let mysqlContainer: StartedMySqlContainer;
-    let containerHost: string;
-    let containerPort: number;
+    for (const engine of engines) {
+      describe(`prisma ${versionToTest} against the ${engine.name} database engine`, function () {
+        let testApp: TestApp;
+        let container: StartedPostgreSqlContainer | StartedMySqlContainer;
+        let containerHost: string;
+        let containerPort: number;
 
-    beforeAll(async function () {
-      reinstallPackages(TEST_APP_DIR);
-      fs.mkdirSync(SPANS_DIR, { recursive: true });
-      installPackages(TEST_APP_DIR, [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME], versionToTest);
+        beforeAll(async function () {
+          reinstallPackages({ appDir: TEST_APP_DIR });
+          fs.mkdirSync(SPANS_DIR, { recursive: true });
 
-      await Promise.all([
-        warmupContainer(ContainerType.POSTGRES),
-        warmupContainer(ContainerType.MYSQL)
-      ]);
-    }, DOCKER_WARMUP_TIMEOUT);
+          await warmupContainer(engine);
+        }, engine.warmupTimeout);
 
-    afterEach(async function () {
-      if (testApp) {
-        console.info('Killing test app...');
-        await testApp.kill();
-      } else {
-        console.warn('Test app was not run.');
-      }
-      if (postgresContainer) {
-        console.info('Stopping Postgres container...');
-        await postgresContainer.stop();
-      } else {
-        console.warn('Postgres container was not started.');
-      }
-      if (mysqlContainer) {
-        console.info('Stopping MySQL container...');
-        await mysqlContainer.stop();
-      } else {
-        console.warn('MySQL container was not started.');
-      }
-    });
+        beforeEach(async function () {
+          [container, containerHost, containerPort] = await startContainer(engine);
 
-    afterAll(function () {
-      uninstallPackages(TEST_APP_DIR, [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME], versionToTest);
-    });
+          // packages must be installed after the container has been started so that
+          // we can provide the correct host and port
+          installPackages({
+            appDir: TEST_APP_DIR,
+            packageNames: [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME],
+            packageVersion: versionToTest,
+            environmentVariables: {
+              DATABASE_URL: engine.buildConnectionUrl(containerHost, containerPort),
+            },
+          });
+        }, engine.startupTimeout);
 
-    itTest(
-      {
-        testName: `postgres basics: ${versionToTest}`,
-        packageName: INSTRUMENTATION_NAME,
-        version: versionToTest,
-        timeout: TEST_TIMEOUT,
-      },
-      async function () {
-        [ postgresContainer, containerHost, containerPort ] = await startPostgresContainer();
-        const exporterFile = `${SPANS_DIR}/postgres-basics.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
-
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
-          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+        afterEach(async function () {
+          if (testApp) {
+            console.info('Killing test app...');
+            await testApp.kill();
+          } else {
+            console.warn('Test app was not run.');
+          }
+          if (container) {
+            console.info(`Stopping ${engine.name} container...`);
+            await container.stop();
+          } else {
+            console.warn(`${engine.name} container was not started.`);
+          }
         });
-      }
-    );
-  }
+
+        afterAll(function () {
+          uninstallPackages({
+            appDir: TEST_APP_DIR,
+            packageNames: [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME],
+            packageVersion: versionToTest,
+          });
+        });
+
+        itTest(
+          {
+            testName: `${engine.name} basics: ${versionToTest}`,
+            packageName: INSTRUMENTATION_NAME,
+            version: versionToTest,
+            timeout: TEST_TIMEOUT,
+          },
+          async function () {
+            const exporterFile = `${SPANS_DIR}/${engine.name}-basics.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
+
+            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+              OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+            });
+
+            /*const topic = 'test-topic-roundtrip';
+              const key = 'test-key-roundtrip';
+              const message = 'test-message-roundtrip';
+              const host = kafkaContainer.getHost();
+              const port = kafkaContainer.getMappedPort(DEFAULT_KAFKA_PORT);
+              await testApp.invokeGetPath(
+                `/invoke-kafka-producer?topic=${topic}&key=${key}&message=${message}&host=${host}&port=${port}`
+              );
+
+              await testApp.invokeGetPath(
+                `/invoke-kafka-consumer?topic=${topic}&message=${message}&host=${host}&port=${port}`
+              );
+
+              const spans = await testApp.getFinalSpans(4);
+
+              const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
+              expect(kafkaJsSpans).toHaveLength(2);
+
+              let resourceAttributes = getExpectedResourceAttributes();
+
+              const sendSpan = getSpanByKind(kafkaJsSpans, SpanKind.PRODUCER);
+              expect(sendSpan).toMatchObject(
+                getExpectedSpan({
+                  spanKind: SpanKind.PRODUCER,
+                  resourceAttributes,
+                  host,
+                  topic,
+                  message,
+                })
+              );
+
+              const receiveSpan = getSpanByKind(kafkaJsSpans, SpanKind.CONSUMER);
+              expect(receiveSpan).toMatchObject(
+                getExpectedSpan({
+                  spanKind: SpanKind.CONSUMER,
+                  resourceAttributes,
+                  host,
+                  topic,
+                  message,
+                })
+              );
+              */
+          }
+        );
+      }); // describe engine function
+    } // loop over engines
+  } // describe version function
 );
