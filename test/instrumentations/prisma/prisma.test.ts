@@ -222,8 +222,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
             await testApp.invokeGetPath(`/get-users`);
 
-            const spans = await testApp.getFinalSpans(4);
-            expect(spans).toHaveLength(4);
+            const spans = await testApp.getFinalSpans(18);
+            expect(spans).toHaveLength(18);
 
             /*
               const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
