@@ -42,6 +42,18 @@ const requestListener = async function (req, res) {
       }
       break;
 
+    case '/get-users':
+      try {
+        const users = await prisma.user.findMany();
+
+        console.error('Selected all users:', users);
+        respond(res, 200, users);
+      } catch (err) {
+        console.error(`Error selecting all users`, err);
+        respond(res, 500, { error: err });
+      }
+      break;
+
     default:
       respond(res, 404, { error: 'Resource not found' });
   }

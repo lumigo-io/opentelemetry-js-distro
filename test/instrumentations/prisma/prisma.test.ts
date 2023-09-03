@@ -17,11 +17,13 @@ type EngineType = {
   name: string,
   appDir: string,
   buildConnectionUrl: (host: string, port: number) => string,
+  database: string,
+  password: string,
   provider: string,
   port: number,
   startupTimeout: number,
-  testContainerConstructor: typeof PostgreSqlContainer | typeof MySqlContainer,
   testContainerImage: string,
+  username: string,
   warmupTimeout: number,
 };
 
@@ -34,40 +36,78 @@ const TEST_TIMEOUT = 600_000;
 
 const engines: EngineType[] = [
   {
-    name: 'postgres',
-    appDir: join(__dirname, 'postgres_app'),
-    buildConnectionUrl: (host: string, port: number) =>
-      `postgresql://postgres:postgres@${host}:${port}/postgres`,
-    provider: 'postgresql',
-    port: 5432,
-    startupTimeout: 30_000,
-    testContainerConstructor: PostgreSqlContainer,
-    testContainerImage: 'postgres:latest',
-    warmupTimeout: 60_000,
-  },
-  {
     name: 'mysql',
     appDir: join(__dirname, 'mysql_app'),
-    buildConnectionUrl: (host: string, port: number) => `mysql://root:root@${host}:${port}/mysql`,
+    buildConnectionUrl: (host: string, port: number) =>
+      `mysql://testuser:testpassword@${host}:${port}/testdb`,
+    database: 'testdb',
+    password: 'testpassword',
     provider: 'mysql',
     port: 3306,
     startupTimeout: 30_000,
-    testContainerConstructor: MySqlContainer,
     testContainerImage: 'mysql:latest',
+    username: 'testuser',
+    warmupTimeout: 60_000,
+  },
+  {
+    name: 'postgres',
+    appDir: join(__dirname, 'postgres_app'),
+    // DATABASE_URL="postgresql://username:mypassword@localhost:5432/college_db?schema=public"
+
+    buildConnectionUrl: (host: string, port: number) =>
+      `postgresql://testuser:testpassword@${host}:${port}/postgres`,
+    database: 'postgres',
+    password: 'testpassword',
+    provider: 'postgresql',
+    port: 5432,
+    startupTimeout: 30_000,
+    testContainerImage: 'postgres:latest',
+    username: 'testuser',
     warmupTimeout: 60_000,
   },
 ];
+
+const startPostgresContainer = async (
+  engine: EngineType,
+  timeout: number = engine.startupTimeout
+): Promise<StartedPostgreSqlContainer> => {
+  return await new PostgreSqlContainer(engine.testContainerImage)
+    .withExposedPorts(engine.port)
+    .withStartupTimeout(timeout)
+    .withDatabase(engine.database)
+    .withUsername(engine.username)
+    .withPassword(engine.password)
+    .start();
+};
+
+const startMySqlContainer = async (
+  engine: EngineType,
+  timeout: number = engine.startupTimeout
+): Promise<StartedMySqlContainer> => {
+  return await new MySqlContainer(engine.testContainerImage)
+    .withExposedPorts(engine.port)
+    .withStartupTimeout(timeout)
+    .withDatabase(engine.database)
+    .withUsername(engine.username)
+    .withUserPassword(engine.password)
+    .start();
+};
 
 const startContainer = async (
   engine: EngineType,
   timeout: number = engine.startupTimeout
 ): Promise<[StartedContainer, string, number]> => {
-  const container: StartedContainer = await new engine.testContainerConstructor(
-    engine.testContainerImage
-  )
-    .withExposedPorts(engine.port)
-    .withStartupTimeout(timeout)
-    .start();
+  let container: StartedContainer;
+  switch (engine.name) {
+    case 'postgres':
+      container = await startPostgresContainer(engine, timeout);
+      break;
+    case 'mysql':
+      container = await startMySqlContainer(engine, timeout);
+      break;
+    default:
+      throw new Error(`Unsupported engine: ${engine.name}`);
+  }
   const host = container.getHost();
   const port = container.getMappedPort(engine.port);
   console.info(`${engine.name} container started on ${host}:${port}...`);
@@ -180,24 +220,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
             await testApp.invokeGetPath(`/add-user?name=Alice&email=alice@prisma.io`);
 
-            const spans = await testApp.getFinalSpans(2);
-            expect(spans).toHaveLength(2);
+            await testApp.invokeGetPath(`/get-users`);
 
-            /*const topic = 'test-topic-roundtrip';
-              const key = 'test-key-roundtrip';
-              const message = 'test-message-roundtrip';
-              const host = kafkaContainer.getHost();
-              const port = kafkaContainer.getMappedPort(DEFAULT_KAFKA_PORT);
-              await testApp.invokeGetPath(
-                `/invoke-kafka-producer?topic=${topic}&key=${key}&message=${message}&host=${host}&port=${port}`
-              );
+            const spans = await testApp.getFinalSpans(4);
+            expect(spans).toHaveLength(4);
 
-              await testApp.invokeGetPath(
-                `/invoke-kafka-consumer?topic=${topic}&message=${message}&host=${host}&port=${port}`
-              );
-
-              const spans = await testApp.getFinalSpans(4);
-
+            /*
               const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
               expect(kafkaJsSpans).toHaveLength(2);
 

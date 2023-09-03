@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "prisma generate && node -r @lumigo/opentelemetry prisma_postgres_app.js"
+    "clean": "rm -rf prisma/migrations",
+    "prep_db": "npm run clean && prisma generate && prisma db push",
+    "start": "npm run prep_db && node -r @lumigo/opentelemetry prisma_postgres_app.js && npm run clean"
   },
   "author": "",
   "license": "ISC",
