@@ -15,6 +15,7 @@ import { installPackages, reinstallPackages, uninstallPackages } from '../../uti
 import { versionsToTest } from '../../utils/versions';
 import {
   filterPrismaSpans,
+  getExpectedResourceAttributes,
   getExpectedSpan,
   getOperationSpans,
   hasExpectedConnectionSpans,
@@ -235,6 +236,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             const prismaSpans = filterPrismaSpans(spans);
             expect(prismaSpans).toHaveLength(17);
 
+            const resourceAttributes = getExpectedResourceAttributes();
+
             // identify the insert query spans by trace id
             const insertQueryTraceId = prismaSpans[0].traceId;
             const insertQuerySpans = prismaSpans.filter(
@@ -252,6 +255,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(insertQueryDbQuerySpans[0]).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine:db_query',
+                resourceAttributes,
                 attributes: {
                   'db.statement': 'BEGIN',
                 },
@@ -261,6 +265,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(insertQueryDbQuerySpans[1]).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine:db_query',
+                resourceAttributes,
                 attributes: {
                   'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
                 },
@@ -270,6 +275,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(insertQueryDbQuerySpans[2]).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine:db_query',
+                resourceAttributes,
                 attributes: {
                   'db.statement': expect.stringMatching(/^SELECT .*User/),
                 },
@@ -279,6 +285,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(insertQueryDbQuerySpans[3]).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine:db_query',
+                resourceAttributes,
                 attributes: {
                   'db.statement': 'COMMIT',
                 },
@@ -288,6 +295,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(getSpanByName(insertQuerySpans, 'prisma:engine:serialize')).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine:serialize',
+                resourceAttributes,
                 attributes: {},
               })
             );
@@ -295,6 +303,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(getSpanByName(insertQuerySpans, 'prisma:client:operation')).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:client:operation',
+                resourceAttributes,
                 attributes: {
                   method: 'create',
                   model: 'User',
@@ -306,6 +315,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(getSpanByName(insertQuerySpans, 'prisma:engine')).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine',
+                resourceAttributes,
                 attributes: {},
               })
             );
@@ -321,6 +331,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(getSpanByName(selectQuerySpans, 'prisma:client:operation')).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:client:operation',
+                resourceAttributes,
                 attributes: {
                   method: 'findMany',
                   model: 'User',
@@ -337,6 +348,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(selectQueryDbQuerySpans[0]).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine:db_query',
+                resourceAttributes,
                 attributes: {
                   'db.statement': expect.stringMatching(/^SELECT .*User/),
                 },
@@ -346,6 +358,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(getSpanByName(selectQuerySpans, 'prisma:engine:serialize')).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine:serialize',
+                resourceAttributes,
                 attributes: {},
               })
             );
@@ -353,6 +366,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             expect(getSpanByName(selectQuerySpans, 'prisma:engine')).toMatchObject(
               getExpectedSpan({
                 name: 'prisma:engine',
+                resourceAttributes,
                 attributes: {},
               })
             );

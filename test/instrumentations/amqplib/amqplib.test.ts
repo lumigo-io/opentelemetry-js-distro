@@ -9,7 +9,11 @@ import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
-import { filterAmqplibSpans, getExpectedSpan } from './amqplibTestUtils';
+import {
+  filterAmqplibSpans,
+  getExpectedResourceAttributes,
+  getExpectedSpan,
+} from './amqplibTestUtils';
 
 const DEFAULT_RABBITMQ_PORT = 5672;
 const DOCKER_WARMUP_TIMEOUT = 30_000;
@@ -133,12 +137,15 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         const amqplibSpans = filterAmqplibSpans(spans, topic);
         expect(amqplibSpans).toHaveLength(2);
 
+        let resourceAttributes = getExpectedResourceAttributes();
+
         const expectedSendSpanName = `<default> -> ${topic} send`;
         const sendSpan = getSpanByName(amqplibSpans, expectedSendSpanName);
         expect(sendSpan).toMatchObject(
           getExpectedSpan({
             nameSpanAttr: expectedSendSpanName,
             spanKind: SpanKind.PRODUCER,
+            resourceAttributes,
             host,
             topic,
             message,
@@ -151,6 +158,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           getExpectedSpan({
             nameSpanAttr: expectedReceiveSpanName,
             spanKind: SpanKind.CONSUMER,
+            resourceAttributes,
             host,
             topic,
             message,

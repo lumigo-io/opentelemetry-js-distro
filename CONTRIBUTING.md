@@ -22,6 +22,8 @@ Instrumentation tests are run with:
 npm run test:instrumentations
 ```
 
+### Scope
+
 You can scope the tests to run to specific instrumentations as follows:
 
 ```sh
@@ -29,6 +31,14 @@ INSTRUMENTATION_UNDER_TEST="<instrumentation_name>" npm run test:instrumentation
 ```
 
 The instrumentation names are the folder names in [`test/instrumentations`](./test/instrumentations).
+
+You can scope the tests to run a specific version of that specific instrumentation as follows:
+
+```sh
+INSTRUMENTATION_UNDER_TEST="<instrumentation_name>" VERSION_UNDER_TEST="<instrumentation_version>" npm run test:instrumentations
+```
+
+### Supported version files
 
 For local testing, you can disable the post-test update of the tested versions file as follows:
 

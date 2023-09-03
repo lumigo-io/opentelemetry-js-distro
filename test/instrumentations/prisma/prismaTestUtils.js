@@ -18,7 +18,7 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan({ name, attributes }) {
+export function getExpectedSpan({ name, resourceAttributes, attributes }) {
   return {
     traceId: expect.any(String),
     id: expect.any(String),
@@ -27,7 +27,7 @@ export function getExpectedSpan({ name, attributes }) {
     name: name,
     kind: SpanKind.INTERNAL,
     resource: {
-      attributes: getExpectedResourceAttributes(),
+      attributes: resourceAttributes,
     },
     attributes: attributes,
     status: {
@@ -50,6 +50,7 @@ export function getOperationSpans(spans) {
 }
 
 export function hasExpectedConnectionSpans(spans, engine) {
+  const resourceAttributes = getExpectedResourceAttributes();
   const connectionSpans = spans.slice(0, 3);
 
   expect(connectionSpans).toHaveLength(3);
@@ -57,6 +58,7 @@ export function hasExpectedConnectionSpans(spans, engine) {
   expect(getSpanByName(connectionSpans, 'prisma:client:serialize')).toMatchObject(
     getExpectedSpan({
       name: 'prisma:client:serialize',
+      resourceAttributes,
       attributes: {},
     })
   );
@@ -64,6 +66,7 @@ export function hasExpectedConnectionSpans(spans, engine) {
   expect(getSpanByName(connectionSpans, 'prisma:client:connect')).toMatchObject(
     getExpectedSpan({
       name: 'prisma:client:connect',
+      resourceAttributes,
       attributes: {},
     })
   );
@@ -71,6 +74,7 @@ export function hasExpectedConnectionSpans(spans, engine) {
   expect(getSpanByName(connectionSpans, 'prisma:engine:connection')).toMatchObject(
     getExpectedSpan({
       name: 'prisma:engine:connection',
+      resourceAttributes,
       attributes: {
         'db.type': engine.name,
       },

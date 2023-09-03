@@ -17,7 +17,7 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan({ spanKind, host, topic, message }) {
+export function getExpectedSpan({ spanKind, resourceAttributes, host, topic, message }) {
   let messageKey;
   switch (spanKind) {
     case SpanKind.PRODUCER:
@@ -37,7 +37,7 @@ export function getExpectedSpan({ spanKind, host, topic, message }) {
     name: topic,
     kind: spanKind,
     resource: {
-      attributes: getExpectedResourceAttributes(),
+      attributes: resourceAttributes,
     },
     attributes: {
       'messaging.destination': topic,

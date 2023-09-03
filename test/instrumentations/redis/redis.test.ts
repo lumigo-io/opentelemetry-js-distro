@@ -8,7 +8,7 @@ import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
-import { filterRedisSpans, getExpectedSpan } from './redisTestUtils';
+import { filterRedisSpans, getExpectedResourceAttributes, getExpectedSpan } from './redisTestUtils';
 
 const DEFAULT_REDIS_PORT = 6379;
 const DOCKER_WARMUP_TIMEOUT = 30_000;
@@ -127,6 +127,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         const redisSpans = filterRedisSpans(spans);
         expect(redisSpans).toHaveLength(4);
 
+        let resourceAttributes = getExpectedResourceAttributes();
+
         const expectedConnectSpanName = `redis-connect`;
         const connectSpans = redisSpans.filter(
           (span) => span.name.indexOf(expectedConnectSpanName) == 0
@@ -136,6 +138,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           expect(connectSpan).toMatchObject(
             getExpectedSpan({
               nameSpanAttr: expectedConnectSpanName,
+              resourceAttributes,
               host,
             })
           );
@@ -204,6 +207,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         const redisSpans = filterRedisSpans(spans);
         expect(redisSpans).toHaveLength(6);
 
+        let resourceAttributes = getExpectedResourceAttributes();
+
         const expectedConnectSpanName = `redis-connect`;
         const connectSpans = redisSpans.filter(
           (span) => span.name.indexOf(expectedConnectSpanName) == 0
@@ -213,6 +218,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           expect(connectSpan).toMatchObject(
             getExpectedSpan({
               nameSpanAttr: expectedConnectSpanName,
+              resourceAttributes,
               host,
             })
           );
@@ -282,6 +288,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         const redisSpans = filterRedisSpans(spans);
         expect(redisSpans).toHaveLength(6);
 
+        let resourceAttributes = getExpectedResourceAttributes();
+
         const expectedConnectSpanName = `redis-connect`;
         const connectSpans = redisSpans.filter(
           (span) => span.name.indexOf(expectedConnectSpanName) == 0
@@ -291,6 +299,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           expect(connectSpan).toMatchObject(
             getExpectedSpan({
               nameSpanAttr: expectedConnectSpanName,
+              resourceAttributes,
               host,
             })
           );
