@@ -45,13 +45,19 @@ export function findFirstDbQueryIndex(spans) {
   return spans.findIndex((span) => span.name === 'prisma:engine:db_query');
 }
 
+const CONNECTION_SPANS = [
+  'prisma:client:serialize',
+  'prisma:client:connect',
+  'prisma:engine:connection',
+];
+
 export function getOperationSpans(spans) {
-  return spans.slice(3);
+  return spans.filter((span) => CONNECTION_SPANS.indexOf(span.name) < 0);
 }
 
 export function hasExpectedConnectionSpans(spans, engine) {
   const resourceAttributes = getExpectedResourceAttributes();
-  const connectionSpans = spans.slice(0, 3);
+  const connectionSpans = spans.filter((span) => CONNECTION_SPANS.indexOf(span.name) > -1);
 
   expect(connectionSpans).toHaveLength(3);
 
