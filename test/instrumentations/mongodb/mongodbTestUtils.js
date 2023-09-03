@@ -17,7 +17,7 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan(nameSpanAttr, resourceAttributes, dbStatement) {
+export function getExpectedSpan(nameSpanAttr, dbStatement) {
   return {
     traceId: expect.any(String),
     id: expect.any(String),
@@ -26,7 +26,7 @@ export function getExpectedSpan(nameSpanAttr, resourceAttributes, dbStatement) {
     name: nameSpanAttr,
     kind: SpanKind.CLIENT,
     resource: {
-      attributes: resourceAttributes,
+      attributes: getExpectedResourceAttributes(),
     },
     attributes: {
       'db.system': 'mongodb',

@@ -2,7 +2,7 @@ import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 export function getExpectedResourceAttributes() {
   return {
-    'service.name': 'kafkajs',
+    'service.name': 'prisma',
     'telemetry.sdk.language': 'nodejs',
     'telemetry.sdk.name': 'opentelemetry',
     'telemetry.sdk.version': expect.any(String),
@@ -52,10 +52,8 @@ export function getExpectedSpan({ spanKind, host, topic, message }) {
   };
 }
 
-export function filterKafkaJsSpans(spans, topic) {
-  return spans.filter((span) => {
-    return span.name == topic && span.attributes['messaging.destination'] == topic;
-  });
+export function filterPrismaSpans(spans) {
+  return spans.filter((span) => span.name.indexOf('prisma:') === 0);
 }
 
 export function filterKafkaJsProduceSpans(spans) {

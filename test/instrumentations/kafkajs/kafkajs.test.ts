@@ -9,11 +9,7 @@ import { getSpanByKind } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
-import {
-  filterKafkaJsSpans,
-  getExpectedResourceAttributes,
-  getExpectedSpan,
-} from './kafkaJsTestUtils';
+import { filterKafkaJsSpans, getExpectedSpan } from './kafkaJsTestUtils';
 
 const DEFAULT_KAFKA_PORT = 9093;
 const DOCKER_START_TIMEOUT = 30_000;
@@ -137,13 +133,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
         expect(kafkaJsSpans).toHaveLength(2);
 
-        let resourceAttributes = getExpectedResourceAttributes();
-
         const sendSpan = getSpanByKind(kafkaJsSpans, SpanKind.PRODUCER);
         expect(sendSpan).toMatchObject(
           getExpectedSpan({
             spanKind: SpanKind.PRODUCER,
-            resourceAttributes,
             host,
             topic,
             message,
@@ -154,7 +147,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         expect(receiveSpan).toMatchObject(
           getExpectedSpan({
             spanKind: SpanKind.CONSUMER,
-            resourceAttributes,
             host,
             topic,
             message,

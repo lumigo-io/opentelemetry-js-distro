@@ -19,13 +19,11 @@ export function getExpectedResourceAttributes() {
 
 export function getExpectedSpan({
   nameSpanAttr,
-  resourceAttributes,
   host,
   dbStatement = undefined,
   responseBody = undefined,
 }: {
   nameSpanAttr: string,
-  resourceAttributes: any,
   host: string,
   dbStatement?: string,
   responseBody?: unknown,
@@ -38,7 +36,7 @@ export function getExpectedSpan({
     name: nameSpanAttr,
     kind: SpanKind.CLIENT,
     resource: {
-      attributes: resourceAttributes,
+      attributes: getExpectedResourceAttributes(),
     },
     attributes: {
       'db.system': 'redis',

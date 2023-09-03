@@ -9,12 +9,7 @@ import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
-import {
-  filterMongoSpans,
-  getExpectedResourceAttributes,
-  getExpectedSpan,
-  getExpectedSpanWithParent,
-} from './mongodbTestUtils';
+import { filterMongoSpans, getExpectedSpan, getExpectedSpanWithParent } from './mongodbTestUtils';
 
 const DOCKER_WARMUP_TIMEOUT = 30_000;
 const INSTRUMENTATION_NAME = `mongodb`;
@@ -143,37 +138,26 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         expect(filterMongoSpans(spans)).toHaveLength(5);
 
-        let resourceAttributes = getExpectedResourceAttributes();
-
         expect(getSpanByName(spans, INSERT_CMD)).toMatchObject(
-          getExpectedSpan(INSERT_CMD, resourceAttributes, expect.stringMatching(/"a":1,"_id":/))
+          getExpectedSpan(INSERT_CMD, expect.stringMatching(/"a":1,"_id":/))
         );
 
         const findSpan = getSpanByName(spans, FIND_CMD);
         if (versionToTest.startsWith('3')) {
-          expect(findSpan).toMatchObject(
-            getExpectedSpanWithParent(FIND_CMD, resourceAttributes, '{"a":1}')
-          );
+          expect(findSpan).toMatchObject(getExpectedSpanWithParent(FIND_CMD, '{"a":1}'));
         } else {
           expect(findSpan).toMatchObject(
-            getExpectedSpanWithParent(
-              FIND_CMD,
-              resourceAttributes,
-              '{"find":"insertOne","filter":{"a":1}}'
-            )
+            getExpectedSpanWithParent(FIND_CMD, '{"find":"insertOne","filter":{"a":1}}')
           );
         }
 
         const updateSpan = getSpanByName(spans, UPDATE_CMD);
         if (versionToTest.startsWith('3')) {
-          expect(updateSpan).toMatchObject(
-            getExpectedSpanWithParent(UPDATE_CMD, resourceAttributes, '{"a":1}')
-          );
+          expect(updateSpan).toMatchObject(getExpectedSpanWithParent(UPDATE_CMD, '{"a":1}'));
         } else {
           expect(updateSpan).toMatchObject(
             getExpectedSpanWithParent(
               UPDATE_CMD,
-              resourceAttributes,
               '{"update":"insertOne","updates":[{"q":{"a":1},"u":{"$set":{"b":1}}}],"ordered":true}'
             )
           );
@@ -181,25 +165,19 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         if (versionToTest.startsWith('3')) {
           expect(getSpanByName(spans, REMOVE_CMD)).toMatchObject(
-            getExpectedSpanWithParent(REMOVE_CMD, resourceAttributes, '{"b":1}')
+            getExpectedSpanWithParent(REMOVE_CMD, '{"b":1}')
           );
         } else {
           expect(getSpanByName(spans, DELETE_CMD)).toMatchObject(
             getExpectedSpanWithParent(
               DELETE_CMD,
-              resourceAttributes,
               '{"delete":"insertOne","deletes":[{"q":{"b":1},"limit":0}],"ordered":true}'
             )
           );
         }
 
         expect(getSpanByName(spans, CREATE_INDEX_CMD)).toMatchObject(
-          getExpectedSpanWithParent(
-            CREATE_INDEX_CMD,
-            resourceAttributes,
-            expectedIndexStatement,
-            '$cmd'
-          )
+          getExpectedSpanWithParent(CREATE_INDEX_CMD, expectedIndexStatement, '$cmd')
         );
       }
     );

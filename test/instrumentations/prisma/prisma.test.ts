@@ -12,6 +12,7 @@ import { itTest } from '../../integration/setup';
 import { TestApp } from '../../utils/test-apps';
 import { installPackages, reinstallPackages, uninstallPackages } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
+import { filterPrismaSpans } from './prismaTestUtils';
 
 type EngineType = {
   name: string,
@@ -225,17 +226,17 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             const spans = await testApp.getFinalSpans(18);
             expect(spans).toHaveLength(18);
 
+            const prismaSpans = filterPrismaSpans(spans);
+            expect(prismaSpans).toHaveLength(16);
+
             /*
               const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
               expect(kafkaJsSpans).toHaveLength(2);
-
-              let resourceAttributes = getExpectedResourceAttributes();
 
               const sendSpan = getSpanByKind(kafkaJsSpans, SpanKind.PRODUCER);
               expect(sendSpan).toMatchObject(
                 getExpectedSpan({
                   spanKind: SpanKind.PRODUCER,
-                  resourceAttributes,
                   host,
                   topic,
                   message,
