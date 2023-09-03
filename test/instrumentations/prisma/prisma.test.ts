@@ -9,10 +9,16 @@ import {
   StartedPostgreSqlContainer,
 } from 'testcontainers';
 import { itTest } from '../../integration/setup';
+import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackages, reinstallPackages, uninstallPackages } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
-import { filterPrismaSpans } from './prismaTestUtils';
+import {
+  filterPrismaSpans,
+  getExpectedSpan,
+  getOperationSpans,
+  hasExpectedConnectionSpans,
+} from './prismaTestUtils';
 
 type EngineType = {
   name: string,
@@ -223,37 +229,133 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
             await testApp.invokeGetPath(`/get-users`);
 
-            const spans = await testApp.getFinalSpans(18);
-            expect(spans).toHaveLength(18);
+            const spans = await testApp.getFinalSpans(19);
+            expect(spans).toHaveLength(19);
 
             const prismaSpans = filterPrismaSpans(spans);
-            expect(prismaSpans).toHaveLength(16);
+            expect(prismaSpans).toHaveLength(17);
 
-            /*
-              const kafkaJsSpans = filterKafkaJsSpans(spans, topic);
-              expect(kafkaJsSpans).toHaveLength(2);
+            // identify the insert query spans by trace id
+            const insertQueryTraceId = prismaSpans[0].traceId;
+            const insertQuerySpans = prismaSpans.filter(
+              (span) => span.traceId === insertQueryTraceId
+            );
+            expect(insertQuerySpans).toHaveLength(10);
 
-              const sendSpan = getSpanByKind(kafkaJsSpans, SpanKind.PRODUCER);
-              expect(sendSpan).toMatchObject(
-                getExpectedSpan({
-                  spanKind: SpanKind.PRODUCER,
-                  host,
-                  topic,
-                  message,
-                })
-              );
+            expect(hasExpectedConnectionSpans(insertQuerySpans, engine)).toBe(true);
 
-              const receiveSpan = getSpanByKind(kafkaJsSpans, SpanKind.CONSUMER);
-              expect(receiveSpan).toMatchObject(
-                getExpectedSpan({
-                  spanKind: SpanKind.CONSUMER,
-                  resourceAttributes,
-                  host,
-                  topic,
-                  message,
-                })
-              );
-              */
+            const insertQueryDbQuerySpans = getOperationSpans(insertQuerySpans).filter(
+              (span) => span.name === 'prisma:engine:db_query'
+            );
+            expect(insertQueryDbQuerySpans).toHaveLength(4);
+
+            expect(insertQueryDbQuerySpans[0]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                attributes: {
+                  'db.statement': 'BEGIN',
+                },
+              })
+            );
+
+            expect(insertQueryDbQuerySpans[1]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                attributes: {
+                  'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
+                },
+              })
+            );
+
+            expect(insertQueryDbQuerySpans[2]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                attributes: {
+                  'db.statement': expect.stringMatching(/^SELECT .*User/),
+                },
+              })
+            );
+
+            expect(insertQueryDbQuerySpans[3]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                attributes: {
+                  'db.statement': 'COMMIT',
+                },
+              })
+            );
+
+            expect(getSpanByName(insertQuerySpans, 'prisma:engine:serialize')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:serialize',
+                attributes: {},
+              })
+            );
+
+            expect(getSpanByName(insertQuerySpans, 'prisma:client:operation')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:client:operation',
+                attributes: {
+                  method: 'create',
+                  model: 'User',
+                  name: 'User.create',
+                },
+              })
+            );
+
+            expect(getSpanByName(insertQuerySpans, 'prisma:engine')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine',
+                attributes: {},
+              })
+            );
+
+            // identify the select query spans by trace id
+            const selectQuerySpans = prismaSpans.filter(
+              (span) => span.traceId !== insertQueryTraceId
+            );
+            expect(selectQuerySpans).toHaveLength(7);
+
+            expect(hasExpectedConnectionSpans(selectQuerySpans, engine)).toBe(true);
+
+            expect(getSpanByName(selectQuerySpans, 'prisma:client:operation')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:client:operation',
+                attributes: {
+                  method: 'findMany',
+                  model: 'User',
+                  name: 'User.findMany',
+                },
+              })
+            );
+
+            const selectQueryDbQuerySpans = getOperationSpans(selectQuerySpans).filter(
+              (span) => span.name === 'prisma:engine:db_query'
+            );
+            expect(selectQueryDbQuerySpans).toHaveLength(1);
+
+            expect(selectQueryDbQuerySpans[0]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                attributes: {
+                  'db.statement': expect.stringMatching(/^SELECT .*User/),
+                },
+              })
+            );
+
+            expect(getSpanByName(selectQuerySpans, 'prisma:engine:serialize')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:serialize',
+                attributes: {},
+              })
+            );
+
+            expect(getSpanByName(selectQuerySpans, 'prisma:engine')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine',
+                attributes: {},
+              })
+            );
           }
         );
       }); // describe engine function

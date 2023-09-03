@@ -1,4 +1,5 @@
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { getSpanByName } from '../../utils/spans';
 
 export function getExpectedResourceAttributes() {
   return {
@@ -17,34 +18,18 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan({ spanKind, host, topic, message }) {
-  let messageKey;
-  switch (spanKind) {
-    case SpanKind.PRODUCER:
-      messageKey = 'messaging.produce.body';
-      break;
-    case SpanKind.CONSUMER:
-      messageKey = 'messaging.consume.body';
-      break;
-    default:
-      throw new Error('spanKind must be either SpanKind.PRODUCER or SpanKind.CONSUMER');
-  }
+export function getExpectedSpan({ name, attributes }) {
   return {
     traceId: expect.any(String),
     id: expect.any(String),
     timestamp: expect.any(Number),
     duration: expect.any(Number),
-    name: topic,
-    kind: spanKind,
+    name: name,
+    kind: SpanKind.INTERNAL,
     resource: {
       attributes: getExpectedResourceAttributes(),
     },
-    attributes: {
-      'messaging.destination': topic,
-      'messaging.destination_kind': 'topic',
-      [messageKey]: JSON.stringify(message),
-      'messaging.system': 'kafka',
-    },
+    attributes: attributes,
     status: {
       code: SpanStatusCode.UNSET,
     },
@@ -56,10 +41,41 @@ export function filterPrismaSpans(spans) {
   return spans.filter((span) => span.name.indexOf('prisma:') === 0);
 }
 
-export function filterKafkaJsProduceSpans(spans) {
-  return spans.filter((span) => span.kind == SpanKind.PRODUCER);
+export function findFirstDbQueryIndex(spans) {
+  return spans.findIndex((span) => span.name === 'prisma:engine:db_query');
 }
 
-export function filterKakfkaConsumeSpans(spans) {
-  return spans.filter((span) => span.kind == SpanKind.CONSUMER);
+export function getOperationSpans(spans) {
+  return spans.slice(3);
+}
+
+export function hasExpectedConnectionSpans(spans, engine) {
+  const connectionSpans = spans.slice(0, 3);
+
+  expect(connectionSpans).toHaveLength(3);
+
+  expect(getSpanByName(connectionSpans, 'prisma:client:serialize')).toMatchObject(
+    getExpectedSpan({
+      name: 'prisma:client:serialize',
+      attributes: {},
+    })
+  );
+
+  expect(getSpanByName(connectionSpans, 'prisma:client:connect')).toMatchObject(
+    getExpectedSpan({
+      name: 'prisma:client:connect',
+      attributes: {},
+    })
+  );
+
+  expect(getSpanByName(connectionSpans, 'prisma:engine:connection')).toMatchObject(
+    getExpectedSpan({
+      name: 'prisma:engine:connection',
+      attributes: {
+        'db.type': engine.name,
+      },
+    })
+  );
+
+  return true;
 }

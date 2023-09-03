@@ -1,7 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
-
 const http = require('http');
 const url = require('url');
 require('log-timestamp');
@@ -27,6 +25,8 @@ const requestListener = async function (req, res) {
   switch (requestUrl.pathname) {
     case '/add-user':
       try {
+        const prisma = new PrismaClient();
+
         const newUser = await prisma.user.create({
           data: {
             name,
@@ -44,6 +44,8 @@ const requestListener = async function (req, res) {
 
     case '/get-users':
       try {
+        const prisma = new PrismaClient();
+
         const users = await prisma.user.findMany();
 
         console.error('Selected all users:', users);
