@@ -19,9 +19,11 @@ async function openRedisConnection(host, port) {
     disableOfflineQueue: true,
   });
 
-  client.on('error', (err) => {
-    console.error('Redis Client Error', err);
-  });
+  // all events must be listened to to prevent "Socket Closed Unexpectedly" errors
+  client.on('error', (err) => console.error('Redis Client Error', err));
+  client.on('connect', () => console.log('Redis Client is connecting'));
+  client.on('reconnecting', () => console.log('Redis Client is reconnecting'));
+  client.on('ready', () => console.log('Redis Client is ready'));
 
   await client.connect();
 
