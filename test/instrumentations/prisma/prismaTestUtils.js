@@ -41,10 +41,6 @@ export function filterPrismaSpans(spans) {
   return spans.filter((span) => span.name.indexOf('prisma:') === 0);
 }
 
-export function findFirstDbQueryIndex(spans) {
-  return spans.findIndex((span) => span.name === 'prisma:engine:db_query');
-}
-
 const CONNECTION_SPANS = [
   'prisma:client:serialize',
   'prisma:client:connect',
