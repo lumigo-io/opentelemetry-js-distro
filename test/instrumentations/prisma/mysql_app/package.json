@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "clean": "rm -rf prisma/migrations",
+    "clean": "rm -f prisma_app.js && rm -rf prisma/migrations",
+    "copy": "cp ../app_shared_resources/prisma_app.js .",
     "prep_db": "npm run clean && prisma generate && prisma db push",
-    "start": "npm run prep_db && node -r @lumigo/opentelemetry prisma_mysql_app.js && npm run clean"
+    "start": "npm run prep_db && npm run copy && node -r @lumigo/opentelemetry prisma_app.js && npm run clean"
   },
   "author": "",
   "license": "ISC",
