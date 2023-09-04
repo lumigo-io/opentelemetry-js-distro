@@ -21,83 +21,96 @@ import {
   hasExpectedConnectionSpans,
 } from './prismaTestUtils';
 
+type DatabaseConfiguration = {
+  database: string,
+  username: string,
+  password: string,
+};
+
 type EngineType = {
   name: string,
   appDir: string,
-  buildConnectionUrl: (host: string, port: number) => string,
-  database: string,
-  password: string,
+  databaseConfiguration: DatabaseConfiguration,
   provider: string,
   port: number,
   startupTimeout: number,
-  testContainerImage: string,
-  username: string,
   warmupTimeout: number,
 };
 
 type StartedContainer = StartedPostgreSqlContainer | StartedMySqlContainer;
 
+const DEFAULT_MYSQL_PORT = 3306;
+const DEFAULT_POSTGRES_PORT = 5432;
+const DEFAULT_STARTUP_TIMEOUT = 30_000;
+const DEFAULT_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `prisma`;
 const INSTRUMENTATION_CLIENT_NAME = `@prisma/client`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_TIMEOUT = 600_000;
 
+const buildConnectionUrl = (engine: EngineType, host: string, port: number): string => {
+  switch (engine.name) {
+    case 'mysql':
+    case 'postgres':
+      const configuration = engine.databaseConfiguration;
+      return `${engine.provider}://${configuration.username}:${configuration.password}@${host}:${port}/${configuration.database}`;
+    default:
+      throw new Error(`Unsupported engine: ${engine.name}`);
+  }
+};
+
 const engines: EngineType[] = [
   {
     name: 'mysql',
     appDir: join(__dirname, 'mysql_app'),
-    buildConnectionUrl: (host: string, port: number) =>
-      `mysql://testuser:testpassword@${host}:${port}/testdb`,
-    database: 'testdb',
-    password: 'testpassword',
+    databaseConfiguration: {
+      database: 'testdb',
+      username: 'testuser',
+      password: 'testpassword',
+    },
     provider: 'mysql',
-    port: 3306,
-    startupTimeout: 30_000,
-    testContainerImage: 'mysql:latest',
-    username: 'testuser',
-    warmupTimeout: 60_000,
+    port: DEFAULT_MYSQL_PORT,
+    startupTimeout: DEFAULT_STARTUP_TIMEOUT,
+    warmupTimeout: DEFAULT_WARMUP_TIMEOUT,
   },
   {
     name: 'postgres',
     appDir: join(__dirname, 'postgres_app'),
-    // DATABASE_URL="postgresql://username:mypassword@localhost:5432/college_db?schema=public"
-
-    buildConnectionUrl: (host: string, port: number) =>
-      `postgresql://testuser:testpassword@${host}:${port}/postgres`,
-    database: 'postgres',
-    password: 'testpassword',
+    databaseConfiguration: {
+      database: 'postgres',
+      username: 'testuser',
+      password: 'testpassword',
+    },
     provider: 'postgresql',
-    port: 5432,
-    startupTimeout: 30_000,
-    testContainerImage: 'postgres:latest',
-    username: 'testuser',
-    warmupTimeout: 60_000,
+    port: DEFAULT_POSTGRES_PORT,
+    startupTimeout: DEFAULT_STARTUP_TIMEOUT,
+    warmupTimeout: DEFAULT_WARMUP_TIMEOUT,
   },
 ];
 
 const startPostgresContainer = async (
-  engine: EngineType,
-  timeout: number = engine.startupTimeout
+  configuration: DatabaseConfiguration,
+  timeout: number = DEFAULT_STARTUP_TIMEOUT
 ): Promise<StartedPostgreSqlContainer> => {
-  return await new PostgreSqlContainer(engine.testContainerImage)
-    .withExposedPorts(engine.port)
+  return await new PostgreSqlContainer('postgres:latest')
+    .withExposedPorts(DEFAULT_POSTGRES_PORT)
     .withStartupTimeout(timeout)
-    .withDatabase(engine.database)
-    .withUsername(engine.username)
-    .withPassword(engine.password)
+    .withDatabase(configuration.database)
+    .withUsername(configuration.username)
+    .withPassword(configuration.password)
     .start();
 };
 
 const startMySqlContainer = async (
-  engine: EngineType,
-  timeout: number = engine.startupTimeout
+  configuration: DatabaseConfiguration,
+  timeout: number = DEFAULT_STARTUP_TIMEOUT
 ): Promise<StartedMySqlContainer> => {
-  return await new MySqlContainer(engine.testContainerImage)
-    .withExposedPorts(engine.port)
+  return await new MySqlContainer('mysql:latest')
+    .withExposedPorts(DEFAULT_MYSQL_PORT)
     .withStartupTimeout(timeout)
-    .withDatabase(engine.database)
-    .withUsername(engine.username)
-    .withUserPassword(engine.password)
+    .withDatabase(configuration.database)
+    .withUsername(configuration.username)
+    .withUserPassword(configuration.password)
     .start();
 };
 
@@ -108,10 +121,10 @@ const startContainer = async (
   let container: StartedContainer;
   switch (engine.name) {
     case 'postgres':
-      container = await startPostgresContainer(engine, timeout);
+      container = await startPostgresContainer(engine.databaseConfiguration, timeout);
       break;
     case 'mysql':
-      container = await startMySqlContainer(engine, timeout);
+      container = await startMySqlContainer(engine.databaseConfiguration, timeout);
       break;
     default:
       throw new Error(`Unsupported engine: ${engine.name}`);
@@ -183,7 +196,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             packageVersion: versionToTest,
             environmentVariables: {
               DATABASE_PROVIDER: engine.provider,
-              DATABASE_URL: engine.buildConnectionUrl(containerHost, containerPort),
+              DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
             },
           });
         }, engine.startupTimeout);
@@ -223,7 +236,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
             testApp = new TestApp(engine.appDir, INSTRUMENTATION_NAME, exporterFile, {
               OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-              DATABASE_URL: engine.buildConnectionUrl(containerHost, containerPort),
+              DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
             });
 
             await testApp.invokeGetPath(`/add-user?name=Alice&email=alice@prisma.io`);
