@@ -41,47 +41,63 @@ export function filterPrismaSpans(spans) {
   return spans.filter((span) => span.name.indexOf('prisma:') === 0);
 }
 
-const CONNECTION_SPANS = [
-  'prisma:client:serialize',
-  'prisma:client:connect',
-  'prisma:engine:connection',
-];
+const CLIENT_CONNECTION_SPAN = 'prisma:engine:connection';
+const QUERY_CONNECTION_SPANS = ['prisma:client:serialize', 'prisma:client:connect'];
 
-export function getOperationSpans(spans) {
-  return spans.filter((span) => CONNECTION_SPANS.indexOf(span.name) < 0);
+export function getQuerySpans(spans) {
+  return spans.filter((span) => span.name != CLIENT_CONNECTION_SPAN);
 }
 
-export function hasExpectedConnectionSpans(spans, engine) {
+export function hasExpectedClientConnectionSpans({
+  spans,
+  engine,
+  expectedInstantiations,
+  expectedQueries,
+}) {
   const resourceAttributes = getExpectedResourceAttributes();
-  const connectionSpans = spans.filter((span) => CONNECTION_SPANS.indexOf(span.name) > -1);
+  const engineConnectionSpans = spans.filter((span) => span.name == CLIENT_CONNECTION_SPAN);
 
-  expect(connectionSpans).toHaveLength(3);
+  // depending on the client version, we can expect an engine connection span on
+  // client instantiation in addition to on each query. as such, the number of
+  // client instantiation spans is treated as optional
+  try {
+    expect(engineConnectionSpans.length).toBe(expectedInstantiations + expectedQueries);
+  } catch (e) {
+    expect(engineConnectionSpans.length).toBe(expectedQueries);
+  }
 
-  expect(getSpanByName(connectionSpans, 'prisma:client:serialize')).toMatchObject(
-    getExpectedSpan({
-      name: 'prisma:client:serialize',
-      resourceAttributes,
-      attributes: {},
-    })
-  );
+  for (const engineConnectionSpan of engineConnectionSpans) {
+    expect(engineConnectionSpan).toMatchObject(
+      getExpectedSpan({
+        name: CLIENT_CONNECTION_SPAN,
+        resourceAttributes,
+        attributes: {
+          'db.type': engine.name,
+        },
+      })
+    );
+  }
 
-  expect(getSpanByName(connectionSpans, 'prisma:client:connect')).toMatchObject(
-    getExpectedSpan({
-      name: 'prisma:client:connect',
-      resourceAttributes,
-      attributes: {},
-    })
-  );
+  return true;
+}
 
-  expect(getSpanByName(connectionSpans, 'prisma:engine:connection')).toMatchObject(
-    getExpectedSpan({
-      name: 'prisma:engine:connection',
-      resourceAttributes,
-      attributes: {
-        'db.type': engine.name,
-      },
-    })
-  );
+export function getQueryOperationSpans(spans) {
+  return spans.filter((span) => QUERY_CONNECTION_SPANS.indexOf(span.name) < 0);
+}
+
+export function hasExpectedQueryConnectionSpans(spans, engine) {
+  const resourceAttributes = getExpectedResourceAttributes();
+  const connectionSpans = spans.filter((span) => QUERY_CONNECTION_SPANS.indexOf(span.name) > -1);
+
+  for (const spanName of QUERY_CONNECTION_SPANS) {
+    expect(getSpanByName(connectionSpans, spanName)).toMatchObject(
+      getExpectedSpan({
+        name: spanName,
+        resourceAttributes,
+        attributes: {},
+      })
+    );
+  }
 
   return true;
 }

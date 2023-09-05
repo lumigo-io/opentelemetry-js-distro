@@ -34,7 +34,7 @@ export const installPackage = ({
   appDir: string, packageName: string, packageVersion: string, environmentVariables?: Record<string, string>
 }) => {
   console.log(`installing ${packageName}@${packageVersion} into ${appDir}...`);
-  const { error } = spawnSync('npm', ['install', '--quiet', `${packageName}@${packageVersion}`], {
+  const { error, status } = spawnSync('npm', ['install', '--quiet', `${packageName}@${packageVersion}`], {
     cwd: appDir,
     env: {
       ...process.env,
@@ -42,8 +42,8 @@ export const installPackage = ({
     }
   });
 
-  if (error) {
-    throw error;
+  if (error || status != 0) {
+    throw error || new Error(`package installation failed with exit code ${status}`);
   }
 };
 
@@ -54,7 +54,7 @@ export const installPackages = ({
 }) => {
   const qualifiedPackages: string[] = packageNames.map((packageName) => `${packageName}@${packageVersion}`);
   console.log(`installing ${qualifiedPackages.join(', ')} into ${appDir}...`);
-  const { error } = spawnSync('npm', ['install', '--quiet', ...qualifiedPackages], {
+  const { error, status } = spawnSync('npm', ['install', /*'--quiet',*/ ...qualifiedPackages], {
     cwd: appDir,
     env: {
       ...process.env,
@@ -62,8 +62,8 @@ export const installPackages = ({
     },
   });
 
-  if (error) {
-    throw error;
+  if (error || status != 0) {
+    throw error || new Error(`package installation failed with exit code ${status}`);
   }
 };
 
@@ -73,12 +73,12 @@ export const uninstallPackage = ({
   appDir: string, packageName: string, packageVersion: string
 }) => {
   console.log(`uninstalling ${packageName}@${packageVersion} from ${appDir}...`);
-  const { error } = spawnSync('npm', ['uninstall', `${packageName}@${packageVersion}`], {
+  const { error, status } = spawnSync('npm', ['uninstall', `${packageName}@${packageVersion}`], {
     cwd: appDir,
   });
 
-  if (error) {
-    throw error;
+  if (error || status != 0) {
+    throw error || new Error(`package uninstall failed with exit code ${status}`);
   }
 };
 
@@ -89,11 +89,11 @@ export const uninstallPackages = ({
 }) => {
   const qualifiedPackages: string[] = packageNames.map((packageName) => `${packageName}@${packageVersion}`);
   console.log(`uninstalling ${qualifiedPackages.join(', ')} from ${appDir}...`);
-  const { error } = spawnSync('npm', ['uninstall', ...qualifiedPackages], {
+  const { error, status } = spawnSync('npm', ['uninstall', ...qualifiedPackages], {
     cwd: appDir,
   });
 
-  if (error) {
-    throw error;
+  if (error || status != 0) {
+    throw error || new Error(`package uninstall failed with exit code ${status}`);
   }
 };
