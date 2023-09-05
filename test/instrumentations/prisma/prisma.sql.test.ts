@@ -17,8 +17,10 @@ import {
   filterPrismaSpans,
   getExpectedResourceAttributes,
   getExpectedSpan,
-  getOperationSpans,
-  hasExpectedConnectionSpans,
+  getQueryOperationSpans,
+  getQuerySpans,
+  hasExpectedClientConnectionSpans,
+  hasExpectedQueryConnectionSpans,
 } from './prismaTestUtils';
 
 type DatabaseConfiguration = {
@@ -41,7 +43,7 @@ type StartedContainer = StartedPostgreSqlContainer | StartedMySqlContainer;
 
 const DEFAULT_MYSQL_PORT = 3306;
 const DEFAULT_POSTGRES_PORT = 5432;
-const DEFAULT_STARTUP_TIMEOUT = 30_000;
+const DEFAULT_STARTUP_TIMEOUT = 45_000; // includes time to install packages
 const DEFAULT_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `prisma`;
 const INSTRUMENTATION_CLIENT_NAME = `@prisma/client`;
@@ -190,12 +192,13 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
           // packages must be installed after the container has been started so that
           // the correct connection url is available for the client generation
+          // having said that, each time the test app starts it will re-generate the
+          // client because the generation on install is not reliable
           installPackages({
             appDir: engine.appDir,
             packageNames: [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME],
             packageVersion: versionToTest,
             environmentVariables: {
-              DATABASE_PROVIDER: engine.provider,
               DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
             },
           });
@@ -243,67 +246,94 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
             await testApp.invokeGetPath(`/get-users`);
 
-            const spans = await testApp.getFinalSpans(19);
-            expect(spans).toHaveLength(19);
+            // from prisma 4.14.0 onwards, the number of spans is
+            // inconsistent, we look for a minimum of 18 spans in total
+            const spans = await testApp.getFinalSpans(18);
 
             const prismaSpans = filterPrismaSpans(spans);
-            expect(prismaSpans).toHaveLength(17);
 
             const resourceAttributes = getExpectedResourceAttributes();
 
+            expect(
+              hasExpectedClientConnectionSpans({
+                spans: prismaSpans,
+                engine,
+                expectedInstantiations: 2,
+                expectedQueries: 2,
+              })
+            ).toBe(true);
+
+            const queryConnectionSpans = getQuerySpans(prismaSpans);
+
             // identify the insert query spans by trace id
-            const insertQueryTraceId = prismaSpans[0].traceId;
-            const insertQuerySpans = prismaSpans.filter(
+            const insertQueryTraceId = queryConnectionSpans[0].traceId;
+            const insertQuerySpans = queryConnectionSpans.filter(
               (span) => span.traceId === insertQueryTraceId
             );
-            expect(insertQuerySpans).toHaveLength(10);
 
-            expect(hasExpectedConnectionSpans(insertQuerySpans, engine)).toBe(true);
+            expect(hasExpectedQueryConnectionSpans(insertQuerySpans, engine)).toBe(true);
 
-            const insertQueryDbQuerySpans = getOperationSpans(insertQuerySpans).filter(
+            // after version 5, postgres inserts have been simplified to not use transactions;
+            // we need to treat the rest of the query spans as optional
+            const insertQueryDbQuerySpans = getQueryOperationSpans(insertQuerySpans).filter(
               (span) => span.name === 'prisma:engine:db_query'
             );
-            expect(insertQueryDbQuerySpans).toHaveLength(4);
 
-            expect(insertQueryDbQuerySpans[0]).toMatchObject(
-              getExpectedSpan({
-                name: 'prisma:engine:db_query',
-                resourceAttributes,
-                attributes: {
-                  'db.statement': 'BEGIN',
-                },
-              })
-            );
+            try {
+              expect(insertQueryDbQuerySpans).toHaveLength(4);
 
-            expect(insertQueryDbQuerySpans[1]).toMatchObject(
-              getExpectedSpan({
-                name: 'prisma:engine:db_query',
-                resourceAttributes,
-                attributes: {
-                  'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
-                },
-              })
-            );
+              expect(insertQueryDbQuerySpans[0]).toMatchObject(
+                getExpectedSpan({
+                  name: 'prisma:engine:db_query',
+                  resourceAttributes,
+                  attributes: {
+                    'db.statement': 'BEGIN',
+                  },
+                })
+              );
 
-            expect(insertQueryDbQuerySpans[2]).toMatchObject(
-              getExpectedSpan({
-                name: 'prisma:engine:db_query',
-                resourceAttributes,
-                attributes: {
-                  'db.statement': expect.stringMatching(/^SELECT .*User/),
-                },
-              })
-            );
+              expect(insertQueryDbQuerySpans[1]).toMatchObject(
+                getExpectedSpan({
+                  name: 'prisma:engine:db_query',
+                  resourceAttributes,
+                  attributes: {
+                    'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
+                  },
+                })
+              );
 
-            expect(insertQueryDbQuerySpans[3]).toMatchObject(
-              getExpectedSpan({
-                name: 'prisma:engine:db_query',
-                resourceAttributes,
-                attributes: {
-                  'db.statement': 'COMMIT',
-                },
-              })
-            );
+              expect(insertQueryDbQuerySpans[2]).toMatchObject(
+                getExpectedSpan({
+                  name: 'prisma:engine:db_query',
+                  resourceAttributes,
+                  attributes: {
+                    'db.statement': expect.stringMatching(/^SELECT .*User/),
+                  },
+                })
+              );
+
+              expect(insertQueryDbQuerySpans[3]).toMatchObject(
+                getExpectedSpan({
+                  name: 'prisma:engine:db_query',
+                  resourceAttributes,
+                  attributes: {
+                    'db.statement': 'COMMIT',
+                  },
+                })
+              );
+            } catch (err) {
+              expect(insertQueryDbQuerySpans).toHaveLength(1);
+
+              expect(insertQueryDbQuerySpans[0]).toMatchObject(
+                getExpectedSpan({
+                  name: 'prisma:engine:db_query',
+                  resourceAttributes,
+                  attributes: {
+                    'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
+                  },
+                })
+              );
+            }
 
             expect(getSpanByName(insertQuerySpans, 'prisma:engine:serialize')).toMatchObject(
               getExpectedSpan({
@@ -334,12 +364,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             );
 
             // identify the select query spans by trace id
-            const selectQuerySpans = prismaSpans.filter(
+            const selectQuerySpans = queryConnectionSpans.filter(
               (span) => span.traceId !== insertQueryTraceId
             );
-            expect(selectQuerySpans).toHaveLength(7);
 
-            expect(hasExpectedConnectionSpans(selectQuerySpans, engine)).toBe(true);
+            expect(hasExpectedQueryConnectionSpans(selectQuerySpans, engine)).toBe(true);
 
             expect(getSpanByName(selectQuerySpans, 'prisma:client:operation')).toMatchObject(
               getExpectedSpan({
@@ -353,7 +382,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               })
             );
 
-            const selectQueryDbQuerySpans = getOperationSpans(selectQuerySpans).filter(
+            const selectQueryDbQuerySpans = getQueryOperationSpans(selectQuerySpans).filter(
               (span) => span.name === 'prisma:engine:db_query'
             );
             expect(selectQueryDbQuerySpans).toHaveLength(1);
