@@ -40,9 +40,13 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     let testValidatorApp: TestApp;
 
     beforeAll(function () {
-      reinstallPackages(TEST_APP_DIR);
+      reinstallPackages({ appDir: TEST_APP_DIR });
       fs.mkdirSync(SPANS_DIR, { recursive: true });
-      installPackage(TEST_APP_DIR, '@grpc/grpc-js', versionToTest);
+      installPackage({
+        appDir: TEST_APP_DIR,
+        packageName: '@grpc/grpc-js',
+        packageVersion: versionToTest,
+      });
     });
 
     afterEach(async function () {
@@ -52,7 +56,11 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     });
 
     afterAll(function () {
-      uninstallPackage(TEST_APP_DIR, '@grpc/grpc-js', versionToTest);
+      uninstallPackage({
+        appDir: TEST_APP_DIR,
+        packageName: '@grpc/grpc-js',
+        packageVersion: versionToTest,
+      });
     });
 
     const checkSpans = async (exporterFile: string, method: string) => {

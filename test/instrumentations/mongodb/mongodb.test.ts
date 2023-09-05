@@ -70,14 +70,18 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     let mongoContainer: StartedMongoDBContainer;
 
     beforeAll(async function () {
-      reinstallPackages(TEST_APP_DIR);
+      reinstallPackages({ appDir: TEST_APP_DIR });
 
       await warmupContainer();
       mkdirSync(SPANS_DIR, { recursive: true });
     }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
-      installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
+      installPackage({
+        appDir: TEST_APP_DIR,
+        packageName: INSTRUMENTATION_NAME,
+        packageVersion: versionToTest,
+      });
 
       mongoContainer = await startMongoDbContainer();
 
@@ -120,7 +124,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         console.log('Mongo container was not initialized');
       }
 
-      uninstallPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
+      uninstallPackage({
+        appDir: TEST_APP_DIR,
+        packageName: INSTRUMENTATION_NAME,
+        packageVersion: versionToTest,
+      });
     });
 
     itTest(

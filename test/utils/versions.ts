@@ -2,7 +2,18 @@ import { readFileSync } from 'fs';
 import { dirname } from 'path';
 import { instrumentationsVersionManager } from '../helpers/InstrumentationsVersionManager';
 
+const VERSION_UNDER_TEST =
+  process.env.INSTRUMENTATION_UNDER_TEST &&
+  process.env.INSTRUMENTATION_UNDER_TEST.length > 0 &&
+  process.env.VERSION_UNDER_TEST &&
+  process.env.VERSION_UNDER_TEST.length > 0
+    ? process.env.VERSION_UNDER_TEST
+    : undefined;
+
 export function versionsToTest(instrumentationName: string, packageName: string) {
+  if (VERSION_UNDER_TEST) {
+    return [VERSION_UNDER_TEST];
+  }
   const allVersions = readFileSync(
     `${dirname(
       dirname(__dirname)

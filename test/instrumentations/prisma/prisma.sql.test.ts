@@ -1,0 +1,391 @@
+import * as fs from 'fs';
+import 'jest-expect-message';
+import 'jest-json';
+import { join } from 'path';
+import {
+  MySqlContainer,
+  PostgreSqlContainer,
+  StartedMySqlContainer,
+  StartedPostgreSqlContainer,
+} from 'testcontainers';
+import { itTest } from '../../integration/setup';
+import { getSpanByName } from '../../utils/spans';
+import { TestApp } from '../../utils/test-apps';
+import { installPackages, reinstallPackages, uninstallPackages } from '../../utils/test-setup';
+import { versionsToTest } from '../../utils/versions';
+import {
+  filterPrismaSpans,
+  getExpectedResourceAttributes,
+  getExpectedSpan,
+  getOperationSpans,
+  hasExpectedConnectionSpans,
+} from './prismaTestUtils';
+
+type DatabaseConfiguration = {
+  database: string,
+  username: string,
+  password: string,
+};
+
+type EngineType = {
+  name: string,
+  appDir: string,
+  databaseConfiguration: DatabaseConfiguration,
+  provider: string,
+  port: number,
+  startupTimeout: number,
+  warmupTimeout: number,
+};
+
+type StartedContainer = StartedPostgreSqlContainer | StartedMySqlContainer;
+
+const DEFAULT_MYSQL_PORT = 3306;
+const DEFAULT_POSTGRES_PORT = 5432;
+const DEFAULT_STARTUP_TIMEOUT = 30_000;
+const DEFAULT_WARMUP_TIMEOUT = 60_000;
+const INSTRUMENTATION_NAME = `prisma`;
+const INSTRUMENTATION_CLIENT_NAME = `@prisma/client`;
+const SPANS_DIR = join(__dirname, 'spans');
+const TEST_TIMEOUT = 600_000;
+
+const buildConnectionUrl = (engine: EngineType, host: string, port: number): string => {
+  switch (engine.name) {
+    case 'mysql':
+    case 'postgres':
+      const configuration = engine.databaseConfiguration;
+      return `${engine.provider}://${configuration.username}:${configuration.password}@${host}:${port}/${configuration.database}`;
+    default:
+      throw new Error(`Unsupported engine: ${engine.name}`);
+  }
+};
+
+const engines: EngineType[] = [
+  {
+    name: 'mysql',
+    appDir: join(__dirname, 'mysql_app'),
+    databaseConfiguration: {
+      database: 'testdb',
+      username: 'testuser',
+      password: 'testpassword',
+    },
+    provider: 'mysql',
+    port: DEFAULT_MYSQL_PORT,
+    startupTimeout: DEFAULT_STARTUP_TIMEOUT,
+    warmupTimeout: DEFAULT_WARMUP_TIMEOUT,
+  },
+  {
+    name: 'postgres',
+    appDir: join(__dirname, 'postgres_app'),
+    databaseConfiguration: {
+      database: 'postgres',
+      username: 'testuser',
+      password: 'testpassword',
+    },
+    provider: 'postgresql',
+    port: DEFAULT_POSTGRES_PORT,
+    startupTimeout: DEFAULT_STARTUP_TIMEOUT,
+    warmupTimeout: DEFAULT_WARMUP_TIMEOUT,
+  },
+];
+
+const startPostgresContainer = async (
+  configuration: DatabaseConfiguration,
+  timeout: number = DEFAULT_STARTUP_TIMEOUT
+): Promise<StartedPostgreSqlContainer> => {
+  return await new PostgreSqlContainer('postgres:latest')
+    .withExposedPorts(DEFAULT_POSTGRES_PORT)
+    .withStartupTimeout(timeout)
+    .withDatabase(configuration.database)
+    .withUsername(configuration.username)
+    .withPassword(configuration.password)
+    .start();
+};
+
+const startMySqlContainer = async (
+  configuration: DatabaseConfiguration,
+  timeout: number = DEFAULT_STARTUP_TIMEOUT
+): Promise<StartedMySqlContainer> => {
+  return await new MySqlContainer('mysql:latest')
+    .withExposedPorts(DEFAULT_MYSQL_PORT)
+    .withStartupTimeout(timeout)
+    .withDatabase(configuration.database)
+    .withUsername(configuration.username)
+    .withUserPassword(configuration.password)
+    .start();
+};
+
+const startContainer = async (
+  engine: EngineType,
+  timeout: number = engine.startupTimeout
+): Promise<[StartedContainer, string, number]> => {
+  let container: StartedContainer;
+  switch (engine.name) {
+    case 'postgres':
+      container = await startPostgresContainer(engine.databaseConfiguration, timeout);
+      break;
+    case 'mysql':
+      container = await startMySqlContainer(engine.databaseConfiguration, timeout);
+      break;
+    default:
+      throw new Error(`Unsupported engine: ${engine.name}`);
+  }
+  const host = container.getHost();
+  const port = container.getMappedPort(engine.port);
+  console.info(`${engine.name} container started on ${host}:${port}...`);
+  return [container, host, port];
+};
+
+let warmupState = {
+  postgres: {
+    warmupInitiated: false,
+    warmupCompleted: false,
+  },
+  mysql: {
+    warmupInitiated: false,
+    warmupCompleted: false,
+  },
+};
+
+const warmupContainer = async (engine: EngineType): Promise<boolean> => {
+  if (!warmupState[engine.name].warmupInitiated) {
+    warmupState[engine.name].warmupInitiated = true;
+    console.warn(
+      `Warming up ${engine.name} container loading, timeout of ${engine.warmupTimeout}ms to account for Docker image pulls...`
+    );
+    let warmupContainer: StartedPostgreSqlContainer | StartedMySqlContainer;
+    try {
+      [warmupContainer] = await startContainer(engine, engine.warmupTimeout);
+      await warmupContainer.stop();
+    } catch (err) {
+      console.warn(`Failed to warmup ${engine.name} container: ${err}`);
+    }
+    warmupState[engine.name].warmupCompleted = true;
+  } else {
+    while (!warmupState[engine.name].warmupCompleted) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+  return true;
+};
+
+describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
+  `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
+  function (versionToTest) {
+    for (const engine of engines) {
+      describe(`prisma ${versionToTest} against the ${engine.name} database engine`, function () {
+        let testApp: TestApp;
+        let container: StartedPostgreSqlContainer | StartedMySqlContainer;
+        let containerHost: string;
+        let containerPort: number;
+
+        beforeAll(async function () {
+          reinstallPackages({ appDir: engine.appDir });
+          fs.mkdirSync(SPANS_DIR, { recursive: true });
+
+          await warmupContainer(engine);
+        }, engine.warmupTimeout);
+
+        beforeEach(async function () {
+          [container, containerHost, containerPort] = await startContainer(engine);
+
+          // packages must be installed after the container has been started so that
+          // the correct connection url is available for the client generation
+          installPackages({
+            appDir: engine.appDir,
+            packageNames: [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME],
+            packageVersion: versionToTest,
+            environmentVariables: {
+              DATABASE_PROVIDER: engine.provider,
+              DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
+            },
+          });
+        }, engine.startupTimeout);
+
+        afterEach(async function () {
+          if (testApp) {
+            console.info('Killing test app...');
+            await testApp.kill();
+          } else {
+            console.warn('Test app was not run.');
+          }
+          if (container) {
+            console.info(`Stopping ${engine.name} container...`);
+            await container.stop();
+          } else {
+            console.warn(`${engine.name} container was not started.`);
+          }
+        });
+
+        afterAll(function () {
+          uninstallPackages({
+            appDir: engine.appDir,
+            packageNames: [INSTRUMENTATION_NAME, INSTRUMENTATION_CLIENT_NAME],
+            packageVersion: versionToTest,
+          });
+        });
+
+        itTest(
+          {
+            testName: `${engine.name} basics: ${versionToTest}`,
+            packageName: INSTRUMENTATION_NAME,
+            version: versionToTest,
+            timeout: TEST_TIMEOUT,
+          },
+          async function () {
+            const exporterFile = `${SPANS_DIR}/${engine.name}-basics.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
+
+            testApp = new TestApp(engine.appDir, INSTRUMENTATION_NAME, exporterFile, {
+              OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+              DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
+            });
+
+            await testApp.invokeGetPath(`/add-user?name=Alice&email=alice@prisma.io`);
+
+            await testApp.invokeGetPath(`/get-users`);
+
+            const spans = await testApp.getFinalSpans(19);
+            expect(spans).toHaveLength(19);
+
+            const prismaSpans = filterPrismaSpans(spans);
+            expect(prismaSpans).toHaveLength(17);
+
+            const resourceAttributes = getExpectedResourceAttributes();
+
+            // identify the insert query spans by trace id
+            const insertQueryTraceId = prismaSpans[0].traceId;
+            const insertQuerySpans = prismaSpans.filter(
+              (span) => span.traceId === insertQueryTraceId
+            );
+            expect(insertQuerySpans).toHaveLength(10);
+
+            expect(hasExpectedConnectionSpans(insertQuerySpans, engine)).toBe(true);
+
+            const insertQueryDbQuerySpans = getOperationSpans(insertQuerySpans).filter(
+              (span) => span.name === 'prisma:engine:db_query'
+            );
+            expect(insertQueryDbQuerySpans).toHaveLength(4);
+
+            expect(insertQueryDbQuerySpans[0]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                resourceAttributes,
+                attributes: {
+                  'db.statement': 'BEGIN',
+                },
+              })
+            );
+
+            expect(insertQueryDbQuerySpans[1]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                resourceAttributes,
+                attributes: {
+                  'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
+                },
+              })
+            );
+
+            expect(insertQueryDbQuerySpans[2]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                resourceAttributes,
+                attributes: {
+                  'db.statement': expect.stringMatching(/^SELECT .*User/),
+                },
+              })
+            );
+
+            expect(insertQueryDbQuerySpans[3]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                resourceAttributes,
+                attributes: {
+                  'db.statement': 'COMMIT',
+                },
+              })
+            );
+
+            expect(getSpanByName(insertQuerySpans, 'prisma:engine:serialize')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:serialize',
+                resourceAttributes,
+                attributes: {},
+              })
+            );
+
+            expect(getSpanByName(insertQuerySpans, 'prisma:client:operation')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:client:operation',
+                resourceAttributes,
+                attributes: {
+                  method: 'create',
+                  model: 'User',
+                  name: 'User.create',
+                },
+              })
+            );
+
+            expect(getSpanByName(insertQuerySpans, 'prisma:engine')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine',
+                resourceAttributes,
+                attributes: {},
+              })
+            );
+
+            // identify the select query spans by trace id
+            const selectQuerySpans = prismaSpans.filter(
+              (span) => span.traceId !== insertQueryTraceId
+            );
+            expect(selectQuerySpans).toHaveLength(7);
+
+            expect(hasExpectedConnectionSpans(selectQuerySpans, engine)).toBe(true);
+
+            expect(getSpanByName(selectQuerySpans, 'prisma:client:operation')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:client:operation',
+                resourceAttributes,
+                attributes: {
+                  method: 'findMany',
+                  model: 'User',
+                  name: 'User.findMany',
+                },
+              })
+            );
+
+            const selectQueryDbQuerySpans = getOperationSpans(selectQuerySpans).filter(
+              (span) => span.name === 'prisma:engine:db_query'
+            );
+            expect(selectQueryDbQuerySpans).toHaveLength(1);
+
+            expect(selectQueryDbQuerySpans[0]).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:db_query',
+                resourceAttributes,
+                attributes: {
+                  'db.statement': expect.stringMatching(/^SELECT .*User/),
+                },
+              })
+            );
+
+            expect(getSpanByName(selectQuerySpans, 'prisma:engine:serialize')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine:serialize',
+                resourceAttributes,
+                attributes: {},
+              })
+            );
+
+            expect(getSpanByName(selectQuerySpans, 'prisma:engine')).toMatchObject(
+              getExpectedSpan({
+                name: 'prisma:engine',
+                resourceAttributes,
+                attributes: {},
+              })
+            );
+          }
+        );
+      }); // describe engine function
+    } // loop over engines
+  } // describe version function
+);

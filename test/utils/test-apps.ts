@@ -183,8 +183,11 @@ export class TestApp {
     }
 
     public async kill(): Promise<number | null> {
-        if (this.app.exitCode == null) {
+        try {
+            console.info(`ensuring app with pid '${this.pid()}' and exit code '${this.app.exitCode})' killed...`);
             this.app.kill();
+        } catch (err) {
+            console.warn(`error killing app with pid '${this.pid()}' and exit code '${this.app.exitCode})'`, err);
         }
 
         await this.closePromise;

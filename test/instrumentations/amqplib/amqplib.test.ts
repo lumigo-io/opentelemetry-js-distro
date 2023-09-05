@@ -63,9 +63,13 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     let rabbitmqContainer: StartedTestContainer;
 
     beforeAll(async function () {
-      reinstallPackages(TEST_APP_DIR);
+      reinstallPackages({ appDir: TEST_APP_DIR });
       fs.mkdirSync(SPANS_DIR, { recursive: true });
-      installPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
+      installPackage({
+        appDir: TEST_APP_DIR,
+        packageName: INSTRUMENTATION_NAME,
+        packageVersion: versionToTest,
+      });
 
       await warmupContainer();
     }, DOCKER_WARMUP_TIMEOUT);
@@ -95,7 +99,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     });
 
     afterAll(function () {
-      uninstallPackage(TEST_APP_DIR, INSTRUMENTATION_NAME, versionToTest);
+      uninstallPackage({
+        appDir: TEST_APP_DIR,
+        packageName: INSTRUMENTATION_NAME,
+        packageVersion: versionToTest,
+      });
     });
 
     itTest(
