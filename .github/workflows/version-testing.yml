@@ -10,7 +10,7 @@ jobs:
       matrix:
         # NOTE: if these are updated, don't forget to
         # update the download-artifacts versions as well
-        node_cimg_tag: [ 14, 16, 18 ]
+        node_cimg_tag: [ 16, 18, 20 ]
     name: check-new-versions-of-instrumented-packages
     steps:
       - uses: actions/checkout@v3
@@ -57,11 +57,6 @@ jobs:
           python-version: 3.7
       - run: mkdir versions_artifacts
       - uses: actions/download-artifact@v2
-        continue-on-error: true  # when there aren't changes the artifact won't be uploaded and this step will fail
-        with:
-          name: 14
-          path: versions_artifacts/14
-      - uses: actions/download-artifact@v2
         continue-on-error: true
         with:
           name: 16
@@ -71,6 +66,11 @@ jobs:
         with:
           name: 18
           path: versions_artifacts/18
+      - uses: actions/download-artifact@v2
+        continue-on-error: true
+        with:
+          name: 20
+          path: versions_artifacts/20
       - run: python3 -m pip install -r ./requirements-ci.txt
         # TODO replace this with a node.js script
       - run: PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m gather_version_artifacts

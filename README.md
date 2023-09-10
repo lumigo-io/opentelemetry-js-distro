@@ -243,7 +243,6 @@ For example, an application tries to remove a user who doesn't exist. These cust
 
 Programmatic Errors indicating that a non-fatal error occurred, such as an application error. You can log programmatic errors, track custom error issues, and trigger [Alerts](https://docs.lumigo.io/docs/event-alert).
 
-
 #### Creating a Programmatic Error
 
 Programmatic errors are created by adding [span events](https://opentelemetry.io/docs/instrumentation/js/instrumentation/#span-events) with a custom attribute being set with the key name `lumigo.type`.
@@ -264,10 +263,9 @@ const { trace } = require('@opentelemetry/api');
 trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>'});
 ```
 
-
 ## Supported runtimes
 
-* Node.js: 14.x, 16.x, 18.x, 20.x
+* Node.js: 16.x, 18.x, 20.x
 
 ## Supported packages
 
@@ -280,6 +278,17 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
 | | | 4.0.0~4.16.0 |
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8 |
+
+### Activating your Prisma client's instrumentation
+
+If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
+
+```json
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["tracing"]
+}
+```
 
 ## Automated dependency reporting
 
