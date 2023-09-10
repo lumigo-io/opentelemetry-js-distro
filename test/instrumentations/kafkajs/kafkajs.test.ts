@@ -16,8 +16,8 @@ import {
 } from './kafkaJsTestUtils';
 
 const DEFAULT_KAFKA_PORT = 9093;
-const DOCKER_START_TIMEOUT = 30_000;
-const DOCKER_WARMUP_TIMEOUT = 60_000;
+const DEFAULT_STARTUP_TIMEOUT = 45_000; // includes time to install packages
+const DEFAULT_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `kafkajs`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -38,7 +38,7 @@ const warmupContainer = async () => {
   if (!warmupState.warmupInitiated) {
     warmupState.warmupInitiated = true;
     console.warn(
-      `Warming up Kafka container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+      `Warming up Kafka container loading, timeout of ${DEFAULT_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
     );
     let warmupContainer: StartedKafkaContainer;
     try {
@@ -71,7 +71,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       });
 
       await warmupContainer();
-    }, DOCKER_WARMUP_TIMEOUT);
+    }, DEFAULT_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
       kafkaContainer = await startKafkaContainer();
@@ -80,7 +80,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       const port = kafkaContainer.getMappedPort(DEFAULT_KAFKA_PORT);
 
       console.info(`Kafka container started on ${host}:${port}...`);
-    }, DOCKER_START_TIMEOUT);
+    }, DEFAULT_STARTUP_TIMEOUT);
 
     afterEach(async function () {
       if (testApp) {

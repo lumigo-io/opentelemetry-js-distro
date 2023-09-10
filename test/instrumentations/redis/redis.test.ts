@@ -11,7 +11,8 @@ import { versionsToTest } from '../../utils/versions';
 import { filterRedisSpans, getExpectedResourceAttributes, getExpectedSpan } from './redisTestUtils';
 
 const DEFAULT_REDIS_PORT = 6379;
-const DOCKER_WARMUP_TIMEOUT = 30_000;
+const DEFAULT_STARTUP_TIMEOUT = 45_000; // includes time to install packages
+const DEFAULT_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `redis`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -20,7 +21,7 @@ const TEST_TIMEOUT = 600_000;
 const startRedisContainer = async () => {
   return await new GenericContainer('redis:latest')
     .withExposedPorts(DEFAULT_REDIS_PORT)
-    .withStartupTimeout(DOCKER_WARMUP_TIMEOUT)
+    .withStartupTimeout(DEFAULT_WARMUP_TIMEOUT)
     .start();
 };
 
@@ -33,7 +34,7 @@ const warmupContainer = async () => {
   if (!warmupState.warmupInitiated) {
     warmupState.warmupInitiated = true;
     console.warn(
-      `Warming up Redis container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+      `Warming up Redis container loading, timeout of ${DEFAULT_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
     );
     let warmupContainer: StartedTestContainer;
     try {
@@ -66,7 +67,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       });
 
       await warmupContainer();
-    }, DOCKER_WARMUP_TIMEOUT);
+    }, DEFAULT_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
       redisContainer = await startRedisContainer();
@@ -75,7 +76,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
 
       console.info(`Redis container started on ${host}:${port}...`);
-    }, 15_000);
+    }, DEFAULT_STARTUP_TIMEOUT);
 
     afterEach(async function () {
       if (testApp) {
