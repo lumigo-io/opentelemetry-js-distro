@@ -279,6 +279,8 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
 | | | 4.0.0~4.16.0 |
+| prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2 |
+| | | 5.0.0~5.2.0 |
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8 |
 
 ## Automated dependency reporting
