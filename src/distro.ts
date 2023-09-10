@@ -11,7 +11,7 @@
  * or errors affecting processes using unsupported Node.js versions.
  */
 import { LUMIGO_LOGGING_NAMESPACE } from './constants';
-import { minMajor, maxMajor } from './supportedVersions.json';
+import { maxMajor, minMajor } from './supportedVersions.json';
 
 export const init = (() => {
   const version = process.version;
@@ -20,7 +20,7 @@ export const init = (() => {
 
     if (nodeJsMajorVersion < minMajor) {
       console.error(
-        `${LUMIGO_LOGGING_NAMESPACE}: Node.js version '${version}' is not supported (minumum supported version: ${minMajor}.x); skipping initialization of the Lumigo OpenTelemetry Distro`
+        `${LUMIGO_LOGGING_NAMESPACE}: Node.js version '${version}' is not supported (minimum supported version: ${minMajor}.x); skipping initialization of the Lumigo OpenTelemetry Distro`
       );
       /*
        * Return a resolve promise, as opposed to a rejected one, to avoid UnhandledPromiseRejectionWarning
