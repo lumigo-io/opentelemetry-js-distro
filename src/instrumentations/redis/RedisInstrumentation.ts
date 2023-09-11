@@ -26,7 +26,7 @@ export default class LumigoRedisInstrumentation extends Instrumentor<RedisInstru
         response: unknown
       ) => {
         span.setAttribute(
-          `redis.response.body`,
+          `db.response.body`,
           CommonUtils.payloadStringify(
             response,
             ScrubContext.HTTP_RESPONSE_BODY,

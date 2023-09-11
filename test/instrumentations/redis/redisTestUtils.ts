@@ -54,7 +54,7 @@ export function getExpectedSpan({
     expectedSpan.attributes['db.statement'] = JSON.stringify(dbStatement);
   }
   if (responseBody) {
-    expectedSpan.attributes['redis.response.body'] = JSON.stringify(responseBody);
+    expectedSpan.attributes['db.response.body'] = JSON.stringify(responseBody);
   }
 
   return expectedSpan;

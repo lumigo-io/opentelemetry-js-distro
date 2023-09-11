@@ -83,7 +83,7 @@ export function hasExpectedClientConnectionSpans(spans) {
       attributes: {
         'db.system': 'redis',
         'db.statement': JSON.stringify('info'),
-        'redis.response.body': expect.any(String),
+        'db.response.body': expect.any(String),
         'net.peer.name': expect.any(String),
         'net.peer.port': expect.any(Number),
         'db.connection_string': expect.any(String),
@@ -98,7 +98,7 @@ export function hasExpectedClientConnectionSpans(spans) {
       attributes: {
         'db.system': 'redis',
         'db.statement': JSON.stringify('quit'),
-        'redis.response.body': JSON.stringify('OK'),
+        'db.response.body': JSON.stringify('OK'),
         'net.peer.name': expect.any(String),
         'net.peer.port': expect.any(Number),
         'db.connection_string': expect.any(String),

@@ -148,7 +148,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               resourceAttributes,
               attributes: {
                 'db.statement': JSON.stringify(`set ${key} ${value}`),
-                'redis.response.body': JSON.stringify('OK'),
+                'db.response.body': JSON.stringify('OK'),
               },
             })
           );
@@ -167,7 +167,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               resourceAttributes,
               attributes: {
                 'db.statement': JSON.stringify(`get ${key}`),
-                'redis.response.body': JSON.stringify(value),
+                'db.response.body': JSON.stringify(value),
               },
             })
           );
@@ -228,7 +228,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               resourceAttributes,
               attributes: {
                 'db.statement': JSON.stringify(`hset ${key} ${fieldA} ${valueA}`),
-                'redis.response.body': JSON.stringify('1'),
+                'db.response.body': JSON.stringify('1'),
               },
             })
           );
@@ -251,7 +251,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
                 'db.statement': JSON.stringify(
                   `hmset ${key} ${fieldA} ${valueA} ${fieldB} ${valueB}`
                 ),
-                'redis.response.body': JSON.stringify('OK'),
+                'db.response.body': JSON.stringify('OK'),
               },
             })
           );
@@ -272,7 +272,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               resourceAttributes,
               attributes: {
                 'db.statement': JSON.stringify(`hgetall ${key}`),
-                'redis.response.body': JSON.stringify([fieldA, valueA, fieldB, valueB].join(',')),
+                'db.response.body': JSON.stringify([fieldA, valueA, fieldB, valueB].join(',')),
               },
             })
           );

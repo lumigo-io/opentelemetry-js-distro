@@ -26,7 +26,7 @@ export default class LumigoIORedisInstrumentation extends Instrumentor<IORedisIn
         response: unknown
       ) => {
         span.setAttribute(
-          `redis.response.body`,
+          `db.response.body`,
           CommonUtils.payloadStringify(
             response?.toString(),
             ScrubContext.HTTP_RESPONSE_BODY,
