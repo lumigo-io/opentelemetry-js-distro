@@ -5,6 +5,7 @@ import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spa
 import { CommonUtils } from '@lumigo/node-core';
 import { Triggers } from '@lumigo/node-core';
 import { AwsServiceData } from '../spans/awsSpan';
+import {getSpanSkipExportAttributes} from "../resources/spanProcessor";
 
 const extractDynamodbMessageId = (reqBody, method) => {
   if (method === 'PutItem' && reqBody['Item']) {
@@ -34,6 +35,26 @@ const extractDynamodbTableName = (reqBody, method) => {
   }
   return tableName;
 };
+
+const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
+  if (!parsedReqBody) {
+    return false;
+  }
+
+  const sqsRequestAction = parsedReqBody['Action'];
+  const autoFilterEmptySqsRaw = process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS;
+
+  // Default is to filter empty SQS requests, unless specified otherwise in the env var
+  let autoFilterEmptySqs: boolean = true;
+  if (!['true', 'false', undefined].includes(autoFilterEmptySqsRaw)) {
+    logger.warn(`Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`);
+  }
+  else {
+    autoFilterEmptySqs = autoFilterEmptySqsRaw !== 'false';
+  }
+
+  return sqsRequestAction === 'ReceiveMessage' && !messageId && autoFilterEmptySqs;
+}
 
 export const dynamodbParser = (requestData) => {
   const { headers: reqHeaders, body: reqBody } = requestData;
@@ -177,6 +198,12 @@ export const sqsParser = (requestData, responseData) => {
       trigger: [mainTrigger, ...Triggers.recursiveParseTriggers(inner, mainTrigger.id)],
     });
   }
+
+  if (shouldSkipSqsSpan(parsedReqBody, awsServiceData.messageId)) {
+    logger.info(`Not tracing empty SQS polling requests (override by setting the LUMIGO_AUTO_FILTER_EMPTY_SQS env var to false)`);
+    Object.assign(awsServiceData, getSpanSkipExportAttributes());
+  }
+
   return awsServiceData;
 };
 
