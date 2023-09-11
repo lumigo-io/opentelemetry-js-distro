@@ -36,7 +36,7 @@ const extractDynamodbTableName = (reqBody, method) => {
   return tableName;
 };
 
-const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
+export const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
   if (!parsedReqBody) {
     return false;
   }
@@ -145,6 +145,7 @@ export const eventBridgeParser = (requestData, responseData) => {
 };
 
 export const sqsParser = (requestData, responseData) => {
+  console.log('sqsParser', requestData, responseData);
   const { body: reqBody } = requestData;
   const { body: resBody } = responseData || {};
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;

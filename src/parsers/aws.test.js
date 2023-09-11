@@ -1,5 +1,6 @@
 import * as aws from './aws';
 import { md5Hash } from '../utils';
+import {shouldSkipSqsSpan} from "./aws";
 
 describe('aws parser', () => {
   test('dynamodbParser', () => {
@@ -346,6 +347,64 @@ describe('aws parser', () => {
     });
   });
 
+  [true, false].map((emptyResponse) => {
+    test('sqsParser -> make sure skip export is calculated', () => {
+      const queueUrl = 'https://sqs.us-west-2.amazonaws.com/33/random-queue-test';
+      const encodedQueueUrl = encodeURIComponent(queueUrl);
+      const requestData = {
+        path: '/',
+        port: 443,
+        host: 'sqs.us-west-2.amazonaws.com',
+        body: `Action=ReceiveMessage&QueueUrl=${encodedQueueUrl}&Version=2012-11-05`,
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
+          'content-length': 172,
+          host: 'sqs.us-west-2.amazonaws.com',
+          'x-amz-date': '20190730T082312Z',
+        },
+        protocol: 'https:',
+        sendTime: 1564474992235,
+      };
+      let responseBody = '';
+      if (emptyResponse) {
+        // empty response, no message id field
+        responseBody = '<?xml version="1.0"?>' +
+            '<ReceiveMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">' +
+            '<ReceiveMessageResult/>' +
+            '<ResponseMetadata>' +
+            '<RequestId>603a96e1-c8dd-572f-be46-cb98d79009bf</RequestId>' +
+            '</ResponseMetadata>' +
+            '</ReceiveMessageResponse>';
+      }
+      else {
+        // non-empty response, it has a message id field
+        responseBody = '<?xml version="1.0"?>' +
+            '<SendMessageResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">' +
+            '<SendMessageResult>' +
+            '<MessageId>b2c50a65-0b64-457b-aaaf-6c66057a18e8</MessageId>' +
+            '<MD5OfMessageBody>02c770fa2770c6d8b825e80d8cbed3cb</MD5OfMessageBody>' +
+            '</SendMessageResult>' +
+            '<ResponseMetadata>' +
+            '<RequestId>257d5503-8386-567d-8a3b-087aa182c9d3</RequestId>' +
+            '</ResponseMetadata>' +
+            '</SendMessageResponse>';
+      }
+      const responseData = { body: responseBody };
+
+      const result = aws.sqsParser(requestData, responseData);
+
+      const skipSpanExportAttribute = result.SKIP_EXPORT;
+
+      if (emptyResponse) {
+        expect(skipSpanExportAttribute).toEqual(true);
+      }
+      else {
+        expect([false, null, undefined].includes(skipSpanExportAttribute)).toEqual(true);
+      }
+    });
+  });
+
   test('sqsParser -> with inner SNS', () => {
     const requestData = {
       host: 'sqs.us-west-2.amazonaws.com',
@@ -389,6 +448,45 @@ describe('aws parser', () => {
         triggeredBy: 'sns',
       },
     ]);
+  });
+
+  [
+      // Don't skip a non-empty receive message
+      {envVar: undefined, parsedReqBody: {Action: 'ReceiveMessage'}, messageId: 'messageId', expectedShouldSkipSpan: false},
+
+      // Skip an empty receive message
+      {envVar: undefined, parsedReqBody: {Action: 'ReceiveMessage'}, messageId: null, expectedShouldSkipSpan: true},
+      {envVar: undefined, parsedReqBody: {Action: 'ReceiveMessage'}, messageId: undefined, expectedShouldSkipSpan: true},
+
+      // Don't skip other actions, no matter if they have a message or not
+      {envVar: undefined, parsedReqBody: {Action: 'OtherAction'}, messageId: 'messageId', expectedShouldSkipSpan: false},
+      {envVar: undefined, parsedReqBody: {Action: 'OtherAction'}, messageId: null, expectedShouldSkipSpan: false},
+
+      // Don't skip if parsedReqBody not in expected format
+      {envVar: undefined, parsedReqBody: null, messageId: null, expectedShouldSkipSpan: false},
+      {envVar: undefined, parsedReqBody: undefined, messageId: null, expectedShouldSkipSpan: false},
+      {envVar: undefined, parsedReqBody: {}, messageId: null, expectedShouldSkipSpan: false},
+
+      // Don't skip if env var is explicitly set to false
+      {envVar: 'false', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: null, expectedShouldSkipSpan: false},
+      {envVar: 'false', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: undefined, expectedShouldSkipSpan: false},
+      {envVar: 'false', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: 'messageId', expectedShouldSkipSpan: false},
+
+      // Skip if env var is explicitly set to true
+      {envVar: 'true', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: null, expectedShouldSkipSpan: true},
+      {envVar: 'true', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: undefined, expectedShouldSkipSpan: true},
+
+      // Don't skip if env var is set to true but response is not empty
+      {envVar: 'true', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: 'messageId', expectedShouldSkipSpan: false},
+
+      // Skip by default if env var value is not supported
+      {envVar: 'unknown', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: 'messageId', expectedShouldSkipSpan: false},
+      {envVar: 'unknown', parsedReqBody: {Action: 'ReceiveMessage'}, messageId: null, expectedShouldSkipSpan: true},
+  ].map(({envVar, parsedReqBody, messageId, expectedShouldSkipSpan}) => {
+    test('sqsParser -> should skip span export', () => {
+      process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = envVar;
+      expect(shouldSkipSqsSpan(parsedReqBody, messageId)).toEqual(expectedShouldSkipSpan);
+    });
   });
 
   test('eventBridgeParser -> happy flow', () => {
