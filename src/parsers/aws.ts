@@ -48,15 +48,18 @@ export const shouldAutoFilterEmptySqs = (): boolean => {
   if (!autoFilterEmptySqsRaw) {
     return defaultResponse;
   }
-  const autoFilterEmptySqsLowerCase = autoFilterEmptySqsRaw.toLowerCase();
-  if (!['true', 'false'].includes(autoFilterEmptySqsLowerCase)) {
-    logger.warn(
-      `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
-    );
-    return defaultResponse;
+
+  switch (autoFilterEmptySqsRaw.toLowerCase()) {
+    case 'true':
+      return true;
+    case 'false':
+      return false;
   }
 
-  return autoFilterEmptySqsLowerCase !== 'false';
+  logger.warn(
+    `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
+  );
+  return defaultResponse;
 };
 
 export const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
