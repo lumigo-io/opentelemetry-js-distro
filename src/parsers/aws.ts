@@ -215,7 +215,7 @@ export const sqsParser = (requestData, responseData) => {
 
   if (shouldSkipSqsSpan(parsedReqBody, awsServiceData.messageId)) {
     logger.info(
-      `Not tracing empty SQS polling requests (override by setting the LUMIGO_AUTO_FILTER_EMPTY_SQS env var to false)`
+      `Not tracing empty SQS polling requests (override by setting the env var LUMIGO_AUTO_FILTER_EMPTY_SQS=FALSE)`
     );
     Object.assign(awsServiceData, getSpanSkipExportAttributes());
   }

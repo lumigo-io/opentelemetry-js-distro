@@ -434,8 +434,8 @@ and to process them as they arrive.
 In order not to clutter the Lumigo platform with empty SQS polling messages, the default behavior is to filter them
 out from being sent to Lumigo.
 
-You can change this behavior by setting the boolean environment variable `LUMIGO_AUTO_FILTER_EMPTY_SQS` to `false`.
-The possible variations are:
-* `LUMIGO_AUTO_FILTER_EMPTY_SQS=true` filter out empty SQS polling messages
-* `LUMIGO_AUTO_FILTER_EMPTY_SQS=false` do not filter out empty SQS polling messages
+You can change this behavior by setting the boolean environment variable `LUMIGO_AUTO_FILTER_EMPTY_SQS` to `FALSE`.
+The possible variations are (case-insensitive):
+* `LUMIGO_AUTO_FILTER_EMPTY_SQS=TRUE` filter out empty SQS polling messages
+* `LUMIGO_AUTO_FILTER_EMPTY_SQS=FALSE` do not filter out empty SQS polling messages
 * No environment variable set (default): filter out empty SQS polling messages
