@@ -1,6 +1,6 @@
 import * as aws from './aws';
 import { md5Hash } from '../utils';
-import {shouldAutoFilterEmptySqs, shouldSkipSqsSpan} from './aws';
+import { shouldAutoFilterEmptySqs, shouldSkipSqsSpan } from './aws';
 
 describe('aws parser', () => {
   test('dynamodbParser', () => {
@@ -459,8 +459,8 @@ describe('aws parser', () => {
           parsedReqBody: { Action: 'ReceiveMessage' },
           messageId: 'messageId',
           expectedShouldSkipSpan: false,
-        }
-      ]
+        },
+      ],
     },
     {
       description: 'Skip an empty receive message',
@@ -476,8 +476,8 @@ describe('aws parser', () => {
           parsedReqBody: { Action: 'ReceiveMessage' },
           messageId: undefined,
           expectedShouldSkipSpan: true,
-        }
-      ]
+        },
+      ],
     },
     {
       description: 'Do not skip other actions, no matter if they have a message or not',
@@ -494,15 +494,20 @@ describe('aws parser', () => {
           messageId: null,
           expectedShouldSkipSpan: false,
         },
-      ]
+      ],
     },
     {
       description: 'Dont skip if parsedReqBody not in expected format',
       cases: [
         { envVar: undefined, parsedReqBody: null, messageId: null, expectedShouldSkipSpan: false },
-        { envVar: undefined, parsedReqBody: undefined, messageId: null, expectedShouldSkipSpan: false },
+        {
+          envVar: undefined,
+          parsedReqBody: undefined,
+          messageId: null,
+          expectedShouldSkipSpan: false,
+        },
         { envVar: undefined, parsedReqBody: {}, messageId: null, expectedShouldSkipSpan: false },
-      ]
+      ],
     },
     {
       description: 'Do not skip if env var is explicitly set to false',
@@ -525,7 +530,7 @@ describe('aws parser', () => {
           messageId: 'messageId',
           expectedShouldSkipSpan: false,
         },
-      ]
+      ],
     },
     {
       description: 'Skip if env var is explicitly set to true',
@@ -542,7 +547,7 @@ describe('aws parser', () => {
           messageId: undefined,
           expectedShouldSkipSpan: true,
         },
-      ]
+      ],
     },
     {
       description: 'Do not skip if env var is set to true but response is not empty',
@@ -552,8 +557,8 @@ describe('aws parser', () => {
           parsedReqBody: { Action: 'ReceiveMessage' },
           messageId: 'messageId',
           expectedShouldSkipSpan: false,
-        }
-      ]
+        },
+      ],
     },
     {
       description: 'Skip by default if env var value is not supported',
@@ -570,8 +575,8 @@ describe('aws parser', () => {
           messageId: null,
           expectedShouldSkipSpan: true,
         },
-      ]
-    }
+      ],
+    },
   ].map(({ description, cases }) => {
     cases.map(({ envVar, parsedReqBody, messageId, expectedShouldSkipSpan }) => {
       test(`sqsParser -> should skip span export (${description})`, () => {
@@ -662,7 +667,7 @@ describe('aws parser', () => {
       envVarValue: undefined,
       expectedShouldAutoFilter: true,
     },
-  ].map(({envVarValue, expectedShouldAutoFilter}) => {
+  ].map(({ envVarValue, expectedShouldAutoFilter }) => {
     test(`auto filter empty sqs response setting eval (LUMIGO_AUTO_FILTER_EMPTY_SQS=${envVarValue}, expected=${expectedShouldAutoFilter})`, () => {
       process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = envVarValue;
       expect(shouldAutoFilterEmptySqs()).toEqual(expectedShouldAutoFilter);

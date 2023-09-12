@@ -51,13 +51,13 @@ export const shouldAutoFilterEmptySqs = (): boolean => {
   const autoFilterEmptySqsLowerCase = autoFilterEmptySqsRaw.toLowerCase();
   if (!['true', 'false'].includes(autoFilterEmptySqsLowerCase)) {
     logger.warn(
-        `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
+      `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
     );
     return defaultResponse;
   }
 
   return autoFilterEmptySqsLowerCase !== 'false';
-}
+};
 
 export const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
   if (!parsedReqBody) {
