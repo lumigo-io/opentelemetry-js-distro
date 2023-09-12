@@ -17,7 +17,7 @@ export class LumigoSpanProcessor extends BatchSpanProcessor {
  * @param span A readable span to check
  */
 export const shouldSkipSpanExport = (span: ReadableSpan): boolean => {
-    return span.attributes.SKIP_EXPORT === true;
+    return span.attributes && span.attributes.SKIP_EXPORT === true;
 }
 
 /**
