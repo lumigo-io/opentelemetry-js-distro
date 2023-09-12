@@ -451,106 +451,133 @@ describe('aws parser', () => {
   });
 
   [
-    // Don't skip a non-empty receive message
     {
-      envVar: undefined,
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: 'messageId',
-      expectedShouldSkipSpan: false,
-    },
-
-    // Skip an empty receive message
-    {
-      envVar: undefined,
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: null,
-      expectedShouldSkipSpan: true,
+      description: 'Do not skip a non-empty receive message',
+      cases: [
+        {
+          envVar: undefined,
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: 'messageId',
+          expectedShouldSkipSpan: false,
+        }
+      ]
     },
     {
-      envVar: undefined,
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: undefined,
-      expectedShouldSkipSpan: true,
-    },
-
-    // Don't skip other actions, no matter if they have a message or not
-    {
-      envVar: undefined,
-      parsedReqBody: { Action: 'OtherAction' },
-      messageId: 'messageId',
-      expectedShouldSkipSpan: false,
-    },
-    {
-      envVar: undefined,
-      parsedReqBody: { Action: 'OtherAction' },
-      messageId: null,
-      expectedShouldSkipSpan: false,
-    },
-
-    // Don't skip if parsedReqBody not in expected format
-    { envVar: undefined, parsedReqBody: null, messageId: null, expectedShouldSkipSpan: false },
-    { envVar: undefined, parsedReqBody: undefined, messageId: null, expectedShouldSkipSpan: false },
-    { envVar: undefined, parsedReqBody: {}, messageId: null, expectedShouldSkipSpan: false },
-
-    // Don't skip if env var is explicitly set to false
-    {
-      envVar: 'false',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: null,
-      expectedShouldSkipSpan: false,
+      description: 'Skip an empty receive message',
+      cases: [
+        {
+          envVar: undefined,
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: null,
+          expectedShouldSkipSpan: true,
+        },
+        {
+          envVar: undefined,
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: undefined,
+          expectedShouldSkipSpan: true,
+        }
+      ]
     },
     {
-      envVar: 'false',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: undefined,
-      expectedShouldSkipSpan: false,
+      description: 'Do not skip other actions, no matter if they have a message or not',
+      cases: [
+        {
+          envVar: undefined,
+          parsedReqBody: { Action: 'OtherAction' },
+          messageId: 'messageId',
+          expectedShouldSkipSpan: false,
+        },
+        {
+          envVar: undefined,
+          parsedReqBody: { Action: 'OtherAction' },
+          messageId: null,
+          expectedShouldSkipSpan: false,
+        },
+      ]
     },
     {
-      envVar: 'false',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: 'messageId',
-      expectedShouldSkipSpan: false,
-    },
-
-    // Skip if env var is explicitly set to true
-    {
-      envVar: 'true',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: null,
-      expectedShouldSkipSpan: true,
+      description: 'Dont skip if parsedReqBody not in expected format',
+      cases: [
+        { envVar: undefined, parsedReqBody: null, messageId: null, expectedShouldSkipSpan: false },
+        { envVar: undefined, parsedReqBody: undefined, messageId: null, expectedShouldSkipSpan: false },
+        { envVar: undefined, parsedReqBody: {}, messageId: null, expectedShouldSkipSpan: false },
+      ]
     },
     {
-      envVar: 'true',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: undefined,
-      expectedShouldSkipSpan: true,
+      description: 'Do not skip if env var is explicitly set to false',
+      cases: [
+        {
+          envVar: 'false',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: null,
+          expectedShouldSkipSpan: false,
+        },
+        {
+          envVar: 'false',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: undefined,
+          expectedShouldSkipSpan: false,
+        },
+        {
+          envVar: 'false',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: 'messageId',
+          expectedShouldSkipSpan: false,
+        },
+      ]
     },
-
-    // Don't skip if env var is set to true but response is not empty
     {
-      envVar: 'true',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: 'messageId',
-      expectedShouldSkipSpan: false,
+      description: 'Skip if env var is explicitly set to true',
+      cases: [
+        {
+          envVar: 'true',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: null,
+          expectedShouldSkipSpan: true,
+        },
+        {
+          envVar: 'true',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: undefined,
+          expectedShouldSkipSpan: true,
+        },
+      ]
     },
-
-    // Skip by default if env var value is not supported
     {
-      envVar: 'unknown',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: 'messageId',
-      expectedShouldSkipSpan: false,
+      description: 'Do not skip if env var is set to true but response is not empty',
+      cases: [
+        {
+          envVar: 'true',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: 'messageId',
+          expectedShouldSkipSpan: false,
+        }
+      ]
     },
     {
-      envVar: 'unknown',
-      parsedReqBody: { Action: 'ReceiveMessage' },
-      messageId: null,
-      expectedShouldSkipSpan: true,
-    },
-  ].map(({ envVar, parsedReqBody, messageId, expectedShouldSkipSpan }) => {
-    test('sqsParser -> should skip span export', () => {
-      process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = envVar;
-      expect(shouldSkipSqsSpan(parsedReqBody, messageId)).toEqual(expectedShouldSkipSpan);
+      description: 'Skip by default if env var value is not supported',
+      cases: [
+        {
+          envVar: 'unknown',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: 'messageId',
+          expectedShouldSkipSpan: false,
+        },
+        {
+          envVar: 'unknown',
+          parsedReqBody: { Action: 'ReceiveMessage' },
+          messageId: null,
+          expectedShouldSkipSpan: true,
+        },
+      ]
+    }
+  ].map(({ description, cases }) => {
+    cases.map(({ envVar, parsedReqBody, messageId, expectedShouldSkipSpan }) => {
+      test(`sqsParser -> should skip span export (${description})`, () => {
+        process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = envVar;
+        expect(shouldSkipSqsSpan(parsedReqBody, messageId)).toEqual(expectedShouldSkipSpan);
+      });
     });
   });
 
