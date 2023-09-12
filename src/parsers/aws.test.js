@@ -1,6 +1,6 @@
 import * as aws from './aws';
 import { md5Hash } from '../utils';
-import { shouldSkipSqsSpan } from './aws';
+import {shouldAutoFilterEmptySqs, shouldSkipSqsSpan} from './aws';
 
 describe('aws parser', () => {
   test('dynamodbParser', () => {
@@ -366,7 +366,7 @@ describe('aws parser', () => {
         protocol: 'https:',
         sendTime: 1564474992235,
       };
-      let responseBody = '';
+      let responseBody;
       if (emptyResponse) {
         // empty response, no message id field
         responseBody =
@@ -595,6 +595,50 @@ describe('aws parser', () => {
     expect(result).toEqual({
       'aws.resource.names': ['test', 'test2'],
       messageIds: ['1-2-3-4', '6-7-8-9'],
+    });
+  });
+
+  [
+    {
+      envVarValue: 'true',
+      expectedShouldAutoFilter: true,
+    },
+    {
+      envVarValue: 'TRUE',
+      expectedShouldAutoFilter: true,
+    },
+    {
+      envVarValue: 'True',
+      expectedShouldAutoFilter: true,
+    },
+    {
+      envVarValue: 'false',
+      expectedShouldAutoFilter: false,
+    },
+    {
+      envVarValue: 'FALSE',
+      expectedShouldAutoFilter: false,
+    },
+    {
+      envVarValue: 'False',
+      expectedShouldAutoFilter: false,
+    },
+    {
+      envVarValue: 'unsupportedValue',
+      expectedShouldAutoFilter: true,
+    },
+    {
+      envVarValue: '',
+      expectedShouldAutoFilter: true,
+    },
+    {
+      envVarValue: undefined,
+      expectedShouldAutoFilter: true,
+    },
+  ].map(({envVarValue, expectedShouldAutoFilter}) => {
+    test(`auto filter empty sqs response setting eval (LUMIGO_AUTO_FILTER_EMPTY_SQS=${envVarValue}, expected=${expectedShouldAutoFilter})`, () => {
+      process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = envVarValue;
+      expect(shouldAutoFilterEmptySqs()).toEqual(expectedShouldAutoFilter);
     });
   });
 

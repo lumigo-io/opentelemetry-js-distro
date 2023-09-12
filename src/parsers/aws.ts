@@ -36,25 +36,37 @@ const extractDynamodbTableName = (reqBody, method) => {
   return tableName;
 };
 
+/**
+ * returns an answer if we should filter empty sqs request spans, based on the LUMIGO_AUTO_FILTER_EMPTY_SQS env var.
+ * The function handles many edge cases, but the basic logic is:
+ * * LUMIGO_AUTO_FILTER_EMPTY_SQS="true" -> return true
+ * * LUMIGO_AUTO_FILTER_EMPTY_SQS="false" -> return false
+ */
+export const shouldAutoFilterEmptySqs = (): boolean => {
+  const defaultResponse = true;
+  const autoFilterEmptySqsRaw = process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS;
+  if (!autoFilterEmptySqsRaw) {
+    return defaultResponse;
+  }
+  const autoFilterEmptySqsLowerCase = autoFilterEmptySqsRaw.toLowerCase();
+  if (!['true', 'false'].includes(autoFilterEmptySqsLowerCase)) {
+    logger.warn(
+        `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
+    );
+    return defaultResponse;
+  }
+
+  return autoFilterEmptySqsLowerCase !== 'false';
+}
+
 export const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
   if (!parsedReqBody) {
     return false;
   }
 
   const sqsRequestAction = parsedReqBody['Action'];
-  const autoFilterEmptySqsRaw = process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS;
 
-  // Default is to filter empty SQS requests, unless specified otherwise in the env var
-  let autoFilterEmptySqs = true;
-  if (!['true', 'false', undefined].includes(autoFilterEmptySqsRaw)) {
-    logger.warn(
-      `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
-    );
-  } else {
-    autoFilterEmptySqs = autoFilterEmptySqsRaw !== 'false';
-  }
-
-  return sqsRequestAction === 'ReceiveMessage' && !messageId && autoFilterEmptySqs;
+  return sqsRequestAction === 'ReceiveMessage' && !messageId && shouldAutoFilterEmptySqs();
 };
 
 export const dynamodbParser = (requestData) => {
