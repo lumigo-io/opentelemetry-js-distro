@@ -347,7 +347,7 @@ describe('aws parser', () => {
     });
   });
 
-  [true, false].map((emptyResponse) => {
+  [true, false].map((isEmptyResponse) => {
     test('sqsParser -> make sure skip export is calculated', () => {
       const queueUrl = 'https://sqs.us-west-2.amazonaws.com/33/random-queue-test';
       const encodedQueueUrl = encodeURIComponent(queueUrl);
@@ -367,7 +367,7 @@ describe('aws parser', () => {
         sendTime: 1564474992235,
       };
       let responseBody;
-      if (emptyResponse) {
+      if (isEmptyResponse) {
         // empty response, no message id field
         responseBody =
           '<?xml version="1.0"?>' +
@@ -397,7 +397,7 @@ describe('aws parser', () => {
 
       const skipSpanExportAttribute = result.SKIP_EXPORT;
 
-      if (emptyResponse) {
+      if (isEmptyResponse) {
         expect(skipSpanExportAttribute).toEqual(true);
       } else {
         expect([false, null, undefined].includes(skipSpanExportAttribute)).toEqual(true);
