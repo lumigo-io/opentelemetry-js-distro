@@ -1,11 +1,7 @@
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Instrumentation, registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource, detectResources, envDetector, processDetector } from '@opentelemetry/resources';
-import {
-  BasicTracerProvider,
-  BatchSpanProcessor,
-  SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';

@@ -25,7 +25,7 @@ export const shouldSkipSpanExport = (span: ReadableSpan): boolean => {
  * @param skipExport (Default true) should the span be skipped from export.
  *                   you can set it to false in order to explicitly not skip exporting a span
  */
-export const getSpanSkipExportAttributes = (skipExport: boolean = true) => {
+export const getSpanSkipExportAttributes = (skipExport = true) => {
   return {
     SKIP_EXPORT: skipExport,
   };

@@ -45,7 +45,7 @@ export const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
   const autoFilterEmptySqsRaw = process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS;
 
   // Default is to filter empty SQS requests, unless specified otherwise in the env var
-  let autoFilterEmptySqs: boolean = true;
+  let autoFilterEmptySqs = true;
   if (!['true', 'false', undefined].includes(autoFilterEmptySqsRaw)) {
     logger.warn(
       `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
@@ -215,7 +215,7 @@ export const kinesisParser = (requestData, responseData) => {
   const { body: reqBody } = requestData;
   const { body: resBody } = responseData;
   const reqBodyJSON = (!!reqBody && JSON.parse(reqBody)) || {};
-  let resBodyJSON = {};
+  let resBodyJSON: object;
   try {
     resBodyJSON = (!!resBody && JSON.parse(resBody)) || {};
   } catch (e) {
