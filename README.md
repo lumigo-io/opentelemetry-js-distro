@@ -109,6 +109,7 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` applies secret redaction to process environment variables (that is, the content of `process.env`)
 * `LUMIGO_REPORT_DEPENDENCIES=false`: This option disables the built-in dependency reporting to Lumigo SaaS. For more information, refer to the [Automated dependency reporting](#automated-dependency-reporting) section.
+* `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 
 ### Execution Tags
 
@@ -425,3 +426,16 @@ await tracerProvider.forceFlush();
 
 // Now the Node.js process can terminate, with all the spans closed so far sent to Lumigo
 ```
+
+### Filtering out empty SQS messages
+
+A common pattern in SQS-based applications is to continuously poll an SQS queue for messages,
+and to process them as they arrive.
+In order not to clutter the Lumigo platform with empty SQS polling messages, the default behavior is to filter them
+out from being sent to Lumigo.
+
+You can change this behavior by setting the boolean environment variable `LUMIGO_AUTO_FILTER_EMPTY_SQS` to `false`.
+The possible variations are:
+* `LUMIGO_AUTO_FILTER_EMPTY_SQS=true` filter out empty SQS polling messages
+* `LUMIGO_AUTO_FILTER_EMPTY_SQS=false` do not filter out empty SQS polling messages
+* No environment variable set (default): filter out empty SQS polling messages
