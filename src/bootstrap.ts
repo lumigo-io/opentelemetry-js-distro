@@ -53,7 +53,7 @@ export interface LumigoSdkInitialization {
 import { dirname, join } from 'path';
 import { logger } from './logging';
 import { ProcessEnvironmentDetector } from './resources/detectors/ProcessEnvironmentDetector';
-import { LumigoSpanProcessor } from "./resources/spanProcessor";
+import { LumigoSpanProcessor } from './resources/spanProcessor';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 

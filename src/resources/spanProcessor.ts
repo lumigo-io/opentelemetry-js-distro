@@ -1,15 +1,15 @@
-import {BatchSpanProcessor, ReadableSpan} from "@opentelemetry/sdk-trace-base";
-import {logger} from "../logging";
+import { BatchSpanProcessor, ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { logger } from '../logging';
 
 export class LumigoSpanProcessor extends BatchSpanProcessor {
-    override onEnd(span: ReadableSpan) {
-        if (shouldSkipSpanExport(span)) {
-            logger.debug("Not exporting span because it has NO_EXPORT=true attribute")
-            return;
-        }
-
-        super.onEnd(span);
+  override onEnd(span: ReadableSpan) {
+    if (shouldSkipSpanExport(span)) {
+      logger.debug('Not exporting span because it has NO_EXPORT=true attribute');
+      return;
     }
+
+    super.onEnd(span);
+  }
 }
 
 /**
@@ -17,8 +17,8 @@ export class LumigoSpanProcessor extends BatchSpanProcessor {
  * @param span A readable span to check
  */
 export const shouldSkipSpanExport = (span: ReadableSpan): boolean => {
-    return span.attributes && span.attributes.SKIP_EXPORT === true;
-}
+  return span.attributes && span.attributes.SKIP_EXPORT === true;
+};
 
 /**
  * Returns the span attributes that need to be added to a span in order for it to be skipped.
@@ -26,7 +26,7 @@ export const shouldSkipSpanExport = (span: ReadableSpan): boolean => {
  *                   you can set it to false in order to explicitly not skip exporting a span
  */
 export const getSpanSkipExportAttributes = (skipExport: boolean = true) => {
-    return {
-        SKIP_EXPORT: skipExport
-    };
-}
+  return {
+    SKIP_EXPORT: skipExport,
+  };
+};
