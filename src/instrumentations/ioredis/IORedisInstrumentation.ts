@@ -1,16 +1,16 @@
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { Span } from '@opentelemetry/api';
-import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis-4';
+import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
 import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
-export default class LumigoRedisInstrumentation extends Instrumentor<RedisInstrumentation> {
+export default class LumigoIORedisInstrumentation extends Instrumentor<IORedisInstrumentation> {
   getInstrumentedModule(): string {
-    return 'redis';
+    return 'ioredis';
   }
 
-  getInstrumentation(): RedisInstrumentation {
-    return new RedisInstrumentation({
+  getInstrumentation(): IORedisInstrumentation {
+    return new IORedisInstrumentation({
       dbStatementSerializer: function (cmdName, cmdArgs) {
         const statement = [cmdName, ...cmdArgs].join(' ');
         return CommonUtils.payloadStringify(
@@ -28,7 +28,7 @@ export default class LumigoRedisInstrumentation extends Instrumentor<RedisInstru
         span.setAttribute(
           `db.response.body`,
           CommonUtils.payloadStringify(
-            response,
+            response?.toString(),
             ScrubContext.HTTP_RESPONSE_BODY,
             getSpanAttributeMaxLength()
           )

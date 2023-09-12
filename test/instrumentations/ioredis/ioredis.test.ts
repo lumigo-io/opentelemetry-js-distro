@@ -4,16 +4,20 @@ import 'jest-json';
 import { join } from 'path';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { itTest } from '../../integration/setup';
-import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
-import { filterRedisSpans, getExpectedResourceAttributes, getExpectedSpan } from './redisTestUtils';
+import {
+  filterRedisSpans,
+  getExpectedResourceAttributes,
+  getExpectedSpan,
+  getQuerySpans,
+  hasExpectedClientConnectionSpans,
+} from './ioredisTestUtils';
 
 const DEFAULT_REDIS_PORT = 6379;
-const DEFAULT_STARTUP_TIMEOUT = 45_000; // includes time to install packages
-const DEFAULT_WARMUP_TIMEOUT = 60_000;
-const INSTRUMENTATION_NAME = `redis`;
+const DOCKER_WARMUP_TIMEOUT = 30_000;
+const INSTRUMENTATION_NAME = `ioredis`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
@@ -21,7 +25,7 @@ const TEST_TIMEOUT = 600_000;
 const startRedisContainer = async () => {
   return await new GenericContainer('redis:latest')
     .withExposedPorts(DEFAULT_REDIS_PORT)
-    .withStartupTimeout(DEFAULT_WARMUP_TIMEOUT)
+    .withStartupTimeout(DOCKER_WARMUP_TIMEOUT)
     .start();
 };
 
@@ -34,7 +38,7 @@ const warmupContainer = async () => {
   if (!warmupState.warmupInitiated) {
     warmupState.warmupInitiated = true;
     console.warn(
-      `Warming up Redis container loading, timeout of ${DEFAULT_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
+      `Warming up Redis container loading, timeout of ${DOCKER_WARMUP_TIMEOUT}ms to account for Docker image pulls...`
     );
     let warmupContainer: StartedTestContainer;
     try {
@@ -67,7 +71,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       });
 
       await warmupContainer();
-    }, DEFAULT_WARMUP_TIMEOUT);
+    }, DOCKER_WARMUP_TIMEOUT);
 
     beforeEach(async function () {
       redisContainer = await startRedisContainer();
@@ -76,7 +80,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
 
       console.info(`Redis container started on ${host}:${port}...`);
-    }, DEFAULT_STARTUP_TIMEOUT);
+    }, 15_000);
 
     afterEach(async function () {
       if (testApp) {
@@ -123,51 +127,51 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         await testApp.invokeGetPath(`/get?key=${key}&value=${value}&host=${host}&port=${port}`);
 
-        const spans = await testApp.getFinalSpans(6);
+        const spans = await testApp.getFinalSpans(12);
 
         const redisSpans = filterRedisSpans(spans);
-        expect(redisSpans).toHaveLength(4);
+        expect(redisSpans).toHaveLength(10);
 
         let resourceAttributes = getExpectedResourceAttributes();
 
-        const expectedConnectSpanName = `redis-connect`;
-        const connectSpans = redisSpans.filter(
-          (span) => span.name.indexOf(expectedConnectSpanName) == 0
-        );
-        expect(connectSpans).toHaveLength(2);
-        for (const connectSpan of connectSpans) {
-          expect(connectSpan).toMatchObject(
+        const setQueryTraceId = redisSpans[0].traceId;
+        const setTraceSpans = redisSpans.filter((span) => span.traceId === setQueryTraceId);
+        expect(setTraceSpans).toHaveLength(5);
+        expect(hasExpectedClientConnectionSpans(setTraceSpans)).toBeTruthy();
+        const setTraceQuerySpans = getQuerySpans(setTraceSpans);
+        expect(setTraceQuerySpans).toHaveLength(2);
+
+        for (const setTraceQuerySpan of setTraceQuerySpans) {
+          expect(setTraceQuerySpan).toMatchObject(
             getExpectedSpan({
-              nameSpanAttr: expectedConnectSpanName,
+              name: 'set',
               resourceAttributes,
-              host,
+              attributes: {
+                'db.statement': JSON.stringify(`set ${key} ${value}`),
+                'db.response.body': JSON.stringify('OK'),
+              },
             })
           );
         }
 
-        const expectedSetSpanName = `redis-SET`;
-        const setSpan = getSpanByName(redisSpans, expectedSetSpanName);
-        expect(setSpan).toMatchObject(
-          getExpectedSpan({
-            nameSpanAttr: expectedSetSpanName,
-            resourceAttributes,
-            host,
-            dbStatement: `SET ${key} ${value}`,
-            responseBody: 'OK',
-          })
-        );
+        const getTraceSpans = redisSpans.filter((span) => span.traceId !== setQueryTraceId);
+        expect(getTraceSpans).toHaveLength(5);
+        expect(hasExpectedClientConnectionSpans(getTraceSpans)).toBeTruthy();
+        const getTraceQuerySpans = getQuerySpans(getTraceSpans);
+        expect(getTraceQuerySpans).toHaveLength(2);
 
-        const expectedGetSpanName = `redis-GET`;
-        const getSpan = getSpanByName(redisSpans, expectedGetSpanName);
-        expect(getSpan).toMatchObject(
-          getExpectedSpan({
-            nameSpanAttr: expectedGetSpanName,
-            resourceAttributes,
-            host,
-            dbStatement: `GET ${key}`,
-            responseBody: value,
-          })
-        );
+        for (const getTraceQuerySpan of getTraceQuerySpans) {
+          expect(getTraceQuerySpan).toMatchObject(
+            getExpectedSpan({
+              name: 'get',
+              resourceAttributes,
+              attributes: {
+                'db.statement': JSON.stringify(`get ${key}`),
+                'db.response.body': JSON.stringify(value),
+              },
+            })
+          );
+        }
       }
     );
 
@@ -203,61 +207,76 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         await testApp.invokeGetPath(`/hgetall?key=${key}&host=${host}&port=${port}`);
 
-        const spans = await testApp.getFinalSpans(8);
+        const spans = await testApp.getFinalSpans(18);
 
         const redisSpans = filterRedisSpans(spans);
-        expect(redisSpans).toHaveLength(6);
+        expect(redisSpans).toHaveLength(15);
 
         let resourceAttributes = getExpectedResourceAttributes();
 
-        const expectedConnectSpanName = `redis-connect`;
-        const connectSpans = redisSpans.filter(
-          (span) => span.name.indexOf(expectedConnectSpanName) == 0
-        );
-        expect(connectSpans).toHaveLength(3);
-        for (const connectSpan of connectSpans) {
-          expect(connectSpan).toMatchObject(
+        const hSetQueryTraceId = redisSpans[0].traceId;
+        const hSetTraceSpans = redisSpans.filter((span) => span.traceId === hSetQueryTraceId);
+        expect(hSetTraceSpans).toHaveLength(5);
+        expect(hasExpectedClientConnectionSpans(hSetTraceSpans)).toBeTruthy();
+        const hSetTraceQuerySpans = getQuerySpans(hSetTraceSpans);
+        expect(hSetTraceQuerySpans).toHaveLength(2);
+
+        for (const hSetTraceQuerySpan of hSetTraceQuerySpans) {
+          expect(hSetTraceQuerySpan).toMatchObject(
             getExpectedSpan({
-              nameSpanAttr: expectedConnectSpanName,
+              name: 'hset',
               resourceAttributes,
-              host,
+              attributes: {
+                'db.statement': JSON.stringify(`hset ${key} ${fieldA} ${valueA}`),
+                'db.response.body': JSON.stringify('1'),
+              },
             })
           );
         }
 
-        const expectedSetSpanName = `redis-HSET`;
-        const setSpans = redisSpans.filter((span) => span.name.indexOf(expectedSetSpanName) == 0);
-        expect(setSpans).toHaveLength(2);
-        expect(setSpans[0]).toMatchObject(
-          getExpectedSpan({
-            nameSpanAttr: expectedSetSpanName,
-            resourceAttributes,
-            host,
-            dbStatement: `HSET ${key} ${fieldA} ${valueA}`,
-            responseBody: 1,
-          })
-        );
-        expect(setSpans[1]).toMatchObject(
-          getExpectedSpan({
-            nameSpanAttr: expectedSetSpanName,
-            resourceAttributes,
-            host,
-            dbStatement: `HSET ${key} ${fieldA} ${valueA} ${fieldB} ${valueB}`,
-            responseBody: 1,
-          })
-        );
+        const hmSetQueryTraceId = redisSpans.filter((span) => span.traceId !== hSetQueryTraceId)[0]
+          .traceId;
+        const hmSetTraceSpans = redisSpans.filter((span) => span.traceId === hmSetQueryTraceId);
+        expect(hmSetTraceSpans).toHaveLength(5);
+        expect(hasExpectedClientConnectionSpans(hmSetTraceSpans)).toBeTruthy();
+        const hmSetTraceQuerySpans = getQuerySpans(hmSetTraceSpans);
+        expect(hmSetTraceQuerySpans).toHaveLength(2);
 
-        const expectedHGetAllSpanName = `redis-HGETALL`;
-        const hGetAllSpan = getSpanByName(redisSpans, expectedHGetAllSpanName);
-        expect(hGetAllSpan).toMatchObject(
-          getExpectedSpan({
-            nameSpanAttr: expectedHGetAllSpanName,
-            resourceAttributes,
-            host,
-            dbStatement: `HGETALL ${key}`,
-            responseBody: { [fieldA]: valueA, [fieldB]: valueB },
-          })
+        for (const hmSetTraceQuerySpan of hmSetTraceQuerySpans) {
+          expect(hmSetTraceQuerySpan).toMatchObject(
+            getExpectedSpan({
+              name: 'hmset',
+              resourceAttributes,
+              attributes: {
+                'db.statement': JSON.stringify(
+                  `hmset ${key} ${fieldA} ${valueA} ${fieldB} ${valueB}`
+                ),
+                'db.response.body': JSON.stringify('OK'),
+              },
+            })
+          );
+        }
+
+        const hGetAllTraceSpans = redisSpans.filter(
+          (span) => span.traceId !== hSetQueryTraceId && span.traceId !== hmSetQueryTraceId
         );
+        expect(hGetAllTraceSpans).toHaveLength(5);
+        expect(hasExpectedClientConnectionSpans(hGetAllTraceSpans)).toBeTruthy();
+        const hGetAllTraceQuerySpans = getQuerySpans(hGetAllTraceSpans);
+        expect(hGetAllTraceQuerySpans).toHaveLength(2);
+
+        for (const hGetAllTraceQuerySpan of hGetAllTraceQuerySpans) {
+          expect(hGetAllTraceQuerySpan).toMatchObject(
+            getExpectedSpan({
+              name: 'hgetall',
+              resourceAttributes,
+              attributes: {
+                'db.statement': JSON.stringify(`hgetall ${key}`),
+                'db.response.body': JSON.stringify([fieldA, valueA, fieldB, valueB].join(',')),
+              },
+            })
+          );
+        }
       }
     );
 
@@ -284,33 +303,20 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           `/transaction-set-and-get?key=${key}&value=${value}&host=${host}&port=${port}`
         );
 
-        const spans = await testApp.getFinalSpans(7);
+        const spans = await testApp.getFinalSpans(14);
 
         const redisSpans = filterRedisSpans(spans);
-        expect(redisSpans).toHaveLength(6);
+        expect(redisSpans).toHaveLength(13);
 
-        let resourceAttributes = getExpectedResourceAttributes();
+        expect(hasExpectedClientConnectionSpans(redisSpans)).toBeTruthy();
+        const transactionQuerySpans = getQuerySpans(redisSpans);
+        expect(transactionQuerySpans).toHaveLength(10);
 
-        const expectedConnectSpanName = `redis-connect`;
-        const connectSpans = redisSpans.filter(
-          (span) => span.name.indexOf(expectedConnectSpanName) == 0
-        );
-        expect(connectSpans).toHaveLength(1);
-        for (const connectSpan of connectSpans) {
-          expect(connectSpan).toMatchObject(
-            getExpectedSpan({
-              nameSpanAttr: expectedConnectSpanName,
-              resourceAttributes,
-              host,
-            })
-          );
-        }
+        const setSpans = redisSpans.filter((span) => span.name.indexOf('set') == 0);
+        expect(setSpans).toHaveLength(4);
 
-        const setSpans = redisSpans.filter((span) => span.name.indexOf('redis-SET') == 0);
-        expect(setSpans).toHaveLength(2);
-
-        const getSpans = redisSpans.filter((span) => span.name.indexOf('redis-GET') == 0);
-        expect(getSpans).toHaveLength(3);
+        const getSpans = redisSpans.filter((span) => span.name.indexOf('get') == 0);
+        expect(getSpans).toHaveLength(6);
       }
     );
   } // describe function

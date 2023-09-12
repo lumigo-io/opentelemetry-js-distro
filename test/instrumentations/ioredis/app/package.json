@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-ioredis-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry ioredis_app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
+    "ioredis": "^4.0.0"
+  }
+}

@@ -1,4 +1,4 @@
-const { createClient } = require('redis');
+const Redis = require('ioredis');
 const http = require('http');
 const url = require('url');
 require('log-timestamp');
@@ -10,24 +10,10 @@ const host = 'localhost';
 let httpServer;
 
 async function openRedisConnection(host, port) {
-  const client = createClient({
-    socket: {
-      host,
-      port,
-      reconnectStrategy: false,
-    },
-    disableOfflineQueue: true,
+  return new Redis({
+    host,
+    port,
   });
-
-  // all events must be listened to to prevent "Socket Closed Unexpectedly" errors
-  client.on('error', (err) => console.error('Redis Client Error', err));
-  client.on('connect', () => console.log('Redis Client is connecting'));
-  client.on('reconnecting', () => console.log('Redis Client is reconnecting'));
-  client.on('ready', () => console.log('Redis Client is ready'));
-
-  await client.connect();
-
-  return client;
 }
 
 function respond(res, status, body) {
@@ -64,7 +50,7 @@ const requestListener = async function (req, res) {
     case '/hset':
       try {
         client = await openRedisConnection(host, port);
-        await client.hSet(key, field, value);
+        await client.hset(key, field, value);
         respond(res, 200, {});
       } catch (err) {
         console.error(`Error setting hash field value`, err);
@@ -79,7 +65,7 @@ const requestListener = async function (req, res) {
           [requestUrl?.query?.fieldA]: requestUrl?.query?.valueA,
           [requestUrl?.query?.fieldB]: requestUrl?.query?.valueB,
         };
-        await client.hSet(key, [...Object.entries(obj).flat()]);
+        await client.hmset(key, [...Object.entries(obj).flat()]);
         respond(res, 200, {});
       } catch (err) {
         console.error(`Error setting hash field values`, err);
@@ -106,7 +92,7 @@ const requestListener = async function (req, res) {
     case '/hgetall':
       try {
         client = await openRedisConnection(host, port);
-        await client.hGetAll(key);
+        await client.hgetall(key);
         respond(res, 200, {});
       } catch (err) {
         console.error(`Error getting key value`, err);
@@ -121,28 +107,28 @@ const requestListener = async function (req, res) {
         const unknownKey = `unknown-${key}`;
         const [setPreKeyReply, getPreKeyValue, setKeyReply, getKeyValue, getUnknownKeyValue] =
           await client
-            .multi()
+            .pipeline()
             .set(key, preKeyValue)
             .get(key)
             .set(key, value)
             .get(key)
             .get(unknownKey)
             .exec();
-        if (setPreKeyReply != 'OK') {
+        if (setPreKeyReply[1] != 'OK') {
           throw new Error(`Set pre-key failed with response '${setPreKeyReply}'`);
         }
-        if (getPreKeyValue != preKeyValue) {
+        if (getPreKeyValue[1] != preKeyValue) {
           throw new Error(
             `Get pre-key value returned '${getPreKeyValue}' when '${preKeyValue}' was expected`
           );
         }
-        if (setKeyReply != 'OK') {
+        if (setKeyReply[1] != 'OK') {
           throw new Error(`Set key reply failed with response '${setKeyReply}'`);
         }
-        if (getKeyValue != value) {
+        if (getKeyValue[1] != value) {
           throw new Error(`Get key value returned '${getKeyValue}' when '${value}' was expected`);
         }
-        if (getUnknownKeyValue) {
+        if (getUnknownKeyValue[1]) {
           throw new Error(`Unexpected value '${getUnknownKeyValue}' for unknown key`);
         }
         respond(res, 200, {});
