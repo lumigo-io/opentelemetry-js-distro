@@ -9,6 +9,7 @@ defaults: &defaults
     auth:
       username: lumigo
       password: $DOCKERHUB_PASSWORD
+  working_directory: ~/opentelemetry-js-distro
 
 workflows:
   test-deploy:
@@ -17,7 +18,6 @@ workflows:
         lumigo_orb_version: *lumigo_orb_version
 
     - test:
-        <<: *defaults
         context: common
         filters:
           branches:
@@ -31,21 +31,18 @@ workflows:
             ignore: main
 
     - lumigo-orb/be-deploy:
-        <<: *defaults
         context: common
         skip_on_auto_test_update: true
         requires:
           - lumigo-orb/is_environment_available
 
     - lumigo-orb/pre_build_artifacts:
-        <<: *defaults
         context: common
         skip_on_auto_test_update: true
         requires:
           - lumigo-orb/is_environment_available
 
     - lumigo-orb/integration-test-prep:
-        <<: *defaults
         context: common
         pre_builds_available: true
         run_test_cleanup: false
@@ -55,7 +52,6 @@ workflows:
           - lumigo-orb/pre_build_artifacts
 
     - lumigo-orb/integration-test-cleanup:
-        <<: *defaults
         name: pre-test-cleanup
         context: common
         skip_on_auto_test_update: true
@@ -63,7 +59,6 @@ workflows:
           - lumigo-orb/integration-test-prep
 
     - lumigo-orb/integration-test-parallel:
-        <<: *defaults
         context: common
         run_test_cleanup: false
         skip_on_auto_test_update: true
@@ -71,7 +66,6 @@ workflows:
           - pre-test-cleanup
 
     - lumigo-orb/integration-test-cleanup:
-        <<: *defaults
         name: post-test-cleanup
         context: common
         skip_on_auto_test_update: true
@@ -79,7 +73,6 @@ workflows:
           - lumigo-orb/integration-test-parallel
 
     - lumigo-orb/e2e-test:
-        <<: *defaults
         context: common
         skip_on_auto_test_update: true
         requires:
@@ -133,10 +126,9 @@ jobs:
           command: npm run lint
       - run:
           name: code-coverage
-          command: npm test --coverage && codecov
+          command: npm run test:unit --coverage && codecov
       - store_artifacts:
           path: coverage
-    working_directory: ~/opentelemetry-js-distro
 
   deploy:
     <<: *defaults
@@ -159,4 +151,3 @@ jobs:
       - run:
           name: deploy to npm
           command: ./scripts/bd_to_prod.sh
-    working_directory: ~/opentelemetry-js-distro
