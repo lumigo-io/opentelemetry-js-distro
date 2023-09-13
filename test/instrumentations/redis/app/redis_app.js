@@ -6,6 +6,12 @@ require('log-timestamp');
 const DEFAULT_REDIS_HOST = 'localhost';
 const DEFAULT_REDIS_PORT = 6379;
 
+// If the redis connection is lost, try to reconnect up to this many times
+const MAX_REDIS_RECONNECT_RETRIES = 10;
+// Between redis reconnect attempts, wait this many milliseconds
+const REDIS_WAIT_BETWEEN_RECONNECTS_MS = 1000;
+
+
 const host = 'localhost';
 let httpServer;
 
@@ -14,12 +20,21 @@ async function openRedisConnection(host, port) {
     socket: {
       host,
       port,
-      reconnectStrategy: false,
+      reconnectStrategy: ((retries, cause) => {
+        console.log(`Connection to Redis lost`);
+        if (retries > MAX_REDIS_RECONNECT_RETRIES) {
+          console.warn(`Reconnecting to Redis retried ${retries} times, giving up`);
+          return new Error(`Too many redis reconnect attempts (${retries}) due to ${cause}`);
+        }
+
+        console.warn(`Reconnecting to Redis after ${retries} retries due to ${cause}`);
+        return REDIS_WAIT_BETWEEN_RECONNECTS_MS;
+      }),
     },
     disableOfflineQueue: true,
   });
 
-  // all events must be listened to to prevent "Socket Closed Unexpectedly" errors
+  // all events must be listened to prevent "Socket Closed Unexpectedly" errors
   client.on('error', (err) => console.error('Redis Client Error', err));
   client.on('connect', () => console.log('Redis Client is connecting'));
   client.on('reconnecting', () => console.log('Redis Client is reconnecting'));
@@ -157,7 +172,9 @@ const requestListener = async function (req, res) {
   }
 
   if (client) {
+    console.log('Closing redis connection');
     await client.quit();
+    console.log('Redis connection closed');
   }
 };
 
