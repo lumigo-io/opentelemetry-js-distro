@@ -111,3 +111,19 @@ test/component/node/spans-test*.json
 .vscode
 
 test-spans*.json
+
+# ignore typescript build files
+test/helpers/*.d.ts
+test/helpers/*.d.ts.map
+test/helpers/*.js
+test/helpers/*.js.map
+
+test/integration/*.d.ts
+test/integration/*.d.ts.map
+test/integration/*.js
+test/integration/*.js.map
+
+test/utils/*.d.ts
+test/utils/*.d.ts.map
+test/utils/*.js
+test/utils/*.js.map
