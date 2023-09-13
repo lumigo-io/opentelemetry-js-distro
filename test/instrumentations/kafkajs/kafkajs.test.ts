@@ -16,7 +16,7 @@ import {
 } from './kafkaJsTestUtils';
 
 const DEFAULT_KAFKA_PORT = 9093;
-const DOCKER_START_TIMEOUT = 30_000;
+const DOCKER_START_TIMEOUT = 60_000;
 const DOCKER_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `kafkajs`;
 const SPANS_DIR = join(__dirname, 'spans');

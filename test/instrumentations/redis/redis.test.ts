@@ -11,7 +11,7 @@ import { versionsToTest } from '../../utils/versions';
 import { filterRedisSpans, getExpectedResourceAttributes, getExpectedSpan } from './redisTestUtils';
 
 const DEFAULT_REDIS_PORT = 6379;
-const DEFAULT_STARTUP_TIMEOUT = 45_000; // includes time to install packages
+const DEFAULT_STARTUP_TIMEOUT = 90_000; // includes time to install packages
 const DEFAULT_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `redis`;
 const SPANS_DIR = join(__dirname, 'spans');
