@@ -1,4 +1,4 @@
-name: Send PR close event to the environment manager
+name: Check PR title format
 
 on:
     pull_request:
@@ -22,5 +22,5 @@ jobs:
                       const title = context.payload.pull_request.title;
                       const regex = /^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([a-z0-9-]+\))?: .{1,50}/;
                       if (!regex.test(title)) {
-                          core.setFailed("PR title is not in the correct format. Please use the following format: <type>(<scope>): <description>");
+                          core.setFailed(`PR title "${title}" is not in the correct format. Please use the following format: <type>(<scope>): <description>`);
                       }
