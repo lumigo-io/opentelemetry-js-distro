@@ -1,11 +1,7 @@
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Instrumentation, registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource, detectResources, envDetector, processDetector } from '@opentelemetry/resources';
-import {
-  BasicTracerProvider,
-  BatchSpanProcessor,
-  SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
@@ -53,6 +49,7 @@ export interface LumigoSdkInitialization {
 import { dirname, join } from 'path';
 import { logger } from './logging';
 import { ProcessEnvironmentDetector } from './resources/detectors/ProcessEnvironmentDetector';
+import { LumigoSpanProcessor } from './resources/spanProcessor';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
@@ -190,7 +187,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       });
 
       tracerProvider.addSpanProcessor(
-        new BatchSpanProcessor(otlpExporter, {
+        new LumigoSpanProcessor(otlpExporter, {
           // The maximum queue size. After the size is reached spans are dropped.
           maxQueueSize: 1000,
           // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.

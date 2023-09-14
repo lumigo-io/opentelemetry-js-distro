@@ -5,6 +5,7 @@ import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spa
 import { CommonUtils } from '@lumigo/node-core';
 import { Triggers } from '@lumigo/node-core';
 import { AwsServiceData } from '../spans/awsSpan';
+import { getSpanSkipExportAttributes } from '../resources/spanProcessor';
 
 const extractDynamodbMessageId = (reqBody, method) => {
   if (method === 'PutItem' && reqBody['Item']) {
@@ -33,6 +34,42 @@ const extractDynamodbTableName = (reqBody, method) => {
     return Object.keys(reqBody.RequestItems)[0];
   }
   return tableName;
+};
+
+/**
+ * returns an answer if we should filter empty sqs request spans, based on the LUMIGO_AUTO_FILTER_EMPTY_SQS env var.
+ * The function handles many edge cases, but the basic logic is:
+ * * LUMIGO_AUTO_FILTER_EMPTY_SQS="true" -> return true
+ * * LUMIGO_AUTO_FILTER_EMPTY_SQS="false" -> return false
+ */
+export const shouldAutoFilterEmptySqs = (): boolean => {
+  const defaultResponse = true;
+  const autoFilterEmptySqsRaw = process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS;
+  if (!autoFilterEmptySqsRaw) {
+    return defaultResponse;
+  }
+
+  switch (autoFilterEmptySqsRaw.toLowerCase()) {
+    case 'true':
+      return true;
+    case 'false':
+      return false;
+  }
+
+  logger.warn(
+    `Invalid boolean value for LUMIGO_AUTO_FILTER_EMPTY_SQS env var: ${autoFilterEmptySqsRaw}`
+  );
+  return defaultResponse;
+};
+
+export const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
+  if (!parsedReqBody) {
+    return false;
+  }
+
+  const sqsRequestAction = parsedReqBody['Action'];
+
+  return sqsRequestAction === 'ReceiveMessage' && !messageId && shouldAutoFilterEmptySqs();
 };
 
 export const dynamodbParser = (requestData) => {
@@ -124,6 +161,7 @@ export const eventBridgeParser = (requestData, responseData) => {
 };
 
 export const sqsParser = (requestData, responseData) => {
+  console.log('sqsParser', requestData, responseData);
   const { body: reqBody } = requestData;
   const { body: resBody } = responseData || {};
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;
@@ -177,6 +215,14 @@ export const sqsParser = (requestData, responseData) => {
       trigger: [mainTrigger, ...Triggers.recursiveParseTriggers(inner, mainTrigger.id)],
     });
   }
+
+  if (shouldSkipSqsSpan(parsedReqBody, awsServiceData.messageId)) {
+    logger.info(
+      `Not tracing empty SQS polling requests (override by setting the env var LUMIGO_AUTO_FILTER_EMPTY_SQS=FALSE)`
+    );
+    Object.assign(awsServiceData, getSpanSkipExportAttributes());
+  }
+
   return awsServiceData;
 };
 
@@ -184,7 +230,7 @@ export const kinesisParser = (requestData, responseData) => {
   const { body: reqBody } = requestData;
   const { body: resBody } = responseData;
   const reqBodyJSON = (!!reqBody && JSON.parse(reqBody)) || {};
-  let resBodyJSON = {};
+  let resBodyJSON: object;
   try {
     resBodyJSON = (!!resBody && JSON.parse(resBody)) || {};
   } catch (e) {
