@@ -3,9 +3,12 @@ name: Check PR title format
 on:
     pull_request:
         types:
+            # Everytime a PR is opened, reopened
             - opened
             - reopened
+            # Everytime a PR is edited (for example: changing the title)
             - edited
+            # Everytime the PR head branch is updated (for example after pushing a new commit)
             - synchronize
 
 jobs:
