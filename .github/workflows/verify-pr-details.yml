@@ -18,6 +18,7 @@ jobs:
                   github-token: ${{secrets.GITHUB_TOKEN}}
                   script: |
                       const title = context.payload.pull_request.title;
+                      console.log(`PR title: ${title}`);
                       const regex = /^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([a-z0-9-]+\))?: .{1,50}/;
                       if (!regex.test(title)) {
                           core.setFailed(`PR title "${title}" is not valid semantic commit format. Please use the following format: <type>(<scope>): <description>`);
