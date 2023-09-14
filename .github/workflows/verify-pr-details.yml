@@ -1,10 +1,10 @@
 name: Check PR title format
 
 on:
-    push:
     pull_request:
         types:
             - opened
+            - reopened
             - edited
 
 jobs:
@@ -17,13 +17,8 @@ jobs:
               with:
                   github-token: ${{secrets.GITHUB_TOKEN}}
                   script: |
-                      if (context.payload.pull_request) {
-                          const title = context.payload.pull_request.title;
-                          const regex = /^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([a-z0-9-]+\))?: .{1,50}/;
-                          if (!regex.test(title)) {
-                              core.setFailed(`PR title "${title}" is not valid semantic commit format. Please use the following format: <type>(<scope>): <description>`);
-                          }
-                      }
-                      else {
-                          core.info('Not a pull request, skipping');
+                      const title = context.payload.pull_request.title;
+                      const regex = /^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([a-z0-9-]+\))?: .{1,50}/;
+                      if (!regex.test(title)) {
+                          core.setFailed(`PR title "${title}" is not valid semantic commit format. Please use the following format: <type>(<scope>): <description>`);
                       }
