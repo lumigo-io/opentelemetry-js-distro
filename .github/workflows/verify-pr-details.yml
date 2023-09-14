@@ -8,6 +8,7 @@ on:
             - reopened
             - synchronize
             - closed
+            - edited
 
 jobs:
     # Job that checks the title of the PR & makes sure it fits the semantic versioning format
