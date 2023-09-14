@@ -2,12 +2,8 @@ name: Check PR title format
 
 on:
     pull_request:
-        # Every pull request type
         types:
             - opened
-            - reopened
-            - synchronize
-            - closed
             - edited
 
 jobs:
