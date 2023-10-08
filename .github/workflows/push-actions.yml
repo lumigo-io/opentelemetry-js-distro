@@ -51,6 +51,12 @@ jobs:
         node_cimg_tag: [ 14, 16, 18, 20 ]
         instrumentations_to_test: ${{ fromJson(needs.instrumentations-to-test.outputs.instrumentations) }}
     steps:
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          # see https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners for
+          # runner specs, default swap space is only 2GB
+          swap-size-gb: 10
       - uses: actions/checkout@v3
       - name: Set up Node
         uses: actions/setup-node@v3
