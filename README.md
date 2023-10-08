@@ -276,19 +276,20 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | grpc-js | [@grpc](https://www.npmjs.com/package/@grpc) | 1.8.0~1.8.20 |
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3 |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
-| ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.24.0 |
+| ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5 |
+| | | 5.0.0~5.3.2 |
 | kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
 | | | 4.0.0~4.16.0 |
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2 |
-| | | 5.0.0~5.2.0 |
+| | | 5.0.0~5.3.0 |
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8 |
 
 ### Activating your Prisma client's instrumentation
 
 If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
 
-```json
+```prisma
 generator client {
   provider = "prisma-client-js"
   previewFeatures = ["tracing"]
