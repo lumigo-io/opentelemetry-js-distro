@@ -35,8 +35,7 @@ jobs:
     - uses: actions/checkout@v3
     - id: list_instrumentations
       run: |
-        instrumentations_as_json_list=$( \
-          ls -1 test/instrumentations \
+        instrumentations_as_json_list=$( ls -1 test/instrumentations \
           | jq --raw-input --slurp 'split("\n") \
           | map(select(. != ""))' \
           | jq -r tostring \
