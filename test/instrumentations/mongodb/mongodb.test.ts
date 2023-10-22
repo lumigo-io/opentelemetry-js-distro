@@ -16,7 +16,7 @@ import {
   getExpectedSpanWithParent,
 } from './mongodbTestUtils';
 
-const DOCKER_WARMUP_TIMEOUT = 30_000;
+const DOCKER_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `mongodb`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -108,7 +108,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
         }
       );
-    }, 15_000);
+    }, DOCKER_WARMUP_TIMEOUT);
 
     afterEach(async function () {
       if (testApp) {
@@ -139,8 +139,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         timeout: TEST_TIMEOUT,
       },
       async function () {
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump(`/test-mongodb`);
+        await testApp.invokeGetPath(`/test-mongodb`);
 
+        const spans = await testApp.getFinalSpans(5);
         expect(filterMongoSpans(spans)).toHaveLength(5);
 
         let resourceAttributes = getExpectedResourceAttributes();

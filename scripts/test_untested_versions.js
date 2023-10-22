@@ -8,6 +8,9 @@ const {
   restorePackageVersionsFromBackup,
 } = require('./tested-versions-file-utils');
 
+const isRunningOnCI = process.env['GITHUB_ACTIONS']?.length || process.env['CI'] == 'true';
+console.info(`\nTesting untested package versions ${isRunningOnCI ? 'on CI' : 'locally'}...`);
+
 const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(function (package) {
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();
   const hasTestedVersionsFile =
@@ -16,8 +19,11 @@ const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(fu
   return isDirectory && hasTestedVersionsFile;
 });
 
-let instrumentationToTest = instrumentationsFolders.filter(instrumentation => {
-  return !process.env.INSTRUMENTATION_UNDER_TEST || process.env.INSTRUMENTATION_UNDER_TEST === instrumentation
+let instrumentationToTest = instrumentationsFolders.filter((instrumentation) => {
+  return (
+    !process.env.INSTRUMENTATION_UNDER_TEST ||
+    process.env.INSTRUMENTATION_UNDER_TEST === instrumentation
+  );
 });
 
 console.info(`\nDiscovering untested versions of: ${instrumentationToTest.join(', ')}`);
@@ -49,7 +55,7 @@ for (const package of instrumentationToTest) {
 
     // if this is run locally, only test the first and last versions
     untestedVersions =
-      process.env['GITHUB_ACTIONS']?.length || untestedVersions.length < 3
+      isRunningOnCI || untestedVersions.length < 3
         ? untestedVersions
         : [untestedVersions[0], untestedVersions[untestedVersions.length - 1]];
 
@@ -59,7 +65,9 @@ for (const package of instrumentationToTest) {
     );
     try {
       execSync(
-        `npm run test:instrumentations -- --testPathPattern=test/instrumentations/${package}`,
+        `npm run test:instrumentations${
+          isRunningOnCI ? ':ci' : ''
+        } -- --testPathPattern=test/instrumentations/${package}`,
         {
           stdio: 'inherit',
         }

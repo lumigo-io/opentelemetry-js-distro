@@ -13,7 +13,8 @@
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
     "semantic-release": "semantic-release",
     "test:unit": "npm run build && NODE_OPTIONS=--unhandled-rejections=strict jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
-    "test:instrumentations": "npm run build && jest -c jest.instrumentations.config.js --detectOpenHandles --runInBand --forceExit --silent=false",
+    "test:instrumentations": "npm run build && jest -c jest.instrumentations.config.js --detectOpenHandles --runInBand --silent=false",
+    "test:instrumentations:ci": "npm run build && jest -c jest.instrumentations.config.js --runInBand --forceExit --silent=false",
     "test:untested-instrumentations": "node scripts/test_untested_versions.js",
     "tsc": "tsc"
   },
@@ -97,16 +98,8 @@
     "webpack-cli": "^4.10.0"
   },
   "release": {
-    "branches": [
-      "main"
-    ],
-    "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      "@semantic-release/npm",
-      "@semantic-release/git",
-      "@semantic-release/github"
-    ]
+    "branches": ["main"],
+    "plugins": ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator", "@semantic-release/npm", "@semantic-release/git", "@semantic-release/github"]
   },
   "husky": {
     "hooks": {

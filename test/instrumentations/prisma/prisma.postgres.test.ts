@@ -2,12 +2,7 @@ import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
 import { join } from 'path';
-import {
-  MySqlContainer,
-  PostgreSqlContainer,
-  StartedMySqlContainer,
-  StartedPostgreSqlContainer,
-} from 'testcontainers';
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from 'testcontainers';
 import { itTest } from '../../integration/setup';
 import { getSpanByName } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
@@ -39,20 +34,19 @@ type EngineType = {
   warmupTimeout: number,
 };
 
-type StartedContainer = StartedPostgreSqlContainer | StartedMySqlContainer;
+type StartedContainer = StartedPostgreSqlContainer;
 
-const DEFAULT_MYSQL_PORT = 3306;
 const DEFAULT_POSTGRES_PORT = 5432;
 const DEFAULT_STARTUP_TIMEOUT = 45_000; // includes time to install packages
 const DEFAULT_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `prisma`;
 const INSTRUMENTATION_CLIENT_NAME = `@prisma/client`;
 const SPANS_DIR = join(__dirname, 'spans');
+const TEARDOWN_TIMEOUT = 15_000;
 const TEST_TIMEOUT = 600_000;
 
 const buildConnectionUrl = (engine: EngineType, host: string, port: number): string => {
   switch (engine.name) {
-    case 'mysql':
     case 'postgres':
       const configuration = engine.databaseConfiguration;
       return `${engine.provider}://${configuration.username}:${configuration.password}@${host}:${port}/${configuration.database}`;
@@ -62,19 +56,6 @@ const buildConnectionUrl = (engine: EngineType, host: string, port: number): str
 };
 
 const engines: EngineType[] = [
-  {
-    name: 'mysql',
-    appDir: join(__dirname, 'mysql_app'),
-    databaseConfiguration: {
-      database: 'testdb',
-      username: 'testuser',
-      password: 'testpassword',
-    },
-    provider: 'mysql',
-    port: DEFAULT_MYSQL_PORT,
-    startupTimeout: DEFAULT_STARTUP_TIMEOUT,
-    warmupTimeout: DEFAULT_WARMUP_TIMEOUT,
-  },
   {
     name: 'postgres',
     appDir: join(__dirname, 'postgres_app'),
@@ -103,19 +84,6 @@ const startPostgresContainer = async (
     .start();
 };
 
-const startMySqlContainer = async (
-  configuration: DatabaseConfiguration,
-  timeout: number = DEFAULT_STARTUP_TIMEOUT
-): Promise<StartedMySqlContainer> => {
-  return await new MySqlContainer('mysql:latest')
-    .withExposedPorts(DEFAULT_MYSQL_PORT)
-    .withStartupTimeout(timeout)
-    .withDatabase(configuration.database)
-    .withUsername(configuration.username)
-    .withUserPassword(configuration.password)
-    .start();
-};
-
 const startContainer = async (
   engine: EngineType,
   timeout: number = engine.startupTimeout
@@ -124,9 +92,6 @@ const startContainer = async (
   switch (engine.name) {
     case 'postgres':
       container = await startPostgresContainer(engine.databaseConfiguration, timeout);
-      break;
-    case 'mysql':
-      container = await startMySqlContainer(engine.databaseConfiguration, timeout);
       break;
     default:
       throw new Error(`Unsupported engine: ${engine.name}`);
@@ -142,10 +107,6 @@ let warmupState = {
     warmupInitiated: false,
     warmupCompleted: false,
   },
-  mysql: {
-    warmupInitiated: false,
-    warmupCompleted: false,
-  },
 };
 
 const warmupContainer = async (engine: EngineType): Promise<boolean> => {
@@ -154,7 +115,7 @@ const warmupContainer = async (engine: EngineType): Promise<boolean> => {
     console.warn(
       `Warming up ${engine.name} container loading, timeout of ${engine.warmupTimeout}ms to account for Docker image pulls...`
     );
-    let warmupContainer: StartedPostgreSqlContainer | StartedMySqlContainer;
+    let warmupContainer: StartedPostgreSqlContainer;
     try {
       [warmupContainer] = await startContainer(engine, engine.warmupTimeout);
       await warmupContainer.stop();
@@ -176,7 +137,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     for (const engine of engines) {
       describe(`prisma ${versionToTest} against the ${engine.name} database engine`, function () {
         let testApp: TestApp;
-        let container: StartedPostgreSqlContainer | StartedMySqlContainer;
+        let container: StartedPostgreSqlContainer;
         let containerHost: string;
         let containerPort: number;
 
@@ -202,22 +163,32 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
             },
           });
+
+          TestApp.runAuxiliaryScript('setup', engine.appDir, {
+            DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
+          });
         }, engine.startupTimeout);
 
         afterEach(async function () {
-          if (testApp) {
-            console.info('Killing test app...');
+          try {
             await testApp.kill();
-          } else {
-            console.warn('Test app was not run.');
+          } catch (err) {
+            console.warn('Failed to kill test app', err);
           }
+
+          try {
+            TestApp.runAuxiliaryScript('teardown', engine.appDir);
+          } catch (err) {
+            console.warn('Failed to run teardown script', err);
+          }
+
           if (container) {
             console.info(`Stopping ${engine.name} container...`);
             await container.stop();
           } else {
             console.warn(`${engine.name} container was not started.`);
           }
-        });
+        }, TEARDOWN_TIMEOUT);
 
         afterAll(function () {
           uninstallPackages({
@@ -238,8 +209,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             const exporterFile = `${SPANS_DIR}/${engine.name}-basics.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
 
             testApp = new TestApp(engine.appDir, INSTRUMENTATION_NAME, exporterFile, {
-              OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
               DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
+              OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
             });
 
             await testApp.invokeGetPath(`/add-user?name=Alice&email=alice@prisma.io`);
@@ -249,6 +220,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             // from prisma 4.14.0 onwards, the number of spans is
             // inconsistent, we look for a minimum of 18 spans in total
             const spans = await testApp.getFinalSpans(18);
+            await testApp.kill();
 
             const prismaSpans = filterPrismaSpans(spans);
 

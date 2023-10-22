@@ -76,10 +76,17 @@ const requestListener = async function (req, res) {
         });
       break;
 
-    case '/stop-server':
-      grpcServer.stop();
-      grpcServer = null;
+    case '/quit':
+      console.error('Received quit command');
+      try {
+        grpcServer.stop();
+        grpcServer = null;
+      } catch (err) {
+        console.error();
+        `Error stopping gRPC server`, err;
+      }
       respond(res, 200, 'done');
+      httpServer.close();
       break;
 
     default:

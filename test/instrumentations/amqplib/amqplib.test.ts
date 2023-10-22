@@ -16,7 +16,7 @@ import {
 } from './amqplibTestUtils';
 
 const DEFAULT_RABBITMQ_PORT = 5672;
-const DOCKER_WARMUP_TIMEOUT = 30_000;
+const DOCKER_WARMUP_TIMEOUT = 60_000;
 const INSTRUMENTATION_NAME = `amqplib`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
@@ -84,12 +84,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     }, 15_000);
 
     afterEach(async function () {
-      if (testApp) {
-        console.info('Killing test app...');
+      try {
         await testApp.kill();
-      } else {
-        console.warn('Test app was not run.');
+      } catch (err) {
+        console.warn('Failed to kill test app', err);
       }
+
       if (rabbitmqContainer) {
         console.info('Stopping RabbitMQ container...');
         await rabbitmqContainer.stop();

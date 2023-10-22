@@ -11,7 +11,6 @@ const MAX_REDIS_RECONNECT_RETRIES = 10;
 // Between redis reconnect attempts, wait this many milliseconds
 const REDIS_WAIT_BETWEEN_RECONNECTS_MS = 1000;
 
-
 const host = 'localhost';
 let httpServer;
 
@@ -20,7 +19,7 @@ async function openRedisConnection(host, port) {
     socket: {
       host,
       port,
-      reconnectStrategy: ((retries, cause) => {
+      reconnectStrategy: (retries, cause) => {
         console.log(`Connection to Redis lost`);
         if (retries > MAX_REDIS_RECONNECT_RETRIES) {
           console.warn(`Reconnecting to Redis retried ${retries} times, giving up`);
@@ -29,7 +28,7 @@ async function openRedisConnection(host, port) {
 
         console.warn(`Reconnecting to Redis after ${retries} retries due to ${cause}`);
         return REDIS_WAIT_BETWEEN_RECONNECTS_MS;
-      }),
+      },
     },
     disableOfflineQueue: true,
   });
@@ -165,6 +164,12 @@ const requestListener = async function (req, res) {
         console.error(`Error in transaction`, err);
         respond(res, 500, { error: err });
       }
+      break;
+
+    case '/quit':
+      console.error('Received quit command');
+      respond(res, 200, {});
+      httpServer.close();
       break;
 
     default:
