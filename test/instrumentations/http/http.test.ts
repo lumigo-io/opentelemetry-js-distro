@@ -41,6 +41,12 @@ describe('Instrumentation tests for the http package', function () {
     });
 
     afterEach(async () => {
+        try {
+            await testApp.kill();
+        } catch (err) {
+            console.warn('Failed to kill test app', err);
+        }
+
         if (server) {
             let promiseResolve: Function = () => {};
             const p = new Promise(function(resolve) {
@@ -51,9 +57,6 @@ describe('Instrumentation tests for the http package', function () {
             await p;
             server = undefined;
         }
-
-        console.info('killing test app...');
-        await testApp.kill();
     });
 
     test('basic http test', async function () {
@@ -79,8 +82,9 @@ describe('Instrumentation tests for the http package', function () {
             TARGET_URL: `http://localhost:${targetPort}`,
         });
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test1');
+        await testApp.invokeGetPath('/test1');
 
+        const spans = await testApp.getFinalSpans(2);
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);
@@ -156,8 +160,9 @@ describe('Instrumentation tests for the http package', function () {
             TARGET_URL: `http://localhost:${targetPort}`,
         });
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test2');
+        await testApp.invokeGetPath('/test2');
 
+        const spans = await testApp.getFinalSpans(2);
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);
@@ -217,8 +222,9 @@ describe('Instrumentation tests for the http package', function () {
             TARGET_URL: `http://localhost:${targetPort}`,
         });
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
+        await testApp.invokeGetPath('/large-response');
 
+        const spans = await testApp.getFinalSpans(2);
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);
@@ -277,8 +283,9 @@ describe('Instrumentation tests for the http package', function () {
         });
         const port = await testApp.port();
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
+        await testApp.invokeGetPath('/large-response');
 
+        const spans = await testApp.getFinalSpans(2);
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);
@@ -340,8 +347,10 @@ describe('Instrumentation tests for the http package', function () {
         });
 
         const port = await testApp.port();
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
 
+        await testApp.invokeGetPath('/large-response');
+
+        const spans = await testApp.getFinalSpans(2);
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);
@@ -400,8 +409,9 @@ describe('Instrumentation tests for the http package', function () {
         });
         const port = await testApp.port();
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/amazon-sigv4');
+        await testApp.invokeGetPath('/amazon-sigv4');
 
+        const spans = await testApp.getFinalSpans(2);
         expect(spans).toHaveLength(2);
 
         const serverSpan = getSpanByKind(spans, 1);

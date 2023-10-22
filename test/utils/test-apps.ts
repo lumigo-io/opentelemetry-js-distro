@@ -40,7 +40,7 @@ export class TestApp {
     }
 
     public static runAuxiliaryScript(scriptName: string, cwd: string, envVars = {}): void {
-        console.info(`running ${scriptName} for test app...`)
+        console.info(`running ${scriptName} for test app in '${cwd}'...`)
         execSync(`npm run ${scriptName}`, {
             cwd,
             env: {
