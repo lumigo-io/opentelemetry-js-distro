@@ -18,6 +18,7 @@
     "tsc": "tsc"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
+  "license": "Apache-2.0",
   "author": "Lumigo",
   "dependencies": {
     "@lumigo/node-core": "1.14.0",
