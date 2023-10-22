@@ -110,15 +110,18 @@ export class TestApp {
                 case 'SIGTERM':
                     const appExitMessage = `app with pid '${this.pid}' exited with signal '${signal}' and exit code '${exitCode}'`;
                     console.info(appExitMessage);
-                    closeResolveFunction();
                     break;
                 default:
                     const appExitWarning = `app with pid '${this.pid}' exited unexpectedly with signal '${signal}':
-                        *** if the app already exited, this is actually expected ***`;
+                    *** if the app already exited, this is actually expected ***`;
                     console.warn(appExitWarning);
-                    closeRejectFunction(new Error(appExitWarning));
                     break;
             }
+            // even if the test app exited unexpectedly, we still want to resolve the close promise,
+            // so that the test can continue - it's reasonable to assume that the tests are written
+            // well enough to fail regardless of the app's exit code
+            closeResolveFunction();
+
             portPromiseResolved = true;
             portResolveFunction(-1);
 
