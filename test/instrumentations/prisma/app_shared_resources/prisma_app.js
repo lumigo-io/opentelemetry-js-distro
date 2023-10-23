@@ -17,7 +17,7 @@ async function createNewUser(name, email) {
     },
   });
 
-  disconnect(prisma);
+  await disconnect(prisma);
 
   return newUser;
 }
@@ -27,14 +27,14 @@ async function selectAllUsers() {
 
   const users = await prisma.user.findMany();
 
-  disconnect(prisma);
+  await disconnect(prisma);
 
   return users;
 }
 
-function disconnect(prisma) {
+async function disconnect(prisma) {
   try {
-    prisma.$disconnect();
+    await prisma.$disconnect();
   } catch (err) {
     console.error(`Error disconnecting from prisma`, err);
   }
