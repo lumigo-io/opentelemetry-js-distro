@@ -296,6 +296,8 @@ generator client {
 }
 ```
 
+**NOTE**: There have been reports of a possible bug that interferes with tracing when multiple Prisma clients have been instantiated, see [Prisma issue #20779](https://github.com/prisma/prisma/issues/20779).
+
 ## Automated dependency reporting
 
 To provide better support and better data-driven product decisions with respect to which packages to support next, the Lumigo OpenTelemetry Distro for JS will report to Lumigo SaaS on startup the packages and their versions used in this application, together with the OpenTelemetry resource data to enable analytics in terms of which platforms use which dependencies.

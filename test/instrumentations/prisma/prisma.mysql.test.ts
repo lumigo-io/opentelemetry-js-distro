@@ -219,7 +219,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             // from prisma 4.14.0 onwards, the number of spans is
             // inconsistent, we look for a minimum of 18 spans in total
             const spans = await testApp.getFinalSpans(18);
-            await testApp.kill();
 
             const prismaSpans = filterPrismaSpans(spans);
 

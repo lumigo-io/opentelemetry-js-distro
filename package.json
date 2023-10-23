@@ -37,7 +37,7 @@
     "@opentelemetry/sdk-trace-base": "1.9.0",
     "@opentelemetry/sdk-trace-node": "1.9.0",
     "@opentelemetry/semantic-conventions": "1.9.0",
-    "@prisma/instrumentation": "^5.2.0",
+    "@prisma/instrumentation": "^5.3.1",
     "opentelemetry-instrumentation-express": "0.35.0",
     "opentelemetry-instrumentation-kafkajs": "^0.39.1",
     "shimmer": "^1.2.1"
@@ -98,8 +98,16 @@
     "webpack-cli": "^4.10.0"
   },
   "release": {
-    "branches": ["main"],
-    "plugins": ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator", "@semantic-release/npm", "@semantic-release/git", "@semantic-release/github"]
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm",
+      "@semantic-release/git",
+      "@semantic-release/github"
+    ]
   },
   "husky": {
     "hooks": {

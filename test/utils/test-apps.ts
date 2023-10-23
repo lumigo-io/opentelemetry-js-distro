@@ -16,6 +16,7 @@ export class TestApp {
     private envVars: any;
     private exitCode: number | null = null;
     private hasAppExited = false;
+    private pid: number | undefined = undefined;
     private portPromise: Promise<Number>;
     private serviceName: string;
     private spanDumpPath: string;
@@ -66,6 +67,8 @@ export class TestApp {
             shell: true,
         });
 
+        this.pid = this.app.pid;
+
         let portResolveFunction: Function;
         this.portPromise = new Promise((resolve) => {
             portResolveFunction = resolve;
@@ -102,7 +105,7 @@ export class TestApp {
             if (this.hasAppExited) {
                 return;
             }
-
+            this.hasAppExited = true;
             this.exitCode = exitCode;
 
             switch (signal) {
@@ -124,23 +127,13 @@ export class TestApp {
 
             portPromiseResolved = true;
             portResolveFunction(-1);
-
-            this.hasAppExited = true;
         });
     };
 
-    public isAppRunning(): boolean {
-        return this.hasAppExited || this.app.exitCode === null;
-    }
-
-    public pid(): Number {
-        return this.app.pid!
-    }
-
     public async port(): Promise<Number> {
         const port = Number(await this.portPromise);
-        if (port < 0 || !this.isAppRunning()) {
-            throw new Error(`port unavailable for test app with pid '${this.pid()}'`);
+        if (port < 0 || this.hasAppExited) {
+            throw new Error(`port unavailable for test app with pid '${this.pid}'`);
         }
         return port;
     }
@@ -220,7 +213,7 @@ export class TestApp {
         const url = `http-get://localhost:${port}/quit`;
 
         return new Promise<void>((resolve, reject) => {
-            console.info(`invoking shutdown url for app wth pid ${this.pid()}: ${url} ...`);
+            console.info(`invoking shutdown url for app wth pid ${this.pid}: ${url} ...`);
             waitOn(
                 {
                     resources: [url],
@@ -245,38 +238,29 @@ export class TestApp {
     }
 
     public async getFinalSpans(expectedNumberOfSpans: number | null = null, timeout: number | null = 3_000): Promise<Span[]> {
-        await this.invokeShutdown();
-
         const spanDumpPath = this.spanDumpPath;
 
         let spans = readSpanDump(spanDumpPath)
 
-        if (!expectedNumberOfSpans) {
-            return spans;
+        if (expectedNumberOfSpans) {
+            const sleepTime = 500;
+            let timeoutRemaining = timeout || 10_000;
+            while (spans.length < expectedNumberOfSpans && timeoutRemaining > 0) {
+                await sleep(sleepTime);
+                timeoutRemaining -= sleepTime;
+                spans = readSpanDump(spanDumpPath);
+            }
         }
 
-        const sleepTime = 500;
-        let timeoutRemaining = timeout || 10_000;
-        while (spans.length < expectedNumberOfSpans && timeoutRemaining > 0) {
-            await sleep(sleepTime);
-            timeoutRemaining -= sleepTime;
-            spans = readSpanDump(spanDumpPath);
-        }
-
+        await this.invokeShutdown();
         return spans;
     }
 
     public async kill(): Promise<number | null> {
-        this.exitCode = this.exitCode || Number(this.app.exitCode);
-        if (!this.isAppRunning()) {
-            console.info(`app with pid '${this.pid()}' already exited with exit code ${this.exitCode}, skipping kill...`);
-            return this.exitCode;
-        }
-        console.info(`killing app with pid '${this.pid()}'...`);
+        console.info(`killing app with pid '${this.pid}'...`);
         try {
             this.app.kill('SIGKILL');
             await this.closePromise;
-            console.info(`app with pid '${this.pid()}' exited with exit code '${this.exitCode}'`);
         } catch (err) {
             console.warn(err);
         }

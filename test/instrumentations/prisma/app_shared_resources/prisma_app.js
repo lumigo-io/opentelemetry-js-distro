@@ -7,6 +7,39 @@ require('log-timestamp');
 const host = 'localhost';
 let httpServer;
 
+async function createNewUser(name, email) {
+  const prisma = new PrismaClient();
+
+  const newUser = await prisma.user.create({
+    data: {
+      name,
+      email,
+    },
+  });
+
+  disconnect(prisma);
+
+  return newUser;
+}
+
+async function selectAllUsers() {
+  const prisma = new PrismaClient();
+
+  const users = await prisma.user.findMany();
+
+  disconnect(prisma);
+
+  return users;
+}
+
+function disconnect(prisma) {
+  try {
+    prisma.$disconnect();
+  } catch (err) {
+    console.error(`Error disconnecting from prisma`, err);
+  }
+}
+
 function respond(res, status, body) {
   console.log(`responding with ${status} ${JSON.stringify(body)}`);
   res.setHeader('Content-Type', 'application/json');
@@ -25,15 +58,7 @@ const requestListener = async function (req, res) {
   switch (requestUrl.pathname) {
     case '/add-user':
       try {
-        const prisma = new PrismaClient();
-
-        const newUser = await prisma.user.create({
-          data: {
-            name,
-            email,
-          },
-        });
-
+        const newUser = await createNewUser(name, email);
         console.error('Created new user:', newUser);
         respond(res, 200, newUser);
       } catch (err) {
@@ -44,10 +69,7 @@ const requestListener = async function (req, res) {
 
     case '/get-users':
       try {
-        const prisma = new PrismaClient();
-
-        const users = await prisma.user.findMany();
-
+        const users = await selectAllUsers();
         console.error('Selected all users:', users);
         respond(res, 200, users);
       } catch (err) {
