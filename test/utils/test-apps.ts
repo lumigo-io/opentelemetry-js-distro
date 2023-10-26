@@ -237,14 +237,14 @@ export class TestApp {
         });
     }
 
-    public async getFinalSpans(expectedNumberOfSpans: number | null = null, timeout: number | null = 3_000): Promise<Span[]> {
+    public async getFinalSpans(expectedNumberOfSpans: number | null = null, timeout = 10_000): Promise<Span[]> {
         const spanDumpPath = this.spanDumpPath;
 
         let spans = readSpanDump(spanDumpPath)
 
         if (expectedNumberOfSpans) {
             const sleepTime = 500;
-            let timeoutRemaining = timeout || 10_000;
+            let timeoutRemaining = timeout;
             while (spans.length < expectedNumberOfSpans && timeoutRemaining > 0) {
                 await sleep(sleepTime);
                 timeoutRemaining -= sleepTime;
