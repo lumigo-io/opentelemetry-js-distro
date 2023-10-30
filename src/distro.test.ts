@@ -473,7 +473,7 @@ function checkBasicResourceAttributes(resource) {
 
   // Process detector
   expect(resourceAttributeKeys).toContain('process.command');
-  expect(resourceAttributeKeys).toContain('process.command_line');
+  expect(resourceAttributeKeys).toContain('process.command_args');
   expect(resourceAttributeKeys).toContain('process.executable.name');
   expect(resourceAttributeKeys).toContain('process.pid');
   expect(resourceAttributeKeys).toContain('process.runtime.name');
