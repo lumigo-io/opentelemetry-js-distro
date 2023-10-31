@@ -437,7 +437,11 @@ const tracerProvider: BasicTracerProvider = (await lumigo.init).tracerProvider;
 
 // Do some quick logic
 
-await tracerProvider.forceFlush();
+try {
+  await tracerProvider.forceFlush();
+} catch (err) {
+  console.error(err);
+}
 
 // Now the Node.js process can terminate, with all the spans closed so far sent to Lumigo
 ```
