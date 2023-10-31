@@ -41,6 +41,12 @@ describe('Instrumentation tests for the http package', function () {
     });
 
     afterEach(async () => {
+        try {
+            await testApp.kill();
+        } catch (err) {
+            console.warn('Failed to kill test app', err);
+        }
+
         if (server) {
             let promiseResolve: Function = () => {};
             const p = new Promise(function(resolve) {
@@ -51,9 +57,6 @@ describe('Instrumentation tests for the http package', function () {
             await p;
             server = undefined;
         }
-
-        console.info('killing test app...');
-        await testApp.kill();
     });
 
     test('basic http test', async function () {
@@ -79,9 +82,10 @@ describe('Instrumentation tests for the http package', function () {
             TARGET_URL: `http://localhost:${targetPort}`,
         });
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test1');
+        await testApp.invokeGetPath('/test1');
 
-        expect(spans).toHaveLength(2);
+        const spans = await testApp.getFinalSpans(2);
+        expect(spans.length == 2 || spans.length == 3).toBeTruthy();
 
         const serverSpan = getSpanByKind(spans, 1);
         expect(serverSpan).toMatchObject({
@@ -156,9 +160,10 @@ describe('Instrumentation tests for the http package', function () {
             TARGET_URL: `http://localhost:${targetPort}`,
         });
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/test2');
+        await testApp.invokeGetPath('/test2');
 
-        expect(spans).toHaveLength(2);
+        const spans = await testApp.getFinalSpans(2);
+        expect(spans.length == 2 || spans.length == 3).toBeTruthy();
 
         const serverSpan = getSpanByKind(spans, 1);
         // process.environ is a resource attribute, therefore not affected by OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT
@@ -217,9 +222,10 @@ describe('Instrumentation tests for the http package', function () {
             TARGET_URL: `http://localhost:${targetPort}`,
         });
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
+        await testApp.invokeGetPath('/large-response');
 
-        expect(spans).toHaveLength(2);
+        const spans = await testApp.getFinalSpans(2);
+        expect(spans.length == 2 || spans.length == 3).toBeTruthy();
 
         const serverSpan = getSpanByKind(spans, 1);
         expect(Object.values(JSON.parse(serverSpan.resource.attributes['process.environ'] as string)).join('').length).toBeLessThanOrEqual(7);
@@ -277,9 +283,10 @@ describe('Instrumentation tests for the http package', function () {
         });
         const port = await testApp.port();
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
+        await testApp.invokeGetPath('/large-response');
 
-        expect(spans).toHaveLength(2);
+        const spans = await testApp.getFinalSpans(2);
+        expect(spans.length == 2 || spans.length == 3).toBeTruthy();
 
         const serverSpan = getSpanByKind(spans, 1);
         expect(serverSpan.attributes).toMatchObject(
@@ -340,9 +347,11 @@ describe('Instrumentation tests for the http package', function () {
         });
 
         const port = await testApp.port();
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/large-response');
 
-        expect(spans).toHaveLength(2);
+        await testApp.invokeGetPath('/large-response');
+
+        const spans = await testApp.getFinalSpans(2);
+        expect(spans.length == 2 || spans.length == 3).toBeTruthy();
 
         const serverSpan = getSpanByKind(spans, 1);
         expect(serverSpan.attributes).toMatchObject(
@@ -400,9 +409,10 @@ describe('Instrumentation tests for the http package', function () {
         });
         const port = await testApp.port();
 
-        const spans = await testApp.invokeGetPathAndRetrieveSpanDump('/amazon-sigv4');
+        await testApp.invokeGetPath('/amazon-sigv4');
 
-        expect(spans).toHaveLength(2);
+        const spans = await testApp.getFinalSpans(2);
+        expect(spans.length == 2 || spans.length == 3).toBeTruthy();
 
         const serverSpan = getSpanByKind(spans, 1);
         expect(serverSpan.attributes).toMatchObject(

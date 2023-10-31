@@ -27,6 +27,12 @@ app.get('/basic', async (_, res) => {
   res.status(200).send('Hello world');
 });
 
+app.get('/quit', async (_, res) => {
+  console.error('Received quit command');
+  res.status(200).send({});
+  server.close();
+});
+
 server = app.listen(0, () => {
   const port = server.address().port;
   console.error(`HTTP server listening on port ${port}`);
