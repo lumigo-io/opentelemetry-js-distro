@@ -276,6 +276,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | grpc-js | [@grpc](https://www.npmjs.com/package/@grpc) | 1.8.0~1.8.20 |
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3 |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
+| fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.29.0~4.24.3 |
 | ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5 |
 | | | 5.0.0~5.3.2 |
 | kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4 |

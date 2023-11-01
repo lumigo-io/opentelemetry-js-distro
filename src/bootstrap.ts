@@ -11,6 +11,7 @@ import { FileSpanExporter } from './exporters';
 import LumigoGrpcInstrumentation from './instrumentations/@grpc/grpc-js/GrpcInstrumentation';
 import LumigoAmqplibInstrumentation from './instrumentations/amqplib/AmqplibInstrumentation';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
+import LumigoFastifyInstrumentation from './instrumentations/fastify/FastifyInstrumentation';
 import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentation';
 import LumigoIORedisInstrumentation from './instrumentations/ioredis/IORedisInstrumentation';
 import LumigoKafkaJsInstrumentation from './instrumentations/kafkajs/KafkaJsInstrumentation';
@@ -95,6 +96,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoAmqplibInstrumentation(),
       new LumigoExpressInstrumentation(),
       new LumigoGrpcInstrumentation(),
+      new LumigoFastifyInstrumentation(),
       new LumigoHttpInstrumentation(...ignoredHostnames),
       new LumigoIORedisInstrumentation(),
       new LumigoKafkaJsInstrumentation(),
