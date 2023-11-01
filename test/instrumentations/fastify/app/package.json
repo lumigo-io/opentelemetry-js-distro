@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-fastify-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry fastify_app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
+    "fastify": "^3.29.0"
+  }
+}
