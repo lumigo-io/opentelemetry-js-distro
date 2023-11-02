@@ -1,5 +1,6 @@
 import { ChildProcessWithoutNullStreams, execSync, spawn } from 'child_process';
 import { existsSync, unlinkSync } from 'fs';
+import fetch from 'node-fetch';
 import waitOn from 'wait-on';
 import { Span, readSpanDump } from './spans';
 import { sleep } from './time';
@@ -169,6 +170,16 @@ export class TestApp {
                     }
                 }
             );
+        });
+    }
+
+    public async invokePostPath(path: string, payload: any): Promise<any> {
+        const port = await this.port()
+
+        return await fetch(`http://localhost:${port}/${path.replace(/^\/+/, '')}`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'application/json' },
         });
     }
 

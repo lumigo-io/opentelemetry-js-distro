@@ -127,5 +127,72 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         });
       }
     );
+
+    itTest(
+      {
+        testName: `echo: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile = `${SPANS_DIR}/echo.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
+
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+        });
+
+        const echoResponse = await testApp.invokePostPath('/echo', { some: 'data' });
+        expect(echoResponse.status).toEqual(200);
+        expect(await echoResponse.json()).toMatchObject({ some: 'data' });
+
+        const spans = await testApp.getFinalSpans(2);
+
+        expect(getSpanByKind(spans, SpanKind.SERVER)).toMatchObject({
+          traceId: expect.any(String),
+          name: 'POST /echo',
+          id: expect.any(String),
+          kind: SpanKind.SERVER,
+          timestamp: expect.any(Number),
+          duration: expect.any(Number),
+          resource: expectedResourceAttributes,
+          attributes: {
+            'http.method': 'POST',
+            'http.target': '/echo',
+            'http.host': expect.stringMatching(/localhost:\d+/),
+            'http.scheme': 'http',
+            'net.peer.ip': expect.any(String),
+            'http.route': '/echo',
+            'http.status_code': 200,
+          },
+          status: {
+            code: SpanStatusCode.UNSET,
+          },
+          events: [],
+        });
+
+        expect(getSpanByKind(spans, SpanKind.INTERNAL)).toMatchObject({
+          traceId: expect.any(String),
+          parentId: expect.any(String),
+          name: expect.stringMatching(/request handler - .+/),
+          id: expect.any(String),
+          kind: SpanKind.INTERNAL,
+          timestamp: expect.any(Number),
+          duration: expect.any(Number),
+          resource: expectedResourceAttributes,
+          attributes: {
+            'http.request.query': '{}',
+            'http.request.headers': expect.stringMatching(/\{.*\}/),
+            // 'http.response.headers': expect.stringMatching(/\{.*\}/),
+            // 'http.response.body': '"Hello world"',
+            'http.route': '/echo',
+          },
+          status: {
+            code: SpanStatusCode.UNSET,
+          },
+          events: [],
+        });
+      }
+    );
   }
 );

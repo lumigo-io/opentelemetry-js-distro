@@ -18,8 +18,13 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.get('/basic', async (request, reply) => {
-  await tracerProvider.forceFlush();
   reply.header('Content-Type', 'text/plain').send('Hello world');
+});
+
+fastify.post('/echo', async (request, reply) => {
+  reply
+    .header('Content-Type', 'text/plain')
+    .send(typeof request.body === 'string' ? request.body : JSON.stringify(request.body));
 });
 
 fastify.get('/quit', async (request, reply) => {
