@@ -1,0 +1,13 @@
+{
+  "name": "lumigo-fetch-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry fetch_app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz"
+  }
+}
