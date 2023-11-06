@@ -3,6 +3,7 @@ import { Instrumentation, registerInstrumentations } from '@opentelemetry/instru
 import { Resource, detectResources, envDetector, processDetector } from '@opentelemetry/resources';
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { Instrumentor } from './instrumentations/instrumentor';
 
 import * as awsResourceDetectors from '@opentelemetry/resource-detector-aws';
 import { DEFAULT_DEPENDENCIES_ENDPOINT, DEFAULT_LUMIGO_ENDPOINT } from './constants';
@@ -93,12 +94,11 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       ignoredHostnames.push(new URL(DEFAULT_DEPENDENCIES_ENDPOINT).hostname);
     }
 
-    const instrumentationsToInstall = [
+    const instrumentationsToInstall:Instrumentor<any>[] = [
       new LumigoAmqplibInstrumentation(),
       new LumigoExpressInstrumentation(),
       new LumigoGrpcInstrumentation(),
       new LumigoFastifyInstrumentation(),
-      new LumigoFetchInstrumentation(),
       new LumigoHttpInstrumentation(...ignoredHostnames),
       new LumigoIORedisInstrumentation(),
       new LumigoKafkaJsInstrumentation(),
@@ -106,6 +106,12 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
     ].filter((i) => i.isApplicable());
+
+    // if the node runtime version is greater than 18, add the fetch instrumentation
+    const [major] = process.versions.node.split('.').map(Number);
+    if (major >= 18) {
+      instrumentationsToInstall.push(new LumigoFetchInstrumentation());
+    }
 
     /*
      * Register instrumentation globally, so that all tracer providers

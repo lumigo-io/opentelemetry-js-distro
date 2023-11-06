@@ -3,7 +3,9 @@ import { Instrumentor } from '../instrumentor';
 
 export default class LumigoFetchInstrumentation extends Instrumentor<FetchInstrumentation> {
   getInstrumentedModule(): string {
-    return 'fetch';
+    // the fetch instrumentation must be applied based on the node runtime version,
+    // there is not relevant module to instrument
+    return '';
   }
 
   getInstrumentation(): FetchInstrumentation {

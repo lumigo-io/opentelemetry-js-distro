@@ -64,7 +64,7 @@ describe(`Instrumentation tests for the fetch api`, function () {
 
       const exporterFile = `${SPANS_DIR}/get.json.fetch.json`;
 
-      testApp = new TestApp(TEST_APP_DIR, 'fetch', exporterFile, {
+      testApp = new TestApp(TEST_APP_DIR, 'fetch-app', exporterFile, {
         OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
       });
 
