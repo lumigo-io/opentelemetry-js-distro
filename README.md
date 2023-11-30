@@ -100,7 +100,9 @@ Specifically supported are:
 * `LUMIGO_DEBUG=TRUE`: Enables debug logging
 * `LUMIGO_DEBUG_SPANDUMP=<path|console:log|console:error>`: Log all spans collected to the `<path>` file or, the value is `console:log` or `console:error`, to `console.log` or `console.error`; this is an option intended only for debugging purposes and should *not* be used in production.
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
+* `LUMIGO_REPORT_DEPENDENCIES=false`: This option disables the built-in dependency reporting to Lumigo SaaS. For more information, refer to the [Automated dependency reporting](#automated-dependency-reporting) section.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
+* `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions in process environment data, HTTP headers, payloads and queries. All regular expressions are case-insensitive. The "magic" value `all` will redact everything. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`. More fine-grained settings can be applied via the following environment variables, which will override `LUMIGO_SECRET_MASKING_REGEX` for a specific type of data:
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES` applies secret redaction to HTTP request bodies
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_HEADERS` applies secret redaction to HTTP request headers
@@ -108,8 +110,6 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` applies secret redaction to process environment variables (that is, the content of `process.env`)
-* `LUMIGO_REPORT_DEPENDENCIES=false`: This option disables the built-in dependency reporting to Lumigo SaaS. For more information, refer to the [Automated dependency reporting](#automated-dependency-reporting) section.
-* `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 
 ### Execution Tags
 
@@ -244,7 +244,6 @@ For example, an application tries to remove a user who doesn't exist. These cust
 
 Programmatic Errors indicating that a non-fatal error occurred, such as an application error. You can log programmatic errors, track custom error issues, and trigger [Alerts](https://docs.lumigo.io/docs/event-alert).
 
-
 #### Creating a Programmatic Error
 
 Programmatic errors are created by adding [span events](https://opentelemetry.io/docs/instrumentation/js/instrumentation/#span-events) with a custom attribute being set with the key name `lumigo.type`.
@@ -277,10 +276,27 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | grpc-js | [@grpc](https://www.npmjs.com/package/@grpc) | 1.8.0~1.8.20 |
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3 |
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
+| fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.29.0~4.24.3 |
+| ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5 |
+| | | 5.0.0~5.3.2 |
 | kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4 |
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
 | | | 4.0.0~4.16.0 |
+| prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.13.0 |
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8 |
+
+### Activating your Prisma client's instrumentation
+
+If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["tracing"]
+}
+```
+
+**NOTE**: There have been reports of a possible bug that interferes with tracing when multiple Prisma clients have been instantiated, see [Prisma issue #20779](https://github.com/prisma/prisma/issues/20779).
 
 ## Automated dependency reporting
 
@@ -422,7 +438,11 @@ const tracerProvider: BasicTracerProvider = (await lumigo.init).tracerProvider;
 
 // Do some quick logic
 
-await tracerProvider.forceFlush();
+try {
+  await tracerProvider.forceFlush();
+} catch (err) {
+  console.error(err);
+}
 
 // Now the Node.js process can terminate, with all the spans closed so far sent to Lumigo
 ```
@@ -436,6 +456,11 @@ out from being sent to Lumigo.
 
 You can change this behavior by setting the boolean environment variable `LUMIGO_AUTO_FILTER_EMPTY_SQS` to `FALSE`.
 The possible variations are (case-insensitive):
+
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS=TRUE` filter out empty SQS polling messages
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS=FALSE` do not filter out empty SQS polling messages
 * No environment variable set (default): filter out empty SQS polling messages
+
+## Contributing
+
+For guidelines on contributing, please see [CONTRIBUTING.md](./CONTRIBUTING.md).

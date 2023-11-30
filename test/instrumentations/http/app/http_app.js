@@ -16,6 +16,7 @@ const requestListener = async function (req, res) {
       res.writeHead(200);
       res.end(JSON.stringify('server is ready!'));
       break;
+
     case '/test1':
       const result = await axios.get(`${targetUrl}/jokes/categories`, {
         headers: {
@@ -27,6 +28,7 @@ const requestListener = async function (req, res) {
       trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.foo', ['bar', 'baz']);
       res.end(JSON.stringify(result.data));
       break;
+
     case '/large-response':
       const big_result = await axios.put(`${targetUrl}/search`, 'Some very awesome payload', {
         headers: {
@@ -39,6 +41,7 @@ const requestListener = async function (req, res) {
       trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.date', 1234567);
       res.end(JSON.stringify(big_result.data));
       break;
+
     case '/test2':
       const dog_res = await axios.get(`${targetUrl}/api/breeds/image/random`, {
         headers: {
@@ -52,6 +55,7 @@ const requestListener = async function (req, res) {
       trace.getActiveSpan()?.setAttribute('lumigo.execution_tags.baz', true);
       res.end(JSON.stringify(dog_res.data));
       break;
+
     case '/aws-credentials':
       try {
         // We expect this to throw due to the timeout + impossibility to connect
@@ -67,6 +71,7 @@ const requestListener = async function (req, res) {
         res.end(JSON.stringify(err));
       }
       break;
+
     case '/amazon-sigv4':
       try {
         // We expect this to throw due to the timeout + impossibility to connect
@@ -84,6 +89,13 @@ const requestListener = async function (req, res) {
         res.writeHead(500);
         res.end(JSON.stringify(err));
       }
+      break;
+
+    case '/quit':
+      console.error('Received quit command');
+      res.writeHead(200);
+      res.end();
+      server.close();
       break;
 
     default:

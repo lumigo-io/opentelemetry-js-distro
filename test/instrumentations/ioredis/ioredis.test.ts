@@ -83,12 +83,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     }, 15_000);
 
     afterEach(async function () {
-      if (testApp) {
-        console.info('Killing test app...');
+      try {
         await testApp.kill();
-      } else {
-        console.warn('Test app was not run.');
+      } catch (err) {
+        console.warn('Failed to kill test app', err);
       }
+
       if (redisContainer) {
         console.info('Stopping Redis container...');
         await redisContainer.stop();

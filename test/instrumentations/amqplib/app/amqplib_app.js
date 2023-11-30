@@ -92,6 +92,12 @@ const requestListener = async function (req, res) {
       }
       break;
 
+    case '/quit':
+      console.error('Received quit command');
+      respond(res, 200, {});
+      httpServer.close();
+      break;
+
     default:
       respond(res, 404, { error: 'Resource not found' });
   }

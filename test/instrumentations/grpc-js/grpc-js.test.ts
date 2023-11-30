@@ -37,7 +37,6 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
   'Instrumentation tests for the @grpc/grpc-js package',
   function (versionToTest) {
     let testApp: TestApp;
-    let testValidatorApp: TestApp;
 
     beforeAll(function () {
       reinstallPackages({ appDir: TEST_APP_DIR });
@@ -50,9 +49,11 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     });
 
     afterEach(async function () {
-      console.info('Killing test app...');
-      await testApp?.kill();
-      await testValidatorApp?.kill();
+      try {
+        await testApp.kill();
+      } catch (err) {
+        console.warn('Failed to kill test app', err);
+      }
     });
 
     afterAll(function () {
@@ -64,7 +65,6 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
     });
 
     const checkSpans = async (exporterFile: string, method: string) => {
-      await testApp.invokeGetPath(`/stop-server`);
       const spans = (await testApp.getFinalSpans(2)).filter(
         (s) => s.name === `grpc.helloworld.Greeter/${method}`
       );

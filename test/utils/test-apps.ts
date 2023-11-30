@@ -1,4 +1,4 @@
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { ChildProcessWithoutNullStreams, execSync, spawn } from 'child_process';
 import { existsSync, unlinkSync } from 'fs';
 import waitOn from 'wait-on';
 import { Span, readSpanDump } from './spans';
@@ -10,37 +10,64 @@ const PORT_REGEX = new RegExp('.*([Ll]istening on port )([0-9]*)', 'g');
 
 export class TestApp {
 
-    private spanDumpPath: string;
-    private portPromise: Promise<Number>;
-    private closePromise: Promise<void>;
     private app: ChildProcessWithoutNullStreams;
+    private closePromise: Promise<void>;
+    private cwd: string;
+    private envVars: any;
+    private exitCode: number | null = null;
+    private hasAppExited = false;
+    private pid: number | undefined = undefined;
+    private portPromise: Promise<Number>;
+    private serviceName: string;
+    private spanDumpPath: string;
 
     constructor(
         cwd: string,
         serviceName: string,
         spanDumpPath: string,
-        env_vars = {}
+        envVars = {}
     ) {
+        this.cwd = cwd;
+        this.envVars = envVars;
+        this.serviceName = serviceName;
+        this.spanDumpPath = spanDumpPath;
+
         if (existsSync(spanDumpPath)) {
             console.info(`removing previous span dump file ${spanDumpPath}...`)
             unlinkSync(spanDumpPath);
         }
 
-        console.info(`starting test app with span dump file ${spanDumpPath}...`);
-        this.app = spawn('npm', ['run', 'start'], {
+        this.runAppScript();
+    }
+
+    public static runAuxiliaryScript(scriptName: string, cwd: string, envVars = {}): void {
+        console.info(`running ${scriptName} for test app in '${cwd}'...`)
+        execSync(`npm run ${scriptName}`, {
             cwd,
             env: {
-                ...process.env, ...{
-                    OTEL_SERVICE_NAME: serviceName,
-                    LUMIGO_DEBUG_SPANDUMP: spanDumpPath,
+                ...process.env,
+                ...envVars,
+            },
+        });
+    };
+
+    public runAppScript(): void {
+        console.info(`starting test app with span dump file ${this.spanDumpPath}...`);
+        this.app = spawn('npm', ['run', 'start'], {
+            cwd: this.cwd,
+            env: {
+                ...process.env,
+                ...{
+                    OTEL_SERVICE_NAME: this.serviceName,
+                    LUMIGO_DEBUG_SPANDUMP: this.spanDumpPath,
                     LUMIGO_DEBUG: String(true),
-                    ...env_vars
-                }
+                },
+                ...this.envVars,
             },
             shell: true,
         });
 
-        this.spanDumpPath = spanDumpPath;
+        this.pid = this.app.pid;
 
         let portResolveFunction: Function;
         this.portPromise = new Promise((resolve) => {
@@ -73,27 +100,40 @@ export class TestApp {
         this.app.on('error', (error) => {
             closeRejectFunction(error);
         });
+
         this.app.on('exit', function (exitCode, signal) {
-            if (signal && signal !== 'SIGTERM') {
-                closeRejectFunction(new Error(`app with pid '${this.pid}' terminated unexpectedly!`));
-            } else {
-                const appExitMessage = `app with pid '${this.pid}' exited with signal '${signal}' and exit code '${exitCode}'`;
-                console.info(appExitMessage);
-                closeResolveFunction();
+            if (this.hasAppExited) {
+                return;
             }
+            this.hasAppExited = true;
+            this.exitCode = exitCode;
+
+            switch (signal) {
+                case 'SIGKILL':
+                case 'SIGTERM':
+                    const appExitMessage = `app with pid '${this.pid}' exited with signal '${signal}' and exit code '${exitCode}'`;
+                    console.info(appExitMessage);
+                    break;
+                default:
+                    const appExitWarning = `app with pid '${this.pid}' exited unexpectedly with signal '${signal}':
+                    *** if the app already exited, this is actually expected ***`;
+                    console.warn(appExitWarning);
+                    break;
+            }
+            // even if the test app exited unexpectedly, we still want to resolve the close promise,
+            // so that the test can continue - it's reasonable to assume that the tests are written
+            // well enough to fail regardless of the app's exit code
+            closeResolveFunction();
+
             portPromiseResolved = true;
             portResolveFunction(-1);
         });
-    }
-
-    public pid(): Number {
-        return this.app.pid!
-    }
+    };
 
     public async port(): Promise<Number> {
         const port = Number(await this.portPromise);
-        if (port < 0) {
-            throw new Error(`app with pid '${this.pid()}' exited unexpectedly!`);
+        if (port < 0 || this.hasAppExited) {
+            throw new Error(`port unavailable for test app with pid '${this.pid}'`);
         }
         return port;
     }
@@ -131,6 +171,7 @@ export class TestApp {
             );
         });
     }
+
     public async invokeGetPathAndRetrieveSpanDump(path: string): Promise<Span[]> {
         const port = await this.port()
 
@@ -162,35 +203,67 @@ export class TestApp {
         });
     }
 
-    public async getFinalSpans(expectedNumberOfSpans: number | null = null, timeout: number | null = 3_000): Promise<Span[]> {
-            const spanDumpPath = this.spanDumpPath;
+    /**
+     * test apps must implement a /quit endpoint that shuts down all servers and exits the process
+     * @returns a promise that resolves when the app has returned 200 on the shutdown signal
+     */
+    public async invokeShutdown(): Promise<void> {
+        const port = await this.port()
 
-            let spans = readSpanDump(spanDumpPath)
+        const url = `http-get://localhost:${port}/quit`;
 
-            if (!expectedNumberOfSpans) {
-                return spans;
-            }
+        return new Promise<void>((resolve, reject) => {
+            console.info(`invoking shutdown url for app wth pid ${this.pid}: ${url} ...`);
+            waitOn(
+                {
+                    resources: [url],
+                    delay: WAIT_ON_INITIAL_DELAY,
+                    timeout: WAIT_ON_TIMEOUT,
+                    simultaneous: 1,
+                    log: true,
+                    validateStatus: function (status: number) {
+                        console.info(`received status: ${status}`);
+                        return status >= 200 && status < 300; // default if not provided
+                    },
+                },
+                async function (err: Error) {
+                    if (err) {
+                        return reject(err)
+                    } else {
+                        resolve();
+                    }
+                }
+            );
+        });
+    }
 
+    public async getFinalSpans(expectedNumberOfSpans: number | null = null, timeout = 10_000): Promise<Span[]> {
+        const spanDumpPath = this.spanDumpPath;
+
+        let spans = readSpanDump(spanDumpPath)
+
+        if (expectedNumberOfSpans) {
             const sleepTime = 500;
-            let timeoutRemaining = timeout || 10_000;
+            let timeoutRemaining = timeout;
             while (spans.length < expectedNumberOfSpans && timeoutRemaining > 0) {
                 await sleep(sleepTime);
                 timeoutRemaining -= sleepTime;
                 spans = readSpanDump(spanDumpPath);
             }
+        }
 
-            return spans;
+        await this.invokeShutdown();
+        return spans;
     }
 
     public async kill(): Promise<number | null> {
+        console.info(`killing app with pid '${this.pid}'...`);
         try {
-            console.info(`ensuring app with pid '${this.pid()}' and exit code '${this.app.exitCode})' killed...`);
-            this.app.kill();
+            this.app.kill('SIGKILL');
+            await this.closePromise;
         } catch (err) {
-            console.warn(`error killing app with pid '${this.pid()}' and exit code '${this.app.exitCode})'`, err);
+            console.warn(err);
         }
-
-        await this.closePromise;
-        return this.app.exitCode
+        return this.exitCode;
     }
 }

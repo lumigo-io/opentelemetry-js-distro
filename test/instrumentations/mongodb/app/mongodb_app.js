@@ -3,6 +3,7 @@ require('log-timestamp');
 const DB = require('./dbUtils');
 
 let db;
+let httpServer;
 
 async function sendMongoDbRequest(res) {
   try {
@@ -32,9 +33,18 @@ const requestListener = async (req, res) => {
       res.writeHead(200);
       res.end(JSON.stringify('done'));
       break;
+
     case '/test-mongodb':
       await sendMongoDbRequest(res);
       break;
+
+    case '/quit':
+      console.error('Received quit command');
+      res.writeHead(200);
+      res.end(JSON.stringify({}));
+      httpServer.close();
+      process.exit(0);
+
     default:
       res.writeHead(404);
       res.end(JSON.stringify({ error: 'Resource not found' }));
@@ -44,9 +54,9 @@ const requestListener = async (req, res) => {
 (async () => {
   db = await DB.setUp();
 
-  const server = http.createServer(requestListener);
-  server.listen(0, 'localhost', () => {
-    const port = server.address().port;
+  httpServer = http.createServer(requestListener);
+  httpServer.listen(0, 'localhost', () => {
+    const port = httpServer.address().port;
     console.error(`HTTP server listening on port ${port}`);
 
     if (process.send) {

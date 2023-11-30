@@ -48,8 +48,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     });
 
     afterEach(async function () {
-      console.info('Killing test app...');
-      await testApp.kill();
+      try {
+        await testApp.kill();
+      } catch (err) {
+        console.warn('Failed to kill test app', err);
+      }
     });
 
     afterAll(function () {
