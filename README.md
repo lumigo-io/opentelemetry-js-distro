@@ -100,7 +100,9 @@ Specifically supported are:
 * `LUMIGO_DEBUG=TRUE`: Enables debug logging
 * `LUMIGO_DEBUG_SPANDUMP=<path|console:log|console:error>`: Log all spans collected to the `<path>` file or, the value is `console:log` or `console:error`, to `console.log` or `console.error`; this is an option intended only for debugging purposes and should *not* be used in production.
 This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does not need to additionally be set for `LUMIGO_DEBUG_SPANDUMP` to work.
+* `LUMIGO_REPORT_DEPENDENCIES=false`: This option disables the built-in dependency reporting to Lumigo SaaS. For more information, refer to the [Automated dependency reporting](#automated-dependency-reporting) section.
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
+* `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions in process environment data, HTTP headers, payloads and queries. All regular expressions are case-insensitive. The "magic" value `all` will redact everything. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`. More fine-grained settings can be applied via the following environment variables, which will override `LUMIGO_SECRET_MASKING_REGEX` for a specific type of data:
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES` applies secret redaction to HTTP request bodies
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_HEADERS` applies secret redaction to HTTP request headers
@@ -108,8 +110,6 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` applies secret redaction to process environment variables (that is, the content of `process.env`)
-* `LUMIGO_REPORT_DEPENDENCIES=false`: This option disables the built-in dependency reporting to Lumigo SaaS. For more information, refer to the [Automated dependency reporting](#automated-dependency-reporting) section.
-* `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 
 ### Execution Tags
 
@@ -456,6 +456,11 @@ out from being sent to Lumigo.
 
 You can change this behavior by setting the boolean environment variable `LUMIGO_AUTO_FILTER_EMPTY_SQS` to `FALSE`.
 The possible variations are (case-insensitive):
+
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS=TRUE` filter out empty SQS polling messages
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS=FALSE` do not filter out empty SQS polling messages
 * No environment variable set (default): filter out empty SQS polling messages
+
+## Contributing
+
+For guidelines on contributing, please see [CONTRIBUTING.md](./CONTRIBUTING.md).
