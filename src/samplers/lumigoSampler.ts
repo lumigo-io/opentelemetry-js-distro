@@ -26,7 +26,7 @@ export class LumigoSampler implements Sampler {
     console.log('url', url);
     if (url && shouldSkipSpanOnRouteMatch(url)) {
       console.debug(
-        `Dropping trace for url '${url} because it matches the auth-filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX'`
+        `Dropping trace for url '${url} because it matches the auth-filter regex specified by 'LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX'`
       );
       decision = SamplingDecision.NOT_RECORD;
     }
@@ -68,18 +68,18 @@ export const shouldSkipSpanOnRouteMatch = (url: string): boolean => {
     return false;
   }
 
-  if (!process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX) {
+  if (!process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX) {
     return false;
   }
 
-  if (process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX) {
+  if (process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX) {
     let regex: null | RegExp = null;
     try {
-      regex = new RegExp(process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX);
+      regex = new RegExp(process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX);
       return regex.test(url);
     } catch (err) {
       console.error(
-        `Invalid regex in 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX': '${process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX}'`
+        `Invalid regex in 'LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX': '${process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX}'`
       );
       return false;
     }

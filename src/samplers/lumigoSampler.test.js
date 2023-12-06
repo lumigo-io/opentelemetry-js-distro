@@ -1,4 +1,4 @@
-import { LumigoSampler, extractUrl, shouldSkipSpanOnRouteMatch } from './lumigoSampler';
+import { extractUrl, shouldSkipSpanOnRouteMatch } from './lumigoSampler';
 
 describe('lumigo sampler', () => {
   afterEach(() => {
@@ -72,7 +72,7 @@ describe('lumigo sampler', () => {
   ].map(({ url, regex, shouldSkip }) => {
     test('test should skip span with url', () => {
       if (regex) {
-        process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX = regex;
+        process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX = regex;
       }
       expect(shouldSkipSpanOnRouteMatch(url)).toEqual(shouldSkip);
     });

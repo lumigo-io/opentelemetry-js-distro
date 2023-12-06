@@ -224,8 +224,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     [
         // Regex matches the outbound endpoint, so it should be filtered out
         {
-          regex: "example\.com",
-          expectedSpanCount: 3,
+          regex: ".*example.*",
+          expectedSpanCount: 2,
           expectedClientSpanCount: 0,
         },
         {
@@ -245,7 +245,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             const exporterFile = `${SPANS_DIR}/skip-http-endpoint-${index}.express@${versionToTest}.json`;
 
             testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
-              LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX: regex,
+                LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX: regex,
             });
 
             await testApp.invokeGetPath('/send-external-request');
