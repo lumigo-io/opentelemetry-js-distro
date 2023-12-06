@@ -250,7 +250,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
             await testApp.invokeGetPath('/send-external-request');
 
-            const spans = await testApp.getFinalSpans(2);
+            const spans = await testApp.getFinalSpans(expectedClientSpanCount);
 
             expect(spans).toHaveLength(expectedSpanCount);
             expect(getSpansByKind(spans, SpanKind.CLIENT)).toHaveLength(expectedClientSpanCount);
