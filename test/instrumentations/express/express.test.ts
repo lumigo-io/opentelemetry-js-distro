@@ -250,10 +250,44 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
             await testApp.invokeGetPath('/send-external-request');
 
-            const spans = await testApp.getFinalSpans(expectedClientSpanCount);
+            const spans = await testApp.getFinalSpans(expectedSpanCount);
 
             expect(spans).toHaveLength(expectedSpanCount);
             expect(getSpansByKind(spans, SpanKind.CLIENT)).toHaveLength(expectedClientSpanCount);
+          }
+      );
+    });
+
+    [
+      // Regex matches the outbound endpoint, so it should be filtered out
+      {
+        regex: ".*localhost.*",
+        expectedSpanCount: 0,
+      },
+      {
+        regex: "this-will-not-match",
+        expectedSpanCount: 2,
+      }
+    ].forEach(({ regex, expectedSpanCount }, index) => {
+      return itTest(
+          {
+            testName: `skip inbound http endpoint by regex ${index}: ${versionToTest}`,
+            packageName: 'express',
+            version: versionToTest,
+            timeout: TEST_TIMEOUT,
+          },
+          async function () {
+            const exporterFile = `${SPANS_DIR}/skip-http-endpoint-${index}.express@${versionToTest}.json`;
+
+            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+              LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX: regex,
+            });
+
+            await testApp.invokeGetPath('/');
+
+            const spans = await testApp.getFinalSpans(expectedSpanCount);
+
+            expect(spans).toHaveLength(expectedSpanCount);
           }
       );
     });
