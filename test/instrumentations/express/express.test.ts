@@ -6,7 +6,7 @@ import { join } from 'path';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 import { itTest } from '../../integration/setup';
-import { getSpanByKind } from '../../utils/spans';
+import {getSpanByKind, getSpansByKind} from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
@@ -99,8 +99,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             'http.scheme': 'http',
             'net.peer.ip': expect.any(String),
             'http.request.query': '{}',
-            'http.request.headers': expect.stringMatching(/\{.*\}/),
-            'http.response.headers': expect.stringMatching(/\{.*\}/),
+            'http.request.headers': expect.stringMatching(/\{.*}/),
+            'http.response.headers': expect.stringMatching(/\{.*}/),
             'http.response.body': '"Hello world"',
             'http.route': '/basic',
             'express.route.full': '/basic',
@@ -151,10 +151,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             'http.host': expect.stringMatching(/localhost:\d+/),
             'http.route': '/test-scrubbing',
             'http.target': '/test-scrubbing',
-            'http.request.headers': expect.stringMatching(/\{.*\}/),
+            'http.request.headers': expect.stringMatching(/\{.*}/),
             'http.request.query': '{}',
             'http.response.body': expect.jsonMatching({ Authorization: '****' }),
-            'http.response.headers': expect.stringMatching(/\{.*\}/),
+            'http.response.headers': expect.stringMatching(/\{.*}/),
             'http.status_code': 200,
             'express.route.full': '/test-scrubbing',
             'express.route.configured': '/test-scrubbing',
@@ -205,9 +205,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             'http.route': '/test-scrubbing',
             'http.target': '/test-scrubbing',
             'http.request.query': '{}',
-            'http.request.headers': expect.stringMatching(/\{.*\}/),
+            'http.request.headers': expect.stringMatching(/\{.*}/),
             'http.response.body': '"****"',
-            'http.response.headers': expect.stringMatching(/\{.*\}/),
+            'http.response.headers': expect.stringMatching(/\{.*}/),
             'http.status_code': 200,
             'express.route.full': '/test-scrubbing',
             'express.route.configured': '/test-scrubbing',
@@ -220,5 +220,76 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         });
       }
     );
+
+    [
+        // Regex matches the outbound endpoint, so it should be filtered out
+        {
+          regex: ".*example.*",
+          expectedSpanCount: 2,
+          expectedClientSpanCount: 0,
+        },
+        {
+          regex: "this-will-not-match",
+          expectedSpanCount: 3,
+          expectedClientSpanCount: 1,
+        }
+    ].forEach(({ regex, expectedSpanCount, expectedClientSpanCount }, index) => {
+      return itTest(
+          {
+            testName: `skip http endpoint by regex ${index}: ${versionToTest}`,
+            packageName: 'express',
+            version: versionToTest,
+            timeout: TEST_TIMEOUT,
+          },
+          async function () {
+            const exporterFile = `${SPANS_DIR}/skip-http-endpoint-${index}.express@${versionToTest}.json`;
+
+            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+                LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX: regex,
+            });
+
+            await testApp.invokeGetPath('/send-external-request');
+
+            const spans = await testApp.getFinalSpans(expectedSpanCount);
+
+            expect(spans).toHaveLength(expectedSpanCount);
+            expect(getSpansByKind(spans, SpanKind.CLIENT)).toHaveLength(expectedClientSpanCount);
+          }
+      );
+    });
+
+    [
+      // Regex matches the outbound endpoint, so it should be filtered out
+      {
+        regex: ".*localhost.*",
+        expectedSpanCount: 0,
+      },
+      {
+        regex: "this-will-not-match",
+        expectedSpanCount: 2,
+      }
+    ].forEach(({ regex, expectedSpanCount }, index) => {
+      return itTest(
+          {
+            testName: `skip inbound http endpoint by regex ${index}: ${versionToTest}`,
+            packageName: 'express',
+            version: versionToTest,
+            timeout: TEST_TIMEOUT,
+          },
+          async function () {
+            const exporterFile = `${SPANS_DIR}/skip-http-endpoint-${index}.express@${versionToTest}.json`;
+
+            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+              LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX: regex,
+            });
+
+            await testApp.invokeGetPath('/');
+
+            const spans = await testApp.getFinalSpans(expectedSpanCount);
+
+            expect(spans).toHaveLength(expectedSpanCount);
+          }
+      );
+    });
   }
 );

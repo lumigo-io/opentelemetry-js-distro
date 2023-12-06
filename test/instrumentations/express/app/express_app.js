@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 require('log-timestamp');
+const axios = require("axios");
 
 let server;
 
@@ -31,6 +32,11 @@ app.get('/quit', async (_, res) => {
   console.error('Received quit command');
   res.status(200).send({});
   server.close();
+});
+
+app.get('/send-external-request', async (_, res) => {
+  await axios.get('https://example.com');
+  res.status(200).send("Done");
 });
 
 server = app.listen(0, () => {
