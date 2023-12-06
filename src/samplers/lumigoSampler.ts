@@ -1,7 +1,7 @@
 import { Sampler, ParentBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
 import { SamplingResult, SamplingDecision } from '@opentelemetry/sdk-trace-base';
-import { standardizeHttpUrl } from "../tools/httpUtils";
+import { standardizeHttpUrl } from '../tools/httpUtils';
 
 export class LumigoSampler implements Sampler {
   shouldSample(

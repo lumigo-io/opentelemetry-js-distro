@@ -42,4 +42,4 @@ export const standardizeHttpUrl = (raw_url) => {
   const parsedUrl = new URL(raw_url);
   const path = parsedUrl.pathname && parsedUrl.pathname !== '/' ? parsedUrl.pathname : '';
   return `${parsedUrl.protocol}//${parsedUrl.host}${path}${parsedUrl.search}`;
-}
+};
