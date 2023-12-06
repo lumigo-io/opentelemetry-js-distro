@@ -1,6 +1,7 @@
 import { Sampler, ParentBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
 import { SamplingResult, SamplingDecision } from '@opentelemetry/sdk-trace-base';
+import { standardizeHttpUrl } from "../tools/httpUtils";
 
 export class LumigoSampler implements Sampler {
   shouldSample(
@@ -47,9 +48,7 @@ export const extractUrl = (attributes: Attributes): string | null => {
     return null;
   }
 
-  const parsedUrl = new URL(raw_url);
-  const path = parsedUrl.pathname && parsedUrl.pathname !== '/' ? parsedUrl.pathname : '';
-  return `${parsedUrl.protocol}//${parsedUrl.host}${path}${parsedUrl.search}`;
+  return standardizeHttpUrl(raw_url);
 };
 
 export const shouldSkipSpanOnRouteMatch = (url: string): boolean => {

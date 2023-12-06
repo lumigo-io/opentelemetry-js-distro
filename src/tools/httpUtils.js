@@ -30,3 +30,16 @@ export const extractBodyFromWriteOrEndFunc = (writeEventArgs) => {
     }
   })();
 };
+
+/**
+ * Formats a raw url string by:
+ * * removing empty path "/" path - "https://example.com/" -> "https://example.com"
+ * * removing port if not standard - "https://example.com:443" -> "https://example.com"
+ * @param raw_url
+ * @returns string formatted url
+ */
+export const standardizeHttpUrl = (raw_url) => {
+  const parsedUrl = new URL(raw_url);
+  const path = parsedUrl.pathname && parsedUrl.pathname !== '/' ? parsedUrl.pathname : '';
+  return `${parsedUrl.protocol}//${parsedUrl.host}${path}${parsedUrl.search}`;
+}
