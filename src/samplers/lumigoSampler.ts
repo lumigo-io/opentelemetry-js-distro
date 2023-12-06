@@ -13,7 +13,6 @@ export class LumigoSampler implements Sampler {
   ): SamplingResult {
     let decision = SamplingDecision.RECORD_AND_SAMPLED;
     const url = extractUrl(attributes);
-    console.log('url', url);
     if (url && shouldSkipSpanOnRouteMatch(url)) {
       console.debug(
         `Dropping trace for url '${url} because it matches the auth-filter regex specified by 'LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX'`
