@@ -11,16 +11,6 @@ export class LumigoSampler implements Sampler {
     attributes: Attributes,
     links: Link[]
   ): SamplingResult {
-    // TODO: Delete this log line when done debugging
-    console.info('LumigoSampler.shouldSample', {
-      context,
-      traceId,
-      spanName,
-      spanKind,
-      attributes,
-      links,
-    });
-
     let decision = SamplingDecision.RECORD_AND_SAMPLED;
     const url = extractUrl(attributes);
     console.log('url', url);
