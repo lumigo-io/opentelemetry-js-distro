@@ -108,7 +108,8 @@ export const parseStringToArray = (rawArray: string): string[] => {
     if (Array.isArray(parsedArray) && !parsedArray.some((e) => typeof e !== 'string')) {
       return parsedArray;
     }
-  } catch (err) {}
+  /* eslint-disable no-empty */
+  } catch (err) { }
 
   console.error(`Invalid array of strings format: '${rawArray}'`);
   return [];
