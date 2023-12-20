@@ -1,5 +1,5 @@
-import {doesEndpointMatchRegexes, extractEndpoint, parseStringToArray} from './lumigoSampler';
-import {SpanKind} from "@opentelemetry/api";
+import { doesEndpointMatchRegexes, extractEndpoint, parseStringToArray } from './lumigoSampler';
+import { SpanKind } from '@opentelemetry/api';
 
 describe('lumigo sampler', () => {
   afterEach(() => {
@@ -89,7 +89,7 @@ describe('lumigo sampler', () => {
       endpoint: undefined,
       regexes: ['.*'],
       shouldMatch: false,
-    }
+    },
   ].map(({ endpoint, regexes, shouldMatch }) => {
     test(`test regex match - ${endpoint}`, () => {
       expect(doesEndpointMatchRegexes(endpoint, regexes)).toEqual(shouldMatch);
@@ -98,27 +98,32 @@ describe('lumigo sampler', () => {
 
   [
     {
-      attributes: {'url.path': 'urlPath', 'http.target': 'httpTarget'},
+      attributes: { 'url.path': 'urlPath', 'http.target': 'httpTarget' },
       spanKind: SpanKind.SERVER,
       expectedEndpoint: 'urlPath',
     },
     {
-      attributes: {'a': 'a', 'http.target': 'httpTarget'},
+      attributes: { a: 'a', 'http.target': 'httpTarget' },
       spanKind: SpanKind.SERVER,
       expectedEndpoint: 'httpTarget',
     },
     {
-      attributes: {'url.full': 'fullUrl', 'http.url': 'httpUrl'},
+      attributes: { 'url.full': 'fullUrl', 'http.url': 'httpUrl' },
       spanKind: SpanKind.CLIENT,
       expectedEndpoint: 'fullUrl',
     },
     {
-      attributes: {'a': 'a', 'http.url': 'httpUrl'},
+      attributes: { a: 'a', 'http.url': 'httpUrl' },
       spanKind: SpanKind.CLIENT,
       expectedEndpoint: 'httpUrl',
     },
     {
-      attributes: {'url.path': 'urlPath', 'http.target': 'httpTarget', 'url.full': 'fullUrl', 'http.url': 'httpUrl'},
+      attributes: {
+        'url.path': 'urlPath',
+        'http.target': 'httpTarget',
+        'url.full': 'fullUrl',
+        'http.url': 'httpUrl',
+      },
       spanKind: SpanKind.INTERNAL,
       expectedEndpoint: null,
     },
@@ -131,7 +136,7 @@ describe('lumigo sampler', () => {
       attributes: {},
       spanKind: SpanKind.CLIENT,
       expectedEndpoint: null,
-    }
+    },
   ].map(({ attributes, spanKind, expectedEndpoint }) => {
     test(`test extract endpoint - ${JSON.stringify(attributes)}`, () => {
       expect(extractEndpoint(attributes, spanKind)).toEqual(expectedEndpoint);

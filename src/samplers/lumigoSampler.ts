@@ -16,19 +16,26 @@ export class LumigoSampler implements Sampler {
     if (endpoint) {
       if (spanKind === SpanKind.CLIENT && doesMatchClientSpanFilteringRegexes(endpoint)) {
         console.debug(
-            `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT'`
+          `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT'`
         );
         decision = SamplingDecision.NOT_RECORD;
       }
-      if (decision !== SamplingDecision.NOT_RECORD && spanKind === SpanKind.SERVER && doesMatchServerSpanFilteringRegexes(endpoint)) {
+      if (
+        decision !== SamplingDecision.NOT_RECORD &&
+        spanKind === SpanKind.SERVER &&
+        doesMatchServerSpanFilteringRegexes(endpoint)
+      ) {
         console.debug(
-            `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER'`
+          `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER'`
         );
         decision = SamplingDecision.NOT_RECORD;
       }
-      if (decision !== SamplingDecision.NOT_RECORD && doesMatchGeneralSpanFilteringRegexes(endpoint)) {
+      if (
+        decision !== SamplingDecision.NOT_RECORD &&
+        doesMatchGeneralSpanFilteringRegexes(endpoint)
+      ) {
         console.debug(
-            `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX'`
+          `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX'`
         );
         decision = SamplingDecision.NOT_RECORD;
       }
@@ -42,8 +49,7 @@ export const extractEndpoint = (attributes: Attributes, spanKind: SpanKind): str
   if (spanKind === SpanKind.CLIENT) {
     const endpoint_attr = attributes['url.full'] || attributes['http.url'];
     return endpoint_attr ? endpoint_attr.toString() : null;
-  }
-  else if (spanKind === SpanKind.SERVER) {
+  } else if (spanKind === SpanKind.SERVER) {
     const endpoint_attr = attributes['url.path'] || attributes['http.target'];
     return endpoint_attr ? endpoint_attr.toString() : null;
   }
@@ -58,7 +64,7 @@ export const doesMatchClientSpanFilteringRegexes = (endpoint: string): boolean =
 
   const regexes = parseStringToArray(process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT);
   return doesEndpointMatchRegexes(endpoint, regexes);
-}
+};
 
 export const doesMatchServerSpanFilteringRegexes = (endpoint: string): boolean => {
   if (!endpoint || !process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER) {
@@ -67,7 +73,7 @@ export const doesMatchServerSpanFilteringRegexes = (endpoint: string): boolean =
 
   const regexes = parseStringToArray(process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER);
   return doesEndpointMatchRegexes(endpoint, regexes);
-}
+};
 
 export const doesMatchGeneralSpanFilteringRegexes = (endpoint: string): boolean => {
   if (!endpoint || !process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX) {
@@ -76,41 +82,37 @@ export const doesMatchGeneralSpanFilteringRegexes = (endpoint: string): boolean 
 
   const regexes = parseStringToArray(process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX);
   return doesEndpointMatchRegexes(endpoint, regexes);
-}
+};
 
 export const doesEndpointMatchRegexes = (endpoint: string, regexes: string[]): boolean => {
-  if (!endpoint || !regexes) { return false; }
+  if (!endpoint || !regexes) {
+    return false;
+  }
 
   for (const rawRegex of regexes) {
     try {
       if (new RegExp(rawRegex).test(endpoint)) {
         return true;
       }
-    }
-    catch (err) {
-      console.error(
-          `Invalid regex: '${rawRegex}', skipping it.`
-      );
+    } catch (err) {
+      console.error(`Invalid regex: '${rawRegex}', skipping it.`);
     }
   }
 
   return false;
-}
+};
 
 export const parseStringToArray = (rawArray: string): string[] => {
   try {
-      const parsedArray = JSON.parse(rawArray);
-      if (Array.isArray(parsedArray) && !parsedArray.some(e => typeof e !== 'string')) {
-        return parsedArray;
-      }
-  }
-  catch (err) {}
+    const parsedArray = JSON.parse(rawArray);
+    if (Array.isArray(parsedArray) && !parsedArray.some((e) => typeof e !== 'string')) {
+      return parsedArray;
+    }
+  } catch (err) {}
 
-  console.error(
-      `Invalid array of strings format: '${rawArray}'`
-  );
+  console.error(`Invalid array of strings format: '${rawArray}'`);
   return [];
-}
+};
 
 export const getLumigoSampler = () => {
   const lumigoSampler = new LumigoSampler();

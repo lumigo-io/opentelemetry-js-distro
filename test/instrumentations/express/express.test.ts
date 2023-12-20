@@ -223,12 +223,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
     [
         {
-          serverFilterEnvVar: '[".*will-not-match.*"]',
-          clientFilterEnvVar: '[".*will-not-match.*"]',
-          filterEnvVar: '[".*send-external-request.*"]',
-          expectedSpanCount: 0,
-          expectedClientSpanCount: 0,
-          expectedServerSpanCount: 0,
+            serverFilterEnvVar: '[".*will-not-match.*"]',
+            clientFilterEnvVar: '[".*will-not-match.*"]',
+            filterEnvVar: '[".*send-external-request.*"]',
+            expectedSpanCount: 0,
+            expectedClientSpanCount: 0,
+            expectedServerSpanCount: 0,
         },
         {
             serverFilterEnvVar: '[".*send-external-request.*"]',
