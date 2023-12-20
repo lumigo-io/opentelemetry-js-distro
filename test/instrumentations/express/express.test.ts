@@ -222,18 +222,37 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     );
 
     [
-        // Regex matches the outbound endpoint, so it should be filtered out
         {
-          regex: ".*example.*",
-          expectedSpanCount: 2,
+          serverFilterEnvVar: '[".*will-not-match.*"]',
+          clientFilterEnvVar: '[".*will-not-match.*"]',
+          filterEnvVar: '[".*send-external-request.*"]',
+          expectedSpanCount: 0,
           expectedClientSpanCount: 0,
+          expectedServerSpanCount: 0,
         },
         {
-          regex: "this-will-not-match",
-          expectedSpanCount: 3,
-          expectedClientSpanCount: 1,
+            serverFilterEnvVar: '[".*send-external-request.*"]',
+            clientFilterEnvVar: '[".*will-not-match.*"]',
+            filterEnvVar: '[".*will-not-match.*"]',
+            expectedSpanCount: 0,
+            expectedClientSpanCount: 0,
+            expectedServerSpanCount: 0,
+        },
+        {
+            serverFilterEnvVar: '[".*will-not-match.*"]',
+            clientFilterEnvVar: '[".*send-external-request.*"]',
+            filterEnvVar: '[".*will-not-match.*"]',
+            expectedSpanCount: 3,
+            expectedClientSpanCount: 1,
+            expectedServerSpanCount: 1,
         }
-    ].forEach(({ regex, expectedSpanCount, expectedClientSpanCount }, index) => {
+    ].forEach(({
+                       serverFilterEnvVar,
+                       clientFilterEnvVar,
+                       filterEnvVar,
+                       expectedSpanCount,
+                       expectedClientSpanCount,
+                       expectedServerSpanCount}, index) => {
       return itTest(
           {
             testName: `skip http endpoint by regex ${index}: ${versionToTest}`,
@@ -245,7 +264,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             const exporterFile = `${SPANS_DIR}/skip-http-endpoint-${index}.express@${versionToTest}.json`;
 
             testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
-                LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX: regex,
+                LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX: filterEnvVar,
+                LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER: serverFilterEnvVar,
+                LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT: clientFilterEnvVar,
             });
 
             await testApp.invokeGetPath('/send-external-request');
@@ -253,41 +274,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             const spans = await testApp.getFinalSpans(expectedSpanCount);
 
             expect(spans).toHaveLength(expectedSpanCount);
+            expect(getSpansByKind(spans, SpanKind.SERVER)).toHaveLength(expectedServerSpanCount);
             expect(getSpansByKind(spans, SpanKind.CLIENT)).toHaveLength(expectedClientSpanCount);
-          }
-      );
-    });
-
-    [
-      // Regex matches the outbound endpoint, so it should be filtered out
-      {
-        regex: ".*localhost.*",
-        expectedSpanCount: 0,
-      },
-      {
-        regex: "this-will-not-match",
-        expectedSpanCount: 2,
-      }
-    ].forEach(({ regex, expectedSpanCount }, index) => {
-      return itTest(
-          {
-            testName: `skip inbound http endpoint by regex ${index}: ${versionToTest}`,
-            packageName: 'express',
-            version: versionToTest,
-            timeout: TEST_TIMEOUT,
-          },
-          async function () {
-            const exporterFile = `${SPANS_DIR}/skip-http-endpoint-${index}.express@${versionToTest}.json`;
-
-            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
-              LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX: regex,
-            });
-
-            await testApp.invokeGetPath('/');
-
-            const spans = await testApp.getFinalSpans(expectedSpanCount);
-
-            expect(spans).toHaveLength(expectedSpanCount);
           }
       );
     });

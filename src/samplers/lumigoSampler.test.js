@@ -1,144 +1,140 @@
-import { extractEndpoint } from './lumigoSampler';
+import {doesEndpointMatchRegexes, extractEndpoint, parseStringToArray} from './lumigoSampler';
+import {SpanKind} from "@opentelemetry/api";
 
 describe('lumigo sampler', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  // [
-  //   {
-  //     description: 'happy flow - full url field exists',
-  //     cases: [
-  //       {
-  //         attributes: {
-  //           'http.url': 'https://example.com',
-  //         },
-  //         expectedUrl: 'https://example.com',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.url': 'https://example.com?page=1',
-  //         },
-  //         expectedUrl: 'https://example.com?page=1',
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     description: 'happy flow - schema host and target fields exist',
-  //     cases: [
-  //       {
-  //         attributes: {
-  //           'http.scheme': 'https',
-  //           'http.host': 'example.com',
-  //           'http.target': '/',
-  //         },
-  //         expectedUrl: 'https://example.com',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.scheme': 'https',
-  //           'http.host': 'example.com',
-  //           'http.target': '/about',
-  //         },
-  //         expectedUrl: 'https://example.com/about',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.scheme': 'https',
-  //           'http.host': 'example.com',
-  //           'http.target': '/about?page=1',
-  //         },
-  //         expectedUrl: 'https://example.com/about?page=1',
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     description: 'http endpoint standard port',
-  //     cases: [
-  //       {
-  //         attributes: {
-  //           'http.url': 'https://example.com:443',
-  //         },
-  //         expectedUrl: 'https://example.com',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.url': 'http://example.com:80',
-  //         },
-  //         expectedUrl: 'http://example.com',
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     description: 'http endpoint non standard port',
-  //     cases: [
-  //       {
-  //         attributes: {
-  //           'http.url': 'https://example.com:80',
-  //         },
-  //         expectedUrl: 'https://example.com:80',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.url': 'https://example.com:80/about',
-  //         },
-  //         expectedUrl: 'https://example.com:80/about',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.url': 'http://example.com:443',
-  //         },
-  //         expectedUrl: 'http://example.com:443',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.url': 'http://example.com:443/about',
-  //         },
-  //         expectedUrl: 'http://example.com:443/about',
-  //       },
-  //       {
-  //         attributes: {
-  //           'http.scheme': 'https',
-  //           'http.host': 'example.com:80',
-  //           'http.target': '/about',
-  //         },
-  //         expectedUrl: 'https://example.com:80/about',
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     description: 'http root url',
-  //     cases: [
-  //       {
-  //         attributes: {
-  //           'http.url': 'https://example.com/',
-  //         },
-  //         expectedUrl: 'https://example.com',
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     description: 'missing values',
-  //     cases: [
-  //       {
-  //         attributes: null,
-  //         expectedUrl: null,
-  //       },
-  //       {
-  //         attributes: undefined,
-  //         expectedUrl: null,
-  //       },
-  //       {
-  //         attributes: {},
-  //         expectedUrl: null,
-  //       },
-  //     ],
-  //   },
-  // ].map(({ description, cases }) => {
-  //   return cases.map(({ attributes, expectedUrl }) => {
-  //     test(`test extract url from span - ${description}`, () => {
-  //       expect(extractEndpoint(attributes)).toEqual(expectedUrl);
-  //     });
-  //   });
-  // });
+  [
+    {
+      rawArrayString: '["a"]',
+      expectedArray: ['a'],
+    },
+    {
+      rawArrayString: '["a", "b"]',
+      expectedArray: ['a', 'b'],
+    },
+    {
+      rawArrayString: '[]',
+      expectedArray: [],
+    },
+    {
+      rawArrayString: '"a","b"',
+      expectedArray: [],
+    },
+    {
+      rawArrayString: 'Not an array',
+      expectedArray: [],
+    },
+    {
+      rawArrayString: null,
+      expectedArray: [],
+    },
+    {
+      rawArrayString: undefined,
+      expectedArray: [],
+    },
+    {
+      rawArrayString: '["a", 2]',
+      expectedArray: [],
+    },
+    {
+      rawArrayString: '["a", true]',
+      expectedArray: [],
+    },
+  ].map(({ rawArrayString, expectedArray }) => {
+    test(`test parse array string - ${rawArrayString}`, () => {
+      expect(parseStringToArray(rawArrayString)).toEqual(expectedArray);
+    });
+  });
+
+  [
+    {
+      endpoint: 'https://example.com',
+      regexes: ['.*example.*'],
+      shouldMatch: true,
+    },
+    {
+      endpoint: '/orders/123',
+      regexes: ['.*orders.*'],
+      shouldMatch: true,
+    },
+    {
+      endpoint: '/orders/123',
+      regexes: ['.*will-not-match.*', '.*orders.*'],
+      shouldMatch: true,
+    },
+    {
+      endpoint: '/orders/123',
+      regexes: [],
+      shouldMatch: false,
+    },
+    {
+      endpoint: '/orders/123',
+      regexes: ['no-match-1', 'no-match-2'],
+      shouldMatch: false,
+    },
+    {
+      endpoint: '',
+      regexes: ['.*'],
+      shouldMatch: false,
+    },
+    {
+      endpoint: null,
+      regexes: ['.*'],
+      shouldMatch: false,
+    },
+    {
+      endpoint: undefined,
+      regexes: ['.*'],
+      shouldMatch: false,
+    }
+  ].map(({ endpoint, regexes, shouldMatch }) => {
+    test(`test regex match - ${endpoint}`, () => {
+      expect(doesEndpointMatchRegexes(endpoint, regexes)).toEqual(shouldMatch);
+    });
+  });
+
+  [
+    {
+      attributes: {'url.path': 'urlPath', 'http.target': 'httpTarget'},
+      spanKind: SpanKind.SERVER,
+      expectedEndpoint: 'urlPath',
+    },
+    {
+      attributes: {'a': 'a', 'http.target': 'httpTarget'},
+      spanKind: SpanKind.SERVER,
+      expectedEndpoint: 'httpTarget',
+    },
+    {
+      attributes: {'url.full': 'fullUrl', 'http.url': 'httpUrl'},
+      spanKind: SpanKind.CLIENT,
+      expectedEndpoint: 'fullUrl',
+    },
+    {
+      attributes: {'a': 'a', 'http.url': 'httpUrl'},
+      spanKind: SpanKind.CLIENT,
+      expectedEndpoint: 'httpUrl',
+    },
+    {
+      attributes: {'url.path': 'urlPath', 'http.target': 'httpTarget', 'url.full': 'fullUrl', 'http.url': 'httpUrl'},
+      spanKind: SpanKind.INTERNAL,
+      expectedEndpoint: null,
+    },
+    {
+      attributes: {},
+      spanKind: SpanKind.SERVER,
+      expectedEndpoint: null,
+    },
+    {
+      attributes: {},
+      spanKind: SpanKind.CLIENT,
+      expectedEndpoint: null,
+    }
+  ].map(({ attributes, spanKind, expectedEndpoint }) => {
+    test(`test extract endpoint - ${JSON.stringify(attributes)}`, () => {
+      expect(extractEndpoint(attributes, spanKind)).toEqual(expectedEndpoint);
+    });
+  });
 });
