@@ -113,6 +113,7 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX='["regex1", "regex2"]'`: This option enables the filtering of client and server endpoints that match the supplied regular expressions. More fine-grained settings can be applied via the following environment variables, which will work in addition to `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` for a specific span type:
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` applies the filter to server spans only. Matching is performed against the following attributes on a span: `url.path`, and `http.target`.
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` applies the filter to client spans only. Matching is performed against the following attributes on a span: `url.full`, and `http.url`.
+  
   For more information check out [Filtering http endpoints](#filtering-http-endpoints).
 
 ### Execution Tags
