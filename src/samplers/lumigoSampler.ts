@@ -1,7 +1,6 @@
 import { Sampler, ParentBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
 import { SamplingResult, SamplingDecision } from '@opentelemetry/sdk-trace-base';
-import { standardizeHttpUrl } from '../tools/httpUtils';
 
 export class LumigoSampler implements Sampler {
   shouldSample(
@@ -13,66 +12,107 @@ export class LumigoSampler implements Sampler {
     links: Link[]
   ): SamplingResult {
     let decision = SamplingDecision.RECORD_AND_SAMPLED;
-    const url = extractUrl(attributes);
-    if (url && shouldSkipSpanOnRouteMatch(url)) {
-      console.debug(
-        `Dropping trace for url '${url} because it matches the auth-filter regex specified by 'LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX'`
-      );
-      decision = SamplingDecision.NOT_RECORD;
+    const endpoint = extractEndpoint(attributes, spanKind);
+    if (endpoint) {
+      if (spanKind === SpanKind.CLIENT && doesMatchClientSpanFilteringRegexes(endpoint)) {
+        console.debug(
+          `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT'`
+        );
+        decision = SamplingDecision.NOT_RECORD;
+      }
+      if (
+        decision !== SamplingDecision.NOT_RECORD &&
+        spanKind === SpanKind.SERVER &&
+        doesMatchServerSpanFilteringRegexes(endpoint)
+      ) {
+        console.debug(
+          `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER'`
+        );
+        decision = SamplingDecision.NOT_RECORD;
+      }
+      if (
+        decision !== SamplingDecision.NOT_RECORD &&
+        doesMatchGeneralSpanFilteringRegexes(endpoint)
+      ) {
+        console.debug(
+          `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX'`
+        );
+        decision = SamplingDecision.NOT_RECORD;
+      }
     }
 
     return { decision: decision };
   }
 }
 
-export const extractUrl = (attributes: Attributes): string | null => {
-  if (!attributes) {
-    return null;
+export const extractEndpoint = (attributes: Attributes, spanKind: SpanKind): string | null => {
+  if (spanKind === SpanKind.CLIENT) {
+    const endpoint_attr = attributes['url.full'] || attributes['http.url'];
+    return endpoint_attr ? endpoint_attr.toString() : null;
+  } else if (spanKind === SpanKind.SERVER) {
+    const endpoint_attr = attributes['url.path'] || attributes['http.target'];
+    return endpoint_attr ? endpoint_attr.toString() : null;
   }
 
-  // Try building a raw url from given attributes
-  let raw_url = null;
-  if (attributes['http.url']) {
-    raw_url = attributes['http.url'].toString();
-  }
-  if (
-    !raw_url &&
-    attributes['http.scheme'] &&
-    attributes['http.host'] &&
-    attributes['http.target']
-  ) {
-    raw_url = `${attributes['http.scheme']}://${attributes['http.host']}${attributes['http.target']}`;
-  }
-
-  if (!raw_url) {
-    return null;
-  }
-
-  return standardizeHttpUrl(raw_url);
+  return null;
 };
 
-export const shouldSkipSpanOnRouteMatch = (url: string): boolean => {
-  if (!url) {
+export const doesMatchClientSpanFilteringRegexes = (endpoint: string): boolean => {
+  if (!endpoint || !process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT) {
     return false;
   }
 
-  if (!process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX) {
+  const regexes = parseStringToArray(process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT);
+  return doesEndpointMatchRegexes(endpoint, regexes);
+};
+
+export const doesMatchServerSpanFilteringRegexes = (endpoint: string): boolean => {
+  if (!endpoint || !process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER) {
     return false;
   }
 
-  if (process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX) {
-    let regex: null | RegExp = null;
+  const regexes = parseStringToArray(process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER);
+  return doesEndpointMatchRegexes(endpoint, regexes);
+};
+
+export const doesMatchGeneralSpanFilteringRegexes = (endpoint: string): boolean => {
+  if (!endpoint || !process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX) {
+    return false;
+  }
+
+  const regexes = parseStringToArray(process.env.LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX);
+  return doesEndpointMatchRegexes(endpoint, regexes);
+};
+
+export const doesEndpointMatchRegexes = (endpoint: string, regexes: string[]): boolean => {
+  if (!endpoint || !regexes) {
+    return false;
+  }
+
+  for (const rawRegex of regexes) {
     try {
-      regex = new RegExp(process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX);
-      return regex.test(url);
+      if (new RegExp(rawRegex).test(endpoint)) {
+        return true;
+      }
     } catch (err) {
-      console.error(
-        `Invalid regex in 'LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX': '${process.env.LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX}'`
-      );
-      return false;
+      console.error(`Invalid regex: '${rawRegex}', skipping it.`);
     }
   }
+
   return false;
+};
+
+export const parseStringToArray = (rawArray: string): string[] => {
+  try {
+    const parsedArray = JSON.parse(rawArray);
+    if (Array.isArray(parsedArray) && parsedArray.every((e) => typeof e === 'string')) {
+      return parsedArray;
+    }
+    /* eslint-disable no-empty */
+  } catch (err) {}
+
+  console.error(`Invalid array of strings format: '${rawArray}'`);
+  return [];
 };
 
 export const getLumigoSampler = () => {
