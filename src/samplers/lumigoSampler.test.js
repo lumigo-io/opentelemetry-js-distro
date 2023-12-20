@@ -6,140 +6,59 @@ describe('lumigo sampler', () => {
     jest.clearAllMocks();
   });
 
-  [
-    {
-      rawArrayString: '["a"]',
-      expectedArray: ['a'],
-    },
-    {
-      rawArrayString: '["a", "b"]',
-      expectedArray: ['a', 'b'],
-    },
-    {
-      rawArrayString: '[]',
-      expectedArray: [],
-    },
-    {
-      rawArrayString: '"a","b"',
-      expectedArray: [],
-    },
-    {
-      rawArrayString: 'Not an array',
-      expectedArray: [],
-    },
-    {
-      rawArrayString: null,
-      expectedArray: [],
-    },
-    {
-      rawArrayString: undefined,
-      expectedArray: [],
-    },
-    {
-      rawArrayString: '["a", 2]',
-      expectedArray: [],
-    },
-    {
-      rawArrayString: '["a", true]',
-      expectedArray: [],
-    },
-  ].map(({ rawArrayString, expectedArray }) => {
-    test(`test parse array string - ${rawArrayString}`, () => {
-      expect(parseStringToArray(rawArrayString)).toEqual(expectedArray);
+  test.each`
+    rawArrayString    | expectedArray
+    ${'["a"]'}        | ${['a']}
+    ${'["a", "b"]'}   | ${['a', 'b']}
+    ${'[]'}           | ${[]}
+    ${'"a","b"'}      | ${[]}
+    ${'Not an array'} | ${[]}
+    ${null}           | ${[]}
+    ${undefined}      | ${[]}
+    ${'["a", 2]'}     | ${[]}
+    ${'["a", true]'}  | ${[]}
+  `('test parse array string', ({ rawArrayString, expectedArray }) => {
+    expect(parseStringToArray(rawArrayString)).toEqual(expectedArray);
+  });
+
+  describe('test when there is a match', () => {
+    const endpoint = 'https://example.com';
+    const regexes = ['.*example.*'];
+    const expected = true;
+    test('test regex match endpoint', () => {
+      expect(doesEndpointMatchRegexes(endpoint, regexes)).toEqual(expected);
     });
   });
 
-  [
-    {
-      endpoint: 'https://example.com',
-      regexes: ['.*example.*'],
-      shouldMatch: true,
-    },
-    {
-      endpoint: '/orders/123',
-      regexes: ['.*orders.*'],
-      shouldMatch: true,
-    },
-    {
-      endpoint: '/orders/123',
-      regexes: ['.*will-not-match.*', '.*orders.*'],
-      shouldMatch: true,
-    },
-    {
-      endpoint: '/orders/123',
-      regexes: [],
-      shouldMatch: false,
-    },
-    {
-      endpoint: '/orders/123',
-      regexes: ['no-match-1', 'no-match-2'],
-      shouldMatch: false,
-    },
-    {
-      endpoint: '',
-      regexes: ['.*'],
-      shouldMatch: false,
-    },
-    {
-      endpoint: null,
-      regexes: ['.*'],
-      shouldMatch: false,
-    },
-    {
-      endpoint: undefined,
-      regexes: ['.*'],
-      shouldMatch: false,
-    },
-  ].map(({ endpoint, regexes, shouldMatch }) => {
-    test(`test regex match - ${endpoint}`, () => {
-      expect(doesEndpointMatchRegexes(endpoint, regexes)).toEqual(shouldMatch);
-    });
+  test.each`
+    endpoint                 | regexes                                 | shouldMatch
+    ${'https://example.com'} | ${['.*example.*']}                      | ${true}
+    ${'/orders/123'}         | ${['.*orders.*']}                       | ${true}
+    ${'/orders/123'}         | ${['.*will-not-match.*', '.*orders.*']} | ${true}
+    ${'/orders/123'}         | ${[]}                                   | ${false}
+    ${'/orders/123'}         | ${['no-match-1', 'no-match-2']}         | ${false}
+    ${''}                    | ${['.*']}                               | ${false}
+    ${null}                  | ${['.*']}                               | ${false}
+    ${undefined}             | ${['.*']}                               | ${false}
+  `('test regex match endpoint', ({ endpoint, regexes, shouldMatch }) => {
+    expect(doesEndpointMatchRegexes(endpoint, regexes)).toEqual(shouldMatch);
   });
 
-  [
-    {
-      attributes: { 'url.path': 'urlPath', 'http.target': 'httpTarget' },
-      spanKind: SpanKind.SERVER,
-      expectedEndpoint: 'urlPath',
-    },
-    {
-      attributes: { a: 'a', 'http.target': 'httpTarget' },
-      spanKind: SpanKind.SERVER,
-      expectedEndpoint: 'httpTarget',
-    },
-    {
-      attributes: { 'url.full': 'fullUrl', 'http.url': 'httpUrl' },
-      spanKind: SpanKind.CLIENT,
-      expectedEndpoint: 'fullUrl',
-    },
-    {
-      attributes: { a: 'a', 'http.url': 'httpUrl' },
-      spanKind: SpanKind.CLIENT,
-      expectedEndpoint: 'httpUrl',
-    },
-    {
-      attributes: {
-        'url.path': 'urlPath',
-        'http.target': 'httpTarget',
-        'url.full': 'fullUrl',
-        'http.url': 'httpUrl',
-      },
-      spanKind: SpanKind.INTERNAL,
-      expectedEndpoint: null,
-    },
-    {
-      attributes: {},
-      spanKind: SpanKind.SERVER,
-      expectedEndpoint: null,
-    },
-    {
-      attributes: {},
-      spanKind: SpanKind.CLIENT,
-      expectedEndpoint: null,
-    },
-  ].map(({ attributes, spanKind, expectedEndpoint }) => {
-    test(`test extract endpoint - ${JSON.stringify(attributes)}`, () => {
-      expect(extractEndpoint(attributes, spanKind)).toEqual(expectedEndpoint);
-    });
+  test.each`
+    attributes                                                | spanKind           | expectedEndpoint
+    ${{ 'url.path': 'urlPath', 'http.target': 'httpTarget' }} | ${SpanKind.SERVER} | ${'urlPath'}
+    ${{ a: 'a', 'http.target': 'httpTarget' }}                | ${SpanKind.SERVER} | ${'httpTarget'}
+    ${{ 'url.full': 'fullUrl', 'http.url': 'httpUrl' }}       | ${SpanKind.CLIENT} | ${'fullUrl'}
+    ${{ a: 'a', 'http.url': 'httpUrl' }}                      | ${SpanKind.CLIENT} | ${'httpUrl'}
+    ${{
+  'url.path': 'urlPath',
+  'http.target': 'httpTarget',
+  'url.full': 'fullUrl',
+  'http.url': 'httpUrl',
+}} | ${SpanKind.INTERNAL} | ${null}
+    ${{}}                                                     | ${SpanKind.SERVER} | ${null}
+    ${{}}                                                     | ${SpanKind.CLIENT} | ${null}
+  `('test extract endpoint', ({ attributes, spanKind, expectedEndpoint }) => {
+    expect(extractEndpoint(attributes, spanKind)).toEqual(expectedEndpoint);
   });
 });
