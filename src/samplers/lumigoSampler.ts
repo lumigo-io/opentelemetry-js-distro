@@ -105,7 +105,7 @@ export const doesEndpointMatchRegexes = (endpoint: string, regexes: string[]): b
 export const parseStringToArray = (rawArray: string): string[] => {
   try {
     const parsedArray = JSON.parse(rawArray);
-    if (Array.isArray(parsedArray) && !parsedArray.some((e) => typeof e !== 'string')) {
+    if (Array.isArray(parsedArray) && parsedArray.every((e) => typeof e === 'string')) {
       return parsedArray;
     }
     /* eslint-disable no-empty */
