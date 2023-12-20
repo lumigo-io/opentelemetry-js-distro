@@ -44,7 +44,7 @@ export const extractEndpoint = (attributes: Attributes, spanKind: SpanKind): str
     return endpoint_attr ? endpoint_attr.toString() : null;
   }
   else if (spanKind === SpanKind.SERVER) {
-    const endpoint_attr = attributes['url.full'] || attributes['http.url'];
+    const endpoint_attr = attributes['url.path'] || attributes['http.target'];
     return endpoint_attr ? endpoint_attr.toString() : null;
   }
 
@@ -79,6 +79,8 @@ export const doesMatchGeneralSpanFilteringRegexes = (endpoint: string): boolean 
 }
 
 export const doesEndpointMatchRegexes = (endpoint: string, regexes: string[]): boolean => {
+  if (!endpoint || !regexes) { return false; }
+
   for (const rawRegex of regexes) {
     try {
       if (new RegExp(rawRegex).test(endpoint)) {
@@ -98,7 +100,7 @@ export const doesEndpointMatchRegexes = (endpoint: string, regexes: string[]): b
 export const parseStringToArray = (rawArray: string): string[] => {
   try {
       const parsedArray = JSON.parse(rawArray);
-      if (Array.isArray(parsedArray) && !parsedArray.some(e => !e.isString())) {
+      if (Array.isArray(parsedArray) && !parsedArray.some(e => typeof e !== 'string')) {
         return parsedArray;
       }
   }
