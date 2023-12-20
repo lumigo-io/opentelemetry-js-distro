@@ -110,7 +110,11 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` applies secret redaction to process environment variables (that is, the content of `process.env`)
-* `LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX`: This option enables the automatic filtering of endpoints that match the supplied regular expressions, refer to the [Filtering out HTTP endpoints](#filtering-out-http-endpoints) section.
+* `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX='["regex1", "regex2"]'`: This option enables the filtering of client and server endpoints that match the supplied regular expressions. More fine-grained settings can be applied via the following environment variables, which will work in addition to `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` for a specific span type:
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` applies the filter to server spans only. Matching is performed against the following attributes on a span: `url.path`, and `http.target`.
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` applies the filter to client spans only. Matching is performed against the following attributes on a span: `url.full`, and `http.url`.
+  For more information check out [Filtering http endpoints](#filtering-http-endpoints).
+
 ### Execution Tags
 
 [Execution Tags](https://docs.lumigo.io/docs/execution-tags) allow you to dynamically add dimensions to your invocations so that they can be identified, searched for, and filtered in Lumigo.
@@ -461,24 +465,20 @@ The possible variations are (case-insensitive):
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS=FALSE` do not filter out empty SQS polling messages
 * No environment variable set (default): filter out empty SQS polling messages
 
-### Filtering out HTTP endpoints
+### Filtering http endpoints
 
-It is possible to automatically filter out spans based on an HTTP server endpoints for all supported web server frameworks.
+It is possible to filter out spans based on the HTTP server / client endpoints for all supported web server frameworks.
 
-Simply set the `LUMIGO_AUTO_FILTER_HTTP_ENDPOINTS_REGEX` environment variable to a regex string that will match the urls,
-spans for matching urls will be not be delivered (works for both incoming & outgoing HTTP requests).
+Set the `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` environment variable to a list of regex strings that will match 
+server / client endpoints.
+Spans with matching endpoints will be not be traced.
+If you only want to filter out server (inbound) spans or client (outbound) spans, you can set the env vars 
+`LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` or `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` respectively.
 
 If we are filtering out an HTTP call to an opentelemetry traced component, every subsequent invocation made by that 
 component won't be traced either.
 
 When filtering out an HTTP span, all child spans will not be recorded as well.
-
-NOTE: When urls are accessed using standard ports (80 for HTTP and 443 for HTTPS), the port is not included in the url.
-
-example patterns:
-* `https:\/\/example\.com\/about` - will match `https://example.com/about`
-* `.*example.*` - will match any url with the word `example` in it
-* `https:\/\/example\.com:123.*` - will match any http request to example.com on port 123
 
 ## Contributing
 
