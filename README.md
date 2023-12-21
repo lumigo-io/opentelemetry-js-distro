@@ -110,9 +110,9 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS` applies secret redaction to HTTP response bodies
   * `LUMIGO_SECRET_MASKING_REGEX_ENVIRONMENT` applies secret redaction to process environment variables (that is, the content of `process.env`)
-* `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX='["regex1", "regex2"]'`: This option enables the filtering of client and server endpoints that match the supplied regular expressions. More fine-grained settings can be applied via the following environment variables, which will work in addition to `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` for a specific span type:
-  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` applies the filter to server spans only. Matching is performed against the following attributes on a span: `url.path`, and `http.target`.
-  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` applies the filter to client spans only. Matching is performed against the following attributes on a span: `url.full`, and `http.url`.
+* `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX='["regex1", "regex2"]'`: This option enables the filtering of client and server endpoints through regular expression searches. Fine-tune your settings via the following environment variables, which work in conjunction with `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` for a specific span type:
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` applies the regular expression search exclusively to server spans. Searching is performed against the following attributes on a span: `url.path` and `http.target`.
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` applies the regular expression search exclusively to client spans. Searching is performed against the following attributes on a span: `url.full` and `http.url`.
   
   For more information check out [Filtering http endpoints](#filtering-http-endpoints).
 
@@ -468,18 +468,30 @@ The possible variations are (case-insensitive):
 
 ### Filtering http endpoints
 
-It is possible to filter out spans based on the HTTP server / client endpoints for all supported web server frameworks.
+You can selectively filter spans based on HTTP server/client endpoints for various components, not limited to web frameworks.
 
-Set the `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` environment variable to a list of regex strings that will match 
-server / client endpoints.
-Spans with matching endpoints will be not be traced.
-If you only want to filter out server (inbound) spans or client (outbound) spans, you can set the env vars 
-`LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` or `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` respectively.
+#### Global filtering
+Set the `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` environment variable to a list of regex strings. Spans with matching server/client endpoints will not be traced.
 
-If we are filtering out an HTTP call to an opentelemetry traced component, every subsequent invocation made by that 
+#### Specific Filtering
+For exclusive server (inbound) or client (outbound) span filtering, use the environment variables:
+* `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER`
+* `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT`
+
+Notes:
+* the environment variable must be a valid JSON array of strings, so if you want to match endpoint with the hostname `google.com` the environment variable value should be `["google\\.com"]`.
+* If we are filtering out an HTTP call to an opentelemetry traced component, every subsequent invocation made by that 
 component won't be traced either.
 
-When filtering out an HTTP span, all child spans will not be recorded as well.
+Examples:
+* Filtering out every incoming HTTP request to the `/login` endpoint (will also match requests such as `/login?user=foo`, `/login/bar`))):
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER=["\\/login"]`
+* Filtering out every outgoing HTTP request to the `google.com` domain (will also match requests such as `google.com/foo`, `bar.google.com`):
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT=["google\\.com"]`'
+* Filtering out every outgoing HTTP request to `https://www.google.com` (will also match requests such as `https://www.google.com/`, `https://www.google.com/foo`)
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT=["https:\\/\\/www\\.google\\.com"]`
+* Filtering out every HTTP request (incoming or outgoing) with the word `login`:
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX=["login"]`
 
 ## Contributing
 
