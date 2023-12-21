@@ -476,10 +476,20 @@ Spans with matching endpoints will be not be traced.
 If you only want to filter out server (inbound) spans or client (outbound) spans, you can set the env vars 
 `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` or `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` respectively.
 
-If we are filtering out an HTTP call to an opentelemetry traced component, every subsequent invocation made by that 
+Notes:
+* the environment variable must be a valid JSON array of strings, so if you want to match endpoint with the hostname `google.com` the environment variable value should be `["google\\.com"]`.
+* If we are filtering out an HTTP call to an opentelemetry traced component, every subsequent invocation made by that 
 component won't be traced either.
 
-When filtering out an HTTP span, all child spans will not be recorded as well.
+Examples:
+* Filtering out every incoming HTTP request to the `/login` endpoint (will also match requests such as `/login?user=foo`, `/login/bar`))):
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER=["\\/login"]`
+* Filtering out every outgoing HTTP request to the `google.com` domain (will also match requests such as `google.com/foo`, `bar.google.com`):
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT=["google\\.com"]`'
+* Filtering out every outgoing HTTP request to `https://www.google.com` (will also match requests such as `https://www.google.com/`, `https://www.google.com/foo`)
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT=["https:\\/\\/www\\.google\\.com"]`
+* Filtering out every HTTP request (incoming or outgoing) with the word `login`:
+  * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX=["login"]`
 
 ## Contributing
 
