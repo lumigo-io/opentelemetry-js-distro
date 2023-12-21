@@ -122,7 +122,7 @@ export const parseStringToArray = (rawArray: string): string[] => {
     /* eslint-disable no-empty */
   } catch (err) {}
 
-  console.error(`Invalid array of strings format: '${rawArray}'`);
+  console.error(`Not valid JSON format for an array of strings: '${rawArray}'`);
   return [];
 };
 
