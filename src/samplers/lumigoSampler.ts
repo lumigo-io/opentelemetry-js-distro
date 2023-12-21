@@ -46,6 +46,17 @@ export class LumigoSampler implements Sampler {
 }
 
 export const extractEndpoint = (attributes: Attributes, spanKind: SpanKind): string | null => {
+  /*
+  * expected attributes for HTTP CLIENT spans:
+  * url.full - The Absolute URL describing a network resource. E.g. "https://www.foo.bar/search?q=OpenTelemetry#SemConv"
+  *
+  * expected attributes for HTTP SERVER spans:
+  * url.path - The URI path component. E.g. "/search"
+  *
+  * deprecated attributes (see https://opentelemetry.io/docs/specs/semconv/attributes-registry/http/#deprecated-http-attributes):
+  * http.target - replaced by the url.path & url.query attributes. Example: "/search?q=OpenTelemetry#SemConv"
+  * http.url - replaced by the url.full attribute. Example: "https://www.foo.bar/search?q=OpenTelemetry#SemConv"
+  * */
   if (spanKind === SpanKind.CLIENT) {
     const endpoint_attr = attributes['url.full'] || attributes['http.url'];
     return endpoint_attr ? endpoint_attr.toString() : null;
