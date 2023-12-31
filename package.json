@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.35.0",
+  "version": "1.36.3",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/distro.js",
   "private": false,
@@ -19,6 +19,7 @@
     "tsc": "tsc"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
+  "license": "Apache-2.0",
   "author": "Lumigo",
   "dependencies": {
     "@lumigo/node-core": "1.14.0",

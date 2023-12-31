@@ -24,6 +24,10 @@ export function getSpanByKind(spans: Span[] = [], spanKindValue: SpanKind): Span
     return spans.find((span) => span.kind === spanKindValue) as Span;
 }
 
+export function getSpansByKind(spans: Span[] = [], spanKindValue: SpanKind): Span[] {
+    return spans.filter((span) => span.kind === spanKindValue);
+}
+
 export function readSpanDump(spanDumpPath: string): Span[] {
     try {
         return readFileSync(spanDumpPath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));

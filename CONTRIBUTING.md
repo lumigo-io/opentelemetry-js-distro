@@ -8,6 +8,9 @@ For this reason we have included the `nvm` configuration file `.nvmrc` set to
 the lowest supported version, if you're using `nvm` then just type `nvm use`
 to switch to it.
 
+If you don't have `nvm` installed, make sure you're running the version of
+Node.js specified in the `.nvmrc` file before installing the `npm` dependencies.
+
 ## Tests
 
 Unit tests are run with:

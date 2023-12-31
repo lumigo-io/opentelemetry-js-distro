@@ -51,6 +51,7 @@ import { dirname, join } from 'path';
 import { logger } from './logging';
 import { ProcessEnvironmentDetector } from './resources/detectors/ProcessEnvironmentDetector';
 import { LumigoSpanProcessor } from './resources/spanProcessor';
+import { getLumigoSampler } from './samplers/lumigoSampler';
 
 const lumigoEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_ENDPOINT;
 
@@ -167,6 +168,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       .merge(await new ProcessEnvironmentDetector().detect());
 
     const tracerProvider = new NodeTracerProvider({
+      sampler: getLumigoSampler(),
       resource,
       spanLimits: {
         attributeValueLengthLimit: getSpanAttributeMaxLength(),
