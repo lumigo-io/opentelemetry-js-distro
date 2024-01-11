@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-aws-sdk-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
+    "aws-sdk": "^2.1533.0"
+  }
+}
