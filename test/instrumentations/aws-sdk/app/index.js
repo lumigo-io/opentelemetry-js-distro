@@ -11,6 +11,7 @@ let appPort;
 let sqsPort;
 let maxNumberOfMessages;
 let sqsClient;
+let queueUrl;
 let httpServer;
 
 const QUEUE_NAME = `test-queue-${Date.now()}`;
@@ -31,9 +32,12 @@ const requestListener = async function (req, res) {
   switch (requestUrl.pathname) {
     case '/init':
       const { sqsPort: _sqsPort, maxNumberOfMessages: _maxNumberOfMessages } = requestUrl.query
-      maxNumberOfMessages = _maxNumberOfMessages
-      sqsPort = _sqsPort
+
+      maxNumberOfMessages = Number(_maxNumberOfMessages)
+      sqsPort = Number(_sqsPort)
       sqsClient = new AWS.SQS({ endpoint: `http://localhost:${sqsPort}`, region: 'us-east-1' })
+      queueUrl = `http://${host}:${sqsPort}/000000000000/${QUEUE_NAME}`
+
       await sqsClient.createQueue({ QueueName: QUEUE_NAME }).promise()
       respond(res, 200);
       break;
@@ -41,7 +45,7 @@ const requestListener = async function (req, res) {
       try {
         await sqsClient.sendMessage({
           MessageBody: JSON.stringify({ someValue: Math.random() * 1000 }),
-          QueueUrl: `http://localhost:${sqsPort}/000000000000/${QUEUE_NAME}`
+          QueueUrl: queueUrl
         }).promise()
         respond(res, 200, {});
       } catch (err) {
@@ -51,12 +55,21 @@ const requestListener = async function (req, res) {
       break;
     case '/sqs/receive-message':
       try {
-        const { Messages: messages } = await sqsClient.receiveMessage({
-          QueueUrl: `http://localhost:${sqsPort}/000000000000/${QUEUE_NAME}`,
-          MaxNumberOfMessages: Number(requestUrl.query.maxNumberOfMessages)
-        }).promise()
+        const totalMessages = [];
 
-        await Promise.all(messages.map(async (message, index) => {
+        while (totalMessages.length < maxNumberOfMessages) {
+          const { Messages: messages } = await sqsClient.receiveMessage({
+            QueueUrl: queueUrl,
+            MaxNumberOfMessages: maxNumberOfMessages
+          }).promise()
+
+          totalMessages.push(...messages)
+        }
+
+        await Promise.all(totalMessages.map(async (message, index) => {
+          console.log(`Deleting message from queue ${QUEUE_NAME}, ReceiptHandle: ${message.ReceiptHandle}`)
+          await sqsClient.deleteMessage({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }).promise()
+
           console.log(`Sending an HTTP request with consumed SQS message #${index}: `, JSON.stringify(req.body))
           await axios.post(`http://${host}:${appPort}/some-other-endpoint`, message)
         }));
