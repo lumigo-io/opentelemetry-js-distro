@@ -81,6 +81,7 @@
     "jest-json": "^2.0.0",
     "jest-mock-console": "^2.0.0",
     "jest-summarizing-reporter": "^1.1.4",
+    "lodash": "^4.17.21",
     "log-timestamp": "^0.3.0",
     "mock-fs": "^5.2.0",
     "mock-http-server": "^1.4.5",

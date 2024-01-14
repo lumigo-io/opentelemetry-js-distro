@@ -4,6 +4,8 @@ import { SpanKind } from '@opentelemetry/api';
 type AttributeValue = string | number | boolean | string[] | number[] | boolean[];
 
 export interface Span {
+    id: string;
+    parentId?: string;
     name: string;
     kind: number;
     attributes: {

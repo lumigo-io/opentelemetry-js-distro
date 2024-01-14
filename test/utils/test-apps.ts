@@ -250,6 +250,10 @@ export class TestApp {
                 timeoutRemaining -= sleepTime;
                 spans = readSpanDump(spanDumpPath);
             }
+
+            if (spans.length < expectedNumberOfSpans) {
+                throw new Error(`expected ${expectedNumberOfSpans} spans, but only found ${spans.length} spans`);
+            }
         }
 
         await this.invokeShutdown();
