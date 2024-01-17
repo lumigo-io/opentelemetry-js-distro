@@ -55,24 +55,19 @@ const requestListener = async function (req, res) {
       break;
     case '/sqs/receive-message':
       try {
-        const totalMessages = [];
+        const { Messages: messages } = await sqsClient.receiveMessage({
+          QueueUrl: queueUrl,
+          MaxNumberOfMessages: maxNumberOfMessages,
+          WaitTimeSeconds: 0
+        }).promise()
 
-        while (totalMessages.length < maxNumberOfMessages) {
-          const { Messages: messages } = await sqsClient.receiveMessage({
-            QueueUrl: queueUrl,
-            MaxNumberOfMessages: maxNumberOfMessages
-          }).promise()
-
-          totalMessages.push(...messages)
-        }
-
-        await Promise.all(totalMessages.map(async (message, index) => {
+        for (const message of messages) {
           console.log(`Deleting message from queue ${QUEUE_NAME}, ReceiptHandle: ${message.ReceiptHandle}`)
           await sqsClient.deleteMessage({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }).promise()
 
-          console.log(`Sending an HTTP request with consumed SQS message #${index}: `, JSON.stringify(req.body))
+          console.log(`Sending an HTTP request with consumed SQS message-id: ${message.MessageId}: `, JSON.stringify(req.body))
           await axios.post(`http://${host}:${appPort}/some-other-endpoint`, message)
-        }));
+        }
 
         respond(res, 200, {});
       } catch (err) {

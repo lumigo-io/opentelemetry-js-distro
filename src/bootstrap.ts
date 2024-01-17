@@ -1,5 +1,5 @@
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Instrumentation, registerInstrumentations } from '@opentelemetry/instrumentation';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource, detectResources, envDetector, processDetector } from '@opentelemetry/resources';
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
@@ -18,6 +18,7 @@ import LumigoKafkaJsInstrumentation from './instrumentations/kafkajs/KafkaJsInst
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
+import LumigoAwsSdkInstrumentation from './instrumentations/aws-sdk/LumigoAwsSdkInstrumentation';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
   LumigoContainerNameDetector,
@@ -104,6 +105,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoMongoDBInstrumentation(),
       new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
+      new LumigoAwsSdkInstrumentation(),
     ].filter((i) => i.isApplicable());
 
     /*
@@ -112,9 +114,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
      * built-in instrumentation in the app.
      */
     registerInstrumentations({
-      instrumentations: instrumentationsToInstall.map(
-        (i) => i.getInstrumentation() as Instrumentation
-      ),
+      instrumentations: instrumentationsToInstall.map((i) => i.getInstrumentation()),
     });
 
     const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());

@@ -8,8 +8,9 @@ const WAIT_ON_INITIAL_DELAY = 1_000;
 const WAIT_ON_TIMEOUT = 10_000;
 const PORT_REGEX = new RegExp('.*([Ll]istening on port )([0-9]*)', 'g');
 
-export class TestApp {
+type SpanCondition = (spans: Span[]) => boolean;
 
+export class TestApp {
     private app: ChildProcessWithoutNullStreams;
     private closePromise: Promise<void>;
     private cwd: string;
@@ -20,17 +21,20 @@ export class TestApp {
     private portPromise: Promise<Number>;
     private serviceName: string;
     private spanDumpPath: string;
+    private readonly showStdout: boolean;
 
     constructor(
         cwd: string,
         serviceName: string,
         spanDumpPath: string,
-        envVars = {}
+        envVars = {},
+        showStdout = false
     ) {
         this.cwd = cwd;
         this.envVars = envVars;
         this.serviceName = serviceName;
         this.spanDumpPath = spanDumpPath;
+        this.showStdout = showStdout;
 
         if (existsSync(spanDumpPath)) {
             console.info(`removing previous span dump file ${spanDumpPath}...`)
@@ -66,7 +70,6 @@ export class TestApp {
             },
             shell: true,
         });
-
         this.pid = this.app.pid;
 
         let portResolveFunction: Function;
@@ -89,6 +92,12 @@ export class TestApp {
 
             console.info('spawn data stderr: ', dataStr);
         });
+
+        if (this.showStdout) {
+            this.app.stdout.on('data', (data) => {
+                console.info('spawn data stdout: ', data.toString());
+            });
+        }
 
         let closeResolveFunction: Function;
         let closeRejectFunction: Function;
@@ -237,22 +246,25 @@ export class TestApp {
         });
     }
 
-    public async getFinalSpans(expectedNumberOfSpans: number | null = null, timeout = 10_000): Promise<Span[]> {
+    public async getFinalSpans(expectedNumberOfSpansOrCondition?: number | SpanCondition, timeout = 10_000): Promise<Span[]> {
         const spanDumpPath = this.spanDumpPath;
-
         let spans = readSpanDump(spanDumpPath)
 
-        if (expectedNumberOfSpans) {
+        if (expectedNumberOfSpansOrCondition) {
+            const condition = typeof expectedNumberOfSpansOrCondition === 'function' ?
+                expectedNumberOfSpansOrCondition :
+                _spans => _spans.length === expectedNumberOfSpansOrCondition;
+
             const sleepTime = 500;
             let timeoutRemaining = timeout;
-            while (spans.length < expectedNumberOfSpans && timeoutRemaining > 0) {
+            while (!condition(spans) && timeoutRemaining > 0) {
                 await sleep(sleepTime);
                 timeoutRemaining -= sleepTime;
                 spans = readSpanDump(spanDumpPath);
             }
 
-            if (spans.length < expectedNumberOfSpans) {
-                throw new Error(`expected ${expectedNumberOfSpans} spans, but only found ${spans.length} spans`);
+            if (!condition(spans)) {
+                throw new Error(`condition on spans was not met`);
             }
         }
 
