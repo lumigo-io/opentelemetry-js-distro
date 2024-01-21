@@ -2,6 +2,8 @@ const AWS = require('aws-sdk');
 const http = require('http');
 const url = require('url');
 const axios = require('axios');
+const { init: lumigoInit } = require('@lumigo/opentelemetry');
+const { context, trace } = require('@opentelemetry/api');
 
 require('log-timestamp');
 
@@ -25,6 +27,9 @@ function respond(res, status, body = {}) {
 }
 
 const requestListener = async function (req, res) {
+  const { tracerProvider } = await lumigoInit;
+  const tracer = tracerProvider.getTracer(__filename);
+
   console.error(`Received request: ${req.method} ${req.url} `);
 
   const requestUrl = url.parse(req.url, true);
@@ -41,7 +46,7 @@ const requestListener = async function (req, res) {
       await sqsClient.createQueue({ QueueName: QUEUE_NAME }).promise()
       respond(res, 200);
       break;
-    case '/sqs/send-message':
+    case '/sqs-app/send-message':
       try {
         await sqsClient.sendMessage({
           MessageBody: JSON.stringify({ someValue: Math.random() * 1000 }),
@@ -53,7 +58,7 @@ const requestListener = async function (req, res) {
         respond(res, 500, { error: err });
       }
       break;
-    case '/sqs/receive-message':
+    case '/sqs-app/receive-message':
       try {
         const { Messages: messages } = await sqsClient.receiveMessage({
           QueueUrl: queueUrl,
@@ -61,13 +66,20 @@ const requestListener = async function (req, res) {
           WaitTimeSeconds: 0
         }).promise()
 
-        for (const message of messages) {
-          console.log(`Deleting message from queue ${QUEUE_NAME}, ReceiptHandle: ${message.ReceiptHandle}`)
-          await sqsClient.deleteMessage({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }).promise()
+        context.with(trace.setSpan(context.active(), messages.__span), async () => {
+          tracer.startActiveSpan('some_child_span', async nestedSpan => {
+            for (const message of messages) {
+              console.log(`Deleting message from queue ${QUEUE_NAME}, ReceiptHandle: ${message.ReceiptHandle}`)
+              await sqsClient.deleteMessage({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }).promise()
 
-          console.log(`Sending an HTTP request with consumed SQS message-id: ${message.MessageId}: `, JSON.stringify(req.body))
-          await axios.post(`http://${host}:${appPort}/some-other-endpoint`, message)
-        }
+              nestedSpan.setAttribute('lumigo.execution_tags.foo', 'bar');
+
+              console.log(`Sending an HTTP request with consumed SQS message-id: ${message.MessageId}: `, JSON.stringify(req.body))
+              await axios.post(`http://${host}:${appPort}/some-other-endpoint`, message)
+            }
+            nestedSpan.end();
+          })
+        })
 
         respond(res, 200, {});
       } catch (err) {

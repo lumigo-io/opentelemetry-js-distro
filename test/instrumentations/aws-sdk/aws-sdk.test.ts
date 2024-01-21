@@ -65,8 +65,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const messagesToSend = 3;
 
       await testApp.invokeGetPath(`/init?sqsPort=${sqsPort}&maxNumberOfMessages=${messagesToSend}`);
-      await times(messagesToSend, () => testApp.invokeGetPath('/sqs/send-message'))
-      await testApp.invokeGetPath('/sqs/receive-message');
+      await times(messagesToSend, () => testApp.invokeGetPath('/sqs-app/send-message'))
+      await testApp.invokeGetPath('/sqs-app/receive-message');
 
       const filterOutboundHttpCallsAfterMessageProcessed = (_spans) => {
         return getSpansByKind(_spans, SpanKind.CLIENT).filter(
