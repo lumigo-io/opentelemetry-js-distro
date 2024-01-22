@@ -7,7 +7,7 @@ import { versionsToTest } from '../../utils/versions';
 import { TestApp } from '../../utils/test-apps';
 import { times } from 'lodash';
 import { SpanKind } from '@opentelemetry/api';
-import { getSpansByKind } from '../../utils/spans';
+import { getSpanByName, getSpansByKind } from '../../utils/spans';
 import 'jest-extended';
 
 const INSTRUMENTATION_NAME = 'aws-sdk';
@@ -19,6 +19,7 @@ const LOCALSTACK_PORT = 4566;
 
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
   let sqsContainer: StartedTestContainer;
+  let testApp: TestApp;
 
   beforeAll(async () => {
     fs.mkdirSync(SPANS_DIR, { recursive: true });
@@ -43,6 +44,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       await sqsContainer.stop()
     }
 
+    if (testApp) {
+      await testApp.kill();
+    }
+
     uninstallPackage({
       appDir: TEST_APP_DIR,
       packageName: INSTRUMENTATION_NAME,
@@ -61,32 +66,28 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const sqsPort = sqsContainer.getMappedPort(LOCALSTACK_PORT)
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-spans@${versionToTest}.json`;
 
-      const testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {}, true);
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {}, true);
       const messagesToSend = 3;
 
       await testApp.invokeGetPath(`/init?sqsPort=${sqsPort}&maxNumberOfMessages=${messagesToSend}`);
       await times(messagesToSend, () => testApp.invokeGetPath('/sqs-app/send-message'))
       await testApp.invokeGetPath('/sqs-app/receive-message');
 
-      const filterOutboundHttpCallsAfterMessageProcessed = (_spans) => {
-        return getSpansByKind(_spans, SpanKind.CLIENT).filter(
+      const filterHttpClientSpans = (spans) => {
+        return getSpansByKind(spans, SpanKind.CLIENT).filter(
           (span) => (span.attributes["http.url"] as string)?.endsWith("/some-other-endpoint")
         )
       }
 
-      const spans = await testApp.getFinalSpans(_spans => filterOutboundHttpCallsAfterMessageProcessed(_spans).length > 0);
+      const finalSpans = await testApp.getFinalSpans(spans => filterHttpClientSpans(spans).length === messagesToSend);
 
-      const receiveMessageServerSpan = spans.find((span) => (span.attributes["http.url"] as string)?.endsWith("/receive-message"));
-      expect(receiveMessageServerSpan).toBeDefined();
-
-      const awsReceiveMessageConsumerSpans = getSpansByKind(spans, SpanKind.CONSUMER)
+      const awsReceiveMessageConsumerSpans = getSpansByKind(finalSpans, SpanKind.CONSUMER)
       expect(awsReceiveMessageConsumerSpans).toHaveLength(1);
-      expect(awsReceiveMessageConsumerSpans[0].parentId).toBe(receiveMessageServerSpan!.id);
 
-      const outboundHttpCallSpans = filterOutboundHttpCallsAfterMessageProcessed(spans)
-      expect(outboundHttpCallSpans).toSatisfyAll((span) => span.parentId === receiveMessageServerSpan!.id);
-
-      await testApp.kill();
+      const internalSpan = getSpanByName(finalSpans, 'receive_child_span')
+      expect(internalSpan).toBeDefined()
+      expect(internalSpan!.parentId).toBe(awsReceiveMessageConsumerSpans[0].id)
+      expect(filterHttpClientSpans(finalSpans)).toSatisfyAll((span) => span.parentId === internalSpan!.id);
     }
   )
 })

@@ -10,8 +10,13 @@
  * with `undefined` as value; the promise is resolved, instead of rejected, to avoid UnhandledPromiseRejectionWarning
  * or errors affecting processes using unsupported Node.js versions.
  */
-import { LUMIGO_LOGGING_NAMESPACE } from './constants';
+import {
+  LUMIGO_LOGGING_NAMESPACE,
+  SQS_RECEIVE_SPAN_KEY as _SQS_RECEIVE_SPAN_KEY,
+} from './constants';
 import { minMajor, maxMajor } from './supportedVersions.json';
+
+export const SQS_RECEIVE_SPAN_KEY = _SQS_RECEIVE_SPAN_KEY;
 
 export const init = (() => {
   const version = process.version;

@@ -8,6 +8,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@lumigo/opentelemetry": "file:../../../../distro.tgz"
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
+    "aws-sdk": "^2.1533.0",
+    "p-retry": "^4.0.0"
   }
 }

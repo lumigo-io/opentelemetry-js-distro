@@ -1,6 +1,6 @@
-import { context } from '@opentelemetry/api';
 import { Instrumentor } from '../instrumentor';
 import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
+import { SQS_RECEIVE_SPAN_KEY } from '../../constants';
 
 export default class LumigoAwsSdkInstrumentation extends Instrumentor<AwsInstrumentation> {
   getInstrumentedModule(): string {
@@ -13,9 +13,9 @@ export default class LumigoAwsSdkInstrumentation extends Instrumentor<AwsInstrum
       suppressInternalInstrumentation: true, // Suppress internal http-spans emitted by the instrumentation
       responseHook: (span, { response }) => {
         if (response.data.Messages!) {
-          response.data.Messages!.__span = span;
+          response.data[SQS_RECEIVE_SPAN_KEY] = span;
         }
-      }
+      },
     });
   }
 }

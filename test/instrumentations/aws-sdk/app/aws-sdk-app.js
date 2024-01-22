@@ -2,8 +2,9 @@ const AWS = require('aws-sdk');
 const http = require('http');
 const url = require('url');
 const axios = require('axios');
-const { init: lumigoInit } = require('@lumigo/opentelemetry');
+const { init: lumigoInit, SQS_RECEIVE_SPAN_KEY } = require('@lumigo/opentelemetry');
 const { context, trace } = require('@opentelemetry/api');
+const pRetry = require('p-retry');
 
 require('log-timestamp');
 
@@ -60,24 +61,29 @@ const requestListener = async function (req, res) {
       break;
     case '/sqs-app/receive-message':
       try {
-        const { Messages: messages } = await sqsClient.receiveMessage({
+        await pRetry(async () => {
+          const { Attributes: { ApproximateNumberOfMessages } }
+            = await sqsClient.getQueueAttributes({ QueueUrl: queueUrl, AttributeNames: ["ApproximateNumberOfMessages"] }).promise()
+
+          if (Number(ApproximateNumberOfMessages) !== maxNumberOfMessages) {
+            throw new Error(`Expecting ${maxNumberOfMessages} messages, but got ${ApproximateNumberOfMessages}`)
+          }
+        }, { retries: 5, onFailedAttempt: err => console.error(err) });
+
+        const response = await sqsClient.receiveMessage({
           QueueUrl: queueUrl,
           MaxNumberOfMessages: maxNumberOfMessages,
           WaitTimeSeconds: 0
         }).promise()
 
-        context.with(trace.setSpan(context.active(), messages.__span), async () => {
-          tracer.startActiveSpan('some_child_span', async nestedSpan => {
-            for (const message of messages) {
-              console.log(`Deleting message from queue ${QUEUE_NAME}, ReceiptHandle: ${message.ReceiptHandle}`)
-              await sqsClient.deleteMessage({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }).promise()
-
-              nestedSpan.setAttribute('lumigo.execution_tags.foo', 'bar');
-
-              console.log(`Sending an HTTP request with consumed SQS message-id: ${message.MessageId}: `, JSON.stringify(req.body))
+        context.with(trace.setSpan(context.active(), response[SQS_RECEIVE_SPAN_KEY]), async () => {
+          tracer.startActiveSpan('receive_child_span', async internalSpan => {
+            for (const message of response.Messages) {
+              internalSpan.setAttribute('lumigo.execution_tags.my_queue_name', QUEUE_NAME);
+              internalSpan.setAttribute('lumigo.execution_tags.my_queue_message_count', response.Messages.length);
               await axios.post(`http://${host}:${appPort}/some-other-endpoint`, message)
             }
-            nestedSpan.end();
+            internalSpan.end()
           })
         })
 
