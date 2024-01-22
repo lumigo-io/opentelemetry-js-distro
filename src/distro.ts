@@ -12,6 +12,7 @@
  */
 import { LUMIGO_LOGGING_NAMESPACE } from './constants';
 import { minMajor, maxMajor } from './supportedVersions.json';
+export type { LumigoSdkInitialization } from './bootstrap';
 
 export const init = (() => {
   const version = process.version;
