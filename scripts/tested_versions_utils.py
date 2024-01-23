@@ -278,14 +278,8 @@ def should_test_only_untested_versions() -> bool:
 
 
 def sort_runtime_array(runtime_array: List[str]) -> List[str]:
-    unsorted_version_tuples: List[Tuple[int, int]] = [
-        (int(version.split(".")[0]), int(version.split(".")[1]))
-        for version in runtime_array
-    ]
-    return [
-        ".".join([str(version[0]), str(version[1])])
-        for version in sorted(unsorted_version_tuples)
-    ]
+    print(runtime_array)
+    return sorted(runtime_array)
 
 
 def generate_support_matrix_markdown(
@@ -305,18 +299,15 @@ def generate_support_matrix_markdown(
             if os.path.basename(directory) == "tested_versions":
                 tested_versions_path = os.path.join(root, directory)
                 package_support_version_directories += [tested_versions_path]
+                print(tested_versions_path)
                 # for each subfolder under tested_versions, we have a runtime
                 for runtime in os.listdir(tested_versions_path):
-                    package_support_version_runtimes += (
-                        [runtime]
-                        if runtime not in package_support_version_runtimes
-                        else []
-                    )
+                    print(runtime)
+                    if runtime not in package_support_version_runtimes:
+                        package_support_version_runtimes.append(runtime)
 
-    package_support_version_runtimes = sort_runtime_array(
-        package_support_version_runtimes
-    )
-
+    package_support_version_runtimes = sort_runtime_array(package_support_version_runtimes)
+    print(package_support_version_runtimes)
     res = [
         # add on one less than the number of runtimes because "supported versions" is the first runtime's column
         f"| Instrumentation | Package | Supported Versions |{'|'.join([' ' for _ in package_support_version_runtimes[:-1]])}|",
