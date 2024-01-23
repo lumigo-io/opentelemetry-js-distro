@@ -74,7 +74,7 @@ jobs:
       - run: PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m gather_version_artifacts
       - run: git --no-pager diff
       - run: rm -rf versions_artifacts  # the artifacts shouldn't be committed
-      - run: echo "::set-output name=branch_name::$(date +version-testing-%Y%m%d)"
+      - run: echo "::set-output name=branch_name::$(date +version-testing-%Y%m%d)_ng"
         id: branch_name
       - run: |  # update 'Supported packages' section in README.md
           PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m update_supported_packages_documentation
