@@ -19,7 +19,7 @@ for count, line in enumerate(
         break
 
 if not next_section_start_index:
-    raise Exception("No next section found")
+    raise Exception("No section found after 'Supported packages'!")
 
 updated_readme_content = readme_content[: supported_packages_start_index + 1]
 updated_readme_content += ["\n"]
