@@ -4,10 +4,10 @@ import os
 from glob import glob
 from typing import List
 
-from src.ci.tested_versions_utils import TestedVersions
+from tested_versions_utils import TestedVersions
 
 ARTIFACTS_PATH = "versions_artifacts"
-INSTRUMENTATIONS_PATH = "src/lumigo_opentelemetry/instrumentations"
+INSTRUMENTATIONS_PATH = "src/instrumentations/"
 
 # Before this script runs, the job downloads the artifacts into files with the following example structure:
 #
