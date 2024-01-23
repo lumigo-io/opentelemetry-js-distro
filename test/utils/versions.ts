@@ -12,14 +12,14 @@ const VERSION_UNDER_TEST =
     : undefined;
 
 export function versionsToTest(instrumentationName: string, packageName: string) {
-  const runtime = process.version;
+  const runtimeVersion = parseInt(process.version.slice(1).split('.')[0]);
   if (VERSION_UNDER_TEST) {
     return [VERSION_UNDER_TEST];
   }
   const allVersions = readFileSync(
     `${dirname(
       dirname(__dirname)
-    )}/src/instrumentations/${instrumentationName}/tested_versions/${runtime}/${packageName}`
+    )}/src/instrumentations/${instrumentationName}/tested_versions/${runtimeVersion}/${packageName}`
   )
     .toString()
     .split('\n')
