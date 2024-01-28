@@ -276,21 +276,24 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 
 ## Supported packages
 
-| Instrumentation | Package | Supported Versions | |
-| --- | --- | :---: | :---: |
-| | | 16 | 18 |
-| grpc-js | [grpc-js](https://www.npmjs.com/package/grpc-js) |  |1.8.0~1.8.20|
-| amqplib | [amqplib](https://www.npmjs.com/package/amqplib) |  |0.9.0~0.10.3|
-| express | [express](https://www.npmjs.com/package/express) |  |4.9.0~4.18.2|
-| fastify | [fastify](https://www.npmjs.com/package/fastify) |  |3.29.0~3.29.5|
-| | | | 4.0.0~4.24.3|
-| ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5| |
-| | | 5.0.0~5.3.2| |
-| kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4|2.0.0~2.2.4|
-| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) |  |3.6.6~3.7.3|
-| | | | 4.0.0~4.16.0|
-| prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.13.0| |
-| redis | [redis](https://www.npmjs.com/package/redis) |  |4.0.0~4.6.8|
+| Instrumentation | Package | Supported Versions | | | |
+| --- | --- | :---: | :---: | :---: | :---: |
+| | | 14 | 16 | 18 | 20 |
+| grpc-js | [grpc-js](https://www.npmjs.com/package/grpc-js) |  | |1.8.0~1.8.20| |
+| amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|
+| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|
+| fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
+| | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
+| | | 4.0.1~4.25.2| 4.0.1~4.25.2| 4.0.1~4.25.2| 4.0.1~4.25.2|
+| ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|
+| | | 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2|
+| kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|
+| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 4.17.0|3.6.6~3.7.3|3.6.6~3.7.3|3.6.6~3.7.3|
+| | | 6.3.0| 4.0.0~4.17.2| 4.0.0~4.17.2| 4.0.0~4.17.2|
+| | | | 5.0.0~5.9.2| 5.0.0~5.9.2| 5.0.0~5.9.2|
+| prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.13.0|4.2.0~4.13.0|4.2.0~4.13.0|4.2.0~4.13.0|
+| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.12|4.0.0~4.6.12|4.0.0~4.6.12|
+| | | 4.6.10~4.6.12| | | |
 
 ## Automated dependency reporting
 
