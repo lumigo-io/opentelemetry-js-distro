@@ -91,7 +91,7 @@ jobs:
           branch: ${{steps.branch_name.outputs.branch_name}}
           commit-message: ${{ env.new_versions }}
           body: ${{ env.new_versions }}
-          base: main
+          base: fix-tested-versions
           labels: version-testing, automerge
           reviewers: GuyMoses,saartochner,shanishiri
 
