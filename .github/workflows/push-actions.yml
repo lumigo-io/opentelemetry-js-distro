@@ -11,7 +11,7 @@ jobs:
       matrix:
         npm-task: ['prettier:ci', 'lint', 'test:unit']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
@@ -21,7 +21,7 @@ jobs:
       - run: npm ci
       - run: npm run ${{ matrix.npm-task }}
       - name: Upload distro as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.npm-task == 'test:unit' }}
         with:
           name: distro-package
@@ -32,7 +32,7 @@ jobs:
     name: List instrumentations to test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - id: list_instrumentations
       run: |
         instrumentations_as_json_list=$(ls -1 test/instrumentations | jq --raw-input --slurp 'split("\n") | map(select(. != ""))' | jq -r tostring)
@@ -57,7 +57,7 @@ jobs:
           # see https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners for
           # runner specs, default swap space is only 2GB
           swap-size-gb: 10
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
@@ -83,7 +83,7 @@ jobs:
           node-version: ${{ matrix.node_cimg_tag }}
           architecture: x64
       - name: Download distro
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: distro-package
       - run: npm i ./distro.tgz
