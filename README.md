@@ -279,7 +279,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | Instrumentation | Package | Supported Versions | | | |
 | --- | --- | :---: | :---: | :---: | :---: |
 | | | 14 | 16 | 18 | 20 |
-| grpc-js | [grpc-js](https://www.npmjs.com/package/grpc-js) |  | |=| |
+| grpc-js | [grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) |  | |=| |
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|

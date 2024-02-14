@@ -98,7 +98,7 @@ jobs:
           body: ${{ env.new_versions }}
           base: fix-tested-versions
           labels: version-testing, automerge
-          reviewers: GuyMoses,saartochner,shanishiri
+          reviewers: GuyMoses,nadav3396,shanishiri
 
   delete-old-version-testing-branches:
     runs-on: ubuntu-latest
