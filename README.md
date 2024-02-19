@@ -279,7 +279,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | Instrumentation | Package | Supported Versions | | | |
 | --- | --- | :---: | :---: | :---: | :---: |
 | | | 14 | 16 | 18 | 20 |
-| grpc-js | [grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) |  | |=| |
+| grpc-js | [grpc-js](https://www.npmjs.com/package/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
@@ -294,7 +294,6 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.13.0|4.2.0~4.13.0|4.2.0~4.13.0|4.2.0~4.13.0|
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
 | | | 4.6.10~4.6.13| | | |
-
 
 ### Activating your Prisma client's instrumentation
 If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
