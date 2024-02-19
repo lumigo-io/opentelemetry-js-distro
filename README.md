@@ -295,6 +295,20 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
 | | | 4.6.10~4.6.13| | | |
 
+
+### Activating your Prisma client's instrumentation
+If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["tracing"]
+}
+```
+
+**NOTE**: There have been reports of a possible bug that interferes with tracing when multiple Prisma clients have been instantiated, see [Prisma issue #20779](https://github.com/prisma/prisma/issues/20779).
+
+
 ## Automated dependency reporting
 
 To provide better support and better data-driven product decisions with respect to which packages to support next, the Lumigo OpenTelemetry Distro for JS will report to Lumigo SaaS on startup the packages and their versions used in this application, together with the OpenTelemetry resource data to enable analytics in terms of which platforms use which dependencies.
