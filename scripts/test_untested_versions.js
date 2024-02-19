@@ -56,15 +56,12 @@ for (const package of instrumentationToTest) {
       `\nTesting ${untestedVersions.length} untested versions of ${package} since ${highestExistingVersion}...`
     );
     backupPackageVersions(package);
-    console.info(untestedVersions)
 
     // if this is run locally, only test the first and last versions
     untestedVersions =
       isRunningOnCI || untestedVersions.length < 3
         ? untestedVersions
         : [untestedVersions[0], untestedVersions[untestedVersions.length - 1]];
-
-    console.info(untestedVersions)
 
     fs.writeFileSync(
       `src/instrumentations/${package}/tested_versions/${runtimeVersion}/${package}`,

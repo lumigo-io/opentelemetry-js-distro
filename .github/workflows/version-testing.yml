@@ -1,6 +1,8 @@
 name: Version Testing
 on:
   push:
+  schedule:
+    - cron: "0 7 * * *"
 jobs:
   test-untested-versions:
     runs-on: ubuntu-20.04
@@ -79,7 +81,7 @@ jobs:
       - run: PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m gather_version_artifacts
       - run: git --no-pager diff
       - run: rm -rf versions_artifacts  # the artifacts shouldn't be committed
-      - run: echo "::set-output name=branch_name::$(date +version-testing-%Y%m%d)_ng"
+      - run: echo "::set-output name=branch_name::$(date +version-testing-%Y%m%d)"
         id: branch_name
       - run: |  # update 'Supported packages' section in README.md
           PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m update_supported_packages_documentation
@@ -96,7 +98,7 @@ jobs:
           branch: ${{steps.branch_name.outputs.branch_name}}
           commit-message: ${{ env.new_versions }}
           body: ${{ env.new_versions }}
-          base: fix-tested-versions
+          base: main
           labels: version-testing, automerge
           reviewers: GuyMoses,nadav3396,shanishiri
 
