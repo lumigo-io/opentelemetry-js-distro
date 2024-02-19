@@ -8,7 +8,8 @@ const getBackupFileName = (pkg) => {
 };
 
 const getFileName = (pkg) => {
-  return `src/instrumentations/${pkg}/tested_versions/${pkg}`;
+  const runtimeVersion = parseInt(process.version.slice(1).split('.')[0]);
+  return `src/instrumentations/${pkg}/tested_versions/${runtimeVersion}/${pkg}`;
 };
 
 const backupPackageVersions = function (pkg) {
@@ -32,6 +33,7 @@ const loadPackageVersions = function (pkg, versionsFile) {
     .readFileSync(versionsFile, 'utf8')
     .split('\n')
     .map((line) => line.trim())
+    .filter((line) => line.match(/^\d+\.\d+\.\d+$/))
     .filter((line) => line.length > 0)
     .sort(compareVersions);
 };

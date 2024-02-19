@@ -10,10 +10,10 @@ jobs:
       matrix:
         # NOTE: if these are updated, don't forget to
         # update the download-artifacts versions as well
-        node_cimg_tag: [ 14, 16, 18 ]
+        node_cimg_tag: [ 14, 16, 18, 20 ]
     name: test-untested-versions
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
@@ -40,7 +40,7 @@ jobs:
               cp "$path" versions_artifact;
             fi
           done
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.node_cimg_tag }}
           path: versions_artifact
@@ -50,27 +50,32 @@ jobs:
     name: create-pr-for-new-versions
     needs: test-untested-versions
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - run: mkdir versions_artifacts
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         continue-on-error: true  # when there aren't changes the artifact won't be uploaded and this step will fail
         with:
           name: 14
           path: versions_artifacts/14
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: 16
           path: versions_artifacts/16
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: 18
           path: versions_artifacts/18
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: 20
+          path: versions_artifacts/20
       - run: python3 -m pip install -r ./requirements-ci.txt
         # TODO replace this with a node.js script
       - run: PYTHONPATH=${PYTHONPATH}:$(pwd)/scripts python3 -m gather_version_artifacts
@@ -95,13 +100,13 @@ jobs:
           body: ${{ env.new_versions }}
           base: main
           labels: version-testing, automerge
-          reviewers: GuyMoses,saartochner,shanishiri
+          reviewers: GuyMoses,nadav3396,shanishiri
 
   delete-old-version-testing-branches:
     runs-on: ubuntu-latest
     name: delete-old-version-testing-branches
     needs: create-pr-for-new-versions
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |  # remove all the version testing branches that aren't from today
           ./scripts/delete_old_version_testing_branches.sh
