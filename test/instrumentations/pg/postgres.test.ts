@@ -11,7 +11,7 @@ import { installPackage, reinstallPackages, uninstallPackage } from '../../utils
 import { versionsToTest } from '../../utils/versions';
 
 
-const DOCKER_WARMUP_TIMEOUT = 60_000;
+const DOCKER_WARMUP_TIMEOUT = 120_000;
 const INSTRUMENTATION_NAME = `pg`;
 const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
