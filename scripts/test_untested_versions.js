@@ -13,6 +13,9 @@ console.info(`\nTesting untested package versions ${isRunningOnCI ? 'on CI' : 'l
 const runtimeVersion = parseInt(process.version.slice(1).split('.')[0]);
 console.log(runtimeVersion)
 const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(function (package) {
+  if (package === '@grpc') {
+    pacakge = '@grpc/grpc-js';
+  }
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();
   const hasTestedVersionsFile =
     fs.existsSync(`src/instrumentations/${package}/tested_versions`) &&
