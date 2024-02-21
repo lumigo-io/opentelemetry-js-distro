@@ -350,6 +350,8 @@ def _generate_support_matrix_markdown_row(
         if os.path.isdir(runtime_path):
             package_names = os.listdir(runtime_path)
             for package_name in package_names:
+                if package_name == "@grpc":
+                    package_name = "@grpc/grpc-js/grpc-js"
                 if package_name not in versions.keys():
                     versions[package_name] = {
                         package_support_version_runtime: []
