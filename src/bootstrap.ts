@@ -112,9 +112,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
      * built-in instrumentation in the app.
      */
     registerInstrumentations({
-      instrumentations: instrumentationsToInstall.map(
-        (i) => i.getInstrumentation() as Instrumentation
-      ),
+      instrumentations: instrumentationsToInstall.map((i) => i.getInstrumentation()),
     });
 
     const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
