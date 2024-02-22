@@ -20,17 +20,20 @@ export class TestApp {
     private portPromise: Promise<Number>;
     private serviceName: string;
     private spanDumpPath: string;
+    private readonly showStdout: boolean;
 
     constructor(
         cwd: string,
         serviceName: string,
         spanDumpPath: string,
-        envVars = {}
+        envVars = {},
+        showStdout = false
     ) {
         this.cwd = cwd;
         this.envVars = envVars;
         this.serviceName = serviceName;
         this.spanDumpPath = spanDumpPath;
+        this.showStdout = showStdout;
 
         if (existsSync(spanDumpPath)) {
             console.info(`removing previous span dump file ${spanDumpPath}...`)
@@ -66,7 +69,6 @@ export class TestApp {
             },
             shell: true,
         });
-
         this.pid = this.app.pid;
 
         let portResolveFunction: Function;
@@ -89,6 +91,12 @@ export class TestApp {
 
             console.info('spawn data stderr: ', dataStr);
         });
+
+        if (this.showStdout) {
+            this.app.stdout.on('data', (data) => {
+                console.info(`[${this.serviceName}] `, data.toString());
+            });
+        }
 
         let closeResolveFunction: Function;
         let closeRejectFunction: Function;
