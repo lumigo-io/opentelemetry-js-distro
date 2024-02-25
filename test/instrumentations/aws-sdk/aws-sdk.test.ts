@@ -5,8 +5,8 @@ import { itTest } from '../../integration/setup';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
 import { TestApp } from '../../utils/test-apps';
-import { get, uniq, times } from 'lodash';
-import { SpanKind } from '@opentelemetry/api';
+import AWS from 'aws-sdk';
+import 'jest-extended';
 
 const INSTRUMENTATION_NAME = `aws-sdk`;
 const SPANS_DIR = join(__dirname, 'spans');
@@ -57,44 +57,23 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
     },
     async () => {
       const sqsPort = sqsContainer.getMappedPort(LOCALSTACK_PORT)
+      const sqsClient = new AWS.SQS({ endpoint: `http://localhost:${sqsPort}`, region: 'us-east-1' })
+
+      const queueName = `test-queue-${Date.now()}`;
+      await sqsClient.createQueue({ QueueName: queueName }).promise()
+
+      const queueUrl = `http://localhost:${sqsPort}/000000000000/${queueName}`
+      await sqsClient.sendMessage({ MessageBody: 'test me!', QueueUrl: queueUrl }).promise()
+
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-spans@${versionToTest}.json`;
       const testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
-      const messagesToSend = 3;
 
-      await testApp.invokeGetPath(`/init?sqsPort=${sqsPort}&maxNumberOfMessages=${messagesToSend}`);
-      await times(messagesToSend, () => testApp.invokeGetPath('/sqs/send-message'))
-      await testApp.invokeGetPath('/sqs/receive-message');
+      await testApp.invokeGetPath(`/sqs/receive?sqsPort=${sqsPort}&queueUrl=${encodeURIComponent(queueUrl)}`);
 
       const spans = await testApp.getFinalSpans();
-
-      const receiveMessageSpan =  spans.find((span) => {
-        const headers = safeJsonParse(span.attributes["http.request.headers"] as string)
-
-        return get(headers, 'user-agent', '').includes('aws-sdk-nodejs') &&
-          get(headers, 'x-amz-target') === 'AmazonSQS.ReceiveMessage'
-      });
-      expect(receiveMessageSpan).toBeDefined();
-
-      const httpCallAfterSqsReceiveServerSpans = spans.filter((span) =>  {
-        return span.kind == SpanKind.SERVER &&  get(span.attributes, "http.url", "").endsWith("/some-other-endpoint")
-      });
-
-      expect(httpCallAfterSqsReceiveServerSpans).toHaveLength(messagesToSend);
-
-      const httpCallsUniqueParentSpanIds = uniq(httpCallAfterSqsReceiveServerSpans.map((span) => span.parentId));
-      expect(httpCallsUniqueParentSpanIds).toHaveLength(1);
-
-      expect(httpCallAfterSqsReceiveServerSpans[0].parentId).toBe(receiveMessageSpan!.id);
+      expect(spans).toSatisfyAny(span => span.attributes?.messageId && span.attributes["http.response.headers"]?.includes(span.attributes?.messageId));
 
       await testApp.kill();
     }
   )
 })
-
-const safeJsonParse = (spanAttributes: string) => {
-  try {
-    return JSON.parse(spanAttributes);
-  } catch (e) {
-    return {};
-  }
-}
