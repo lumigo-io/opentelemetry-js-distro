@@ -81,7 +81,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const { MessageId: expectedMessageId } = await sqsClient.sendMessage({ MessageBody: SAMPLE_INNER_SNS_MESSAGE_BODY, QueueUrl: queueUrl }).promise()
 
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-spans@${versionToTest}.json`;
-      const testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { "_LUMIGO_AWS_HOST_OVERRIDE": `sqs.${region}.amazonaws.com` });
+      const testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
 
       await testApp.invokeGetPath(`/sqs/receive?region=${region}&sqsPort=${sqsPort}&queueUrl=${encodeURIComponent(queueUrl)}`);
 

@@ -161,37 +161,6 @@ export const eventBridgeParser = (requestData, responseData) => {
   };
 };
 
-export const attributesFromAwsSdkContext = (span: Span, messages) => {
-  const spanAttributes = span['attributes'] || {};
-  const messageId = messages[0]?.['MessageId'];
-  let lumigoData;
-
-  const innerRaw = messages[0]?.Body ?? '';
-  if (innerRaw.search(Triggers.INNER_MESSAGES_IDENTIFIER_PATTERN) > 0) {
-    // TODO: what if the inner message is not a JSON?
-    const inner = JSON.parse(innerRaw);
-    const mainTrigger = {
-      id: CommonUtils.getRandomString(10),
-      targetId: null,
-      triggeredBy: Triggers.MessageTrigger.SQS,
-      fromMessageIds: [messageId],
-      extra: { resource: spanAttributes['messaging.url'] },
-    };
-
-    lumigoData = JSON.stringify({
-      trigger: [mainTrigger, ...Triggers.recursiveParseTriggers(inner, mainTrigger.id)],
-    });
-  }
-
-  return {
-    // Backward compatibility with the http-instrumentation way of extracting the resource name.
-    // TODO: remove this once tracing-ingestion is changed to use "message.destination" directly
-    'aws.resource.name': spanAttributes['messaging.destination'],
-    messageId,
-    lumigoData,
-  };
-};
-
 export const sqsParser = (requestData, responseData, jsonResponseBody = undefined) => {
   const { body: reqBody } = requestData;
   const { body: resBody } = responseData || {};

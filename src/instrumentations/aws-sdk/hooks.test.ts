@@ -1,6 +1,6 @@
-import { BasicTracerProvider, Span } from '@opentelemetry/sdk-trace-base';
 import { responseHook } from './hooks';
 import type { AwsSdkResponseHookInformation } from '@opentelemetry/instrumentation-aws-sdk';
+import { rootSpanWithAttributes } from '../../../test/utils/spans'
 
 describe('aws-sdk instrumentation hooks', () => {
   describe('responseHook', () => {
@@ -64,14 +64,6 @@ describe('aws-sdk instrumentation hooks', () => {
       expect(span.attributes).toHaveProperty('SKIP_EXPORT', true)
     })
   })
-
-  const rootSpanWithAttributes = (attributes: Record<string, any>): Span => {
-    const provider = new BasicTracerProvider();
-    const root = provider.getTracer('default').startSpan('root');
-    root.setAttributes(attributes);
-
-    return root as Span;
-  };
 
   const awsResponseWithData = (data: unknown): AwsSdkResponseHookInformation => {
     return {

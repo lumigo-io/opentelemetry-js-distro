@@ -1,22 +1,6 @@
 import { readFileSync } from 'fs';
 import { SpanKind } from '@opentelemetry/api';
-
-type AttributeValue = string | number | boolean | string[] | number[] | boolean[];
-
-export interface Span {
-    id: string;
-    parentId?: string;
-    name: string;
-    kind: number;
-    attributes: {
-        [key: string]: AttributeValue
-    },
-    resource: {
-        attributes: {
-            [key: string]: AttributeValue
-        }
-    }
-}
+import { BasicTracerProvider, Span } from '@opentelemetry/sdk-trace-base';
 
 export function getSpanByName(spans: Span[] = [], spanName: string) {
     return spans.find((span) => span.name === spanName);
@@ -38,3 +22,11 @@ export function readSpanDump(spanDumpPath: string): Span[] {
         return [];
     }
 }
+
+export const rootSpanWithAttributes = (attributes: Record<string, any>): Span => {
+    const provider = new BasicTracerProvider();
+    const root = provider.getTracer('default').startSpan('root');
+    root.setAttributes(attributes);
+
+    return root as Span;
+  };

@@ -1,6 +1,7 @@
 import { getAwsServiceData, getAwsServiceFromHost } from './awsSpan';
-import { BasicTracerProvider, Span } from '@opentelemetry/sdk-trace-base';
+import { Span } from '@opentelemetry/sdk-trace-base';
 import { AwsOtherService, AwsParsedService } from './types';
+import { rootSpanWithAttributes } from '../../test/utils/spans'
 
 describe('awsSpan', () => {
   describe('getAwsServiceFromHost', () => {
@@ -60,12 +61,4 @@ describe('awsSpan', () => {
       });
     });
   });
-
-  const rootSpanWithAttributes = (attributes: Record<string, any>) => {
-    const provider = new BasicTracerProvider();
-    const root = provider.getTracer('default').startSpan('root');
-    root.setAttributes(attributes);
-
-    return root;
-  };
 });
