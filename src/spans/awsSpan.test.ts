@@ -1,7 +1,7 @@
 import { getAwsServiceData, getAwsServiceFromHost } from './awsSpan';
 import { Span } from '@opentelemetry/sdk-trace-base';
 import { AwsOtherService, AwsParsedService } from './types';
-import { rootSpanWithAttributes } from '../../test/utils/spans'
+import { rootSpanWithAttributes } from '../../test/utils/spans';
 
 describe('awsSpan', () => {
   describe('getAwsServiceFromHost', () => {
