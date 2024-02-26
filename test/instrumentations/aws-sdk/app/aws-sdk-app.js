@@ -24,12 +24,12 @@ const requestListener = async function (req, res) {
     case '/sqs/receive':
       console.error('/sqs/receive endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
-        sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: 'us-east-1' })
-        const { Messages: messages } = await sqsClient.receiveMessage({
+        sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        await sqsClient.receiveMessage({
           QueueUrl: requestUrl.query.queueUrl,
           MaxNumberOfMessages: 1
         }).promise()
-        respond(res, 200, { messages });
+        respond(res, 200, {});
       } catch (err) {
         console.error('Error on receiveMessage', err);
         respond(res, 500, { error: err });
