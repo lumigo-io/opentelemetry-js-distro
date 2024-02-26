@@ -4,7 +4,7 @@ import { URL } from 'url';
 
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
-import { Span } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/sdk-trace-base';
 
 import { InstrumentationIfc } from '../hooksIfc';
 import { logger } from '../../logging';

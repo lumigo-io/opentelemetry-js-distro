@@ -1,4 +1,4 @@
-import { Span } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 import {
@@ -11,25 +11,13 @@ import {
   snsParser,
   sqsParser,
 } from '../parsers/aws';
-
-export enum AwsOtherService {
-  ApiGateway,
-  ExternalService,
-  ElasticBeanstalkSqsDaemon,
-}
-
-export enum AwsParsedService {
-  DynamoDB = 'dynamodb',
-  EventBridge = 'events',
-  Kinesis = 'kinesis',
-  Lambda = 'lambda',
-  SNS = 'sns',
-  SQS = 'sqs',
-}
+import { AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES } from '../instrumentations/aws-sdk/LumigoAwsSdklibInstrumentation';
+import { setSpanAsNotExportable } from '../resources/spanProcessor';
+import { AwsOtherService, AwsParsedService, SupportedAwsServices } from './types';
 
 const AMAZON_REQUESTID_HEADER_NAME = 'x-amzn-requestid';
 
-export const getAwsServiceFromHost = (host = ''): AwsParsedService | AwsOtherService => {
+export const getAwsServiceFromHost = (host = ''): SupportedAwsServices => {
   if (host?.includes('.execute-api.')) {
     // E.g. `my_happy_api.execute-api.eu-central-1.amazonaws.com`
     return AwsOtherService.ApiGateway;
@@ -50,7 +38,7 @@ export const getAwsServiceFromHost = (host = ''): AwsParsedService | AwsOtherSer
   return AwsOtherService.ExternalService;
 };
 
-export type AwsServiceData = {
+export type AwsServiceAttributes = {
   awsServiceData?: {
     [key: string]: any;
   };
@@ -60,42 +48,49 @@ export type AwsServiceData = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getAwsServiceData = (
-  requestData,
-  responseData,
-  span: Span & { attributes: Record<string, string> }
-): AwsServiceData => {
-  let awsService: AwsParsedService | AwsOtherService;
+export const getAwsServiceData = (requestData, responseData, span: Span): AwsServiceAttributes => {
+  let serviceType: SupportedAwsServices;
 
   const { host } = requestData;
   if (host?.includes('amazonaws.com')) {
-    awsService = getAwsServiceFromHost(host);
-  } else if (span.attributes[SemanticAttributes.HTTP_USER_AGENT]?.startsWith('aws-sqsd')) {
+    serviceType = getAwsServiceFromHost(host);
+  } else if (
+    span.attributes[SemanticAttributes.HTTP_USER_AGENT]?.toString().startsWith('aws-sqsd')
+  ) {
     /*
      * Workaround for Elastic Beanstalk, where a local proxy called "AWS SQS Daemon"
      * is used to fetch SQS messages, causing the hostname to be `localhost`.
      *
      * See https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features-managing-env-tiers.html#worker-daemon
      */
-    awsService = AwsOtherService.ElasticBeanstalkSqsDaemon;
+    serviceType = AwsOtherService.ElasticBeanstalkSqsDaemon;
   } else if (
     responseData?.headers[AMAZON_REQUESTID_HEADER_NAME] ||
     responseData?.headers[AMAZON_REQUESTID_HEADER_NAME]
   ) {
-    awsService = AwsOtherService.ExternalService;
+    serviceType = AwsOtherService.ExternalService;
   } else {
     // not an aws service
     return {};
   }
 
-  const serviceData = getServiceAttributes(awsService, requestData, responseData);
-
-  // If the service is one in the AwsParsedService enum, we also need to extract the region
-  if (Object.values(AwsParsedService).includes(awsService as AwsParsedService)) {
-    serviceData['aws.region'] = host.split('.')[1];
+  // AWS services supported by the aws-sdk instrumentation already produce spans, so we skip the http-spans for those calls.
+  // We can remove this logic when we move to entirely relying on the aws-sdk instrumentation, and use the suppressInternalInstrumentation
+  // flag. See:
+  // https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-sdk#aws-sdk-instrumentation-options
+  if (AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(serviceType)) {
+    setSpanAsNotExportable(span);
+    return {};
   }
 
-  return serviceData;
+  const serviceAttributes = getServiceAttributes(serviceType, requestData, responseData);
+
+  // If the service is one in the AwsParsedService enum, we also need to extract the region
+  if (Object.values(AwsParsedService).includes(serviceType as AwsParsedService)) {
+    serviceAttributes['aws.region'] = host.split('.')[1];
+  }
+
+  return serviceAttributes;
 };
 
 const getServiceAttributes = (

@@ -1,8 +1,11 @@
-import {AwsInstrumentation} from "@opentelemetry/instrumentation-aws-sdk";
-import { Instrumentor } from "../instrumentor";
-import {attributesFromAwsSdkContext} from "../../parsers/aws";
+import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
+import { Instrumentor } from '../instrumentor';
+import { AwsParsedService, SupportedAwsServices } from '../../spans/types';
+import {responseHook} from './hooks';
 
-const SERVICES_REMOVED_FROM_LUMIGO_HTTP_INSTRUMENTATION = ['sqs'];
+export const AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES: SupportedAwsServices[] = [
+  AwsParsedService.SQS,
+];
 
 export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentation> {
   getInstrumentedModule(): string {
@@ -10,17 +13,6 @@ export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentat
   }
 
   getInstrumentation(): AwsInstrumentation {
-    return new AwsInstrumentation({
-      responseHook: (span, responseInfo) => {
-        const spanAttributes = span['attributes'] || {};
-        const awsServiceIdentifier = spanAttributes["aws.service.identifier"]
-
-        if (SERVICES_REMOVED_FROM_LUMIGO_HTTP_INSTRUMENTATION.includes(awsServiceIdentifier)) {
-          span.setAttributes(attributesFromAwsSdkContext(span, responseInfo.response.data.Messages))
-        } else {
-          // TODO: skip span
-        }
-      }
-    });
+    return new AwsInstrumentation({ responseHook });
   }
 }

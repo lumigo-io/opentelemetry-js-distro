@@ -1,4 +1,4 @@
-import { BatchSpanProcessor, ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor, ReadableSpan, Span as MutableSpan } from '@opentelemetry/sdk-trace-base';
 import { logger } from '../logging';
 
 export class LumigoSpanProcessor extends BatchSpanProcessor {
@@ -29,4 +29,8 @@ export const getSpanSkipExportAttributes = (skipExport = true) => {
   return {
     SKIP_EXPORT: skipExport,
   };
+};
+
+export const setSpanAsNotExportable = (span: MutableSpan) => {
+  span.setAttributes(getSpanSkipExportAttributes());
 };

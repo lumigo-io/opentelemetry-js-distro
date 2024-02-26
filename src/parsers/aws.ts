@@ -4,7 +4,7 @@ import { traverse } from '../tools/xmlToJson';
 import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
 import { CommonUtils } from '@lumigo/node-core';
 import { Triggers } from '@lumigo/node-core';
-import { AwsServiceData } from '../spans/awsSpan';
+import { AwsServiceAttributes } from '../spans/awsSpan';
 import { getSpanSkipExportAttributes } from '../resources/spanProcessor';
 import { Span } from '@opentelemetry/api';
 
@@ -162,12 +162,11 @@ export const eventBridgeParser = (requestData, responseData) => {
 };
 
 export const attributesFromAwsSdkContext = (span: Span, messages) => {
-  const spanAttributes = span["attributes"] || {}
-  const messageId =  messages[0]["MessageId"]
-  let lumigoData
+  const spanAttributes = span['attributes'] || {};
+  const messageId = messages[0]?.['MessageId'];
+  let lumigoData;
 
-  // TODO: applicable only if there's a single message as a result of a receiveMessage call, handle empty body case
-  const innerRaw = messages[0].Body
+  const innerRaw = messages[0]?.Body ?? '';
   if (innerRaw.search(Triggers.INNER_MESSAGES_IDENTIFIER_PATTERN) > 0) {
     // TODO: what if the inner message is not a JSON?
     const inner = JSON.parse(innerRaw);
@@ -176,7 +175,7 @@ export const attributesFromAwsSdkContext = (span: Span, messages) => {
       targetId: null,
       triggeredBy: Triggers.MessageTrigger.SQS,
       fromMessageIds: [messageId],
-      extra: { resource: spanAttributes["messaging.url"] },
+      extra: { resource: spanAttributes['messaging.url'] },
     };
 
     lumigoData = JSON.stringify({
@@ -187,11 +186,11 @@ export const attributesFromAwsSdkContext = (span: Span, messages) => {
   return {
     // Backward compatibility with the http-instrumentation way of extracting the resource name.
     // TODO: remove this once tracing-ingestion is changed to use "message.destination" directly
-    "aws.resource.name": spanAttributes["messaging.destination"],
+    'aws.resource.name': spanAttributes['messaging.destination'],
     messageId,
-    lumigoData
-  }
-}
+    lumigoData,
+  };
+};
 
 export const sqsParser = (requestData, responseData, jsonResponseBody = undefined) => {
   const { body: reqBody } = requestData;
@@ -199,7 +198,7 @@ export const sqsParser = (requestData, responseData, jsonResponseBody = undefine
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;
   const parsedResBody = jsonResponseBody || (resBody ? traverse(resBody) : undefined);
   const resourceName = parsedReqBody ? parsedReqBody['QueueUrl'] : undefined;
-  const awsServiceData: AwsServiceData = { 'aws.resource.name': resourceName };
+  const awsServiceData: AwsServiceAttributes = { 'aws.resource.name': resourceName };
   awsServiceData.messageId =
     safeGet(parsedResBody, ['SendMessageResponse', 'SendMessageResult', 'MessageId'], undefined) ||
     safeGet(
