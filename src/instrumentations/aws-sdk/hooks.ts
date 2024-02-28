@@ -4,7 +4,7 @@ import type { AwsSdkResponseHookInformation } from '@opentelemetry/instrumentati
 import type { Span as MutableSpan } from '@opentelemetry/sdk-trace-base';
 import { setSpanAsNotExportable } from '../../resources/spanProcessor';
 import { AwsParsedService } from '../../spans/types';
-import { extractSqsAttributes } from './attribute-extractors';
+import { extractAttributesFromSqsResponse } from './attribute-extractors';
 
 export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHookInformation) => {
   const awsServiceIdentifier = span.attributes['aws.service.identifier'];
@@ -21,7 +21,7 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
     if (shouldAutoFilterEmptySqs() && responseInfo.response.data.Messages?.length === 0) {
       setSpanAsNotExportable(span as MutableSpan);
     } else {
-      span.setAttributes(extractSqsAttributes(responseInfo.response.data, span));
+      span.setAttributes(extractAttributesFromSqsResponse(responseInfo.response.data, span));
       span.setAttribute("messaging.consume.body", JSON.stringify(responseInfo.response.data));
     }
   }

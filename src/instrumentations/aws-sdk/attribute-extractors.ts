@@ -22,7 +22,7 @@ type ReceiveMessageResponse = {
 
 type SqsResponse = SendMessageResponse | ReceiveMessageResponse | SendMessageBatchResponse;
 
-type ParseAwsServiceProperties = {
+type AwsExtractedAttributes = {
   messageId?: string;
   lumigoData?: string;
   'aws.resource.name'?: string;
@@ -36,10 +36,10 @@ const safeJsonParse = (maybeJson: string) => {
   }
 };
 
-export const extractSqsAttributes = (
+export const extractAttributesFromSqsResponse = (
   sqsResponse: SqsResponse,
   span: ReadableSpan
-): ParseAwsServiceProperties => {
+): AwsExtractedAttributes => {
   const spanAttributes = span['attributes'] || {};
   const operation = spanAttributes['rpc.method'];
   const awsResourceName = spanAttributes['messaging.url'] as string;
