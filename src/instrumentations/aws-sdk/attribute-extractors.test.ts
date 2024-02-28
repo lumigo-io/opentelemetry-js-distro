@@ -1,16 +1,16 @@
-import { sqsParser } from './parsers';
+import { extractSqsAttributes } from './attribute-extractors';
 import { rootSpanWithAttributes } from '../../../test/utils/spans';
 import { Triggers } from '@lumigo/node-core';
 import 'jest-json';
 
-describe('sqsParser', () => {
+describe('extractSqsAttributes', () => {
   const queueUrl = 'https://sqs.us-east-1.amazonaws.com/177715257436/MyQueue';
   const sqsMessageId = 'sqs-message-id-123';
 
   test('returns an empty attributes object when no messages were returned', () => {
     const span = rootSpanWithAttributes({});
 
-    const result = sqsParser({ Messages: [] }, span);
+    const result = extractSqsAttributes({ Messages: [] }, span);
     expect(result).toEqual({});
   });
 
@@ -35,7 +35,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
-      const result = sqsParser({ Messages: [sqsMessage] }, receiveMessagesSpan);
+      const result = extractSqsAttributes({ Messages: [sqsMessage] }, receiveMessagesSpan);
 
       expect(result).toMatchObject({
         messageId: sqsMessageId,
@@ -66,7 +66,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
-      const result = sqsParser({ Messages: [] }, receiveMessagesSpan);
+      const result = extractSqsAttributes({ Messages: [] }, receiveMessagesSpan);
 
       expect(result).toMatchObject({ 'aws.resource.name': queueUrl });
     });
@@ -76,7 +76,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
-      const result = sqsParser(
+      const result = extractSqsAttributes(
         { Messages: [{ Body: '', MessageId: sqsMessageId }] },
         receiveMessagesSpan
       );
@@ -92,7 +92,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
-      const result = sqsParser(
+      const result = extractSqsAttributes(
         { Messages: [{ Body: `{Bad ${innerMessageIdentifier} JSON}`, MessageId: sqsMessageId }] },
         receiveMessagesSpan
       );
@@ -107,7 +107,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'SendMessage',
       });
-      const result = sqsParser({ MessageId: sqsMessageId }, sendMessageSpan);
+      const result = extractSqsAttributes({ MessageId: sqsMessageId }, sendMessageSpan);
 
       expect(result).toMatchObject({
         messageId: sqsMessageId,
@@ -122,7 +122,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'SendMessageBatch',
       });
-      const result = sqsParser(
+      const result = extractSqsAttributes(
         { Successful: [{ MessageId: sqsMessageId }], Failed: [{ MessageId: 'this-one-failed' }] },
         sendMessageSpan
       );
@@ -138,7 +138,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'SendMessageBatch',
       });
-      const result = sqsParser(
+      const result = extractSqsAttributes(
         { Successful: [], Failed: [{ MessageId: 'this-one-failed' }] },
         sendMessageSpan
       );
@@ -153,7 +153,7 @@ describe('sqsParser', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'SomeWeirdStuff',
       });
-      const result = sqsParser(
+      const result = extractSqsAttributes(
         { Successful: [], Failed: [{ MessageId: 'this-one-failed' }] },
         sendMessageSpan
       );

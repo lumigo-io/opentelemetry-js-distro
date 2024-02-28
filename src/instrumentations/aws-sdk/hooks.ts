@@ -1,10 +1,10 @@
 import { shouldAutoFilterEmptySqs } from '../../parsers/aws';
-import { AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES } from './LumigoAwsSdklibInstrumentation';
+import { AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES } from './LumigoAwsSdkLibInstrumentation';
 import type { AwsSdkResponseHookInformation } from '@opentelemetry/instrumentation-aws-sdk';
 import type { Span as MutableSpan } from '@opentelemetry/sdk-trace-base';
 import { setSpanAsNotExportable } from '../../resources/spanProcessor';
 import { AwsParsedService } from '../../spans/types';
-import { sqsParser } from './parsers';
+import { extractSqsAttributes } from './attribute-extractors';
 
 export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHookInformation) => {
   const awsServiceIdentifier = span.attributes['aws.service.identifier'];
@@ -21,7 +21,8 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
     if (shouldAutoFilterEmptySqs() && responseInfo.response.data.Messages?.length === 0) {
       setSpanAsNotExportable(span as MutableSpan);
     } else {
-      span.setAttributes(sqsParser(responseInfo.response.data, span));
+      span.setAttributes(extractSqsAttributes(responseInfo.response.data, span));
+      span.setAttribute("messaging.consume.body", JSON.stringify(responseInfo.response.data));
     }
   }
 };

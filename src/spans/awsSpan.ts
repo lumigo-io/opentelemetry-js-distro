@@ -11,7 +11,7 @@ import {
   snsParser,
   sqsParser,
 } from '../parsers/aws';
-import { AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES } from '../instrumentations/aws-sdk/LumigoAwsSdklibInstrumentation';
+import { AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
 import { setSpanAsNotExportable } from '../resources/spanProcessor';
 import { AwsOtherService, AwsParsedService, SupportedAwsServices } from './types';
 

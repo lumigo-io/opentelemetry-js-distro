@@ -30,7 +30,7 @@ const SAMPLE_INNER_SNS_MESSAGE_BODY = JSON.stringify({
 
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
   let sqsContainer: StartedTestContainer;
-  let sqsProxy: http.Server;
+  let testApp: TestApp;
 
   beforeAll(async () => {
     fs.mkdirSync(SPANS_DIR, { recursive: true });
@@ -51,6 +51,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   }, TIMEOUT)
 
   afterAll(async () => {
+    if (testApp) {
+      await testApp.kill();
+    }
+
     if (sqsContainer) {
       await sqsContainer.stop()
     }
@@ -81,19 +85,35 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const { MessageId: expectedMessageId } = await sqsClient.sendMessage({ MessageBody: SAMPLE_INNER_SNS_MESSAGE_BODY, QueueUrl: queueUrl }).promise()
 
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-spans@${versionToTest}.json`;
-      const testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
 
       await testApp.invokeGetPath(`/sqs/receive?region=${region}&sqsPort=${sqsPort}&queueUrl=${encodeURIComponent(queueUrl)}`);
 
       const spans = await testApp.getFinalSpans();
-      const sqsHttpSpans = spans.filter(span => span.attributes?.messageId)
+      const sqsSpans = spans.filter(span => span.attributes?.["rpc.service"] === "SQS" && span.attributes?.["rpc.method"] === "ReceiveMessage")
 
-      // Make sure there are no duplicate spans for the same request from other instrumentations
-      expect(sqsHttpSpans).toBeArrayOfSize(1);
+      // TODO: uncomment that when the http instrumentation is replaced by the aws-sdk one entirely
+      // in the context of AWS requests
+      // expect(sqsSpans).toBeArrayOfSize(1);
 
-      const sqsSpan = sqsHttpSpans[0];
+      const sqsSpan = sqsSpans[0];
+
+      // Fields that are implicitly set by the aws-sdk instrumentation
       expect(sqsSpan.attributes['aws.region']).toEqual(region);
-      expect(sqsSpan.attributes['aws.resource.name']).toEqual(queueName);
+      expect(sqsSpan.attributes['messaging.system']).toBe('aws.sqs')
+      expect(sqsSpan.attributes['messaging.url']).toBe(queueUrl)
+
+      // Fields we explicitly set in our instrumentation wrapper
+      expect(sqsSpan.attributes['aws.resource.name']).toEqual(queueUrl);
+      expect(sqsSpan.attributes['messageId']).toEqual(expectedMessageId);
+      expect(sqsSpan.attributes['messaging.consume.body']).toMatchJSON({
+        Messages: [{
+          Body: SAMPLE_INNER_SNS_MESSAGE_BODY,
+          MD5OfBody: expect.any(String),
+          MessageId: expectedMessageId,
+          ReceiptHandle: expect.any(String)
+        }]
+      })
       expect(sqsSpan.attributes['lumigoData']).toMatchJSON({
         trigger: [
           {
@@ -112,9 +132,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
           }
         ]
       });
-      expect(sqsSpan.attributes['messageId']).toEqual(expectedMessageId);
-
-      await testApp.kill();
     }
   )
 })

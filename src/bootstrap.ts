@@ -18,7 +18,7 @@ import LumigoKafkaJsInstrumentation from './instrumentations/kafkajs/KafkaJsInst
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
-import { LumigoAwsSdkLibInstrumentation } from './instrumentations/aws-sdk/LumigoAwsSdklibInstrumentation';
+import { LumigoAwsSdkLibInstrumentation } from './instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
   LumigoContainerNameDetector,

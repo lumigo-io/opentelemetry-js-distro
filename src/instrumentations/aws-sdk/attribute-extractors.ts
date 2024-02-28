@@ -36,7 +36,7 @@ const safeJsonParse = (maybeJson: string) => {
   }
 };
 
-export const sqsParser = (
+export const extractSqsAttributes = (
   sqsResponse: SqsResponse,
   span: ReadableSpan
 ): ParseAwsServiceProperties => {
