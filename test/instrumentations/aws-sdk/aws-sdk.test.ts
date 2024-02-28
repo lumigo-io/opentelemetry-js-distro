@@ -7,7 +7,6 @@ import { versionsToTest } from '../../utils/versions';
 import { TestApp } from '../../utils/test-apps';
 import AWS from 'aws-sdk';
 import { Triggers } from '@lumigo/node-core'
-import http from 'http';
 import 'jest-extended';
 import 'jest-json';
 
@@ -79,7 +78,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const sqsClient = new AWS.SQS({ endpoint: `http://localhost:${sqsPort}`, region })
       const queueName = `test-queue-${Date.now()}`;
       await sqsClient.createQueue({ QueueName: queueName }).promise()
-
       const queueUrl = `http://localhost:${sqsPort}/000000000000/${queueName}`
 
       const { MessageId: expectedMessageId } = await sqsClient.sendMessage({ MessageBody: SAMPLE_INNER_SNS_MESSAGE_BODY, QueueUrl: queueUrl }).promise()

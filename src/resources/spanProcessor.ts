@@ -8,7 +8,7 @@ import { logger } from '../logging';
 export class LumigoSpanProcessor extends BatchSpanProcessor {
   override onEnd(span: ReadableSpan) {
     if (shouldSkipSpanExport(span)) {
-      logger.debug('Not exporting span because it has NO_EXPORT=true attribute');
+      logger.debug('Not exporting span because it has SKIP_EXPORT=true attribute');
       return;
     }
 
