@@ -101,6 +101,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsReceiveSpan.attributes['aws.resource.name']).toEqual(queueUrl);
       expect(sqsReceiveSpan.attributes['messageId']).toEqual(expectedMessageId);
+      expect(sqsReceiveSpan.attributes['messaging.publish.body']).toBeUndefined()
       expect(sqsReceiveSpan.attributes['messaging.consume.body']).toMatchJSON({
         Messages: [{
           Body: SAMPLE_INNER_SNS_MESSAGE_BODY,
@@ -108,15 +109,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
           MessageId: expectedMessageId,
           ReceiptHandle: expect.any(String)
         }]
-      })
-
-      // *********************************************************
-      // TODO: messaging.publish.body is wrong for receiveMessage!
-      // *********************************************************
-      expect(sqsReceiveSpan.attributes['messaging.publish.body']).toMatchJSON({
-        "MaxNumberOfMessages": expect.any(Number),
-        "MessageAttributeNames": expect.toBeArray(),
-        "QueueUrl": queueUrl,
       })
       expect(sqsReceiveSpan.attributes['lumigoData']).toMatchJSON({
         trigger: [
@@ -169,12 +161,13 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsSendSpan.attributes['aws.resource.name']).toEqual(queueUrl);
       expect(sqsSendSpan.attributes['messageId']).toEqual(expectedMessageId);
+      expect(sqsSendSpan.attributes['messaging.consume.body']).toBeUndefined()
       expect(sqsSendSpan.attributes['messaging.publish.body']).toMatchJSON({
         // Message body sent from the test-app
         "MessageBody": "some message",
         "QueueUrl": queueUrl,
       })
-      expect(sqsSendSpan.attributes).not.toHaveProperty('lumigoData')
+      expect(sqsSendSpan.attributes['lumigoData']).toBeUndefined()
     }
   )
 
@@ -208,6 +201,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsSendBatchSpan.attributes['aws.resource.name']).toEqual(queueUrl);
       expect(sqsSendBatchSpan.attributes['messageId']).toEqual(expectedMessageId);
+      expect(sqsSendBatchSpan.attributes['messaging.consume.body']).toBeUndefined()
       expect(sqsSendBatchSpan.attributes['messaging.publish.body']).toMatchJSON({
         // Message bodies sent from the test-app
         "Entries":  [

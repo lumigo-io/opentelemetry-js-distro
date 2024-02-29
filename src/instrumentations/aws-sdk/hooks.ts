@@ -11,9 +11,13 @@ import { extractAttributesFromSqsResponse } from './attribute-extractors';
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { getSpanAttributeMaxLength } from '../../utils';
 
-export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHookInformation) => {
-  const awsServiceIdentifier = span.attributes['aws.service.identifier'];
+const SQS_PUBLISH_OPERATIONS = ['SendMessage', 'SendMessageBatch'];
+const SQS_CONSUME_OPERATIONS = ['ReceiveMessage'];
 
+export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHookInformation) => {
+  const awsServiceIdentifier = span.attributes?.['aws.service.identifier'];
+
+  // SKip all spans that are currently covered by the http-instrumentation
   if (
     !AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(awsServiceIdentifier as AwsParsedService)
   ) {
@@ -21,14 +25,18 @@ export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHook
     return;
   }
 
-  span.setAttribute(
-    'messaging.publish.body',
-    CommonUtils.payloadStringify(
-      requestInfo.request.commandInput,
-      ScrubContext.HTTP_REQUEST_BODY,
-      getSpanAttributeMaxLength()
-    )
-  );
+  const sqsOperation = span.attributes?.['rpc.method'] as string;
+
+  if (SQS_PUBLISH_OPERATIONS.includes(sqsOperation)) {
+    span.setAttribute(
+      'messaging.publish.body',
+      CommonUtils.payloadStringify(
+        requestInfo.request.commandInput,
+        ScrubContext.HTTP_REQUEST_BODY,
+        getSpanAttributeMaxLength()
+      )
+    );
+  }
 };
 
 export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHookInformation) => {
@@ -47,14 +55,19 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
       setSpanAsNotExportable(span as MutableSpan);
     } else {
       span.setAttributes(extractAttributesFromSqsResponse(responseInfo.response.data, span));
-      span.setAttribute(
-        'messaging.consume.body',
-        CommonUtils.payloadStringify(
-          responseInfo.response.data,
-          ScrubContext.HTTP_RESPONSE_BODY,
-          getSpanAttributeMaxLength()
-        )
-      );
+
+      const sqsOperation = span.attributes['rpc.method'] as string;
+
+      if (SQS_CONSUME_OPERATIONS.includes(sqsOperation)) {
+        span.setAttribute(
+          'messaging.consume.body',
+          CommonUtils.payloadStringify(
+            responseInfo.response.data,
+            ScrubContext.HTTP_RESPONSE_BODY,
+            getSpanAttributeMaxLength()
+          )
+        );
+      }
     }
   }
 };
