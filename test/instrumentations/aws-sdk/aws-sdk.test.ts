@@ -112,6 +112,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
           ReceiptHandle: expect.any(String)
         }]
       })
+      expect(sqsSpan.attributes['messaging.publish.body']).toMatchJSON({
+        "MaxNumberOfMessages": expect.any(Number),
+        "MessageAttributeNames": expect.toBeArray(),
+        "QueueUrl": queueUrl,
+      })
       expect(sqsSpan.attributes['lumigoData']).toMatchJSON({
         trigger: [
           {

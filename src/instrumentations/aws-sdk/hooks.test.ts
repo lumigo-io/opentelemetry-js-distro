@@ -1,5 +1,8 @@
-import { responseHook } from './hooks';
-import type { AwsSdkResponseHookInformation } from '@opentelemetry/instrumentation-aws-sdk';
+import { responseHook, preRequestHook } from './hooks';
+import type {
+  AwsSdkRequestHookInformation,
+  AwsSdkResponseHookInformation,
+} from '@opentelemetry/instrumentation-aws-sdk';
 import { rootSpanWithAttributes } from '../../../test/utils/spans';
 
 describe('aws-sdk instrumentation hooks', () => {
@@ -12,7 +15,9 @@ describe('aws-sdk instrumentation hooks', () => {
 
       responseHook(span, awsSdkResponse);
 
-      expect(span.attributes).toMatchObject({ 'aws.service.identifier': 'sqs' });
+      expect(span.attributes).toMatchObject({
+        'messaging.consume.body': JSON.stringify(awsSdkResponse.response.data),
+      });
       expect(span.attributes).not.toHaveProperty('SKIP_EXPORT');
     });
 
@@ -60,7 +65,7 @@ describe('aws-sdk instrumentation hooks', () => {
       });
     });
 
-    it('mark spans coming from other services as non-exportable', () => {
+    it('marks spans coming from other services as non-exportable and does not change their attributes', () => {
       const span = rootSpanWithAttributes({ 'aws.service.identifier': 'not-sqs' });
       const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
         'some-thing': 'else',
@@ -68,24 +73,65 @@ describe('aws-sdk instrumentation hooks', () => {
 
       responseHook(span, awsSdkResponse);
 
-      expect(span.attributes).toMatchObject({});
+      expect(span.attributes).not.toHaveProperty('messaging.consume.body');
       expect(span.attributes).toHaveProperty('SKIP_EXPORT', true);
     });
+
+    const awsResponseWithData = (data: unknown): AwsSdkResponseHookInformation => {
+      return {
+        response: {
+          request: {
+            commandInput: {},
+            commandName: 'not used',
+            serviceName: 'not used',
+            region: 'us-west-2',
+          },
+          requestId: '1234',
+          data,
+        },
+        moduleVersion: 'x.y.z',
+      };
+    };
   });
 
-  const awsResponseWithData = (data: unknown): AwsSdkResponseHookInformation => {
-    return {
-      response: {
+  describe('preRequestHook', () => {
+    it('adds attributes to a span coming from SQS', () => {
+      const span = rootSpanWithAttributes({ 'aws.service.identifier': 'sqs' });
+      const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
+        some: 'thing',
+      });
+
+      preRequestHook(span, awsSdkRequest);
+
+      expect(span.attributes).toMatchObject({
+        'messaging.publish.body': JSON.stringify(awsSdkRequest.request.commandInput),
+      });
+      expect(span.attributes).not.toHaveProperty('SKIP_EXPORT');
+    });
+
+    it('marks spans coming from other services as non-exportable and does not changes their attributes', () => {
+      const span = rootSpanWithAttributes({ 'aws.service.identifier': 'not-sqs' });
+      const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
+        some: 'thing',
+      });
+
+      preRequestHook(span, awsSdkRequest);
+
+      expect(span.attributes).not.toHaveProperty('messaging.publish.body');
+      expect(span.attributes).toHaveProperty('SKIP_EXPORT', true);
+    });
+
+    const awsRequestWithCommandInput = (
+      commandInput: Record<string, any>
+    ): AwsSdkRequestHookInformation => {
+      return {
         request: {
-          commandInput: {},
+          commandInput,
           commandName: 'not used',
           serviceName: 'not used',
-          region: 'us-west-2',
+          region: 'not used',
         },
-        requestId: '1234',
-        data,
-      },
-      moduleVersion: 'x.y.z',
+      };
     };
-  };
+  });
 });

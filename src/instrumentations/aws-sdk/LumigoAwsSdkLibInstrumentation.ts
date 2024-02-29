@@ -1,7 +1,7 @@
 import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
 import { Instrumentor } from '../instrumentor';
 import { AwsParsedService, SupportedAwsServices } from '../../spans/types';
-import { responseHook } from './hooks';
+import { preRequestHook, responseHook } from './hooks';
 
 export const AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES: SupportedAwsServices[] = [
   AwsParsedService.SQS,
@@ -13,6 +13,6 @@ export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentat
   }
 
   getInstrumentation(): AwsInstrumentation {
-    return new AwsInstrumentation({ responseHook });
+    return new AwsInstrumentation({ responseHook, preRequestHook });
   }
 }

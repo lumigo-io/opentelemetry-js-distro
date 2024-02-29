@@ -35,7 +35,10 @@ describe('extractAttributesFromSqsResponse', () => {
         'messaging.url': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
-      const result = extractAttributesFromSqsResponse({ Messages: [sqsMessage] }, receiveMessagesSpan);
+      const result = extractAttributesFromSqsResponse(
+        { Messages: [sqsMessage] },
+        receiveMessagesSpan
+      );
 
       expect(result).toMatchObject({
         messageId: sqsMessageId,
