@@ -16,13 +16,13 @@ function respond(res, status, body = {}) {
 }
 
 const requestListener = async function (req, res) {
-  console.error(`Received request: ${req.method} ${req.url} `);
+  console.log(`Received request: ${req.method} ${req.url} `);
 
   const requestUrl = url.parse(req.url, true);
 
   switch (requestUrl.pathname) {
-    case '/sqs/receive':
-      console.error('/sqs/receive endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
+    case '/sqs/receive-message':
+      console.log('/sqs/receive endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
         sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
         await sqsClient.receiveMessage({
@@ -35,6 +35,44 @@ const requestListener = async function (req, res) {
         respond(res, 500, { error: err });
       }
       break;
+    case '/sqs/send-message':
+      console.log('/sqs/send endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
+      try {
+        sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        await sqsClient.sendMessage({
+          MessageBody: 'some message',
+          QueueUrl: requestUrl.query.queueUrl,
+        }).promise()
+        respond(res, 200, {});
+      } catch (err) {
+        console.error('Error on sendMessage', err);
+        respond(res, 500, { error: err });
+      }
+      break;
+    case '/sqs/send-message-batch':
+      console.log('/sqs/send-batch endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
+      try {
+        sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        await sqsClient.sendMessageBatch({
+          Entries: [
+            {
+              Id: '1',
+              MessageBody: 'Message 1 body'
+            },
+            {
+              Id: '2',
+              MessageBody: 'Message 2 body'
+            }
+          ],
+          QueueUrl: requestUrl.query.queueUrl,
+        }).promise()
+        respond(res, 200, {});
+      } catch (err) {
+        console.error('Error on sendMessage', err);
+        respond(res, 500, { error: err });
+      }
+      break;
+
     case '/quit':
       console.error('/quit endpoint invoked, shutting down...');
       respond(res, 200);

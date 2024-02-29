@@ -14,6 +14,10 @@ export function getSpansByKind(spans: Span[] = [], spanKindValue: SpanKind): Spa
     return spans.filter((span) => span.kind === spanKindValue);
 }
 
+export const getSpansByAttribute = (spans: Span[], attributeKey: string, attributeValue: unknown): Span[] => {
+    return spans.filter((span) => span.attributes[attributeKey] === attributeValue);
+}
+
 export function readSpanDump(spanDumpPath: string): Span[] {
     try {
         return readFileSync(spanDumpPath, 'utf-8').split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
