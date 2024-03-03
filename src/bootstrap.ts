@@ -117,7 +117,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       instrumentations: instrumentationsToInstall.map((i) => i.getInstrumentation()),
     });
 
-    const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
+    const instrumentedModules: string[] = instrumentationsToInstall.flatMap((i) => i.getInstrumentedModules());
 
     logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
 

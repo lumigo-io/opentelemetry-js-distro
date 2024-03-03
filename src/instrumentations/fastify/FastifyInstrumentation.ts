@@ -6,8 +6,8 @@ import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoFastifyInstrumentation extends Instrumentor<FastifyInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'fastify';
+  getInstrumentedModules(): string[] {
+    return ['fastify'];
   }
 
   getInstrumentation(): FastifyInstrumentation {

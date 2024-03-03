@@ -3,8 +3,8 @@ import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoExpressInstrumentation extends Instrumentor<ExpressInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'express';
+  getInstrumentedModules(): string[] {
+    return ['express'];
   }
 
   getInstrumentation(): ExpressInstrumentation {

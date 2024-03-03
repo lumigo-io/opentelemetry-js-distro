@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-aws-sdk-client-sqs-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry aws-sdk-client-sqs-app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.0.0",
+    "@lumigo/opentelemetry": "file:../../../../../distro.tgz"
+  }
+}

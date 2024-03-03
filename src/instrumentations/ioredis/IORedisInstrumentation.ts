@@ -5,8 +5,8 @@ import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoIORedisInstrumentation extends Instrumentor<IORedisInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'ioredis';
+  getInstrumentedModules(): string[] {
+    return ['ioredis'];
   }
 
   getInstrumentation(): IORedisInstrumentation {

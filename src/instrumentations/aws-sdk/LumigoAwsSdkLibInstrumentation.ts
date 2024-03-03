@@ -8,8 +8,8 @@ export const AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES: SupportedAwsServices[]
 ];
 
 export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'aws-sdk';
+  getInstrumentedModules(): string[] {
+    return ['aws-sdk', '@aws-sdk/client-sqs'];
   }
 
   getInstrumentation(): AwsInstrumentation {

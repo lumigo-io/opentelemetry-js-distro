@@ -1,17 +1,17 @@
 import fs from 'fs';
 import { join } from 'path';
 import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
-import { itTest } from '../../integration/setup';
-import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
-import { versionsToTest } from '../../utils/versions';
-import { TestApp } from '../../utils/test-apps';
+import { itTest } from '../../../integration/setup';
+import { installPackage, reinstallPackages, uninstallPackage } from '../../../utils/test-setup';
+import { versionsToTest } from '../../../utils/versions';
+import { TestApp } from '../../../utils/test-apps';
 import AWS from 'aws-sdk';
 import { Triggers } from '@lumigo/node-core'
 import 'jest-extended';
 import 'jest-json';
-import {getSpansByAttribute} from '../../utils/spans';
+import {getSpansByAttribute} from '../../../utils/spans';
 
-const INSTRUMENTATION_NAME = `aws-sdk`;
+const INSTRUMENTATION_NAME = '@aws-sdk/client-sqs';
 const SPANS_DIR = join(__dirname, 'spans');
 const SQS_STARTUP_TIMEOUT = 60_000;
 const TIMEOUT = 600_000;
@@ -80,12 +80,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       timeout: TIMEOUT,
     },
     async () => {
-      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-receive-message-spans@${versionToTest}.json`;
+      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME.replace('/', '-')}-receive-message-spans@${versionToTest}.json`;
 
       const queueUrl = await createTempQueue();
       const { MessageId: expectedMessageId } = await sqsClient.sendMessage({ MessageBody: SAMPLE_INNER_SNS_MESSAGE_BODY, QueueUrl: queueUrl }).promise()
 
-      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_DEBUG: 'true' });
 
       await testApp.invokeGetPath(`/sqs/receive-message?${testAppQueryParams(queueUrl)}`);
 

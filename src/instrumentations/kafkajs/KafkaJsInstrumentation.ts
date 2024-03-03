@@ -6,8 +6,8 @@ import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoKafkaJsInstrumentation extends Instrumentor<KafkaJsInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'kafkajs';
+  getInstrumentedModules(): string[] {
+    return ['kafkajs'];
   }
 
   getInstrumentation(): KafkaJsInstrumentation {

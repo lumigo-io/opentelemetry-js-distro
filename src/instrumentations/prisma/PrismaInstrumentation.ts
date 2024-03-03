@@ -2,8 +2,8 @@ import { PrismaInstrumentation } from '@prisma/instrumentation';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoPrismaInstrumentation extends Instrumentor<PrismaInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'prisma';
+  getInstrumentedModules(): string[] {
+    return ['prisma'];
   }
 
   getInstrumentation(): PrismaInstrumentation {

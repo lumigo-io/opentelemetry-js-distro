@@ -190,7 +190,7 @@ export const canRequireModule = (libId) => {
   return false;
 };
 
-export const safeRequire = (libId) => {
+export const safeRequire = (libId: string) => {
   const customReq =
     // eslint-disable-next-line no-undef,camelcase
     // @ts-ignore __non_webpack_require__ not available at compile time

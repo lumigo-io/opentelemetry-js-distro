@@ -5,8 +5,8 @@ import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoRedisInstrumentation extends Instrumentor<RedisInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'redis';
+  getInstrumentedModules(): string[] {
+    return ['redis'];
   }
 
   getInstrumentation(): RedisInstrumentation {

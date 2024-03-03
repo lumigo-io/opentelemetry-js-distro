@@ -9,8 +9,8 @@ import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';
 
 export default class LumigoAmqplibInstrumentation extends Instrumentor<AmqplibInstrumentation> {
-  getInstrumentedModule(): string {
-    return 'amqplib';
+  getInstrumentedModules(): string[] {
+    return ['amqplib'];
   }
 
   getInstrumentation(): AmqplibInstrumentation {
