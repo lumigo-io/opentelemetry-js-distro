@@ -5,6 +5,7 @@ import { preRequestHook, responseHook } from './hooks';
 
 export const AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES: SupportedAwsServices[] = [
   AwsParsedService.SQS,
+  AwsOtherService.ElasticBeanstalkSqsDaemon
 ];
 
 export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentation> {

@@ -39,7 +39,7 @@ describe('awsSpan', () => {
         expect(awsServiceAttributes).toEqual({});
 
         // Temporary, required until the http instrumentation is suppressed by the aws-sdk one
-        expect(root['attributes']).toHaveProperty('SKIP_EXPORT', true);
+        expect(root.attributes).toHaveProperty('SKIP_EXPORT', true);
       });
 
       test('Elastic Beanstalk SQS Daemon', () => {
@@ -54,9 +54,14 @@ describe('awsSpan', () => {
         // @ts-ignore
         const awsServiceData = getAwsServiceData(requestData, responseData, root);
 
-        expect(awsServiceData).toMatchObject({
+        // Temporary, required until the http instrumentation is suppressed by the aws-sdk one
+        expect(root.attributes).toHaveProperty('SKIP_EXPORT', true);
+
+        // Temporary, required until the http instrumentation is suppressed by the aws-sdk one
+        expect(awsServiceData).not.toMatchObject({
           messageId: '85dc3997-b060-47bc-9d89-c754d7260dbd',
         });
+
         expect(awsServiceData).not.toHaveProperty('aws.region');
       });
     });
