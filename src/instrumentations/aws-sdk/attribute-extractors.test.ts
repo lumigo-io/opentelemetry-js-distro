@@ -7,13 +7,6 @@ describe('extractAttributesFromSqsResponse', () => {
   const queueUrl = 'https://sqs.us-east-1.amazonaws.com/177715257436/MyQueue';
   const sqsMessageId = 'sqs-message-id-123';
 
-  test('returns an empty attributes object when no messages were returned', () => {
-    const span = rootSpanWithAttributes({});
-
-    const result = extractAttributesFromSqsResponse({ Messages: [] }, span);
-    expect(result).toEqual({});
-  });
-
   describe('ReceiveMessage operations', () => {
     test('builds the attribute-data correctly for inner messages', () => {
       const innerMessageId = 'sns-message-message-id-123';
@@ -70,6 +63,17 @@ describe('extractAttributesFromSqsResponse', () => {
         'rpc.method': 'ReceiveMessage',
       });
       const result = extractAttributesFromSqsResponse({ Messages: [] }, receiveMessagesSpan);
+
+      expect(result).toMatchObject({ 'aws.resource.name': queueUrl });
+    });
+
+    test('does not produce a messageId when a bad response is received', () => {
+      const receiveMessagesSpan = rootSpanWithAttributes({
+        'messaging.url': queueUrl,
+        'rpc.method': 'ReceiveMessage',
+      });
+      // @ts-expect-error
+      const result = extractAttributesFromSqsResponse({}, receiveMessagesSpan);
 
       expect(result).toMatchObject({ 'aws.resource.name': queueUrl });
     });
@@ -145,6 +149,17 @@ describe('extractAttributesFromSqsResponse', () => {
         { Successful: [], Failed: [{ MessageId: 'this-one-failed' }] },
         sendMessageSpan
       );
+
+      expect(result).toMatchObject({ 'aws.resource.name': queueUrl });
+    });
+
+    test('does not produce a messageId when a bad response is received', () => {
+      const receiveMessagesSpan = rootSpanWithAttributes({
+        'messaging.url': queueUrl,
+        'rpc.method': 'SendMessageBatch',
+      });
+      // @ts-expect-error
+      const result = extractAttributesFromSqsResponse({}, receiveMessagesSpan);
 
       expect(result).toMatchObject({ 'aws.resource.name': queueUrl });
     });

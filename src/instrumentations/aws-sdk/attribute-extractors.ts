@@ -47,10 +47,10 @@ export const extractAttributesFromSqsResponse = (
   switch (operation) {
     case 'ReceiveMessage': {
       const messages = (sqsResponse as ReceiveMessageResponse).Messages;
-      const messageId = messages[0]?.MessageId;
+      const messageId = messages?.[0]?.MessageId;
       let lumigoData;
 
-      const innerRaw = messages[0]?.Body ?? '';
+      const innerRaw = messages?.[0]?.Body ?? '';
       if (innerRaw.search(Triggers.INNER_MESSAGES_IDENTIFIER_PATTERN) > 0) {
         // TODO: what if the inner message is not a JSON?
         const inner = safeJsonParse(innerRaw);
@@ -83,7 +83,7 @@ export const extractAttributesFromSqsResponse = (
 
     case 'SendMessageBatch':
       return {
-        messageId: (sqsResponse as SendMessageBatchResponse).Successful[0]?.MessageId,
+        messageId: (sqsResponse as SendMessageBatchResponse).Successful?.[0]?.MessageId,
         ...baseAttributes,
       };
 

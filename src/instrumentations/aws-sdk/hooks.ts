@@ -15,7 +15,7 @@ const SQS_PUBLISH_OPERATIONS = ['SendMessage', 'SendMessageBatch'];
 const SQS_CONSUME_OPERATIONS = ['ReceiveMessage'];
 
 export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHookInformation) => {
-  const awsServiceIdentifier = span.attributes?.['aws.service.identifier'];
+  const awsServiceIdentifier = (span.attributes?.['rpc.service'] as string)?.toLowerCase();
 
   // SKip all spans that are currently covered by the http-instrumentation
   if (
@@ -40,7 +40,7 @@ export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHook
 };
 
 export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHookInformation) => {
-  const awsServiceIdentifier = span.attributes['aws.service.identifier'];
+  const awsServiceIdentifier = (span.attributes?.['rpc.service'] as string)?.toLowerCase();
 
   // SKip all spans that are currently covered by the http-instrumentation
   if (
@@ -51,7 +51,9 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
   }
 
   if (awsServiceIdentifier === AwsParsedService.SQS) {
-    if (shouldAutoFilterEmptySqs() && responseInfo.response.data.Messages?.length === 0) {
+    const sqsOperation = span.attributes?.['rpc.method'] as string;
+
+    if (shouldAutoFilterEmptySqs() && sqsOperation === "ReceiveMessage" && responseInfo.response.data.Messages?.length === 0) {
       setSpanAsNotExportable(span as MutableSpan);
     } else {
       span.setAttributes(extractAttributesFromSqsResponse(responseInfo.response.data, span));
