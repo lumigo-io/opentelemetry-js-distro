@@ -1,6 +1,6 @@
 import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
 import { Instrumentor } from '../instrumentor';
-import { AwsParsedService, SupportedAwsServices } from '../../spans/types';
+import { AwsOtherService, AwsParsedService, SupportedAwsServices } from '../../spans/types';
 import { preRequestHook, responseHook } from './hooks';
 
 export const AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES: SupportedAwsServices[] = [
@@ -10,7 +10,8 @@ export const AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES: SupportedAwsServices[]
 
 export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentation> {
   getInstrumentedModules(): string[] {
-    return ['aws-sdk', '@aws-sdk/client-sqs'];
+    // Add '@aws-sdk/client-sqs' once https://github.com/open-telemetry/opentelemetry-js-contrib/issues/1987 is resolved
+    return ['aws-sdk'];
   }
 
   getInstrumentation(): AwsInstrumentation {
