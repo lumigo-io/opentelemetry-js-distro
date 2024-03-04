@@ -1,5 +1,5 @@
 import { shouldAutoFilterEmptySqs } from '../../parsers/aws';
-import { AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES } from './LumigoAwsSdkLibInstrumentation';
+import { isServiceSupportedByLumigoAwsSdkInstrumentation } from './LumigoAwsSdkLibInstrumentation';
 import type {
   AwsSdkRequestHookInformation,
   AwsSdkResponseHookInformation,
@@ -17,9 +17,9 @@ const SQS_CONSUME_OPERATIONS = ['ReceiveMessage'];
 export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHookInformation) => {
   const awsServiceIdentifier = (span.attributes?.['rpc.service'] as string)?.toLowerCase();
 
-  // SKip all spans that are currently covered by the http-instrumentation
+  // Skip all spans that are currently covered by the http-instrumentation
   if (
-    !AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(awsServiceIdentifier as AwsParsedService)
+    !isServiceSupportedByLumigoAwsSdkInstrumentation(awsServiceIdentifier as AwsParsedService)
   ) {
     setSpanAsNotExportable(span as MutableSpan);
     return;
@@ -42,9 +42,10 @@ export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHook
 export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHookInformation) => {
   const awsServiceIdentifier = (span.attributes?.['rpc.service'] as string)?.toLowerCase();
 
-  // SKip all spans that are currently covered by the http-instrumentation
+  // Skip all spans that are currently not supported by the aws-sdk instrumentation,
+  // assuming those will be covered by the http-instrumentation for the meantime
   if (
-    !AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(awsServiceIdentifier as AwsParsedService)
+    !isServiceSupportedByLumigoAwsSdkInstrumentation(awsServiceIdentifier as AwsParsedService)
   ) {
     setSpanAsNotExportable(span as MutableSpan);
     return;

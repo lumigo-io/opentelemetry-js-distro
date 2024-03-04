@@ -11,9 +11,9 @@ import {
   snsParser,
   sqsParser,
 } from '../parsers/aws';
-import { AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
 import { setSpanAsNotExportable } from '../resources/spanProcessor';
 import { AwsOtherService, AwsParsedService, SupportedAwsServices } from './types';
+import { LumigoAwsSdkLibInstrumentation, isServiceSupportedByLumigoAwsSdkInstrumentation } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
 
 const AMAZON_REQUESTID_HEADER_NAME = 'x-amzn-requestid';
 
@@ -78,7 +78,8 @@ export const getAwsServiceData = (requestData, responseData, span: Span): AwsSer
   // We can remove this logic when we move to entirely relying on the aws-sdk instrumentation, and use the suppressInternalInstrumentation
   // flag. See:
   // https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-sdk#aws-sdk-instrumentation-options
-  if (AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(serviceType)) {
+  const awdSdkInstrumentation = new LumigoAwsSdkLibInstrumentation();
+  if (awdSdkInstrumentation.isApplicable() && isServiceSupportedByLumigoAwsSdkInstrumentation(serviceType)) {
     setSpanAsNotExportable(span);
     return {};
   }

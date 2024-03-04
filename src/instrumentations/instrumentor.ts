@@ -6,5 +6,7 @@ export abstract class Instrumentor<T extends Instrumentation> {
 
   abstract getInstrumentation(options?): T;
 
-  isApplicable = () => this.getInstrumentedModules().some(canRequireModule);
+  isApplicable() {
+    return this.getInstrumentedModules().some(canRequireModule);
+  }
 }
