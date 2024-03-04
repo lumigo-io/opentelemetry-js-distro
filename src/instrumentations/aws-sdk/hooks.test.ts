@@ -8,8 +8,12 @@ import { getSpanAttributeMaxLength } from '../../utils';
 
 describe('aws-sdk instrumentation hooks', () => {
   describe('responseHook', () => {
-    test('adds the consumed body to an SQS.ReceiveMessage span', () => {
-      const span = rootSpanWithAttributes({ 'rpc.service': 'SQS', 'rpc.method': 'ReceiveMessage' });
+    test('adds custom attributes to an SQS.ReceiveMessage span', () => {
+      const span = rootSpanWithAttributes({
+        'rpc.service': 'SQS',
+        'rpc.method': 'ReceiveMessage',
+        'messaging.destination': 'some-queue-name'
+      });
       const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
         Messages: [{ Body: 'something' }],
       });
@@ -18,6 +22,8 @@ describe('aws-sdk instrumentation hooks', () => {
 
       expect(span.attributes).toMatchObject({
         'messaging.consume.body': JSON.stringify(awsSdkResponse.response.data),
+        'messaging.operation': 'ReceiveMessage',
+        'aws.queue.name': 'some-queue-name'
       });
       expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
     });
@@ -85,7 +91,7 @@ describe('aws-sdk instrumentation hooks', () => {
       });
     });
 
-    test('marks spans coming from other services as non-exportable and does not modify them', () => {
+    test('marks spans coming from other services as non-exportable', () => {
       const span = rootSpanWithAttributes({ 'aws.service.identifier': 'not-sqs' });
       const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
         'some-thing': 'else',
@@ -93,7 +99,6 @@ describe('aws-sdk instrumentation hooks', () => {
 
       responseHook(span, awsSdkResponse);
 
-      expect(span.attributes['messaging.consume.body']).toBeUndefined();
       expect(span.attributes).toHaveProperty('SKIP_EXPORT', true);
     });
 
@@ -144,7 +149,11 @@ describe('aws-sdk instrumentation hooks', () => {
 
   describe('preRequestHook', () => {
     test.each(['SendMessage', 'SendMessageBatch'])('adds attributes to a span coming from an SQS publish operation', (sqsOperation) => {
-      const span = rootSpanWithAttributes({ 'rpc.service': 'SQS', 'rpc.method': sqsOperation });
+      const span = rootSpanWithAttributes({
+        'rpc.service': 'SQS',
+        'rpc.method': sqsOperation,
+        'messaging.destination': 'some-queue-name'
+      });
       const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
         some: 'thing',
       });
@@ -153,11 +162,13 @@ describe('aws-sdk instrumentation hooks', () => {
 
       expect(span.attributes).toMatchObject({
         'messaging.publish.body': JSON.stringify(awsSdkRequest.request.commandInput),
+        'messaging.operation': sqsOperation,
+        'aws.queue.name': 'some-queue-name'
       });
       expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
     });
 
-    test('marks spans coming from other services as non-exportable and does not changes their attributes', () => {
+    test('marks spans coming from other services as non-exportable', () => {
       const span = rootSpanWithAttributes({ 'aws.service.identifier': 'not-sqs' });
       const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
         some: 'thing',
@@ -165,7 +176,6 @@ describe('aws-sdk instrumentation hooks', () => {
 
       preRequestHook(span, awsSdkRequest);
 
-      expect(span.attributes['messaging.publish.body']).toBeUndefined();
       expect(span.attributes).toHaveProperty('SKIP_EXPORT', true);
     });
 

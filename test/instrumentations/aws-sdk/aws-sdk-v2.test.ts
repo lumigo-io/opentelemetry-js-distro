@@ -82,7 +82,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
     async () => {
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-receive-message-spans@${versionToTest}.json`;
 
-      const queueUrl = await createTempQueue();
+      const { queueUrl, queueName } = await createTempQueue();
       const { MessageId: expectedMessageId } = await sqsClient.sendMessage({ MessageBody: SAMPLE_INNER_SNS_MESSAGE_BODY, QueueUrl: queueUrl }).promise()
 
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
@@ -101,6 +101,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsReceiveSpan.attributes['aws.resource.name']).toEqual(queueUrl);
       expect(sqsReceiveSpan.attributes['messageId']).toEqual(expectedMessageId);
+      expect(sqsReceiveSpan.attributes['messaging.operation']).toEqual('ReceiveMessage')
+      expect(sqsReceiveSpan.attributes['aws.queue.name']).toEqual(queueName)
       expect(sqsReceiveSpan.attributes['messaging.publish.body']).toBeUndefined()
       expect(sqsReceiveSpan.attributes['messaging.consume.body']).toMatchJSON({
         Messages: [{
@@ -142,7 +144,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
 
-      const queueUrl = await createTempQueue();
+      const { queueUrl, queueName } = await createTempQueue();
       await testApp.invokeGetPath(`/sqs/send-message?${testAppQueryParams(queueUrl)}`);
 
       const { Messages } = await sqsClient.receiveMessage({ QueueUrl: queueUrl, WaitTimeSeconds: 1 }).promise()
@@ -161,6 +163,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsSendSpan.attributes['aws.resource.name']).toEqual(queueUrl);
       expect(sqsSendSpan.attributes['messageId']).toEqual(expectedMessageId);
+      expect(sqsSendSpan.attributes['messaging.operation']).toEqual('SendMessage')
+      expect(sqsSendSpan.attributes['aws.queue.name']).toEqual(queueName)
       expect(sqsSendSpan.attributes['messaging.consume.body']).toBeUndefined()
       expect(sqsSendSpan.attributes['messaging.publish.body']).toMatchJSON({
         // Message body sent from the test-app
@@ -182,7 +186,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-batch-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
 
-      const queueUrl = await createTempQueue();
+      const { queueUrl, queueName } = await createTempQueue();
       await testApp.invokeGetPath(`/sqs/send-message-batch?${testAppQueryParams(queueUrl)}`);
 
       const { Messages } = await sqsClient.receiveMessage({ QueueUrl: queueUrl, WaitTimeSeconds: 1, MaxNumberOfMessages: 2 }).promise()
@@ -201,6 +205,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsSendBatchSpan.attributes['aws.resource.name']).toEqual(queueUrl);
       expect(sqsSendBatchSpan.attributes['messageId']).toEqual(expectedMessageId);
+      expect(sqsSendBatchSpan.attributes['messaging.operation']).toEqual('SendMessageBatch')
+      expect(sqsSendBatchSpan.attributes['aws.queue.name']).toEqual(queueName)
       expect(sqsSendBatchSpan.attributes['messaging.consume.body']).toBeUndefined()
       expect(sqsSendBatchSpan.attributes['messaging.publish.body']).toMatchJSON({
         // Message bodies sent from the test-app
@@ -231,6 +237,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
     await sqsClient.createQueue({ QueueName: queueName }).promise()
     const queueUrl = `http://localhost:${sqsPort}/000000000000/${queueName}`
 
-    return queueUrl
+    return { queueUrl, queueName }
   }
 })
