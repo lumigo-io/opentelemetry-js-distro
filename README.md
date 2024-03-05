@@ -279,19 +279,20 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | Instrumentation | Package | Supported Versions | | | |
 | --- | --- | :---: | :---: | :---: | :---: |
 | | | 14 | 16 | 18 | 20 |
-| grpc-js | [grpc-js](https://www.npmjs.com/package/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
+| grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|
-| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|4.9.0~4.18.2|
+| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.3|4.9.0~4.18.3|4.9.0~4.18.3|4.9.0~4.18.3|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
 | | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
-| | | 4.0.1~4.26.1| 4.0.1~4.26.1| 4.0.1~4.26.1| 4.0.1~4.26.1|
+| | | 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2|
 | ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|
 | | | 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2|
 | kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 4.17.0|3.6.6~3.7.3|3.6.6~3.7.3|3.6.6~3.7.3|
 | | | 6.3.0| 4.0.0~4.17.2| 4.0.0~4.17.2| 4.0.0~4.17.2|
 | | | | 5.0.0~5.9.2| 5.0.0~5.9.2| 5.0.0~5.9.2|
-| postgres | [pg](https://www.npmjs.com/package/pg) | | | | |
+| | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
+| pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3|8.11.3|8.11.3|8.11.3|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.13.0|4.2.0~4.13.0|4.2.0~4.13.0|4.2.0~4.13.0|
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
 | | | 4.6.10~4.6.13| | | |
