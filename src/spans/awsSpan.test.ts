@@ -2,9 +2,12 @@ import { getAwsServiceData, getAwsServiceFromHost } from './awsSpan';
 import { Span } from '@opentelemetry/sdk-trace-base';
 import { AwsOtherService, AwsParsedService } from './types';
 import { rootSpanWithAttributes } from '../../test/utils/spans';
-import { LumigoAwsSdkLibInstrumentation } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation'
+import { LumigoAwsSdkLibInstrumentation } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
 
-const mockIsAwsSdkInstrumentationApplicable = jest.spyOn(LumigoAwsSdkLibInstrumentation.prototype, 'isApplicable')
+const mockIsAwsSdkInstrumentationApplicable = jest.spyOn(
+  LumigoAwsSdkLibInstrumentation.prototype,
+  'isApplicable'
+);
 
 describe('awsSpan', () => {
   describe('getAwsServiceFromHost', () => {
@@ -31,7 +34,7 @@ describe('awsSpan', () => {
     describe('when native aws-sdk instrumentation is inapplicable', () => {
       beforeEach(() => {
         mockIsAwsSdkInstrumentationApplicable.mockReturnValue(false);
-      })
+      });
 
       test('does not mark SQS spans as skipped ', () => {
         const requestData = {
@@ -46,7 +49,7 @@ describe('awsSpan', () => {
         expect(awsServiceAttributes).not.toEqual({});
 
         expect(root.attributes['SKIP_EXPORT']).toBeUndefined();
-      })
+      });
 
       test('does not mark Elastic Beanstalk SQS Daemon spans as skipped', () => {
         const requestData = {
@@ -70,12 +73,12 @@ describe('awsSpan', () => {
 
         expect(awsServiceData).not.toHaveProperty('aws.region');
       });
-    })
+    });
 
     describe('when native aws-sdk instrumentation is applicable', () => {
       beforeEach(() => {
         mockIsAwsSdkInstrumentationApplicable.mockReturnValue(true);
-      })
+      });
 
       test('marks SQS spans as skipped', () => {
         const requestData = {

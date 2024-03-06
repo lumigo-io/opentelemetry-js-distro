@@ -13,7 +13,10 @@ import {
 } from '../parsers/aws';
 import { setSpanAsNotExportable } from '../resources/spanProcessor';
 import { AwsOtherService, AwsParsedService, SupportedAwsServices } from './types';
-import { LumigoAwsSdkLibInstrumentation, isServiceSupportedByLumigoAwsSdkInstrumentation } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
+import {
+  LumigoAwsSdkLibInstrumentation,
+  isServiceSupportedByLumigoAwsSdkInstrumentation,
+} from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
 
 const AMAZON_REQUESTID_HEADER_NAME = 'x-amzn-requestid';
 
@@ -79,7 +82,10 @@ export const getAwsServiceData = (requestData, responseData, span: Span): AwsSer
   // flag. See:
   // https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-sdk#aws-sdk-instrumentation-options
   const awdSdkInstrumentation = new LumigoAwsSdkLibInstrumentation();
-  if (awdSdkInstrumentation.isApplicable() && isServiceSupportedByLumigoAwsSdkInstrumentation(serviceType)) {
+  if (
+    awdSdkInstrumentation.isApplicable() &&
+    isServiceSupportedByLumigoAwsSdkInstrumentation(serviceType)
+  ) {
     setSpanAsNotExportable(span);
     return {};
   }
