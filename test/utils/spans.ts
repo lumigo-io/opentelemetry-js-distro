@@ -27,9 +27,9 @@ export function readSpanDump(spanDumpPath: string): Span[] {
     }
 }
 
-export const rootSpanWithAttributes = (attributes: Record<string, any>): Span => {
+export const rootSpanWithAttributes = (attributes: Record<string, any>, kind?: SpanKind): Span => {
     const provider = new BasicTracerProvider();
-    const root = provider.getTracer('default').startSpan('root');
+    const root = provider.getTracer('default').startSpan('root', { kind, attributes });
     root.setAttributes(attributes);
 
     return root as Span;

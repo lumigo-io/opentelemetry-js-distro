@@ -1,15 +1,16 @@
 import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
 import { Instrumentor } from '../instrumentor';
 import { AwsOtherService, AwsParsedService, SupportedAwsServices } from '../../spans/types';
-import { preRequestHook, responseHook } from './hooks';
+import { preRequestHook, responseHook, sqsProcessHook } from './hooks';
 
 const LUMIGO_AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES: SupportedAwsServices[] = [
   AwsParsedService.SQS,
-  AwsOtherService.ElasticBeanstalkSqsDaemon
+  AwsOtherService.ElasticBeanstalkSqsDaemon,
 ];
 
-export const isServiceSupportedByLumigoAwsSdkInstrumentation = (serviceType: SupportedAwsServices): boolean =>
-  LUMIGO_AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(serviceType);
+export const isServiceSupportedByLumigoAwsSdkInstrumentation = (
+  serviceType: SupportedAwsServices
+): boolean => LUMIGO_AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(serviceType);
 
 export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentation> {
   getInstrumentedModules(): string[] {
@@ -18,6 +19,10 @@ export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentat
   }
 
   getInstrumentation(): AwsInstrumentation {
-    return new AwsInstrumentation({ responseHook, preRequestHook });
+    return new AwsInstrumentation({
+      responseHook,
+      preRequestHook,
+      sqsProcessHook,
+    });
   }
 }

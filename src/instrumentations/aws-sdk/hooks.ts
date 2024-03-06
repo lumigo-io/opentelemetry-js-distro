@@ -10,6 +10,7 @@ import { AwsParsedService } from '../../spans/types';
 import { extractAttributesFromSqsResponse } from './attribute-extractors';
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { getSpanAttributeMaxLength } from '../../utils';
+import { SpanKind } from '@opentelemetry/api';
 
 const SQS_PUBLISH_OPERATIONS = ['SendMessage', 'SendMessageBatch'];
 const SQS_CONSUME_OPERATIONS = ['ReceiveMessage'];
@@ -18,9 +19,7 @@ export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHook
   const awsServiceIdentifier = (span.attributes?.['rpc.service'] as string)?.toLowerCase();
 
   // Skip all spans that are currently covered by the http-instrumentation
-  if (
-    !isServiceSupportedByLumigoAwsSdkInstrumentation(awsServiceIdentifier as AwsParsedService)
-  ) {
+  if (!isServiceSupportedByLumigoAwsSdkInstrumentation(awsServiceIdentifier as AwsParsedService)) {
     setSpanAsNotExportable(span as MutableSpan);
     return;
   }
@@ -46,9 +45,7 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
 
   // Skip all spans that are currently not supported by the aws-sdk instrumentation,
   // assuming those will be covered by the http-instrumentation for the meantime
-  if (
-    !isServiceSupportedByLumigoAwsSdkInstrumentation(awsServiceIdentifier as AwsParsedService)
-  ) {
+  if (!isServiceSupportedByLumigoAwsSdkInstrumentation(awsServiceIdentifier as AwsParsedService)) {
     setSpanAsNotExportable(span as MutableSpan);
     return;
   }
@@ -56,7 +53,11 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
   if (awsServiceIdentifier === AwsParsedService.SQS) {
     const sqsOperation = span.attributes?.['rpc.method'] as string;
 
-    if (shouldAutoFilterEmptySqs() && sqsOperation === "ReceiveMessage" && responseInfo.response.data.Messages?.length === 0) {
+    if (
+      shouldAutoFilterEmptySqs() &&
+      sqsOperation === 'ReceiveMessage' &&
+      responseInfo.response.data.Messages?.length === 0
+    ) {
       setSpanAsNotExportable(span as MutableSpan);
     } else {
       span.setAttributes(extractAttributesFromSqsResponse(responseInfo.response.data, span));
@@ -77,4 +78,11 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
       }
     }
   }
+};
+
+export const sqsProcessHook = (span: MutableSpan) => {
+  // @ts-expect-error - span kind is read-only
+  span.kind = SpanKind.INTERNAL;
+
+  delete span['attributes']['messaging.message_id'];
 };

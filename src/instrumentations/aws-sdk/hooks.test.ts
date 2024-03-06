@@ -1,10 +1,11 @@
-import { responseHook, preRequestHook } from './hooks';
+import { responseHook, preRequestHook, sqsProcessHook } from './hooks';
 import type {
   AwsSdkRequestHookInformation,
   AwsSdkResponseHookInformation,
 } from '@opentelemetry/instrumentation-aws-sdk';
 import { rootSpanWithAttributes } from '../../../test/utils/spans';
 import { getSpanAttributeMaxLength } from '../../utils';
+import { SpanKind } from '@opentelemetry/api';
 
 describe('aws-sdk instrumentation hooks', () => {
   describe('responseHook', () => {
@@ -12,7 +13,7 @@ describe('aws-sdk instrumentation hooks', () => {
       const span = rootSpanWithAttributes({
         'rpc.service': 'SQS',
         'rpc.method': 'ReceiveMessage',
-        'messaging.destination': 'some-queue-name'
+        'messaging.destination': 'some-queue-name',
       });
       const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
         Messages: [{ Body: 'something' }],
@@ -23,7 +24,7 @@ describe('aws-sdk instrumentation hooks', () => {
       expect(span.attributes).toMatchObject({
         'messaging.consume.body': JSON.stringify(awsSdkResponse.response.data),
         'messaging.operation': 'ReceiveMessage',
-        'aws.queue.name': 'some-queue-name'
+        'aws.queue.name': 'some-queue-name',
       });
       expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
     });
@@ -36,7 +37,7 @@ describe('aws-sdk instrumentation hooks', () => {
 
       responseHook(span, awsSdkResponse);
 
-      expect(span.attributes['messaging.consume.body']).toBeUndefined()
+      expect(span.attributes['messaging.consume.body']).toBeUndefined();
       expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
     });
 
@@ -46,7 +47,10 @@ describe('aws-sdk instrumentation hooks', () => {
           jest.isolateModules(() => {
             process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'false';
 
-            const span = rootSpanWithAttributes({ 'rpc.service': 'SQS', 'rpc.method': 'ReceiveMessage' });
+            const span = rootSpanWithAttributes({
+              'rpc.service': 'SQS',
+              'rpc.method': 'ReceiveMessage',
+            });
             const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
               Messages: [],
             });
@@ -54,7 +58,7 @@ describe('aws-sdk instrumentation hooks', () => {
             responseHook(span, awsSdkResponse);
 
             expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
-          })
+          });
         });
       });
 
@@ -63,7 +67,10 @@ describe('aws-sdk instrumentation hooks', () => {
           jest.isolateModules(() => {
             process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
 
-            const span = rootSpanWithAttributes({ 'rpc.service': 'SQS', 'rpc.method': 'ReceiveMessage' });
+            const span = rootSpanWithAttributes({
+              'rpc.service': 'SQS',
+              'rpc.method': 'ReceiveMessage',
+            });
             const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
               Messages: [],
             });
@@ -71,14 +78,17 @@ describe('aws-sdk instrumentation hooks', () => {
             responseHook(span, awsSdkResponse);
 
             expect(span.attributes).toHaveProperty('SKIP_EXPORT', true);
-          })
+          });
         });
 
         test('ignores non SQS-polling empty responses', () => {
           jest.isolateModules(() => {
             process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
 
-            const span = rootSpanWithAttributes({ 'rpc.service': 'SQS', 'rpc.method': 'SomeThingElse' });
+            const span = rootSpanWithAttributes({
+              'rpc.service': 'SQS',
+              'rpc.method': 'SomeThingElse',
+            });
             const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
               Messages: [],
             });
@@ -86,7 +96,7 @@ describe('aws-sdk instrumentation hooks', () => {
             responseHook(span, awsSdkResponse);
 
             expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
-          })
+          });
         });
       });
     });
@@ -113,7 +123,10 @@ describe('aws-sdk instrumentation hooks', () => {
           `.*${secretKey}.*`,
         ]);
 
-        const span = rootSpanWithAttributes({ 'rpc.service': 'SQS', 'rpc.method': 'ReceiveMessage' });
+        const span = rootSpanWithAttributes({
+          'rpc.service': 'SQS',
+          'rpc.method': 'ReceiveMessage',
+        });
         const payload = {
           [secretKey]: secretValue,
           'non-secret-key': 'a'.repeat(getSpanAttributeMaxLength() * 2),
@@ -148,25 +161,28 @@ describe('aws-sdk instrumentation hooks', () => {
   });
 
   describe('preRequestHook', () => {
-    test.each(['SendMessage', 'SendMessageBatch'])('adds attributes to a span coming from an SQS publish operation', (sqsOperation) => {
-      const span = rootSpanWithAttributes({
-        'rpc.service': 'SQS',
-        'rpc.method': sqsOperation,
-        'messaging.destination': 'some-queue-name'
-      });
-      const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
-        some: 'thing',
-      });
+    test.each(['SendMessage', 'SendMessageBatch'])(
+      'adds attributes to a span coming from an SQS publish operation',
+      (sqsOperation) => {
+        const span = rootSpanWithAttributes({
+          'rpc.service': 'SQS',
+          'rpc.method': sqsOperation,
+          'messaging.destination': 'some-queue-name',
+        });
+        const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
+          some: 'thing',
+        });
 
-      preRequestHook(span, awsSdkRequest);
+        preRequestHook(span, awsSdkRequest);
 
-      expect(span.attributes).toMatchObject({
-        'messaging.publish.body': JSON.stringify(awsSdkRequest.request.commandInput),
-        'messaging.operation': sqsOperation,
-        'aws.queue.name': 'some-queue-name'
-      });
-      expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
-    });
+        expect(span.attributes).toMatchObject({
+          'messaging.publish.body': JSON.stringify(awsSdkRequest.request.commandInput),
+          'messaging.operation': sqsOperation,
+          'aws.queue.name': 'some-queue-name',
+        });
+        expect(span.attributes['SKIP_EXPORT']).toBeUndefined();
+      }
+    );
 
     test('marks spans coming from other services as non-exportable', () => {
       const span = rootSpanWithAttributes({ 'aws.service.identifier': 'not-sqs' });
@@ -183,29 +199,35 @@ describe('aws-sdk instrumentation hooks', () => {
       const secretKey = 'shhhh';
       const secretValue = 'some-secret';
 
-      test.each(['SendMessage', 'SendMessageBatch'])('truncates and scrubs the SQS message body for %s operations', (sqsOperation) => {
-        // node-core loads the value of LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES on require() time,
-        // therefore we must use isolateModules and re-set its value so the change will take effect
-        jest.isolateModules(() => {
-          process.env['LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES'] = JSON.stringify([
-            `.*${secretKey}.*`,
-          ]);
+      test.each(['SendMessage', 'SendMessageBatch'])(
+        'truncates and scrubs the SQS message body for %s operations',
+        (sqsOperation) => {
+          // node-core loads the value of LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES on require() time,
+          // therefore we must use isolateModules and re-set its value so the change will take effect
+          jest.isolateModules(() => {
+            process.env['LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES'] = JSON.stringify([
+              `.*${secretKey}.*`,
+            ]);
 
-          const span = rootSpanWithAttributes({ 'rpc.service': 'SQS', 'rpc.method': sqsOperation });
-          const payload = {
-            [secretKey]: secretValue,
-            'non-secret-key': 'a'.repeat(getSpanAttributeMaxLength() * 2),
-          };
-          const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput(payload);
-          const preRequestHook = jest.requireActual('./hooks').preRequestHook;
-          preRequestHook(span, awsSdkRequest);
+            const span = rootSpanWithAttributes({
+              'rpc.service': 'SQS',
+              'rpc.method': sqsOperation,
+            });
+            const payload = {
+              [secretKey]: secretValue,
+              'non-secret-key': 'a'.repeat(getSpanAttributeMaxLength() * 2),
+            };
+            const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput(payload);
+            const preRequestHook = jest.requireActual('./hooks').preRequestHook;
+            preRequestHook(span, awsSdkRequest);
 
-          expect(span.attributes['messaging.publish.body']).not.toContain(secretValue);
-          expect(span.attributes['messaging.publish.body']!.toString().length).toBeLessThanOrEqual(
-            JSON.stringify(payload).length
-          );
-        });
-      });
+            expect(span.attributes['messaging.publish.body']).not.toContain(secretValue);
+            expect(
+              span.attributes['messaging.publish.body']!.toString().length
+            ).toBeLessThanOrEqual(JSON.stringify(payload).length);
+          });
+        }
+      );
     });
 
     const awsRequestWithCommandInput = (
@@ -220,5 +242,22 @@ describe('aws-sdk instrumentation hooks', () => {
         },
       };
     };
+  });
+
+  describe('sqsProcessHook', () => {
+    test('sets the span kind and attributes for tracing-ingestion', () => {
+      // aws-sdk instrumentation does not set the span type to internal, but to consumer for some reason
+      const sqsProcessSpan = rootSpanWithAttributes(
+        {
+          'messaging.message_id': 'this will fail tracing-ingestion by causing an infinite loop',
+        },
+        SpanKind.CONSUMER
+      );
+
+      sqsProcessHook(sqsProcessSpan);
+
+      expect(sqsProcessSpan.kind).toBe(SpanKind.INTERNAL);
+      expect(sqsProcessSpan.attributes['messaging.message_id']).toBeUndefined();
+    });
   });
 });
