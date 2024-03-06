@@ -4,8 +4,8 @@ import { wrapServer } from './wrapGrpcServer';
 import { wrapClient } from './wrapGrpcClient';
 
 export default class LumigoGrpcInstrumentation extends Instrumentor<GrpcInstrumentation> {
-  getInstrumentedModules(): string[] {
-    return ['@grpc/grpc-js'];
+  getInstrumentedModule(): string {
+    return '@grpc/grpc-js';
   }
 
   getInstrumentation(): GrpcInstrumentation {

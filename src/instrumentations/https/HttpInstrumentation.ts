@@ -23,7 +23,7 @@ export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrume
     );
   }
 
-  getInstrumentedModules = () => ['http'];
+  getInstrumentedModule = () => 'http';
 
   getInstrumentation = () =>
     new HttpInstrumentation({

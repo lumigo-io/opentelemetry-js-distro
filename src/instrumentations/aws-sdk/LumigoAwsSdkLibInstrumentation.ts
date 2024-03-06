@@ -13,9 +13,9 @@ export const isServiceSupportedByLumigoAwsSdkInstrumentation = (
 ): boolean => LUMIGO_AWS_INSTRUMENTATION_SUPPORTED_SERVICE_TYPES.includes(serviceType);
 
 export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentation> {
-  getInstrumentedModules(): string[] {
+  getInstrumentedModule(): string {
     // Add '@aws-sdk/client-sqs' once https://github.com/open-telemetry/opentelemetry-js-contrib/issues/1987 is resolved
-    return ['aws-sdk'];
+    return 'aws-sdk';
   }
 
   getInstrumentation(): AwsInstrumentation {
