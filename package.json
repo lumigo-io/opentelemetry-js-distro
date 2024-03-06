@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.37.1",
+  "version": "1.37.2",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/distro.js",
   "private": false,
@@ -41,7 +41,7 @@
     "@opentelemetry/sdk-trace-base": "1.9.1",
     "@opentelemetry/sdk-trace-node": "1.9.1",
     "@opentelemetry/semantic-conventions": "1.17.1",
-    "@prisma/instrumentation": "^5.10.2",
+    "@prisma/instrumentation": "^4.14.0",
     "opentelemetry-instrumentation-express": "0.39.1",
     "opentelemetry-instrumentation-kafkajs": "^0.39.1",
     "shimmer": "^1.2.1"
