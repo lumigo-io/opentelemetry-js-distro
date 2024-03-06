@@ -14,7 +14,8 @@ export const isServiceSupportedByLumigoAwsSdkInstrumentation = (
 
 export class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsInstrumentation> {
   getInstrumentedModule(): string {
-    // Add '@aws-sdk/client-sqs' once https://github.com/open-telemetry/opentelemetry-js-contrib/issues/1987 is resolved
+    // TODO: Change this to a list and add '@aws-sdk/client-sqs' once
+    // https://github.com/open-telemetry/opentelemetry-js-contrib/issues/1987 is resolved
     return 'aws-sdk';
   }
 

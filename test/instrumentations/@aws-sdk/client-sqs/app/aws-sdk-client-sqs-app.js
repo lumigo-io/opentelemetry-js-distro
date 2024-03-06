@@ -61,16 +61,15 @@ const requestListener = async function (req, res) {
       try {
         sqsClient = new SQSClient({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
         const sendMessageBatchCommand = new SendMessageBatchCommand({
+          QueueUrl: requestUrl.query.queueUrl,
           Entries: [
             {
               Id: '1',
               MessageBody: 'Message 1 body',
-              QueueUrl: requestUrl.query.queueUrl,
             },
             {
               Id: '2',
               MessageBody: 'Message 2 body',
-              QueueUrl: requestUrl.query.queueUrl,
             },
           ],
         })
