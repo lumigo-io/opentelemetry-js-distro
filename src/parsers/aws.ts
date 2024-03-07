@@ -6,7 +6,6 @@ import { CommonUtils } from '@lumigo/node-core';
 import { Triggers } from '@lumigo/node-core';
 import { AwsServiceAttributes } from '../spans/awsSpan';
 import { getSpanSkipExportAttributes } from '../resources/spanProcessor';
-import { Span } from '@opentelemetry/api';
 
 const extractDynamodbMessageId = (reqBody, method) => {
   if (method === 'PutItem' && reqBody['Item']) {
