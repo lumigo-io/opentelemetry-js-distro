@@ -1,5 +1,5 @@
 import { shouldAutoFilterEmptySqs } from '../../parsers/aws';
-import { isServiceSupportedByLumigoAwsSdkInstrumentation } from './LumigoAwsSdkLibInstrumentation';
+import { isServiceSupportedByLumigoAwsSdkInstrumentation } from './shared';
 import type {
   AwsSdkRequestHookInformation,
   AwsSdkResponseHookInformation,
@@ -11,6 +11,7 @@ import { extractAttributesFromSqsResponse } from './attribute-extractors';
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { getSpanAttributeMaxLength } from '../../utils';
 import { SpanKind } from '@opentelemetry/api';
+import { setAwsInstrumentationSpanActive } from './shared';
 
 const SQS_PUBLISH_OPERATIONS = ['SendMessage', 'SendMessageBatch'];
 const SQS_CONSUME_OPERATIONS = ['ReceiveMessage'];
@@ -22,6 +23,9 @@ export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHook
   if (!isServiceSupportedByLumigoAwsSdkInstrumentation(awsServiceIdentifier as AwsParsedService)) {
     setSpanAsNotExportable(span as MutableSpan);
     return;
+  } else {
+    // Signal other instrumentations that an aws-sdk span is active
+    setAwsInstrumentationSpanActive(true);
   }
 
   const sqsOperation = span.attributes?.['rpc.method'] as string;
@@ -62,8 +66,6 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
     } else {
       span.setAttributes(extractAttributesFromSqsResponse(responseInfo.response.data, span));
 
-      const sqsOperation = span.attributes['rpc.method'] as string;
-
       if (SQS_CONSUME_OPERATIONS.includes(sqsOperation)) {
         span.setAttribute('aws.queue.name', span.attributes['messaging.destination']);
         span.setAttribute('messaging.operation', sqsOperation);
@@ -78,6 +80,9 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
       }
     }
   }
+
+  // Signal other instrumentations that an aws-sdk span is becoming inactive
+  setAwsInstrumentationSpanActive(false);
 };
 
 export const sqsProcessHook = (span: MutableSpan) => {

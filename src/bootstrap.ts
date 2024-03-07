@@ -18,7 +18,10 @@ import LumigoKafkaJsInstrumentation from './instrumentations/kafkajs/KafkaJsInst
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
 import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
-import { LumigoAwsSdkLibInstrumentation } from './instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
+import {
+  LumigoAwsSdkV2LibInstrumentation,
+  LumigoAwsSdkV3LibInstrumentation,
+} from './instrumentations/aws-sdk';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
   LumigoContainerNameDetector,
@@ -105,7 +108,8 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoMongoDBInstrumentation(),
       new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
-      new LumigoAwsSdkLibInstrumentation(),
+      new LumigoAwsSdkV2LibInstrumentation(),
+      new LumigoAwsSdkV3LibInstrumentation(),
     ].filter((i) => i.isApplicable());
 
     /*

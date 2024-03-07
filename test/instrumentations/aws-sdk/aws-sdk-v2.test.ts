@@ -9,7 +9,9 @@ import AWS from 'aws-sdk';
 import { Triggers } from '@lumigo/node-core'
 import 'jest-extended';
 import 'jest-json';
-import {getSpansByAttribute} from '../../utils/spans';
+import { getSpansByAttribute } from '../../utils/spans';
+import { createTempQueue, filterAwsSdkInstrumentationSpans, testAppQueryParams } from '../../utils/aws-sdk-helpers';
+import { shouldSkipSpanExport } from '../../../src/resources/spanProcessor';
 
 const INSTRUMENTATION_NAME = 'aws-sdk';
 const SPANS_DIR = join(__dirname, 'spans');
@@ -82,14 +84,18 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
     async () => {
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-receive-message-spans@${versionToTest}.json`;
 
-      const { queueUrl, queueName } = await createTempQueue();
+      const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
       const { MessageId: expectedMessageId } = await sqsClient.sendMessage({ MessageBody: SAMPLE_INNER_SNS_MESSAGE_BODY, QueueUrl: queueUrl }).promise()
 
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
 
-      await testApp.invokeGetPath(`/sqs/receive-message?${testAppQueryParams(queueUrl)}`);
+      await testApp.invokeGetPath(`/sqs/receive-message?${testAppQueryParams({ queueUrl, region, sqsPort })}`);
 
       const spans = await testApp.getFinalSpans();
+
+      const awsSdkHttpSpans = filterAwsSdkInstrumentationSpans(spans)
+      expect(awsSdkHttpSpans).toSatisfyAll(shouldSkipSpanExport)
+
       const sqsSpans = getSpansByAttribute(spans, "rpc.service", "SQS")
       const sqsReceiveSpan = getSpansByAttribute(sqsSpans, "rpc.method", "ReceiveMessage")[0]
 
@@ -144,14 +150,18 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
 
-      const { queueUrl, queueName } = await createTempQueue();
-      await testApp.invokeGetPath(`/sqs/send-message?${testAppQueryParams(queueUrl)}`);
+      const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
+      await testApp.invokeGetPath(`/sqs/send-message?${testAppQueryParams({ queueUrl, region, sqsPort })}`);
 
       const { Messages } = await sqsClient.receiveMessage({ QueueUrl: queueUrl, WaitTimeSeconds: 1 }).promise()
       const expectedMessageId = Messages?.[0].MessageId
       expect(expectedMessageId).toBeDefined()
 
       const spans = await testApp.getFinalSpans();
+
+      const awsSdkHttpSpans = filterAwsSdkInstrumentationSpans(spans)
+      expect(awsSdkHttpSpans).toSatisfyAll(shouldSkipSpanExport)
+
       const sqsSpans = getSpansByAttribute(spans, "rpc.service", "SQS")
       const sqsSendSpan = getSpansByAttribute(sqsSpans, "rpc.method", "SendMessage")[0]
 
@@ -186,14 +196,18 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-batch-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile);
 
-      const { queueUrl, queueName } = await createTempQueue();
-      await testApp.invokeGetPath(`/sqs/send-message-batch?${testAppQueryParams(queueUrl)}`);
+      const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
+      await testApp.invokeGetPath(`/sqs/send-message-batch?${testAppQueryParams({ queueUrl, region, sqsPort })}`);
 
       const { Messages } = await sqsClient.receiveMessage({ QueueUrl: queueUrl, WaitTimeSeconds: 1, MaxNumberOfMessages: 2 }).promise()
       const expectedMessageId = Messages?.[0].MessageId
       expect(expectedMessageId).toBeDefined()
 
       const spans = await testApp.getFinalSpans();
+
+      const awsSdkHttpSpans = filterAwsSdkInstrumentationSpans(spans)
+      expect(awsSdkHttpSpans).toSatisfyAll(shouldSkipSpanExport)
+
       const sqsSpans = getSpansByAttribute(spans, "rpc.service", "SQS")
       const sqsSendBatchSpan = getSpansByAttribute(sqsSpans, "rpc.method", "SendMessageBatch")[0]
 
@@ -225,18 +239,4 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       expect(sqsSendBatchSpan.attributes).not.toHaveProperty('lumigoData')
     }
   )
-
-  const testAppQueryParams = (queueUrl: string) =>  Object.entries({
-    region,
-    sqsPort,
-    queueUrl: encodeURIComponent(queueUrl)
-  }).map(keyValue => keyValue.join('=')).join('&')
-
-  const createTempQueue = async () => {
-    const queueName = `test-queue-${Date.now()}`;
-    await sqsClient.createQueue({ QueueName: queueName }).promise()
-    const queueUrl = `http://localhost:${sqsPort}/000000000000/${queueName}`
-
-    return { queueUrl, queueName }
-  }
 })
