@@ -8,6 +8,6 @@ describe('LumigoGrpcInstrumentation', () => {
   let lumigoGrpcInstrumentation = new LumigoGrpcInstrumentation();
 
   test('getInstrumentedModule should return "@grpc/grpc-js"', () => {
-    expect(lumigoGrpcInstrumentation.getInstrumentedModule()).toEqual(['@grpc/grpc-js']);
+    expect(lumigoGrpcInstrumentation.getInstrumentedModule()).toEqual('@grpc/grpc-js');
   });
 });
