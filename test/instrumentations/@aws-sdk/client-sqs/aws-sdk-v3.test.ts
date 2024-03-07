@@ -12,6 +12,7 @@ import 'jest-json';
 import { getSpansByAttribute } from '../../../utils/spans';
 import { createTempQueue, filterAwsSdkInstrumentationSpans, testAppQueryParams } from '../../../utils/aws-sdk-helpers';
 import { shouldSkipSpanExport } from '../../../../src/resources/spanProcessor'
+import { SpanKind } from '@opentelemetry/api';
 
 const INSTRUMENTATION_NAME = '@aws-sdk/client-sqs';
 const INSTRUMENTATION_SPANS_FILE_PREFIX = INSTRUMENTATION_NAME.replace('/', '-')
@@ -137,6 +138,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
           }
         ]
       });
+
+      const processingSpans = getSpansByAttribute(spans, "messaging.operation", "process")
+      expect(processingSpans.length).toBeGreaterThanOrEqual(1)
+      expect(processingSpans).toSatisfyAll((span) => span.kind === SpanKind.INTERNAL && span.attributes['messaging.message_id'] === undefined)
     }
   )
 

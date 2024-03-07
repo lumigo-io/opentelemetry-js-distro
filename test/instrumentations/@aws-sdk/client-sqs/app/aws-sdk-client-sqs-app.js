@@ -34,7 +34,10 @@ const requestListener = async function (req, res) {
           QueueUrl: requestUrl.query.queueUrl,
           MaxNumberOfMessages: 1
         })
-        await sqsClient.send(receiveMessageCommand)
+        const { Messages } = await sqsClient.send(receiveMessageCommand)
+
+        // Triggers an aws-sdk processing-span
+        await Promise.all(Messages.map(() => console.log('processing message!')))
         respond(res, 200, {});
       } catch (err) {
         console.error('Error on receiveMessage', err);
