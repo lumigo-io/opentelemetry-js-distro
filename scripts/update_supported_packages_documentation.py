@@ -14,12 +14,12 @@ next_section_start_index = None
 for count, line in enumerate(
     readme_content[supported_packages_start_index + 2 :]  # noqa: E203
 ):
-    if line.startswith("## "):
+    if line.startswith("### "):
         next_section_start_index = supported_packages_start_index + 2 + count
         break
 
 if not next_section_start_index:
-    raise Exception("No next section found")
+    raise Exception("No section found after 'Supported packages'!")
 
 updated_readme_content = readme_content[: supported_packages_start_index + 1]
 updated_readme_content += ["\n"]

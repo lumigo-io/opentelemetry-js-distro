@@ -16,6 +16,7 @@ import LumigoHttpInstrumentation from './instrumentations/https/HttpInstrumentat
 import LumigoIORedisInstrumentation from './instrumentations/ioredis/IORedisInstrumentation';
 import LumigoKafkaJsInstrumentation from './instrumentations/kafkajs/KafkaJsInstrumentation';
 import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInstrumentation';
+import LumigoPgInstrumentation from './instrumentations/pg/PgInstrumentation';
 import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
 import {
@@ -106,6 +107,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoIORedisInstrumentation(),
       new LumigoKafkaJsInstrumentation(),
       new LumigoMongoDBInstrumentation(),
+      new LumigoPgInstrumentation(),
       new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
       new LumigoAwsSdkV2LibInstrumentation(),

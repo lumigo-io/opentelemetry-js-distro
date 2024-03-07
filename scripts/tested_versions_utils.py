@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import attr
 import os
 import re
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
+
+import attr
 
 # This regexp splits the version line across three capture groups:
 # `(!)?` captures whether or not the version is supported (if supported, the `!` character is missing)
@@ -50,19 +51,19 @@ class NonSemanticVersion:
     version: str
     comment: str
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NonSemanticVersion):
             return False
 
         return self.version == other.version
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         if not isinstance(other, NonSemanticVersion):
             return False
 
         return self.version < other.version
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{'' if self.supported else '!'}{self.version}{' # ' + self.comment if self.comment else ''}"
 
 
@@ -76,7 +77,7 @@ class SemanticVersion:
     suffix: str
     comment: str
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, SemanticVersion):
             return False
 
@@ -87,7 +88,7 @@ class SemanticVersion:
             and self.suffix == other.suffix
         )
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         if not isinstance(other, SemanticVersion):
             return True
 
@@ -117,7 +118,7 @@ class SemanticVersion:
 
         return self.suffix < other.suffix
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{'' if self.supported else '!'}{self.version}{' # ' + self.comment if self.comment else ''}"
 
 
@@ -158,15 +159,21 @@ class TestedVersions:
 
     @staticmethod
     def _add_version_to_file(
-        directory: str, dependency_name: str, dependency_version: str, supported: bool
-    ):
-        dependency_file_path = TestedVersions.get_file_path(directory, dependency_name)
+        directory: str,
+        python: str,
+        dependency_name: str,
+        dependency_version: str,
+        supported: bool,
+    ) -> None:
+        dependency_file_path = TestedVersions.get_file_path(
+            directory, python, dependency_name
+        )
         TestedVersions.add_version_to_file(
             dependency_file_path, dependency_version, supported
         )
 
     @staticmethod
-    def add_version_to_file(path: str, version: str, supported: bool):
+    def add_version_to_file(path: str, version: str, supported: bool) -> None:
         tested_versions = TestedVersions.from_file(path)
 
         parsed_version = parse_version(("" if supported else "!") + version)
@@ -213,27 +220,27 @@ class TestedVersions:
     @staticmethod
     @contextmanager
     def save_tests_result(
-        directory: str, dependency_name: str, dependency_version: str
-    ):
+        directory: str, python: str, dependency_name: str, dependency_version: str
+    ) -> Generator[None, None, None]:
         if should_test_only_untested_versions():
             try:
                 yield
             except Exception:
                 TestedVersions._add_version_to_file(
-                    directory, dependency_name, dependency_version, False
+                    directory, python, dependency_name, dependency_version, False
                 )
                 raise
             TestedVersions._add_version_to_file(
-                directory, dependency_name, dependency_version, True
+                directory, python, dependency_name, dependency_version, True
             )
         else:
             yield
 
     @staticmethod
-    def get_file_path(directory: str, dependency_name: str) -> str:
+    def get_file_path(directory: str, python: str, dependency_name: str) -> str:
         return (
             os.path.dirname(os.path.dirname(__file__))
-            + f"/test/integration/{directory}/tested_versions/{dependency_name}"
+            + f"/test/integration/{directory}/tested_versions/{python}/{dependency_name}"
         )
 
     @staticmethod
@@ -270,34 +277,62 @@ def should_test_only_untested_versions() -> bool:
     return os.getenv("TEST_ONLY_UNTESTED_NEW_VERSIONS", "").lower() == "true"
 
 
+def sort_runtime_array(runtime_array: List[str]) -> List[str]:
+    print(runtime_array)
+    return sorted(runtime_array)
+
+
 def generate_support_matrix_markdown(
-    src_root=None, package_url_template="https://pypi.org/project/{}"
+    src_root: Optional[str] = None,
+    package_url_template: str = "https://pypi.org/project/{}",
 ) -> List[str]:
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
     if src_root:
         project_root = os.path.join(project_root, src_root)
 
-    # Find all the 'tested_versions' folders and the files inside
+    # Find all the 'tested_versions' folders and the supported runtimes
     package_support_version_directories = []
+    package_support_version_runtimes = []
     for root, directories, files in os.walk(project_root):
         for directory in directories:
             if os.path.basename(directory) == "tested_versions":
-                package_support_version_directories += [os.path.join(root, directory)]
+                tested_versions_path = os.path.join(root, directory)
+                package_support_version_directories += [tested_versions_path]
+                print(tested_versions_path)
+                # for each subfolder under tested_versions, we have a runtime
+                for runtime in os.listdir(tested_versions_path):
+                    print(runtime)
+                    if runtime not in package_support_version_runtimes:
+                        package_support_version_runtimes.append(runtime)
 
-    res = ["| Instrumentation | Package | Supported Versions |", "| --- | --- | --- |"]
+    package_support_version_runtimes = sort_runtime_array(package_support_version_runtimes)
+    print(package_support_version_runtimes)
+    res = [
+        # add on one less than the number of runtimes because "supported versions" is the first runtime's column
+        f"| Instrumentation | Package | Supported Versions |{'|'.join([' ' for _ in package_support_version_runtimes[:-1]])}|",
+        # | | | :---: | :---: | ... |
+        f"| --- | --- | {' | '.join([':---:' for _ in package_support_version_runtimes])} |",
+        # | | | 3.7 | 3.8 | ... |
+        f"| | | {' | '.join(package_support_version_runtimes)} |",
+    ]
+
     for package_support_version_directory in sorted(
         package_support_version_directories
     ):
         res += _generate_support_matrix_markdown_row(
-            package_support_version_directory, package_url_template
+            package_support_version_directory,
+            package_support_version_runtimes,
+            package_url_template,
         )
 
     return res
 
 
 def _generate_support_matrix_markdown_row(
-    tested_versions_directory, package_url_template
+    tested_versions_directory: str,
+    package_support_version_runtimes: List[str],
+    package_url_template: str,
 ) -> List[str]:
     """Generate the markdown row for an instrumentation"""
 
@@ -306,51 +341,64 @@ def _generate_support_matrix_markdown_row(
     # like fastapi and uvicorn
     instrumentation = os.path.basename(os.path.dirname(tested_versions_directory))
 
-    packages = sorted(os.listdir(tested_versions_directory))
+    # initialize versions dict for all the packages we find
+    versions: Dict[str, Dict[str, List[str]]] = {}
+    for runtime in package_support_version_runtimes:
+        runtime_path = os.path.join(tested_versions_directory, runtime)
+        # if we have a folder in the tested_versions_directory that matches the runtime,
+        # use that to determine which packages we have
+        if os.path.isdir(runtime_path):
+            package_names = os.listdir(runtime_path)
+            for package_name in package_names:
+                if package_name == "@grpc":
+                    package_name = "@grpc/grpc-js"
+                if package_name not in versions.keys():
+                    versions[package_name] = {
+                        package_support_version_runtime: []
+                        for package_support_version_runtime in package_support_version_runtimes
+                    }
+                tested_versions_path = os.path.join(
+                    tested_versions_directory, runtime, package_name
+                )
+                # if tested_versions_path exists then we have a package that is tested for this runtime
+                if os.path.exists(tested_versions_path):
+                    versions[package_name][runtime] = _get_supported_version_ranges(
+                        TestedVersions.from_file(tested_versions_path)
+                    )
 
     res = []
-    if len(packages) == 1:
-        package = packages[0]
-        file_path = os.path.join(tested_versions_directory, packages[0])
-        if os.path.isdir(file_path):
-            # The case of @grpc/grpc-js, where the package is a subdirectory
-            file_path = os.path.join(file_path, os.listdir(file_path)[0])
+    is_instrumentation_written = False
+    for package_name in versions:
+        displayed_instrumentation = ""
+        if not is_instrumentation_written:
+            displayed_instrumentation = instrumentation
+            is_instrumentation_written = True
 
-        supported_version_ranges = _get_supported_version_ranges(
-            TestedVersions.from_file(file_path)
-        )
+        first_row = f"| {displayed_instrumentation} | [{package_name}]({package_url_template.format(package_name)}) | "
+        for runtime in package_support_version_runtimes:
+            if len(versions[package_name][runtime]) > 0:
+                first_row += versions[package_name][runtime][0] + "|"
+            else:
+                first_row += " |"
+        res.append(first_row)
 
-        res.append(
-            f"| {instrumentation} | [{package}]({package_url_template.format(package)}) | {supported_version_ranges[0]} |"
-        )
-        for supported_version_range in supported_version_ranges[1:]:
-            res.append(f"| | | {supported_version_range} |")
-    else:
-        first_package = packages[0]
-        supported_version_ranges_first_package = _get_supported_version_ranges(
-            TestedVersions.from_file(
-                os.path.join(tested_versions_directory, first_package)
-            )
-        )
-
-        res.append(
-            f"| {instrumentation} | [{first_package}]({package_url_template.format(first_package)}) | {supported_version_ranges_first_package[0]} |"
-        )
-        for supported_version_range in supported_version_ranges_first_package[1:]:
-            res.append(f"| | | {supported_version_range} |")
-
-        for package in packages[1:]:
-            supported_version_ranges = _get_supported_version_ranges(
-                TestedVersions.from_file(
-                    os.path.join(tested_versions_directory, package)
-                )
-            )
-            res.append(
-                f"| | [{package}]({package_url_template.format(package)}) | {supported_version_ranges[0]} |"
-            )
-
-            for supported_version_range in supported_version_ranges[1:]:
-                res.append(f"| | | {supported_version_range} |")
+        # as long as there are more rows, add them
+        row_num = 1
+        while True:
+            row_found = False
+            for runtime in package_support_version_runtimes:
+                if len(versions[package_name][runtime]) > row_num:
+                    row_found = True
+            if not row_found:
+                break
+            next_row = "| | |"
+            for runtime in package_support_version_runtimes:
+                if len(versions[package_name][runtime]) > row_num:
+                    next_row += " " + versions[package_name][runtime][row_num] + "|"
+                else:
+                    next_row += " |"
+            res.append(next_row)
+            row_num += 1
 
     return res
 

@@ -7,6 +7,7 @@ const {
   loadPackageVersionsFromBackup,
 } = require('./scripts/tested-versions-file-utils');
 
+const runtimeVersion = parseInt(process.version.slice(1).split('.')[0]);
 const oldEnv = Object.assign({}, process.env);
 beforeEach(() => {
   process.env = { ...oldEnv };
@@ -34,7 +35,7 @@ afterAll(() => {
       versions_keys.forEach((pkg) => {
         // updated supported versions file
         const testedVersionFolder = `./src/instrumentations/${pkg}/tested_versions`;
-        const testVersionsFile = `${testedVersionFolder}/${pkg}`;
+        const testVersionsFile = `${testedVersionFolder}/${runtimeVersion}/${pkg}`;
         fs.mkdirSync(testedVersionFolder, { recursive: true });
         const versionStrings = versions[pkg].unsupported
           .map((v) => `!${v}`)

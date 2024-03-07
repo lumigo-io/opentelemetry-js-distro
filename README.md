@@ -276,22 +276,29 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 
 ## Supported packages
 
-| Instrumentation | Package | Supported Versions |
-| --- | --- | --- |
-| grpc-js | [@grpc](https://www.npmjs.com/package/@grpc) | 1.8.0~1.8.20 |
-| amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3 |
-| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.2 |
-| fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.29.0~4.24.3 |
-| ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5 |
-| | | 5.0.0~5.3.2 |
-| kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4 |
-| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 3.6.6~3.7.3 |
-| | | 4.0.0~4.16.0 |
-| prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.13.0 |
-| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8 |
+| Instrumentation | Package | Supported Versions | | | |
+| --- | --- | :---: | :---: | :---: | :---: |
+| | | 14 | 16 | 18 | 20 |
+| grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
+| amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|
+| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.3|4.9.0~4.18.3|4.9.0~4.18.3|4.9.0~4.18.3|
+| fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
+| | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
+| | | 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2|
+| ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|
+| | | 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2|
+| kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|
+| mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 4.17.0|3.6.6~3.7.3|3.6.6~3.7.3|3.6.6~3.7.3|
+| | | 6.3.0| 4.0.0~4.17.2| 4.0.0~4.17.2| 4.0.0~4.17.2|
+| | | | 5.0.0~5.9.2| 5.0.0~5.9.2| 5.0.0~5.9.2|
+| | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
+| pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3|8.11.3|8.11.3|8.11.3|
+| prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
+| | | | 5.0.0~5.10.2| 5.0.0~5.10.2| 5.0.0~5.10.2|
+| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
+| | | 4.6.10~4.6.13| | | |
 
 ### Activating your Prisma client's instrumentation
-
 If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
 
 ```prisma
@@ -302,6 +309,7 @@ generator client {
 ```
 
 **NOTE**: There have been reports of a possible bug that interferes with tracing when multiple Prisma clients have been instantiated, see [Prisma issue #20779](https://github.com/prisma/prisma/issues/20779).
+
 
 ## Automated dependency reporting
 

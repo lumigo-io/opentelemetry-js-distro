@@ -10,12 +10,16 @@ const {
 
 const isRunningOnCI = process.env['GITHUB_ACTIONS']?.length || process.env['CI'] == 'true';
 console.info(`\nTesting untested package versions ${isRunningOnCI ? 'on CI' : 'locally'}...`);
-
+const runtimeVersion = parseInt(process.version.slice(1).split('.')[0]);
+console.log(runtimeVersion)
 const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(function (package) {
+  if (package === '@grpc') {
+    pacakge = '@grpc/grpc-js';
+  }
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();
   const hasTestedVersionsFile =
     fs.existsSync(`src/instrumentations/${package}/tested_versions`) &&
-    fs.existsSync(`src/instrumentations/${package}/tested_versions/${package}`);
+    fs.existsSync(`src/instrumentations/${package}/tested_versions/${runtimeVersion}/${package}`);
   return isDirectory && hasTestedVersionsFile;
 });
 
@@ -35,14 +39,17 @@ for (const package of instrumentationToTest) {
 
   let untestedVersions = Object.keys(
     JSON.parse(execSync(`npm show ${package} time --json`, { encoding: 'utf8' }))
-  )
-    .filter((version) => {
+  );
+  if (highestExistingVersion !== undefined) {
+
+    untestedVersions = untestedVersions.filter((version) => {
       const isValidVersion = version.match(/^\d+\.\d+\.\d+$/);
       const isNewerThanExistingVersion =
-        isValidVersion && compareVersions(version, highestExistingVersion) > 0;
+          isValidVersion && compareVersions(version, highestExistingVersion) > 0;
       return isValidVersion && isNewerThanExistingVersion;
     })
-    .sort(compareVersions);
+        .sort(compareVersions);
+  }
 
   if (untestedVersions.length === 0) {
     console.info(`No untested versions of ${package} since ${highestExistingVersion} found.`);
@@ -60,7 +67,7 @@ for (const package of instrumentationToTest) {
         : [untestedVersions[0], untestedVersions[untestedVersions.length - 1]];
 
     fs.writeFileSync(
-      `src/instrumentations/${package}/tested_versions/${package}`,
+      `src/instrumentations/${package}/tested_versions/${runtimeVersion}/${package}`,
       untestedVersions.join('\n') + '\n'
     );
     try {

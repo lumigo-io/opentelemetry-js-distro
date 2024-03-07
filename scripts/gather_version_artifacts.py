@@ -1,102 +1,67 @@
+# call this script from the project root with python3 -m scripts.gather_version_artifacts
+
 import os
 from glob import glob
-from typing import List, Dict, Tuple
+from typing import List
 
 from tested_versions_utils import TestedVersions
 
-ARTIFACT_DIR_NAME = "versions_artifacts"
-
+ARTIFACTS_PATH = "versions_artifacts"
+INSTRUMENTATIONS_PATH = "src/instrumentations/"
 
 # Before this script runs, the job downloads the artifacts into files with the following example structure:
 #
 #   versions_artifacts/
-#       12/
-#           express: (next lines are the data inside the file)
-#               4.17.2
-#               !4.17.3
-#           mongoose:
-#               6.4.4
-#               3.9.7
-#       14/
-#           express:
-#               4.17.2
-#               !4.17.3
-#           mongoose:
-#               3.9.7
-#               6.4.4
+#       3.7/
+#           boto3: (next lines are the data inside the file)
+#               1.0.0
+#              !2.0.0
+#       3.10/
+#           fastapi:
+#               5.1.0
+#               5.2.0
 #
 # Each file contains the original supported versions and the results from the tests in the previous job.
 
+
 def main() -> None:
-    runtime_to_files = {
-        python_runtime: sorted(
-            os.listdir(os.path.join(ARTIFACT_DIR_NAME, python_runtime))
-        )
-        for python_runtime in os.listdir(ARTIFACT_DIR_NAME)
+    files_by_runtime = {
+        python_runtime: sorted(os.listdir(os.path.join(ARTIFACTS_PATH, python_runtime)))
+        for python_runtime in os.listdir(ARTIFACTS_PATH)
     }
-    print("runtime_to_files:", runtime_to_files)
-    if not any(runtime_to_files.values()):
+    print(f"new results detected: {files_by_runtime}")
+
+    if not any(files_by_runtime.values()):
         print("No files were found so nothing to update, returning")
         return
-    files_names = list(runtime_to_files.values())[0]
-    if any([files != files_names for files in runtime_to_files.values()]):
-        raise Exception("Got different files from different runtimes")
-    origin_tested_files = glob(
-        "src/instrumentations/*/tested_versions/*"
-    )
-    for instrumentation_name in files_names:
-        handle_dependency(
-            instrumentation_name, origin_tested_files, tuple(runtime_to_files)
+
+    for runtime, dependencies in files_by_runtime.items():
+        update_dependencies(dependencies, runtime)
+
+
+def update_dependencies(dependencies: List[str], runtime: str) -> None:
+    for instrumentation_name in dependencies:
+        print(
+            f"processing {instrumentation_name} for {runtime}...",
         )
-
-
-def handle_dependency(
-    instrumentation_name: str, origin_tested_files: List[str], runtimes: Tuple[str, ...]
-) -> None:
-    print("working on:", instrumentation_name)
-    origin_path = next(
-        path
-        for path in origin_tested_files
-        if path.endswith(f"tested_versions/{instrumentation_name}")
-    )
-
-    runtime_to_tested_versions = calculate_runtime_to_tested_versions_dict(
-        instrumentation_name, runtimes
-    )
-
-    for version in list(runtime_to_tested_versions.values())[0].all_versions:
-        supported = all(
-            [
-                # A version is supported only if it works in all runtimes
-                (version in runtime_to_tested_versions[runtime].supported_versions)
-                for runtime in runtimes
-            ]
+        # find all the relevant files in the instrumentations path
+        # NOTE: this handles the case where the instrumentation's tested versions are
+        #       not in its own path, eg. uvicorn
+        original_tested_versions_files = glob(
+            f"{INSTRUMENTATIONS_PATH}/*/tested_versions/{runtime}/*"
         )
-
-        TestedVersions.add_version_to_file(origin_path, version, supported)
-
-
-def calculate_runtime_to_tested_versions_dict(
-    instrumentation_name: str, runtimes: Tuple[str, ...]
-) -> Dict[str, TestedVersions]:
-    runtime_to_tested_versions = {
-        runtime: TestedVersions.from_file(
-            os.path.join(ARTIFACT_DIR_NAME, runtime, instrumentation_name)
-        )
-        for runtime in runtimes
-    }
-    print("runtime_to_tested_versions:", runtime_to_tested_versions)
-
-    # Sanity check that we tested the same versions in all runtimes
-    all_versions = set(list(runtime_to_tested_versions.values())[0].all_versions)
-    if any(
-        [
-            set(tested_versions.all_versions) != all_versions
-            for tested_versions in runtime_to_tested_versions.values()
-        ]
-    ):
-        raise Exception("Got different versions from different runtimes")
-    return runtime_to_tested_versions
+        for original_tested_versions_file in original_tested_versions_files:
+            if original_tested_versions_file.endswith(
+                f"tested_versions/{runtime}/{instrumentation_name}"
+            ):
+                tested_versions = TestedVersions.from_file(
+                    os.path.join(ARTIFACTS_PATH, runtime, instrumentation_name)
+                )
+                for version in tested_versions.all_versions:
+                    supported = version in tested_versions.supported_versions
+                    TestedVersions.add_version_to_file(
+                        original_tested_versions_file, version, supported
+                    )
 
 
 if __name__ == "__main__":

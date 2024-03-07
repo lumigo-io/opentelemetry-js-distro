@@ -1,0 +1,20 @@
+{
+  "name": "lumigo-postgres-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry postgres_app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
+    "bson": "4.7.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "async-await-retry": "^2.0.0",
+    "denque": "^2.1.0",
+    "optional-require": "^1.1.8"
+  }
+}
