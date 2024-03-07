@@ -50,7 +50,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       .start();
 
     sqsPort = sqsContainer.getMappedPort(LOCALSTACK_PORT)
-    sqsClient = new AWS.SQS({ endpoint: `http://localhost:${sqsPort}`, region })
+    sqsClient = new AWS.SQS({
+      endpoint: `http://localhost:${sqsPort}`,
+      region,
+      credentials: new AWS.Credentials('000000000000', 'na')
+    })
 
     reinstallPackages({ appDir: TEST_APP_DIR })
     installPackage({
