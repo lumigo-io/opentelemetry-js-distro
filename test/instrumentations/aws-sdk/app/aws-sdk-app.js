@@ -24,7 +24,11 @@ const requestListener = async function (req, res) {
     case '/sqs/receive-message':
       console.log('/sqs/receive endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
-        sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        sqsClient = new AWS.SQS({
+          endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
+          region: requestUrl.query.region,
+          credentials: new AWS.Credentials('000000000000', 'na')
+        });
         const { Messages } = await sqsClient.receiveMessage({
           QueueUrl: requestUrl.query.queueUrl,
           MaxNumberOfMessages: 1
@@ -41,7 +45,11 @@ const requestListener = async function (req, res) {
     case '/sqs/send-message':
       console.log('/sqs/send endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
-        sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        sqsClient = new AWS.SQS({
+          endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
+          region: requestUrl.query.region,
+          credentials: new AWS.Credentials('000000000000', 'na')
+        });
         await sqsClient.sendMessage({
           MessageBody: 'some message',
           QueueUrl: requestUrl.query.queueUrl,
@@ -55,7 +63,11 @@ const requestListener = async function (req, res) {
     case '/sqs/send-message-batch':
       console.log('/sqs/send-batch endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
-        sqsClient = new AWS.SQS({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        sqsClient = new AWS.SQS({
+          endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
+          region: requestUrl.query.region,
+          credentials: new AWS.Credentials('000000000000', 'na')
+        });
         await sqsClient.sendMessageBatch({
           Entries: [
             {

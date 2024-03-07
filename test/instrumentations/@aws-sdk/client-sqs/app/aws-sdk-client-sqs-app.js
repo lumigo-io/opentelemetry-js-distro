@@ -29,7 +29,11 @@ const requestListener = async function (req, res) {
     case '/sqs/receive-message':
       console.log('/sqs/receive endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
-        sqsClient = new SQSClient({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        sqsClient = new SQSClient({
+          endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
+          region: requestUrl.query.region,
+          credentials: new AWS.Credentials('000000000000', 'na')
+        });
         const receiveMessageCommand = new ReceiveMessageCommand({
           QueueUrl: requestUrl.query.queueUrl,
           MaxNumberOfMessages: 1
@@ -51,6 +55,7 @@ const requestListener = async function (req, res) {
         const sendMessageCommand = new SendMessageCommand({
           MessageBody: 'some message',
           QueueUrl: requestUrl.query.queueUrl,
+          credentials: new AWS.Credentials('000000000000', 'na')
         })
         await sqsClient.send(sendMessageCommand)
         respond(res, 200, {});
@@ -62,7 +67,11 @@ const requestListener = async function (req, res) {
     case '/sqs/send-message-batch':
       console.log('/sqs/send-batch endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
-        sqsClient = new SQSClient({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
+        sqsClient = new SQSClient({
+          endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
+          region: requestUrl.query.region,
+          credentials: new AWS.Credentials('000000000000', 'na')
+        });
         const sendMessageBatchCommand = new SendMessageBatchCommand({
           QueueUrl: requestUrl.query.queueUrl,
           Entries: [
