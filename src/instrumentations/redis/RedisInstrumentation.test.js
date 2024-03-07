@@ -8,6 +8,6 @@ describe('LumigoRedisInstrumentation', () => {
   let lumigoRedisInstrumentation = new LumigoRedisInstrumentation();
 
   test('getInstrumentedModule should return "redis"', () => {
-    expect(lumigoRedisInstrumentation.getInstrumentedModules()).toEqual(['redis']);
+    expect(lumigoRedisInstrumentation.getInstrumentedModule()).toEqual('redis');
   });
 });

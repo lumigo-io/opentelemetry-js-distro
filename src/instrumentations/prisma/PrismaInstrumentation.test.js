@@ -8,6 +8,6 @@ describe('LumigoPrismaInstrumentation', () => {
   let lumigoPrismaInstrumentation = new LumigoPrismaInstrumentation();
 
   test('getInstrumentedModule should return "prisma"', () => {
-    expect(lumigoPrismaInstrumentation.getInstrumentedModules()).toEqual(['prisma']);
+    expect(lumigoPrismaInstrumentation.getInstrumentedModule()).toEqual('prisma');
   });
 });

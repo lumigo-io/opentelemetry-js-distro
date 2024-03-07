@@ -8,6 +8,6 @@ describe('LumigoAmqplibInstrumentation', () => {
   let lumigoAmqplibInstrumentation = new LumigoAmqplibInstrumentation();
 
   test('getInstrumentedModule should return "amqplib"', () => {
-    expect(lumigoAmqplibInstrumentation.getInstrumentedModules()).toEqual(['amqplib']);
+    expect(lumigoAmqplibInstrumentation.getInstrumentedModule()).toEqual('amqplib');
   });
 });

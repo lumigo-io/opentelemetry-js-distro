@@ -8,6 +8,6 @@ describe('LumigoIORedisInstrumentation', () => {
   let lumigoIORedisInstrumentation = new LumigoIORedisInstrumentation();
 
   test('getInstrumentedModule should return "ioredis"', () => {
-    expect(lumigoIORedisInstrumentation.getInstrumentedModules()).toEqual(['ioredis']);
+    expect(lumigoIORedisInstrumentation.getInstrumentedModule()).toEqual('ioredis');
   });
 });

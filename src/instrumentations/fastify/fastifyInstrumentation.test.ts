@@ -4,6 +4,6 @@ describe('LumigoFastifyInstrumentation', () => {
   let lumigoFastifyInstrumentation = new LumigoFastifyInstrumentation();
 
   test('getInstrumentedModule should return "fastify"', () => {
-    expect(lumigoFastifyInstrumentation.getInstrumentedModules()).toEqual(['fastify']);
+    expect(lumigoFastifyInstrumentation.getInstrumentedModule()).toEqual('fastify');
   });
 });

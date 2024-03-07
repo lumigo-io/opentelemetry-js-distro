@@ -8,6 +8,6 @@ describe('LumigoKafkaJsInstrumentation', () => {
   let lumigoKafkaJsInstrumentation = new LumigoKafkaJsInstrumentation();
 
   test('getInstrumentedModule should return "kafkajs"', () => {
-    expect(lumigoKafkaJsInstrumentation.getInstrumentedModules()).toEqual(['kafkajs']);
+    expect(lumigoKafkaJsInstrumentation.getInstrumentedModule()).toEqual('kafkajs');
   });
 });

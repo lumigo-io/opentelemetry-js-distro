@@ -8,6 +8,6 @@ describe('LumigoMongoDBInstrumentation', () => {
   let lumigoMongoDBInstrumentation = new LumigoMongoDBInstrumentation();
 
   test('getInstrumentedModule should return "mongodb"', () => {
-    expect(lumigoMongoDBInstrumentation.getInstrumentedModules()).toEqual(['mongodb']);
+    expect(lumigoMongoDBInstrumentation.getInstrumentedModule()).toEqual('mongodb');
   });
 });
