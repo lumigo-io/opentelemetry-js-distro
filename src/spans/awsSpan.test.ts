@@ -43,8 +43,8 @@ describe('awsSpan', () => {
           expect(awsServiceAttributes).not.toEqual({});
 
           expect(root.attributes['SKIP_EXPORT']).toBeUndefined();
-        })
-      })
+        });
+      });
 
       test('does not mark Elastic Beanstalk SQS Daemon spans as skipped', () => {
         const requestData = {
@@ -88,7 +88,7 @@ describe('awsSpan', () => {
 
           // Temporary, required until the http instrumentation is suppressed by the aws-sdk one
           expect(root.attributes).toHaveProperty('SKIP_EXPORT', true);
-        })
+        });
       });
 
       test('marks Elastic Beanstalk SQS Daemon spans as skipped', () => {
