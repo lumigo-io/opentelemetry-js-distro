@@ -295,7 +295,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
 | pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3|8.11.3|8.11.3|8.11.3|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
-| | | | 5.0.0~5.10.2| 5.0.0~5.10.2| 5.0.0~5.10.2|
+| | | 5.0.0~5.10.2| 5.0.0~5.10.2| 5.0.0~5.10.2| 5.0.0~5.10.2|
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
 | | | 4.6.10~4.6.13| | | |
 
