@@ -16,6 +16,9 @@ const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(fu
   if (package === '@grpc') {
     pacakge = '@grpc/grpc-js';
   }
+  if (package === '@nestjs') {
+    pacakge = '@nestjs/core';
+  }
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();
   const hasTestedVersionsFile =
     fs.existsSync(`src/instrumentations/${package}/tested_versions`) &&
