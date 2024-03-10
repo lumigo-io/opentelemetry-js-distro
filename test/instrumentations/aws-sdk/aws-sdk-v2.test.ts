@@ -14,7 +14,7 @@ import { createTempQueue, filterAwsSdkInstrumentationSpans, testAppQueryParams }
 import { shouldSkipSpanExport } from '../../../src/resources/spanProcessor';
 import { SpanKind } from '@opentelemetry/api';
 
-const INSTRUMENTATION_NAME = 'aws-sdk-v2';
+const INSTRUMENTATION_NAME = 'aws-sdk';
 const PACKAGE_NAME = 'aws-sdk';
 const SPANS_DIR = join(__dirname, 'spans');
 const SQS_STARTUP_TIMEOUT = 60_000;

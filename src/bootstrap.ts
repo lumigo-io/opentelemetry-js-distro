@@ -23,7 +23,7 @@ import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrument
 import {
   LumigoAwsSdkV2LibInstrumentation,
   LumigoAwsSdkV3LibInstrumentation,
-} from './instrumentations/aws-sdk-v2';
+} from './instrumentations/aws-sdk';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
   LumigoContainerNameDetector,

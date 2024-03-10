@@ -13,7 +13,7 @@ import {
 } from '../parsers/aws';
 import { setSpanAsNotExportable } from '../resources/spanProcessor';
 import { AwsOtherService, AwsParsedService, SupportedAwsServices } from './types';
-import { isAwsInstrumentationSpanActive } from '../instrumentations/aws-sdk-v2/shared';
+import { isAwsInstrumentationSpanActive } from '../instrumentations/aws-sdk/shared';
 
 const AMAZON_REQUESTID_HEADER_NAME = 'x-amzn-requestid';
 
