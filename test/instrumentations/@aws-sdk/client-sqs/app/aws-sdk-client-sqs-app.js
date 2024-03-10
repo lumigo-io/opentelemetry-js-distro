@@ -48,27 +48,30 @@ const requestListener = async function (req, res) {
         await Promise.all(Messages.map(() => console.log('processing message!')))
         respond(res, 200, {});
       } catch (err) {
-        console.error('Error on receiveMessage', err);
+        console.error('Error on ReceiveMessageCommand', err);
         respond(res, 500, { error: err });
       }
       break;
     case '/sqs/send-message':
       console.log('/sqs/send endpoint invoked, query-params: ', JSON.stringify(requestUrl.query));
       try {
-        sqsClient = new SQSClient({ endpoint: `http://localhost:${requestUrl.query.sqsPort}`, region: requestUrl.query.region });
-        const sendMessageCommand = new SendMessageCommand({
-          MessageBody: 'some message',
-          QueueUrl: requestUrl.query.queueUrl,
+        sqsClient = new SQSClient({
+          endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
+          region: requestUrl.query.region,
           credentials: {
             accessKeyId: 'test',
             secretAccessKey: 'test',
             region: requestUrl.query.region
           }
+        });
+        const sendMessageCommand = new SendMessageCommand({
+          MessageBody: 'some message',
+          QueueUrl: requestUrl.query.queueUrl
         })
         await sqsClient.send(sendMessageCommand)
         respond(res, 200, {});
       } catch (err) {
-        console.error('Error on sendMessage', err);
+        console.error('Error on SendMessageCommand', err);
         respond(res, 500, { error: err });
       }
       break;
@@ -100,7 +103,7 @@ const requestListener = async function (req, res) {
         await sqsClient.send(sendMessageBatchCommand)
         respond(res, 200, {});
       } catch (err) {
-        console.error('Error on sendMessage', err);
+        console.error('Error on SendMessageBatchCommand', err);
         respond(res, 500, { error: err });
       }
       break;
