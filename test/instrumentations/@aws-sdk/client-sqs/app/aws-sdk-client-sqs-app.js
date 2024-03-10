@@ -34,7 +34,8 @@ const requestListener = async function (req, res) {
           region: requestUrl.query.region,
           credentials: {
             accessKeyId: 'test',
-            secretAccessKey: 'test'
+            secretAccessKey: 'test',
+            region: requestUrl.query.region
           }
         });
         const receiveMessageCommand = new ReceiveMessageCommand({
@@ -60,7 +61,8 @@ const requestListener = async function (req, res) {
           QueueUrl: requestUrl.query.queueUrl,
           credentials: {
             accessKeyId: 'test',
-            secretAccessKey: 'test'
+            secretAccessKey: 'test',
+            region: requestUrl.query.region
           }
         })
         await sqsClient.send(sendMessageCommand)
@@ -78,7 +80,8 @@ const requestListener = async function (req, res) {
           region: requestUrl.query.region,
           credentials: {
             accessKeyId: 'test',
-            secretAccessKey: 'test'
+            secretAccessKey: 'test',
+            region: requestUrl.query.region
           }
         });
         const sendMessageBatchCommand = new SendMessageBatchCommand({
