@@ -190,6 +190,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
         // Message body sent from the test-app
         "MessageBody": "some message",
         "QueueUrl": queueUrl,
+        "credentials": "****"
       })
       expect(sqsSendSpan.attributes['lumigoData']).toBeUndefined()
     }

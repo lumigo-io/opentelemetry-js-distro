@@ -32,7 +32,10 @@ const requestListener = async function (req, res) {
         sqsClient = new SQSClient({
           endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
           region: requestUrl.query.region,
-          credentials: new AWS.Credentials('000000000000', 'na')
+          credentials: {
+            accessKeyId: '000000000000',
+            secretAccessKey: 'na'
+          }
         });
         const receiveMessageCommand = new ReceiveMessageCommand({
           QueueUrl: requestUrl.query.queueUrl,
@@ -55,7 +58,10 @@ const requestListener = async function (req, res) {
         const sendMessageCommand = new SendMessageCommand({
           MessageBody: 'some message',
           QueueUrl: requestUrl.query.queueUrl,
-          credentials: new AWS.Credentials('000000000000', 'na')
+          credentials: {
+            accessKeyId: '000000000000',
+            secretAccessKey: 'na'
+          }
         })
         await sqsClient.send(sendMessageCommand)
         respond(res, 200, {});
@@ -70,7 +76,10 @@ const requestListener = async function (req, res) {
         sqsClient = new SQSClient({
           endpoint: `http://localhost:${requestUrl.query.sqsPort}`,
           region: requestUrl.query.region,
-          credentials: new AWS.Credentials('000000000000', 'na')
+          credentials: {
+            accessKeyId: '000000000000',
+            secretAccessKey: 'na'
+          }
         });
         const sendMessageBatchCommand = new SendMessageBatchCommand({
           QueueUrl: requestUrl.query.queueUrl,
