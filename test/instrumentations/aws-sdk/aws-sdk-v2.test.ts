@@ -14,7 +14,8 @@ import { createTempQueue, filterAwsSdkInstrumentationSpans, testAppQueryParams }
 import { shouldSkipSpanExport } from '../../../src/resources/spanProcessor';
 import { SpanKind } from '@opentelemetry/api';
 
-const INSTRUMENTATION_NAME = 'aws-sdk';
+const INSTRUMENTATION_NAME = 'aws-sdk-v2';
+const PACKAGE_NAME = 'aws-sdk';
 const SPANS_DIR = join(__dirname, 'spans');
 const SQS_STARTUP_TIMEOUT = 60_000;
 const TIMEOUT = 600_000;
@@ -31,7 +32,7 @@ const SAMPLE_INNER_SNS_MESSAGE_BODY = JSON.stringify({
   "UnsubscribeURL": "https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&amp;SubscriptionArn=arn:aws:sns:us-west-2:123456789:inner-sns:123456789"
 })
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
+describe.each(versionsToTest(INSTRUMENTATION_NAME, PACKAGE_NAME))(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
   let sqsContainer: StartedTestContainer;
   let testApp: TestApp;
   let sqsPort: number;
@@ -58,7 +59,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
     reinstallPackages({ appDir: TEST_APP_DIR })
     installPackage({
       appDir: TEST_APP_DIR,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       packageVersion: versionToTest
     });
   }, TIMEOUT)
@@ -74,7 +75,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
 
     uninstallPackage({
       appDir: TEST_APP_DIR,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       packageVersion: versionToTest
     });
   }, TIMEOUT)
@@ -82,7 +83,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} SQS.receiveMessage: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },
@@ -150,7 +151,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} SQS.sendMessage: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },
@@ -196,7 +197,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} SQS.sendMessageBatch: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },
@@ -251,7 +252,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} kill-switch: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },

@@ -14,8 +14,8 @@ import { createTempQueue, filterAwsSdkInstrumentationSpans, testAppQueryParams }
 import { shouldSkipSpanExport } from '../../../../src/resources/spanProcessor'
 import { SpanKind } from '@opentelemetry/api';
 
-const INSTRUMENTATION_NAME = '@aws-sdk/client-sqs';
-const INSTRUMENTATION_SPANS_FILE_PREFIX = INSTRUMENTATION_NAME.replace('/', '-')
+const INSTRUMENTATION_NAME = 'aws-sdk-v3';
+const PACKAGE_NAME = '@aws-sdk/client-sqs';
 const SPANS_DIR = join(__dirname, 'spans');
 const SQS_STARTUP_TIMEOUT = 60_000;
 const TIMEOUT = 600_000;
@@ -32,7 +32,7 @@ const SAMPLE_INNER_SNS_MESSAGE_BODY = JSON.stringify({
   "UnsubscribeURL": "https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&amp;SubscriptionArn=arn:aws:sns:us-west-2:123456789:inner-sns:123456789"
 })
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
+describe.each(versionsToTest(INSTRUMENTATION_NAME, PACKAGE_NAME))(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
   let sqsContainer: StartedTestContainer;
   let testApp: TestApp;
   let sqsPort: number;
@@ -59,7 +59,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
     reinstallPackages({ appDir: TEST_APP_DIR })
     installPackage({
       appDir: TEST_APP_DIR,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       packageVersion: versionToTest
     });
   }, TIMEOUT)
@@ -75,7 +75,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
 
     uninstallPackage({
       appDir: TEST_APP_DIR,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       packageVersion: versionToTest
     });
   }, TIMEOUT)
@@ -83,12 +83,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} SQS.receiveMessage: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },
     async () => {
-      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_SPANS_FILE_PREFIX}-receive-message-spans@${versionToTest}.json`;
+      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-receive-message-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: true });
 
       const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
@@ -152,12 +152,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} SQS.sendMessage: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },
     async () => {
-      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_SPANS_FILE_PREFIX}-send-message-spans@${versionToTest}.json`;
+      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: true });
 
       const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
@@ -189,8 +189,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
       expect(sqsSendSpan.attributes['messaging.publish.body']).toMatchJSON({
         // Message body sent from the test-app
         "MessageBody": "some message",
-        "QueueUrl": queueUrl,
-        "credentials": "****"
+        "QueueUrl": queueUrl
       })
       expect(sqsSendSpan.attributes['lumigoData']).toBeUndefined()
     }
@@ -199,12 +198,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} SQS.sendMessageBatch: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },
     async () => {
-      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_SPANS_FILE_PREFIX}-send-message-batch-spans@${versionToTest}.json`;
+      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-batch-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: true });
 
       const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
@@ -254,12 +253,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(`Instr
   itTest(
     {
       testName: `${INSTRUMENTATION_NAME} kill-switch: ${versionToTest}`,
-      packageName: INSTRUMENTATION_NAME,
+      packageName: PACKAGE_NAME,
       version: versionToTest,
       timeout: TIMEOUT,
     },
     async () => {
-      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_SPANS_FILE_PREFIX}-send-message-batch-spans@${versionToTest}.json`;
+      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-batch-spans@${versionToTest}.json`;
       testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: false });
 
       const { queueUrl } = await createTempQueue({ sqsClient, sqsPort });
