@@ -9,6 +9,7 @@ import { DEFAULT_DEPENDENCIES_ENDPOINT, DEFAULT_LUMIGO_ENDPOINT } from './consta
 import { report } from './dependencies';
 import { FileSpanExporter } from './exporters';
 import LumigoGrpcInstrumentation from './instrumentations/@grpc/grpc-js/GrpcInstrumentation';
+import LumigoNestInstrumentation from './instrumentations/@nestjs/core/NestInstrumentation';
 import LumigoAmqplibInstrumentation from './instrumentations/amqplib/AmqplibInstrumentation';
 import LumigoExpressInstrumentation from './instrumentations/express/ExpressInstrumentation';
 import LumigoFastifyInstrumentation from './instrumentations/fastify/FastifyInstrumentation';
@@ -102,6 +103,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoAmqplibInstrumentation(),
       new LumigoExpressInstrumentation(),
       new LumigoGrpcInstrumentation(),
+      new LumigoNestInstrumentation(),
       new LumigoFastifyInstrumentation(),
       new LumigoHttpInstrumentation(...ignoredHostnames),
       new LumigoIORedisInstrumentation(),

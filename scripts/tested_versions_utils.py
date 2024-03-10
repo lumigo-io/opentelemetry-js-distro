@@ -352,6 +352,8 @@ def _generate_support_matrix_markdown_row(
             for package_name in package_names:
                 if package_name == "@grpc":
                     package_name = "@grpc/grpc-js"
+                if package_name == "@nestjs":
+                    package_name = "@nestjs/core"
                 if package_name not in versions.keys():
                     versions[package_name] = {
                         package_support_version_runtime: []

@@ -77,6 +77,19 @@ export class TestApp {
         })
 
         let portPromiseResolved = false;
+        this.app.stdout.on('data', (data) => {
+            const dataStr = data.toString();
+
+            if (!portPromiseResolved) {
+                const portRegexMatch = PORT_REGEX.exec(dataStr);
+
+                if (portRegexMatch && portRegexMatch.length >= 3) {
+                    portPromiseResolved = true;
+                    portResolveFunction(parseInt(portRegexMatch[2]));
+                }
+            }
+            console.info('spawn data stdout: ', dataStr);
+        });
         this.app.stderr.on('data', (data) => {
             const dataStr = data.toString();
 
