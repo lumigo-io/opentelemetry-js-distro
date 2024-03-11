@@ -1,5 +1,5 @@
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Instrumentation, registerInstrumentations } from '@opentelemetry/instrumentation';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource, detectResources, envDetector, processDetector } from '@opentelemetry/resources';
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
@@ -20,6 +20,10 @@ import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInst
 import LumigoPgInstrumentation from './instrumentations/pg/PgInstrumentation';
 import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
+import {
+  LumigoAwsSdkV2LibInstrumentation,
+  LumigoAwsSdkV3LibInstrumentation,
+} from './instrumentations/aws-sdk';
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
   LumigoContainerNameDetector,
@@ -108,6 +112,8 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoPgInstrumentation(),
       new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
+      new LumigoAwsSdkV2LibInstrumentation(),
+      new LumigoAwsSdkV3LibInstrumentation(),
     ].filter((i) => i.isApplicable());
 
     /*
@@ -116,12 +122,12 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
      * built-in instrumentation in the app.
      */
     registerInstrumentations({
-      instrumentations: instrumentationsToInstall.map(
-        (i) => i.getInstrumentation() as Instrumentation
-      ),
+      instrumentations: instrumentationsToInstall.map((i) => i.getInstrumentation()),
     });
 
-    const instrumentedModules = instrumentationsToInstall.map((i) => i.getInstrumentedModule());
+    const instrumentedModules: string[] = instrumentationsToInstall.map((i) =>
+      i.getInstrumentedModule()
+    );
 
     logger.debug(`Instrumented modules: ${instrumentedModules.join(', ')}`);
 

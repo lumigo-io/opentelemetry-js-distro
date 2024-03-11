@@ -4,7 +4,7 @@ import { traverse } from '../tools/xmlToJson';
 import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
 import { CommonUtils } from '@lumigo/node-core';
 import { Triggers } from '@lumigo/node-core';
-import { AwsServiceData } from '../spans/awsSpan';
+import { AwsServiceAttributes } from '../spans/awsSpan';
 import { getSpanSkipExportAttributes } from '../resources/spanProcessor';
 
 const extractDynamodbMessageId = (reqBody, method) => {
@@ -160,13 +160,13 @@ export const eventBridgeParser = (requestData, responseData) => {
   };
 };
 
-export const sqsParser = (requestData, responseData) => {
+export const sqsParser = (requestData, responseData, jsonResponseBody = undefined) => {
   const { body: reqBody } = requestData;
   const { body: resBody } = responseData || {};
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;
-  const parsedResBody = resBody ? traverse(resBody) : undefined;
+  const parsedResBody = jsonResponseBody || (resBody ? traverse(resBody) : undefined);
   const resourceName = parsedReqBody ? parsedReqBody['QueueUrl'] : undefined;
-  const awsServiceData: AwsServiceData = { 'aws.resource.name': resourceName };
+  const awsServiceData: AwsServiceAttributes = { 'aws.resource.name': resourceName };
   awsServiceData.messageId =
     safeGet(parsedResBody, ['SendMessageResponse', 'SendMessageResult', 'MessageId'], undefined) ||
     safeGet(

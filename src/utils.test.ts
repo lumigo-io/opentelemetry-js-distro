@@ -1,34 +1,4 @@
-import { getSpanAttributeMaxLength, safeRequire } from './utils';
-
-describe('utils tests', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('safeRequire -> simple flow', () => {
-    const http = require('http');
-
-    const result = safeRequire('http');
-
-    expect(http).toEqual(result);
-  });
-
-  test('safeRequire -> not exist', () => {
-    const result = safeRequire('BlaBlaBlaBla');
-
-    expect(result).toBeFalsy();
-  });
-
-  test('safeRequire -> other error', () => {
-    jest.doMock('fs', () => {
-      throw Error('RandomError');
-    });
-
-    const result = safeRequire('fs');
-
-    expect(result).toBeFalsy();
-  });
-});
+import { getSpanAttributeMaxLength } from './utils';
 
 describe('getSpanAttributeMaxLength', () => {
   describe('value according to env. vars', () => {

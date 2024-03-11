@@ -190,32 +190,6 @@ export const canRequireModule = (libId) => {
   return false;
 };
 
-export const safeRequire = (libId) => {
-  const customReq =
-    // eslint-disable-next-line no-undef,camelcase
-    // @ts-ignore __non_webpack_require__ not available at compile time
-    typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
-
-  try {
-    return customReq(libId);
-  } catch (e) {
-    try {
-      const path = customReq.resolve(libId, {
-        paths: (process.env.NODE_PATH || '').split(':'),
-      });
-      return customReq(path);
-    } catch (e) {
-      if (e.code !== 'MODULE_NOT_FOUND') {
-        logger.warn('Unable to load module', {
-          error: e,
-          libId: libId,
-        });
-      }
-    }
-  }
-  return undefined;
-};
-
 export const getSpanAttributeMaxLength = () => {
   return (
     parseInt(process.env.OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT) ||

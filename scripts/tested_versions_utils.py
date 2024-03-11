@@ -328,6 +328,11 @@ def generate_support_matrix_markdown(
 
     return res
 
+package_name_overrides = {
+    "@grpc": "@grpc/grpc-js",
+    "@nestjs": "@nestjs/core",
+    "@aws-sdk": "@aws-sdk/client-sqs"
+}
 
 def _generate_support_matrix_markdown_row(
     tested_versions_directory: str,
@@ -350,10 +355,7 @@ def _generate_support_matrix_markdown_row(
         if os.path.isdir(runtime_path):
             package_names = os.listdir(runtime_path)
             for package_name in package_names:
-                if package_name == "@grpc":
-                    package_name = "@grpc/grpc-js"
-                if package_name == "@nestjs":
-                    package_name = "@nestjs/core"
+                package_name = package_name_overrides.get(package_name, package_name)
                 if package_name not in versions.keys():
                     versions[package_name] = {
                         package_support_version_runtime: []

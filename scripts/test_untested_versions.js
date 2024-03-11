@@ -8,17 +8,19 @@ const {
   restorePackageVersionsFromBackup,
 } = require('./tested-versions-file-utils');
 
+const packageNameOverrides = {
+  '@grpc': '@grpc/grpc-js',
+  '@nestjs': '@nestjs/core',
+  '@aws-sdk': '@aws-sdk/client-sqs',
+}
+
 const isRunningOnCI = process.env['GITHUB_ACTIONS']?.length || process.env['CI'] == 'true';
 console.info(`\nTesting untested package versions ${isRunningOnCI ? 'on CI' : 'locally'}...`);
 const runtimeVersion = parseInt(process.version.slice(1).split('.')[0]);
 console.log(runtimeVersion)
-const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter(function (package) {
-  if (package === '@grpc') {
-    pacakge = '@grpc/grpc-js';
-  }
-  if (package === '@nestjs') {
-    pacakge = '@nestjs/core';
-  }
+const instrumentationsFolders = fs.readdirSync('src/instrumentations').filter((package) => {
+  package = packageNameOverrides[package] || package
+
   const isDirectory = fs.statSync(`src/instrumentations/${package}`).isDirectory();
   const hasTestedVersionsFile =
     fs.existsSync(`src/instrumentations/${package}/tested_versions`) &&
@@ -35,7 +37,8 @@ let instrumentationToTest = instrumentationsFolders.filter((instrumentation) => 
 
 console.info(`\nDiscovering untested versions of: ${instrumentationToTest.join(', ')}`);
 
-for (const package of instrumentationToTest) {
+const correctedInstrumentationsToTest = instrumentationToTest.map(inst => packageNameOverrides[inst] || inst)
+for (const package of correctedInstrumentationsToTest) {
   console.info(`\nDiscovering untested versions of ${package}...`);
   const existingVersions = loadPackageVersions(package);
   const highestExistingVersion = existingVersions[existingVersions.length - 1];
@@ -48,10 +51,10 @@ for (const package of instrumentationToTest) {
     untestedVersions = untestedVersions.filter((version) => {
       const isValidVersion = version.match(/^\d+\.\d+\.\d+$/);
       const isNewerThanExistingVersion =
-          isValidVersion && compareVersions(version, highestExistingVersion) > 0;
+        isValidVersion && compareVersions(version, highestExistingVersion) > 0;
       return isValidVersion && isNewerThanExistingVersion;
     })
-        .sort(compareVersions);
+      .sort(compareVersions);
   }
 
   if (untestedVersions.length === 0) {
@@ -75,8 +78,7 @@ for (const package of instrumentationToTest) {
     );
     try {
       execSync(
-        `npm run test:instrumentations${
-          isRunningOnCI ? ':ci' : ''
+        `npm run test:instrumentations${isRunningOnCI ? ':ci' : ''
         } -- --testPathPattern=test/instrumentations/${package}`,
         {
           stdio: 'inherit',

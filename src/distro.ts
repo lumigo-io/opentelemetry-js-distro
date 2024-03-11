@@ -1,5 +1,5 @@
 /**
- * This file provides a level of inderection before bootstrapping the Lumigo OpenTelemetry Distro for JS
+ * This file provides a level of indirection before bootstrapping the Lumigo OpenTelemetry Distro for JS
  * that allows us to check the version of Node.js before anything potentially dangerous (or missing, like
  * `fs/promises` in Node.js).
  *
@@ -21,7 +21,7 @@ export const init = (() => {
 
     if (nodeJsMajorVersion < minMajor) {
       console.error(
-        `${LUMIGO_LOGGING_NAMESPACE}: Node.js version '${version}' is not supported (minumum supported version: ${minMajor}.x); skipping initialization of the Lumigo OpenTelemetry Distro`
+        `${LUMIGO_LOGGING_NAMESPACE}: Node.js version '${version}' is not supported (minimum supported version: ${minMajor}.x); skipping initialization of the Lumigo OpenTelemetry Distro`
       );
       /*
        * Return a resolve promise, as opposed to a rejected one, to avoid UnhandledPromiseRejectionWarning
