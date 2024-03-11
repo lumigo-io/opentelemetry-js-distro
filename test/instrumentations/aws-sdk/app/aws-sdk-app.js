@@ -1,6 +1,8 @@
 const AWS = require('aws-sdk');
 const http = require('http');
 const url = require('url');
+const axios = require('axios');
+const { trace } = require('@opentelemetry/api');
 
 require('log-timestamp');
 
@@ -29,13 +31,19 @@ const requestListener = async function (req, res) {
           region: requestUrl.query.region,
           credentials: new AWS.Credentials('000000000000', 'na')
         });
+
         const { Messages } = await sqsClient.receiveMessage({
           QueueUrl: requestUrl.query.queueUrl,
           MaxNumberOfMessages: 1
         }).promise()
 
+
         // Triggers an aws-sdk processing-span
-        await Promise.all(Messages.map(() => console.log('processing message!')))
+        await Promise.all(Messages.map(() => {
+          trace.getActiveSpan().setAttribute('lumigo.execution_tags.foo', 'bar');
+          axios.get('http://non-existing:8080').catch(() => { });
+        }))
+
         respond(res, 200, {});
       } catch (err) {
         console.error('Error on receiveMessage', err);

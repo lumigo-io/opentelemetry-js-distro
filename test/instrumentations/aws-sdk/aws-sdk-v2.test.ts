@@ -144,7 +144,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, PACKAGE_NAME))(`Instrumentati
 
       const processingSpans = getSpansByAttribute(spans, "messaging.operation", "process")
       expect(processingSpans.length).toBeGreaterThanOrEqual(1)
-      expect(processingSpans).toSatisfyAll((span) => span.kind === SpanKind.INTERNAL && span.attributes['messaging.message_id'] === undefined)
+      expect(processingSpans).toSatisfyAll((span) =>
+        span.kind === SpanKind.INTERNAL &&
+        span.attributes['messaging.message_id'] === undefined &&
+        span.attributes['messaging.operation'] === 'process'
+      )
+      expect(processingSpans).toSatisfyAll((span) => span.attributes['lumigo.execution_tags.foo'] === 'bar')
     }
   )
 
