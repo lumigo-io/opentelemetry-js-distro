@@ -279,9 +279,11 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | Instrumentation | Package | Supported Versions | | | |
 | --- | --- | :---: | :---: | :---: | :---: |
 | | | 14 | 16 | 18 | 20 |
+| client-sqs | [@aws-sdk/client-sqs](https://www.npmjs.com/package/@aws-sdk/client-sqs) | 3.525.0|3.525.0|3.525.0|3.525.0|
 | grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
-| nest-js | [@nestjs/core](https://www.npmjs.com/package/@nestjs/core) | | | | |
+| core | [@nestjs/core](https://www.npmjs.com/package/@nestjs/core) |  |10.3.2|10.3.2|10.3.2|
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|
+| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1577.0|2.1533.0~2.1577.0|2.1533.0~2.1577.0|2.1533.0~2.1577.0|
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.18.3|4.9.0~4.18.3|4.9.0~4.18.3|4.9.0~4.18.3|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
 | | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
@@ -295,7 +297,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
 | pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3|8.11.3|8.11.3|8.11.3|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
-| | | 5.0.0~5.10.2| 5.0.0~5.10.2| 5.0.0~5.10.2| 5.0.0~5.10.2|
+| | | 5.0.0~5.11.0| 5.0.0~5.11.0| 5.0.0~5.11.0| 5.0.0~5.11.0|
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
 | | | 4.6.10~4.6.13| | | |
 
