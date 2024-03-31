@@ -304,7 +304,6 @@ describe('Distro initialization', () => {
     test('is disabled if LUMIGO_TRACER_TOKEN is not set', async () => {
       await jest.isolateModulesAsync(async () => {
         const utils = require('./utils');
-        jest.mock('./utils');
 
         const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
@@ -322,7 +321,6 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
         const utils = require('./utils');
-        jest.mock('./utils');
 
         const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
@@ -347,7 +345,6 @@ describe('Distro initialization', () => {
             process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
             const utils = require('./utils');
-            jest.mock('./utils');
 
             const postUri = jest
               .spyOn(utils, 'postUri')
@@ -383,7 +380,6 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
         const utils = require('./utils');
-        jest.mock('./utils');
 
         const postUri = jest
           .spyOn(utils, 'postUri')
@@ -418,7 +414,6 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_TRACER_TOKEN = lumigoToken;
 
         const utils = require('./utils');
-        jest.mock('./utils');
 
         const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
 
@@ -444,6 +439,45 @@ describe('Distro initialization', () => {
         expect(payload.resourceAttributes['lumigo.distro.version']).toBe(version);
         expect(payload.packages.length).toBeGreaterThan(0);
         expect(headers).toEqual({ Authorization: `LumigoToken ${lumigoToken}` });
+      });
+    });
+  });
+
+  describe('when used by Webpack', () => {
+    test("uses 'unknown' as the version when it cannot be extracted and does not fail loading", async () => {
+      await jest.isolateModulesAsync(async () => {
+        process.env.LUMIGO_TRACER_TOKEN = 'abcdef';
+
+        const utils = require('./utils');
+
+        const postUri = jest.spyOn(utils, 'postUri').mockImplementation(() => Promise.resolve());
+
+        // Mock a webpack setup where package.json is not available
+        global.__non_webpack_require__ = (moduleName) => {
+          if (moduleName.includes('package.json')) {
+            throw new Error('Cannot find module');
+          } else {
+            return require(moduleName);
+          }
+        };
+        global.__non_webpack_require__.resolve = require.resolve;
+
+        const { init } = jest.requireActual('./distro');
+        const { reportDependencies } = await init;
+
+        const res = await reportDependencies;
+        expect(res).toBeUndefined();
+
+        expect(postUri.mock.calls.length).toBe(1);
+
+        const [, data] = postUri.mock.calls[0];
+
+        const payload = data as {
+          resourceAttributes: Object;
+          packages: string;
+        };
+
+        expect(payload.resourceAttributes['lumigo.distro.version']).toBe('unknown');
       });
     });
   });
