@@ -31,7 +31,7 @@ import {
   LumigoKubernetesDetector,
   LumigoTagDetector,
 } from './resources/detectors';
-import { getSpanAttributeMaxLength } from './utils';
+import { getSpanAttributeMaxLength, safeRequire } from './utils';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -90,9 +90,9 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
     }
 
     const { version: distroVersion } =
-      require(join(dirname(__dirname), 'package.json')) ||
-      require(join(__dirname, 'package.json')) ||
-      'unknown';
+      safeRequire(join(dirname(__dirname), 'package.json')) ||
+      safeRequire(join(__dirname, 'package.json')) ||
+      {};
 
     const ignoredHostnames = [new URL(lumigoEndpoint).hostname];
     if (lumigoEndpoint != DEFAULT_LUMIGO_ENDPOINT) {
@@ -235,7 +235,11 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       propagator: new LumigoW3CTraceContextPropagator(),
     });
 
-    logger.info(`Lumigo OpenTelemetry Distro v${distroVersion} started.`);
+    logger.info(
+      `Lumigo OpenTelemetry Distro ${
+        distroVersion ? `v${distroVersion}` : 'with an unknown version'
+      } started.`
+    );
 
     return {
       tracerProvider,

@@ -165,11 +165,29 @@ export const md5Hash = (item: {}): string | undefined => {
 // @ts-ignore
 export const removeDuplicates = (arr) => Array.from(new Set(arr));
 
+// @ts-ignore __non_webpack_require__ not available at compile time
+const getRequireFunction = () =>
+  typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+
+export const safeRequire = (moduleNameOrPath) => {
+  const customReq = getRequireFunction();
+
+  try {
+    return customReq(moduleNameOrPath);
+  } catch (e) {
+    if (e.code !== 'MODULE_NOT_FOUND') {
+      logger.warn('Unable to load module', {
+        error: e,
+        libId: moduleNameOrPath,
+      });
+    }
+
+    return undefined;
+  }
+};
+
 export const canRequireModule = (libId) => {
-  const customReq =
-    // eslint-disable-next-line no-undef,camelcase
-    // @ts-ignore __non_webpack_require__ not available at compile time
-    typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
+  const customReq = getRequireFunction();
 
   try {
     return !!customReq.resolve(libId);
