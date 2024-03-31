@@ -165,8 +165,8 @@ export const md5Hash = (item: {}): string | undefined => {
 // @ts-ignore
 export const removeDuplicates = (arr) => Array.from(new Set(arr));
 
-// @ts-ignore __non_webpack_require__ not available at compile time
 const getRequireFunction = () =>
+  // @ts-ignore __non_webpack_require__ not available at compile time
   typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
 
 export const safeRequire = (moduleNameOrPath) => {
