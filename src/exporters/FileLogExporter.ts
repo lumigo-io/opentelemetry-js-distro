@@ -13,31 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  hrTimeToMicroseconds,
-} from '@opentelemetry/core';
-import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
+import { hrTimeToMicroseconds } from '@opentelemetry/core';
+import { ReadableLogRecord } from '@opentelemetry/sdk-logs';
 import { FileExporter } from './FileExporter';
 
 /**
- * This is implementation of {@link SpanExporter} that prints spans to a file.
+ * This is implementation of {@link LogExporter} that prints log records to a file.
  * This class can be used for debug purposes. It is not advised to use this
  * exporter in production.
  */
-export class FileSpanExporter extends FileExporter<ReadableSpan> {
-  protected exportInfo(span: ReadableSpan): Object {
+export class FileLogExporter extends FileExporter<ReadableLogRecord> {
+  protected exportInfo(logRecord: ReadableLogRecord): Object {
     return {
-      traceId: span.spanContext().traceId,
-      parentId: span.parentSpanId,
-      name: span.name,
-      id: span.spanContext().spanId,
-      kind: span.kind,
-      timestamp: hrTimeToMicroseconds(span.startTime),
-      duration: hrTimeToMicroseconds(span.duration),
-      attributes: span.attributes,
-      status: span.status,
-      events: span.events,
-      resource: span.resource,
-    };
+      timestamp: hrTimeToMicroseconds(logRecord.hrTime),
+      traceId: logRecord.spanContext?.traceId,
+      spanId: logRecord.spanContext?.spanId,
+      traceFlags: logRecord.spanContext?.traceFlags,
+      severityText: logRecord.severityText,
+      severityNumber: logRecord.severityNumber,
+      body: logRecord.body,
+      attributes: logRecord.attributes,
+    }
   }
 }

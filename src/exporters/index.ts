@@ -14,4 +14,5 @@
  * limitations under the License.
  */
 
-export * from './FileSpanExporter';
+export { FileSpanExporter } from './FileSpanExporter';
+export { FileLogExporter } from './FileLogExporter';
