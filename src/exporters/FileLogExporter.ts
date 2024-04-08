@@ -33,6 +33,6 @@ export class FileLogExporter extends FileExporter<ReadableLogRecord> {
       severityNumber: logRecord.severityNumber,
       body: logRecord.body,
       attributes: logRecord.attributes,
-    }
+    };
   }
 }

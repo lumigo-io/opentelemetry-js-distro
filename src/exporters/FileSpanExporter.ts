@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  hrTimeToMicroseconds,
-} from '@opentelemetry/core';
+import { hrTimeToMicroseconds } from '@opentelemetry/core';
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
 import { FileExporter } from './FileExporter';
 

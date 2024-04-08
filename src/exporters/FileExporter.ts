@@ -16,11 +16,7 @@
 
 import { appendFileSync, closeSync, fsyncSync, openSync } from 'fs';
 import { realpath, lstat } from 'fs/promises';
-import {
-  BindOnceFuture,
-  ExportResult,
-  ExportResultCode,
-} from '@opentelemetry/core';
+import { BindOnceFuture, ExportResult, ExportResultCode } from '@opentelemetry/core';
 import { logger } from '../logging';
 
 /**
@@ -65,7 +61,8 @@ export abstract class FileExporter<T> implements Exporter<T> {
     }
 
     const logsRecordsJson =
-      records.map((record) => JSON.stringify(this.exportInfo(record), undefined, 0)).join('\n') + '\n';
+      records.map((record) => JSON.stringify(this.exportInfo(record), undefined, 0)).join('\n') +
+      '\n';
 
     try {
       if (this._fd) {
@@ -91,7 +88,7 @@ export abstract class FileExporter<T> implements Exporter<T> {
    * converts records info into a more readable format
    * @param record
    */
-  protected abstract exportInfo(record: T): Object
+  protected abstract exportInfo(record: T): Object;
 
   forceFlush(): Promise<void> {
     if (this._shutdownOnce.isCalled) {

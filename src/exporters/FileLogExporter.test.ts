@@ -2,7 +2,7 @@ import mockConsole from 'jest-mock-console';
 import mock from 'mock-fs';
 
 import { FileLogExporter } from './index';
-import {LoggerProvider, LogRecord, SimpleLogRecordProcessor} from '@opentelemetry/sdk-logs';
+import { LoggerProvider, LogRecord, SimpleLogRecordProcessor } from '@opentelemetry/sdk-logs';
 
 describe('FileLogExporter tests', () => {
   afterEach(() => {
@@ -32,16 +32,14 @@ describe('FileLogExporter tests', () => {
     const provider = new LoggerProvider();
     provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
 
-    provider.getLogger('default').emit({ attributes: { 'foo': 'bar' }})
+    provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
 
     await provider.shutdown();
 
     expect(spyExport).toHaveBeenCalledTimes(1);
     const actualLogRecord = spyExport.mock.calls[0][0][0];
 
-    expect(actualLogRecord).toEqual(
-      expect.objectContaining({ attributes: { foo: 'bar' } })
-    );
+    expect(actualLogRecord).toEqual(expect.objectContaining({ attributes: { foo: 'bar' } }));
   });
 
   test('should write one log record to console.log', async () => {
@@ -52,7 +50,7 @@ describe('FileLogExporter tests', () => {
       const provider = new LoggerProvider();
       provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
 
-      provider.getLogger('default').emit({ attributes: { 'foo': 'bar' }})
+      provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
 
       await provider.shutdown();
 
@@ -75,14 +73,16 @@ describe('FileLogExporter tests', () => {
       const provider = new LoggerProvider();
       provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
 
-      provider.getLogger('default').emit({ attributes: { 'foo': 'bar' }})
+      provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
 
       await provider.shutdown();
 
       expect(console.error).toHaveBeenCalledTimes(1);
       const actualSpan = console.error.mock.calls[0][0];
 
-      expect(JSON.parse(actualSpan)).toEqual(expect.objectContaining({ attributes: { foo: 'bar' } }));
+      expect(JSON.parse(actualSpan)).toEqual(
+        expect.objectContaining({ attributes: { foo: 'bar' } })
+      );
     } finally {
       restoreConsole();
     }
@@ -97,8 +97,8 @@ describe('FileLogExporter tests', () => {
     const provider = new LoggerProvider();
     provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
 
-    provider.getLogger('default').emit({ attributes: { 'foo': 'bar' }})
-    provider.getLogger('default').emit({ attributes: { 'foo': 'baz' }})
+    provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
+    provider.getLogger('default').emit({ attributes: { foo: 'baz' } });
 
     await provider.shutdown();
 
