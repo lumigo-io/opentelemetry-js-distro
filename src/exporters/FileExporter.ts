@@ -20,7 +20,7 @@ import { BindOnceFuture, ExportResult, ExportResultCode } from '@opentelemetry/c
 import { logger } from '../logging';
 
 /**
- * This is implementation of {@link LogExporter} that prints log records to a file.
+ * This is implementation of {@link Exporter} that prints records to a file.
  * This class can be used for debug purposes. It is not advised to use this
  * exporter in production.
  */
@@ -49,7 +49,7 @@ export abstract class FileExporter<T> implements Exporter<T> {
   }
 
   /**
-   * Export log records.
+   * Export records.
    * @param records
    * @param resultCallback
    */
@@ -60,17 +60,17 @@ export abstract class FileExporter<T> implements Exporter<T> {
       });
     }
 
-    const logsRecordsJson =
+    const recordsJson =
       records.map((record) => JSON.stringify(this.exportInfo(record), undefined, 0)).join('\n') +
       '\n';
 
     try {
       if (this._fd) {
-        appendFileSync(this._fd, logsRecordsJson);
+        appendFileSync(this._fd, recordsJson);
       } else if (this.file === PRINT_TO_CONSOLE_LOG) {
-        console.log(logsRecordsJson);
+        console.log(recordsJson);
       } else if (this.file === PRINT_TO_CONSOLE_ERROR) {
-        console.error(logsRecordsJson);
+        console.error(recordsJson);
       }
     } catch (err) {
       return resultCallback({
@@ -123,10 +123,7 @@ export abstract class FileExporter<T> implements Exporter<T> {
             closeSync(this._fd);
           }
         } catch (err) {
-          logger.error(
-            `An error occurred while shutting down the logdump exporter to file '${this.file}'`,
-            err
-          );
+          logger.error(`An error occurred while shutting down, exporter file: '${this.file}'`, err);
         }
       }
     });
@@ -138,7 +135,7 @@ export abstract class FileExporter<T> implements Exporter<T> {
         try {
           fsyncSync(this._fd);
         } catch (err) {
-          logger.error(`An error occurred while flushing the logdump to file '${this.file}'`, err);
+          logger.error(`An error occurred while flushing the records to file '${this.file}'`, err);
           reject(err);
           return;
         }

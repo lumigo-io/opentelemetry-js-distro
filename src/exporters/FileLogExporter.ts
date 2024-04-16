@@ -18,7 +18,7 @@ import { ReadableLogRecord } from '@opentelemetry/sdk-logs';
 import { FileExporter } from './FileExporter';
 
 /**
- * This is implementation of {@link LogExporter} that prints log records to a file.
+ * This is implementation of {@link FileExporter} that prints log records to a file.
  * This class can be used for debug purposes. It is not advised to use this
  * exporter in production.
  */

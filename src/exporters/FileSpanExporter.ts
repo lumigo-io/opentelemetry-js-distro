@@ -18,7 +18,7 @@ import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base';
 import { FileExporter } from './FileExporter';
 
 /**
- * This is implementation of {@link SpanExporter} that prints spans to a file.
+ * This is implementation of {@link FileExporter} that prints spans to a file.
  * This class can be used for debug purposes. It is not advised to use this
  * exporter in production.
  */
