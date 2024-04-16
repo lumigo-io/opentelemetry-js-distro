@@ -73,9 +73,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const exporterFile = `${SPANS_DIR}/basics.express@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         await testApp.invokeGetPath('/basic');
 
@@ -126,9 +126,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-requests.express@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         await testApp.invokeGetPath('/test-scrubbing');
 
@@ -178,10 +178,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const exporterFile = `${SPANS_DIR}/secret-masking-requests-complete-redaction.express@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
           LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES: 'all',
-        });
+        }});
 
         await testApp.invokeGetPath('/test-scrubbing');
 
@@ -263,11 +263,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           async function () {
             const exporterFile = `${SPANS_DIR}/skip-http-endpoint-${index}.express@${versionToTest}.json`;
 
-            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+            testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
                 LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX: filterEnvVar,
                 LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER: serverFilterEnvVar,
                 LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT: clientFilterEnvVar,
-            });
+            }});
 
             await testApp.invokeGetPath('/send-external-request');
 
