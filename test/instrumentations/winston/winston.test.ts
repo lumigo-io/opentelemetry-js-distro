@@ -46,10 +46,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         testName: `${INSTRUMENTATION_NAME} logger: ${versionToTest}`,
         packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
-        timeout: 10_000 * 60000
+        timeout: 10_000
       },
       async function () {
-        const logDumpPath = `${LOGS_DIR}/${INSTRUMENTATION_NAME}.winston-logs@${versionToTest}.json`;
+        const logDumpPath = `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`;
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { logDumpPath, env: { LUMIGO_LOGS_ENABLED: 'true' } });
 
