@@ -1,12 +1,8 @@
 const http = require('http');
 const url = require('url');
-const winston = require('winston');
+const { init } = require("@lumigo/opentelemetry")
 
 require('log-timestamp');
-
-const winstonLogger = winston.createLogger({
-  transports: [new winston.transports.Console()],
-})
 
 const host = 'localhost';
 let httpServer;
@@ -20,18 +16,23 @@ function respond(res, status, body) {
 }
 
 const requestListener = async function (req, res) {
+  await init;
+
+  const winston = require('winston');
+  const winstonLogger = winston.createLogger({
+    transports: [new winston.transports.Console()],
+  })
+
   console.error(`Received request: ${req.method} ${req.url}`);
 
   const requestUrl = url.parse(req.url, true);
   const logLine = requestUrl?.query?.logLine
-  const logLevel = requestUrl?.query?.logLevel
 
   switch (requestUrl.pathname) {
     case '/write-log-line':
       try {
-        winstonLogger[logLevel](logLine);
-
-        winstonLogger.on('finish', () => respond(res, 200, {}))
+        winstonLogger.info(logLine);
+        respond(res, 200, {})
       } catch (err) {
         console.error(`Error writing log line`, err);
         respond(res, 500, { error: err });

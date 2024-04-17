@@ -54,7 +54,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { logDumpPath, env: { LUMIGO_LOGS_ENABLED: 'true' } });
 
         const logLine = 'Hello world!';
-        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(logLine)}&logLevel=info`);
+        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(logLine)}`);
 
         const logs = await testApp.getFinalLogs(1);
 
