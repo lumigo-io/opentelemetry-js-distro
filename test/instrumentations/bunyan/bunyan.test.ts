@@ -59,6 +59,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         const logs = await testApp.getFinalLogs(1);
 
         expect(logs[0].body).toEqual(logLine);
+
+        // Span context is available since the test app is an instrumented HTTP server
+        expect(logs[0]["traceId"]).toHaveLength(32);
+        expect(logs[0]["spanId"]).toHaveLength(16);
       }
     );
   }
