@@ -51,18 +51,24 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const logDumpPath = `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { logDumpPath, env: { LUMIGO_LOGS_ENABLED: 'true' } });
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { logDumpPath, env: { LUMIGO_LOGS_ENABLED: 'true', LUMIGO_SECRET_MASKING_REGEX: "[\".*sekret.*\"]" } });
 
         const logLine = 'Hello Winston!';
         await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(logLine)}`);
 
-        const logs = await testApp.getFinalLogs(1);
+        const secretLogLine = JSON.stringify({ a: 1, sekret: 'this is secret!' });
+        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(secretLogLine)}&format=json`);
+
+        const logs = await testApp.getFinalLogs(2);
 
         expect(logs[0].body).toEqual(logLine);
-
         // Span context is available since the test app is an instrumented HTTP server
         expect(logs[0]["traceId"]).toHaveLength(32);
         expect(logs[0]["spanId"]).toHaveLength(16);
+
+        expect(logs[1].body).toMatchJSON({ a: 1, sekret: '****' });
+        expect(logs[1]["traceId"]).toHaveLength(32);
+        expect(logs[1]["spanId"]).toHaveLength(16);
       }
     );
   }

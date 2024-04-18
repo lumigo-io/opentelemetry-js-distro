@@ -78,6 +78,7 @@ import { logger } from './logging';
 import { ProcessEnvironmentDetector } from './resources/detectors/ProcessEnvironmentDetector';
 import { LumigoSpanProcessor } from './resources/spanProcessor';
 import { getLumigoSampler } from './samplers/lumigoSampler';
+import { LumigoLogRecordProcessor } from './processors/LumigoLogRecordProcessor';
 
 const lumigoTraceEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_TRACES_ENDPOINT;
 const lumigoLogEndpoint = process.env.LUMIGO_LOGS_ENDPOINT || DEFAULT_LUMIGO_LOGS_ENDPOINT;
@@ -222,6 +223,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
         attributeValueLengthLimit: getLogAttributeMaxLength(),
       },
     });
+    loggerProvider.addLogRecordProcessor(new LumigoLogRecordProcessor());
 
     if (process.env.LUMIGO_DEBUG_LOGDUMP) {
       loggerProvider.addLogRecordProcessor(

@@ -25,11 +25,16 @@ const requestListener = async function (req, res) {
 
   const requestUrl = url.parse(req.url, true);
   const logLine = requestUrl?.query?.logLine
+  const format = requestUrl?.query?.format
 
   switch (requestUrl.pathname) {
     case '/write-log-line':
       try {
-        bunyanLogger.info(logLine);
+        if (format === 'json') {
+          bunyanLogger.info(JSON.parse(logLine));
+        } else {
+          bunyanLogger.info(logLine);
+        }
         respond(res, 200, {})
       } catch (err) {
         console.error(`Error writing log line`, err);
