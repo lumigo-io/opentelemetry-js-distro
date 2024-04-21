@@ -1,4 +1,4 @@
-import { payloadStringify, ScrubContext } from '@lumigo/node-core';
+import { scrub } from '@lumigo/node-core';
 import { Context } from '@opentelemetry/api';
 import { LogRecord, LogRecordProcessor } from '@opentelemetry/sdk-logs';
 
@@ -8,15 +8,10 @@ export class LumigoLogRecordProcessor implements LogRecordProcessor {
   }
 
   onEmit(logRecord: LogRecord, context?: Context): void {
-    if (typeof logRecord.body === 'string') {
-      try {
-        logRecord.body = payloadStringify(JSON.parse(logRecord.body), ScrubContext.DEFAULT);
-      } catch (e) {
-        // Leave record unaffected
-      }
-    }
+    logRecord.body = scrub(logRecord.body);
+
     // @ts-ignore
-    logRecord.attributes = JSON.parse(payloadStringify(logRecord.attributes, ScrubContext.DEFAULT));
+    logRecord.attributes = scrub(logRecord.attributes);
   }
 
   shutdown(): Promise<void> {

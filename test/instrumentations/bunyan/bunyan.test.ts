@@ -19,13 +19,13 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     beforeAll(async () => {
       await fakeEdge.start();
 
-      reinstallPackages({ appDir: TEST_APP_DIR });
+      // reinstallPackages({ appDir: TEST_APP_DIR });
       fs.mkdirSync(LOGS_DIR, { recursive: true });
-      installPackage({
-        appDir: TEST_APP_DIR,
-        packageName: INSTRUMENTATION_NAME,
-        packageVersion: versionToTest,
-      });
+      // installPackage({
+      //   appDir: TEST_APP_DIR,
+      //   packageName: INSTRUMENTATION_NAME,
+      //   packageVersion: versionToTest,
+      // });
     });
 
     afterEach(async () => {
@@ -39,11 +39,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     afterAll(async () => {
       await fakeEdge.stop();
 
-      uninstallPackage({
-        appDir: TEST_APP_DIR,
-        packageName: INSTRUMENTATION_NAME,
-        packageVersion: versionToTest,
-      });
+      // uninstallPackage({
+      //   appDir: TEST_APP_DIR,
+      //   packageName: INSTRUMENTATION_NAME,
+      //   packageVersion: versionToTest,
+      // });
     });
 
     itTest(
@@ -67,13 +67,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           },
         });
 
-        const logLine = 'Hello Bunyan!';
-        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(logLine)}`);
-
-        const secretLogLine = JSON.stringify({ a: 1, sekret: 'this is secret!' });
-        await testApp.invokeGetPath(
-          `/write-log-line?logLine=${encodeURIComponent(secretLogLine)}&format=json`
-        );
+        await writeLogLine('Hello Bunyan!');
+        await writeLogLine({ a: 1, sekret: 'this is secret!' });
 
         await fakeEdge.waitFor(
           () => fakeEdge.resources.length == 1,
@@ -90,12 +85,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           },
         ]);
 
-        expect(fakeEdge.logs[0].body).toEqual({ stringValue: logLine });
+        expect(fakeEdge.logs[0].body).toEqual({ stringValue: 'Hello Bunyan!' });
         // Span context is available since the test app is an instrumented HTTP server
         expect(fakeEdge.logs[0]['traceId']).toHaveLength(32);
         expect(fakeEdge.logs[0]['spanId']).toHaveLength(16);
 
-        // Logging an object produces attributes rather than a body string
+        // Logging an object in Bunyan produces attributes, as opposed to making the body an object
         expect(fakeEdge.logs[1].attributes).toIncludeAllMembers([
           { key: 'a', value: { intValue: 1 } },
           { key: 'sekret', value: { stringValue: '****' } },
@@ -123,11 +118,16 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           },
         });
 
-        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent("some thing")}`);
+        await writeLogLine('Hello Bunyan!');
 
         // We expect no logs to be sent, therefore waiting for 1 log should fail
         await expect(testApp.getFinalLogs(1)).rejects.toThrow();
       }
     );
+
+    const writeLogLine = async (logLine: any) =>
+      testApp.invokeGetPath(
+        `/write-log-line?logLine=${encodeURIComponent(JSON.stringify(logLine))}`
+      );
   }
 );

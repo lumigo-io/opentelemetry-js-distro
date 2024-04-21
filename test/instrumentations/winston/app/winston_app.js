@@ -26,11 +26,11 @@ const requestListener = async function (req, res) {
   console.error(`Received request: ${req.method} ${req.url}`);
 
   const requestUrl = url.parse(req.url, true);
-  const logLine = requestUrl?.query?.logLine
 
   switch (requestUrl.pathname) {
     case '/write-log-line':
       try {
+        const logLine = JSON.parse(requestUrl?.query?.logLine)
         winstonLogger.info(logLine);
         respond(res, 200, {})
       } catch (err) {
@@ -53,7 +53,7 @@ const requestListener = async function (req, res) {
 httpServer = http.createServer(requestListener);
 httpServer.listen(0, host, () => {
   const port = httpServer.address().port;
-  console.error(`HTTP server listening on port ${port}`);
+  console.error(`HTTP server listening on port ${port} `);
   if (process.send) {
     process.send(port);
   }

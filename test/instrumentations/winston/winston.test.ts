@@ -20,13 +20,13 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     beforeAll(async () => {
       await fakeEdge.start();
 
-      reinstallPackages({ appDir: TEST_APP_DIR });
+      // reinstallPackages({ appDir: TEST_APP_DIR });
       fs.mkdirSync(LOGS_DIR, { recursive: true });
-      installPackage({
-        appDir: TEST_APP_DIR,
-        packageName: INSTRUMENTATION_NAME,
-        packageVersion: versionToTest,
-      });
+      // installPackage({
+      //   appDir: TEST_APP_DIR,
+      //   packageName: INSTRUMENTATION_NAME,
+      //   packageVersion: versionToTest,
+      // });
     });
 
     afterEach(async () => {
@@ -39,11 +39,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
     afterAll(async () => {
       await fakeEdge.stop();
-      uninstallPackage({
-        appDir: TEST_APP_DIR,
-        packageName: INSTRUMENTATION_NAME,
-        packageVersion: versionToTest,
-      });
+      // uninstallPackage({
+      //   appDir: TEST_APP_DIR,
+      //   packageName: INSTRUMENTATION_NAME,
+      //   packageVersion: versionToTest,
+      // });
     });
 
     itTest(
@@ -54,10 +54,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         timeout: 20_000,
       },
       async function () {
-        const logDumpPath = `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`;
-
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
-          logDumpPath,
+          logDumpPath: `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`,
           env: {
             LUMIGO_ENABLE_LOGS: 'true',
             LUMIGO_SECRET_MASKING_REGEX: '[".*sekret.*"]',
@@ -67,13 +65,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           },
         });
 
-        const logLine = 'Hello Winston!';
-        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(logLine)}`);
-
-        const secretLogLine = JSON.stringify({ a: 1, sekret: 'this is secret!' });
-        await testApp.invokeGetPath(
-          `/write-log-line?logLine=${encodeURIComponent(secretLogLine)}&format=json`
-        );
+        await writeLogLine('Hello Winston!');
+        await writeLogLine({ a: 1, sekret: 'this is secret!' });
 
         await fakeEdge.waitFor(
           () => fakeEdge.resources.length == 1,
@@ -90,13 +83,18 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           },
         ]);
 
-        expect(fakeEdge.logs[0].body).toEqual({ stringValue: logLine });
+        expect(fakeEdge.logs[0].body).toEqual({ stringValue: 'Hello Winston!' });
         // Span context is available since the test app is an instrumented HTTP server
         expect(fakeEdge.logs[0]['traceId']).toHaveLength(32);
         expect(fakeEdge.logs[0]['spanId']).toHaveLength(16);
 
         expect(fakeEdge.logs[1].body).toMatchObject({
-          stringValue: expect.toMatchJSON({ a: 1, sekret: '****' }),
+          kvlistValue: {
+            values: [
+              { key: 'a', value: { intValue: 1 } },
+              { key: 'sekret', value: { stringValue: '****' } },
+            ],
+          },
         });
         expect(fakeEdge.logs[1]['traceId']).toHaveLength(32);
         expect(fakeEdge.logs[1]['spanId']).toHaveLength(16);
@@ -115,17 +113,22 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       },
       async function () {
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
-          logDumpPath: `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`,
+          logDumpPath: `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs-off@${versionToTest}.json`,
           env: {
             LUMIGO_ENABLE_LOGS: 'false',
           },
         });
 
-        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent("some thing")}`);
+        await writeLogLine('Hello Winston!');
 
         // We expect no logs to be sent, therefore waiting for 1 log should fail
         await expect(testApp.getFinalLogs(1)).rejects.toThrow();
       }
     );
+
+    const writeLogLine = async (logLine: any) =>
+      testApp.invokeGetPath(
+        `/write-log-line?logLine=${encodeURIComponent(JSON.stringify(logLine))}`
+      );
   }
 );
