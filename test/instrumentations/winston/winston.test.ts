@@ -4,6 +4,8 @@ import { itTest } from '../../integration/setup';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
+import { FakeEdge } from '../../utils/fake-edge';
+import { setTimeout } from 'timers/promises';
 
 const INSTRUMENTATION_NAME = 'winston';
 const LOGS_DIR = join(__dirname, 'logs');
@@ -13,8 +15,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
     let testApp: TestApp;
+    const fakeEdge = new FakeEdge();
 
-    beforeAll(() => {
+    beforeAll(async () => {
+      await fakeEdge.start();
+
       reinstallPackages({ appDir: TEST_APP_DIR });
       fs.mkdirSync(LOGS_DIR, { recursive: true });
       installPackage({
@@ -24,16 +29,16 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       });
     });
 
-    afterEach(async function () {
+    afterEach(async () => {
+      fakeEdge.reset();
+
       if (testApp) {
-        console.info('Killing test app...');
         await testApp.kill();
-      } else {
-        console.warn('Test app was not run.');
       }
     });
 
-    afterAll(() => {
+    afterAll(async () => {
+      await fakeEdge.stop();
       uninstallPackage({
         appDir: TEST_APP_DIR,
         packageName: INSTRUMENTATION_NAME,
@@ -46,29 +51,58 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         testName: `${INSTRUMENTATION_NAME} logger: ${versionToTest}`,
         packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
-        timeout: 10_000
+        timeout: 20_000,
       },
       async function () {
         const logDumpPath = `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { logDumpPath, env: { LUMIGO_LOGS_ENABLED: 'true', LUMIGO_SECRET_MASKING_REGEX: "[\".*sekret.*\"]" } });
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+          logDumpPath,
+          env: {
+            LUMIGO_LOGS_ENABLED: 'true',
+            LUMIGO_SECRET_MASKING_REGEX: '[".*sekret.*"]',
+            LUMIGO_LOGS_ENDPOINT: fakeEdge.logsUrl,
+            LUMIGO_ENDPOINT: fakeEdge.tracesUrl,
+            LUMIGO_TRACER_TOKEN: 't_123456789',
+          },
+        });
 
         const logLine = 'Hello Winston!';
         await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(logLine)}`);
 
         const secretLogLine = JSON.stringify({ a: 1, sekret: 'this is secret!' });
-        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent(secretLogLine)}&format=json`);
+        await testApp.invokeGetPath(
+          `/write-log-line?logLine=${encodeURIComponent(secretLogLine)}&format=json`
+        );
 
-        const logs = await testApp.getFinalLogs(2);
+        await fakeEdge.waitFor(
+          () => fakeEdge.resources.length == 1,
+          'waiting for resources to be processed'
+        );
+        await fakeEdge.waitFor(() => fakeEdge.logs.length == 2, 'waiting for logs to be processed');
 
-        expect(logs[0].body).toEqual(logLine);
+        expect(fakeEdge.resources[0].attributes).toIncludeAllMembers([
+          {
+            key: 'service.name',
+            value: {
+              stringValue: 'winston',
+            },
+          },
+        ]);
+
+        expect(fakeEdge.logs[0].body).toEqual({ stringValue: logLine });
         // Span context is available since the test app is an instrumented HTTP server
-        expect(logs[0]["traceId"]).toHaveLength(32);
-        expect(logs[0]["spanId"]).toHaveLength(16);
+        expect(fakeEdge.logs[0]['traceId']).toHaveLength(32);
+        expect(fakeEdge.logs[0]['spanId']).toHaveLength(16);
 
-        expect(logs[1].body).toMatchJSON({ a: 1, sekret: '****' });
-        expect(logs[1]["traceId"]).toHaveLength(32);
-        expect(logs[1]["spanId"]).toHaveLength(16);
+        expect(fakeEdge.logs[1].body).toMatchObject({
+          stringValue: expect.toMatchJSON({ a: 1, sekret: '****' }),
+        });
+        expect(fakeEdge.logs[1]['traceId']).toHaveLength(32);
+        expect(fakeEdge.logs[1]['spanId']).toHaveLength(16);
+
+        // Test the log-dump functionality
+        await testApp.getFinalLogs(2);
       }
     );
   }

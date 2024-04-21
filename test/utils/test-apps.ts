@@ -310,6 +310,10 @@ export class TestApp {
     public async kill(): Promise<number | null> {
         console.info(`killing app with pid '${this.pid}'...`);
         try {
+            // Avoids PIPEWRAP open handle error when killing the test app
+            this.app.stdout.destroy()
+            this.app.stderr.destroy()
+
             this.app.kill('SIGKILL');
             await this.closePromise;
         } catch (err) {

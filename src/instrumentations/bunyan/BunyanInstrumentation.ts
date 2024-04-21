@@ -11,9 +11,6 @@ export default class LumigoBunyanInstrumentation extends Instrumentor<BunyanInst
   }
 
   override isApplicable(): boolean {
-    return (
-      super.isApplicable() &&
-      process.env.LUMIGO_LOGS_ENABLED?.toLowerCase() === 'true'
-    );
+    return super.isApplicable() && process.env.LUMIGO_LOGS_ENABLED?.toLowerCase() === 'true';
   }
 }

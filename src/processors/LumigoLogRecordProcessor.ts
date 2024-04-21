@@ -12,7 +12,7 @@ export class LumigoLogRecordProcessor implements LogRecordProcessor {
       try {
         logRecord.body = payloadStringify(JSON.parse(logRecord.body), ScrubContext.DEFAULT);
       } catch (e) {
-
+        // Leave record unaffected
       }
     }
     // @ts-ignore
