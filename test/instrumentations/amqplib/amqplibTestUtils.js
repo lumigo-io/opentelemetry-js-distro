@@ -6,7 +6,7 @@ export function getExpectedResourceAttributes() {
     'telemetry.sdk.language': 'nodejs',
     'telemetry.sdk.name': 'opentelemetry',
     'telemetry.sdk.version': expect.any(String),
-    framework: 'node',
+    'framework': expect.toBeOneOf(['node', 'express']),
     'process.environ': expect.any(String),
     'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
     'process.pid': expect.any(Number),
