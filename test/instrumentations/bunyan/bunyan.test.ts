@@ -59,7 +59,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
           logDumpPath,
           env: {
-            LUMIGO_LOGS_ENABLED: 'true',
+            LUMIGO_ENABLE_LOGS: 'true',
             LUMIGO_SECRET_MASKING_REGEX: '[".*sekret.*"]',
             LUMIGO_LOGS_ENDPOINT: fakeEdge.logsUrl,
             LUMIGO_ENDPOINT: fakeEdge.tracesUrl,

@@ -57,7 +57,7 @@ declare global {
       LUMIGO_DEBUG_SPANDUMP?: string;
       LUMIGO_DEBUG_LOGDUMP?: string;
       LUMIGO_ENDPOINT?: string;
-      LUMIGO_LOGS_ENABLED?: string;
+      LUMIGO_ENABLE_LOGS?: string;
       LUMIGO_LOGS_ENDPOINT?: string;
       LUMIGO_REPORT_DEPENDENCIES?: string;
       LUMIGO_SWITCH_OFF?: string;

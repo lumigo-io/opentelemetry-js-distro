@@ -12,6 +12,6 @@ export default class LumigoWinstonInstrumentation extends Instrumentor<WinstonIn
   }
 
   override isApplicable(): boolean {
-    return super.isApplicable() && process.env.LUMIGO_LOGS_ENABLED?.toLowerCase() === 'true';
+    return super.isApplicable() && process.env.LUMIGO_ENABLE_LOGS?.toLowerCase() === 'true';
   }
 }
