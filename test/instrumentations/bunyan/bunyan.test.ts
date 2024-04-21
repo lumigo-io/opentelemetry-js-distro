@@ -107,5 +107,27 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         await testApp.getFinalLogs(2);
       }
     );
+
+    itTest(
+      {
+        testName: `${INSTRUMENTATION_NAME} logger: ${versionToTest} - logging off`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: 20_000,
+      },
+      async function () {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+          logDumpPath: `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`,
+          env: {
+            LUMIGO_ENABLE_LOGS: 'false',
+          },
+        });
+
+        await testApp.invokeGetPath(`/write-log-line?logLine=${encodeURIComponent("some thing")}`);
+
+        // We expect no logs to be sent, therefore waiting for 1 log should fail
+        await expect(testApp.getFinalLogs(1)).rejects.toThrow();
+      }
+    );
   }
 );
