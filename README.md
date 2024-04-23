@@ -282,22 +282,22 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | client-sqs | [@aws-sdk/client-sqs](https://www.npmjs.com/package/@aws-sdk/client-sqs) | 3.525.0|3.525.0|3.525.0|3.525.0|
 | grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
 | core | [@nestjs/core](https://www.npmjs.com/package/@nestjs/core) |  |10.3.2|10.3.2|10.3.2|
-| amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|0.9.0~0.10.3|
-| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1590.0|2.1533.0~2.1590.0|2.1533.0~2.1590.0|2.1533.0~2.1590.0|
+| amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|
+| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1604.0|2.1533.0~2.1604.0|2.1533.0~2.1604.0|2.1533.0~2.1604.0|
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
 | | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
 | | | 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2|
 | ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|
-| | | 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2| 5.0.0~5.3.2|
+| | | 5.0.0~5.4.1| 5.0.0~5.4.1| 5.0.0~5.4.1| 5.0.0~5.4.1|
 | kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|
 | mongodb | [mongodb](https://www.npmjs.com/package/mongodb) | 4.17.0~4.17.2|3.6.6~3.7.3|3.6.6~3.7.3|3.6.6~3.7.3|
 | | | 5.0.0~5.9.2| 4.0.0~4.17.2| 4.0.0~4.17.2| 4.0.0~4.17.2|
 | | | | 5.0.0~5.9.2| 5.0.0~5.9.2| 5.0.0~5.9.2|
 | | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
-| pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3~8.11.4|8.11.3~8.11.4|8.11.3~8.11.4|8.11.3~8.11.4|
+| pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3~8.11.5|8.11.3~8.11.5|8.11.3~8.11.5|8.11.3~8.11.5|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
-| | | 5.0.0~5.11.0| 5.0.0~5.11.0| 5.0.0~5.11.0| 5.0.0~5.11.0|
+| | | 5.0.0~5.12.1| 5.0.0~5.12.1| 5.0.0~5.12.1| 5.0.0~5.12.1|
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
 | | | 4.6.10~4.6.13| | | |
 
