@@ -20,13 +20,13 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
     beforeAll(async () => {
       await fakeEdge.start();
 
-      // reinstallPackages({ appDir: TEST_APP_DIR });
+      reinstallPackages({ appDir: TEST_APP_DIR });
       fs.mkdirSync(LOGS_DIR, { recursive: true });
-      // installPackage({
-      //   appDir: TEST_APP_DIR,
-      //   packageName: INSTRUMENTATION_NAME,
-      //   packageVersion: versionToTest,
-      // });
+      installPackage({
+        appDir: TEST_APP_DIR,
+        packageName: INSTRUMENTATION_NAME,
+        packageVersion: versionToTest,
+      });
     });
 
     afterEach(async () => {
@@ -39,11 +39,11 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
     afterAll(async () => {
       await fakeEdge.stop();
-      // uninstallPackage({
-      //   appDir: TEST_APP_DIR,
-      //   packageName: INSTRUMENTATION_NAME,
-      //   packageVersion: versionToTest,
-      // });
+      uninstallPackage({
+        appDir: TEST_APP_DIR,
+        packageName: INSTRUMENTATION_NAME,
+        packageVersion: versionToTest,
+      });
     });
 
     itTest(
