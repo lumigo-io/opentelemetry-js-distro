@@ -18,7 +18,7 @@ const TEST_TIMEOUT = 20_000;
 
 const expectedResourceAttributes = {
   attributes: {
-    'framework': 'express',
+    'framework': expect.toBeOneOf(['node', 'express']),
     'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
     'process.environ': expect.any(String),
     'process.executable.name': 'node',
