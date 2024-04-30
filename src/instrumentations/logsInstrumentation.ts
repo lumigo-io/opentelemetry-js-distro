@@ -15,10 +15,7 @@ export default class LogsInstrumentation extends InstrumentationBase {
     super('logs-instrumentation', '0.0.1');
   }
 
-  protected init():
-    | InstrumentationModuleDefinition
-    | InstrumentationModuleDefinition[]
-    | void {
+  protected init(): InstrumentationModuleDefinition | InstrumentationModuleDefinition[] | void {
     logger.debug('in console instrumentation');
 
     return [
