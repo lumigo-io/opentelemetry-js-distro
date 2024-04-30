@@ -79,7 +79,7 @@ describe('Instrumentation tests for the http package', function () {
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
             spanDumpPath,
             env: {
-                LUMIGO_ENDPOINT: 'https://walle-edge-app-us-west-2.walle.golumigo.com',
+                LUMIGO_ENDPOINT: 'https://some-endpoint-to-divert-reporting-from-production.com',
                 LUMIGO_TRACER_TOKEN: 't_123321',
                 TARGET_URL: `http://localhost:${targetPort}`,
             }
