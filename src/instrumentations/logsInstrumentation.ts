@@ -7,7 +7,7 @@ import { SpanKind } from '@opentelemetry/api';
 
 import { logger } from '../logging';
 
-export default class LogsInstrumentation extends InstrumentationBase<any> {
+export default class LogsInstrumentation extends InstrumentationBase {
   instrumentationDescription: string;
   supportedVersions: string[];
 
@@ -16,13 +16,13 @@ export default class LogsInstrumentation extends InstrumentationBase<any> {
   }
 
   protected init():
-    | InstrumentationModuleDefinition<any>
-    | InstrumentationModuleDefinition<any>[]
+    | InstrumentationModuleDefinition
+    | InstrumentationModuleDefinition[]
     | void {
     logger.debug('in console instrumentation');
 
     return [
-      new InstrumentationNodeModuleDefinition<any>(
+      new InstrumentationNodeModuleDefinition(
         'console',
         ['*'],
         (moduleExports, moduleVersion) => {
@@ -36,6 +36,7 @@ export default class LogsInstrumentation extends InstrumentationBase<any> {
       ),
     ];
   }
+
   private logsWrapper = (instrumentation, level) => {
     return (original) => {
       return (
