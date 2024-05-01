@@ -134,6 +134,7 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
   "severityText": "info",
   // ...
 ```
+Note that logging support is applicable only when using versions of the logging libraries listed [here](##supported-packages).
 
 * `LUMIGO_DEBUG_LOGDUMP` - similar to `LUMIGO_DEBUG_SPANDUMP`, only for logs instead of spans. Effective only when `LUMIGO_ENABLE_LOGS` is set to `true`.
 
