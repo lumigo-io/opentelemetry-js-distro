@@ -35,7 +35,7 @@ describe('Instrumentation tests for the http package', function () {
     let server: Server | undefined;
 
     beforeAll(function () {
-        // reinstallPackages({ appDir: TEST_APP_DIR });
+        reinstallPackages({ appDir: TEST_APP_DIR });
         fs.mkdirSync(SPANS_DIR, { recursive: true });
 
     });
