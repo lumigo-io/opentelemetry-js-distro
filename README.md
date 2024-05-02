@@ -10,6 +10,10 @@ The Lumigo OpenTelemetry Distribution for Node.js is made of several upstream Op
 
 **Note:** If you are looking for the Lumigo Node.js tracer for AWS Lambda functions, [`@lumigo/tracer`](https://npm.io/package/@lumigo/tracer) is the package you should use instead.
 
+## Logging support
+The Lumigo OpenTelemetry Distribution also allows logging span-correlated records. See the [configuration](#logging-instrumentation) section for details on how to enable this feature.
+When using the logging feature, the same set of rules for [secret masking](#lumigo-specific-configurations) applies on the content of the log message, with only `LUMIGO_SECRET_MASKING_REGEX` being considered.
+
 ## Setup
 
 ### Add @lumigo/opentelemetry as dependency
@@ -114,8 +118,26 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX='["regex1", "regex2"]'`: This option enables the filtering of client and server endpoints through regular expression searches. Fine-tune your settings via the following environment variables, which work in conjunction with `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` for a specific span type:
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` applies the regular expression search exclusively to server spans. Searching is performed against the following attributes on a span: `url.path` and `http.target`.
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` applies the regular expression search exclusively to client spans. Searching is performed against the following attributes on a span: `url.full` and `http.url`.
-  
+
   For more information check out [Filtering http endpoints](#filtering-http-endpoints).
+
+#### Logging instrumentation
+
+* `LUMIGO_ENABLE_LOGS` - Default: `false`. When set to `true`, turns on the logging instrumentations (currently for the [Winston](https://github.com/winstonjs/winston) and [Bunyan](https://github.com/trentm/node-bunyan) loggers) to capture log-records and send them to Lumigo. Emitted logs will also get injected with the active span context, e.g.:
+```js
+  // ...
+  "body": "Hello Winston!",
+  "attributes": {
+    "trace_id": "1fce43bfd3fdde3f1a9ea1adc78b521d",
+    "span_id": "13c05292d3b5f5e8",
+    "trace_flags": "01"
+  }
+  "severityText": "info",
+  // ...
+```
+Note that logging support is applicable only when using versions of the logging libraries listed [here](##supported-packages).
+
+* `LUMIGO_DEBUG_LOGDUMP` - similar to `LUMIGO_DEBUG_SPANDUMP`, only for logs instead of spans. Effective only when `LUMIGO_ENABLE_LOGS` is set to `true`.
 
 ### Execution Tags
 
@@ -492,7 +514,7 @@ For exclusive server (inbound) or client (outbound) span filtering, use the envi
 
 Notes:
 * the environment variable must be a valid JSON array of strings, so if you want to match endpoint with the hostname `google.com` the environment variable value should be `["google\\.com"]`.
-* If we are filtering out an HTTP call to an opentelemetry traced component, every subsequent invocation made by that 
+* If we are filtering out an HTTP call to an opentelemetry traced component, every subsequent invocation made by that
 component won't be traced either.
 
 Examples:

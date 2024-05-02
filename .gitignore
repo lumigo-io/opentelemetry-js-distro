@@ -114,6 +114,7 @@ test/component/node/spans-test*.json
 .vscode
 
 test-spans*.json
+test-logs*.json
 
 # ignore typescript build files
 test/helpers/*.d.ts

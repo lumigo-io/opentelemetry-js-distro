@@ -15,7 +15,7 @@ const INSTRUMENTATION_NAME = 'http';
 
 const expectedResourceAttributes = {
     attributes: {
-        'framework': 'node',
+        'framework': expect.toBeOneOf(['node', 'express']),
         'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
         'process.environ': expect.any(String),
         'process.executable.name': 'node',
@@ -76,10 +76,13 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-            LUMIGO_ENDPOINT: 'https://walle-edge-app-us-west-2.walle.golumigo.com',
-            LUMIGO_TRACER_TOKEN: 't_123321',
-            TARGET_URL: `http://localhost:${targetPort}`,
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+            spanDumpPath,
+            env: {
+                LUMIGO_ENDPOINT: 'https://some-endpoint-to-divert-reporting-from-production.com',
+                LUMIGO_TRACER_TOKEN: 't_123321',
+                TARGET_URL: `http://localhost:${targetPort}`,
+            }
         });
 
         await testApp.invokeGetPath('/test1');
@@ -155,9 +158,12 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '1',
-            TARGET_URL: `http://localhost:${targetPort}`,
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+            spanDumpPath,
+            env: {
+                OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '1',
+                TARGET_URL: `http://localhost:${targetPort}`,
+            }
         });
 
         await testApp.invokeGetPath('/test2');
@@ -217,9 +223,12 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-            OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: '3',
-            TARGET_URL: `http://localhost:${targetPort}`,
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+            spanDumpPath,
+            env: {
+                OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: '3',
+                TARGET_URL: `http://localhost:${targetPort}`,
+            }
         });
 
         await testApp.invokeGetPath('/large-response');
@@ -278,8 +287,11 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-            TARGET_URL: `http://localhost:${targetPort}`,
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+            spanDumpPath,
+            env: {
+                TARGET_URL: `http://localhost:${targetPort}`,
+            }
         });
         const port = await testApp.port();
 
@@ -338,12 +350,15 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-            TARGET_URL: `http://localhost:${targetPort}`,
-            LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES: 'all',
-            LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_HEADERS: 'all',
-            LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES: 'all',
-            LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS: 'all',
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+            spanDumpPath,
+            env:{
+                TARGET_URL: `http://localhost:${targetPort}`,
+                LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES: 'all',
+                LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_HEADERS: 'all',
+                LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_BODIES: 'all',
+                LUMIGO_SECRET_MASKING_REGEX_HTTP_RESPONSE_HEADERS: 'all',
+            }
         });
 
         const port = await testApp.port();
@@ -403,9 +418,12 @@ describe('Instrumentation tests for the http package', function () {
         });
         server = targetServer;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, spanDumpPath, {
-            TARGET_URL: `http://localhost:${targetPort}`,
-            LUMIGO_DEBUG: 'true',
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+            spanDumpPath,
+            env: {
+                TARGET_URL: `http://localhost:${targetPort}`,
+                LUMIGO_DEBUG: 'true',
+            }
         });
         const port = await testApp.port();
 

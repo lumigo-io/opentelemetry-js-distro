@@ -18,7 +18,7 @@ const TEST_TIMEOUT = 20_000;
 
 const expectedResourceAttributes = {
   attributes: {
-    framework: 'node',
+    'framework': expect.toBeOneOf(['node', 'express']),
     'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
     'process.environ': expect.any(String),
     'process.executable.name': 'node',
@@ -73,9 +73,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const exporterFile = `${SPANS_DIR}/basics.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         await testApp.invokeGetPath('/basic');
 

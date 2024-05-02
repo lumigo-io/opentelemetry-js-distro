@@ -54,10 +54,12 @@ describe.each(versionsToTest('@nestjs/core', '@nestjs/core'))(
             testApp = new TestApp(
               TEST_APP_DIR,
               INSTRUMENTATION_NAME,
-              `${SPANS_DIR}/basic-@${versionToTest}.json`,
               {
-                  NEST_JS_PORT: port,
-                  OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+                  spanDumpPath: `${SPANS_DIR}/basic-@${versionToTest}.json`,
+                  env: {
+                    NEST_JS_PORT: String(port),
+                    OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+                  }
               }
             );
         }, DOCKER_WARMUP_TIMEOUT);

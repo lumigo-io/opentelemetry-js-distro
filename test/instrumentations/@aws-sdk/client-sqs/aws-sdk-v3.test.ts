@@ -89,7 +89,7 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
     },
     async () => {
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-receive-message-spans@${versionToTest}.json`;
-      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: true });
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile,  env: { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: 'true' }});
 
       const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
       const { MessageId: expectedMessageId } = await sqsClient.sendMessage({ MessageBody: SAMPLE_INNER_SNS_MESSAGE_BODY, QueueUrl: queueUrl }).promise()
@@ -158,7 +158,7 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
     },
     async () => {
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-spans@${versionToTest}.json`;
-      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: true });
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: 'true' }});
 
       const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
       await testApp.invokeGetPath(`/sqs/send-message?${testAppQueryParams({ queueUrl, region, sqsPort})}`);
@@ -204,7 +204,7 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
     },
     async () => {
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-batch-spans@${versionToTest}.json`;
-      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: true });
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: 'true' } });
 
       const { queueUrl, queueName } = await createTempQueue({ sqsClient, sqsPort });
       await testApp.invokeGetPath(`/sqs/send-message-batch?${testAppQueryParams({ queueUrl, region, sqsPort })}`);
@@ -259,7 +259,7 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
     },
     async () => {
       const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-batch-spans@${versionToTest}.json`;
-      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: false });
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: 'false' } });
 
       const { queueUrl } = await createTempQueue({ sqsClient, sqsPort });
       await testApp.invokeGetPath(`/sqs/send-message-batch?${testAppQueryParams({ queueUrl, region, sqsPort })}`);
