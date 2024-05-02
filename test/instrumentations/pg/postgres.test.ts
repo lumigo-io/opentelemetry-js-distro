@@ -78,14 +78,16 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       testApp = new TestApp(
         TEST_APP_DIR,
         INSTRUMENTATION_NAME,
-        `${SPANS_DIR}/basic-@${versionToTest}.json`,
         {
-          POSTGRES_HOST: postgresContainer.getHost().toString(),
-          POSTGRES_PORT: postgresContainer.getPort().toString(),
-          POSTGRES_DATABASE: postgresContainer.getDatabase().toString(),
-          POSTGRES_USER: postgresContainer.getUsername().toString(),
-          POSTGRES_PASSWORD: postgresContainer.getPassword().toString(),
-          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+          spanDumpPath: `${SPANS_DIR}/basic-@${versionToTest}.json`,
+          env: {
+            POSTGRES_HOST: postgresContainer.getHost().toString(),
+            POSTGRES_PORT: postgresContainer.getPort().toString(),
+            POSTGRES_DATABASE: postgresContainer.getDatabase().toString(),
+            POSTGRES_USER: postgresContainer.getUsername().toString(),
+            POSTGRES_PASSWORD: postgresContainer.getPassword().toString(),
+            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+          }
         }
       );
     }, DOCKER_WARMUP_TIMEOUT);

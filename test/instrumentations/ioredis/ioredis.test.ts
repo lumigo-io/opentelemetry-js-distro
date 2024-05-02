@@ -115,8 +115,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}.set-and-get@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
-          OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+          spanDumpPath: exporterFile,
+          env: { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' }
         });
 
         const key = 'test:set-and-get';
@@ -185,9 +186,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}.hash@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         const key = 'test:hash';
         const fieldA = 'test-field-a';
@@ -290,9 +291,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       async function () {
         const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}.transaction@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         const key = 'test:transaction:set-and-get';
         const value = 'test-value';

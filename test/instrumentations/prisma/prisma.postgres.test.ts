@@ -208,10 +208,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
           async function () {
             const exporterFile = `${SPANS_DIR}/${engine.name}-basics.${INSTRUMENTATION_NAME}@${versionToTest}.json`;
 
-            testApp = new TestApp(engine.appDir, INSTRUMENTATION_NAME, exporterFile, {
+            testApp = new TestApp(engine.appDir, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
               DATABASE_URL: buildConnectionUrl(engine, containerHost, containerPort),
               OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-            });
+            }});
 
             await testApp.invokeGetPath(`/add-user?name=Alice&email=alice@prisma.io`);
 

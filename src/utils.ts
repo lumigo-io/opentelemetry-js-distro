@@ -216,6 +216,9 @@ export const getSpanAttributeMaxLength = () => {
   );
 };
 
+// For now, we use the same set of limits for logs and spans, therefore this is just an alias
+export const getLogAttributeMaxLength = getSpanAttributeMaxLength;
+
 export const getResourceAttributeMaxLength = () => {
   return (
     parseInt(process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT) || DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT

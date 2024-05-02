@@ -100,9 +100,9 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
       async function () {
         const exporterFile = `${SPANS_DIR}/server-roundtrip-unary-unary-grpc-js@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         const grpcPort = DEFAULT_GRPC_PORT;
 
@@ -135,9 +135,9 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
       async function () {
         const exporterFile = `${SPANS_DIR}/server-roundtrip-unary-stream-grpc-js@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         const grpcPort = DEFAULT_GRPC_PORT;
 
@@ -173,9 +173,9 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
       async function () {
         const exporterFile = `${SPANS_DIR}/server-roundtrip-stream-unary-grpc-js@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         const grpcPort = DEFAULT_GRPC_PORT;
 
@@ -213,9 +213,9 @@ describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
       async function () {
         const exporterFile = `${SPANS_DIR}/server-roundtrip-stream-stream-grpc-js@${versionToTest}.json`;
 
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, exporterFile, {
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-        });
+        }});
 
         const grpcPort = DEFAULT_GRPC_PORT;
 

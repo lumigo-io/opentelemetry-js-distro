@@ -1,0 +1,14 @@
+{
+  "name": "lumigo-bunyan-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node -r @lumigo/opentelemetry bunyan_app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
+    "bunyan": "^1.8.15"
+  }
+}
