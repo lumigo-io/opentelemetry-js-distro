@@ -253,4 +253,25 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, PACKAGE_NAME))(`Instrumentati
       expect(sqsSendBatchSpan.attributes).not.toHaveProperty('lumigoData')
     }
   )
+
+  itTest(
+    {
+      testName: `${INSTRUMENTATION_NAME} kill-switch: ${versionToTest}`,
+      packageName: PACKAGE_NAME,
+      version: versionToTest,
+      timeout: TIMEOUT,
+    },
+    async () => {
+      const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}-send-message-batch-spans@${versionToTest}.json`;
+      testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: { LUMIGO_USE_AWS_SDK_INSTRUMENTATION: 'false' } });
+
+      const { queueUrl } = await createTempQueue({ sqsClient, sqsPort });
+      await testApp.invokeGetPath(`/sqs/send-message-batch?${testAppQueryParams({ queueUrl, region, sqsPort })}`);
+
+      const spans = await testApp.getFinalSpans();
+      const sqsSpans = getSpansByAttribute(spans, "rpc.service", "SQS")
+
+      expect(sqsSpans).toBeEmpty()
+    }
+  )
 })
