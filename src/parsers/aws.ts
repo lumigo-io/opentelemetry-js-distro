@@ -62,14 +62,18 @@ export const shouldAutoFilterEmptySqs = (): boolean => {
   return defaultResponse;
 };
 
-export const shouldSkipSqsSpan = (parsedReqBody, messageId) => {
-  if (!parsedReqBody) {
+export const shouldSkipSqsSpan = (parsedReqBody, requestHeaders, messageId) => {
+  if (!parsedReqBody && !requestHeaders) {
     return false;
   }
 
-  const sqsRequestAction = parsedReqBody['Action'];
+  const sqsRequestAction = parsedReqBody?.['Action'] || requestHeaders?.['x-amz-target'];
 
-  return sqsRequestAction === 'ReceiveMessage' && !messageId && shouldAutoFilterEmptySqs();
+  return (
+    ['ReceiveMessage', 'AmazonSQS.ReceiveMessage'].includes(sqsRequestAction) &&
+    !messageId &&
+    shouldAutoFilterEmptySqs()
+  );
 };
 
 export const dynamodbParser = (requestData) => {
@@ -161,7 +165,7 @@ export const eventBridgeParser = (requestData, responseData) => {
 };
 
 export const sqsParser = (requestData, responseData, jsonResponseBody = undefined) => {
-  const { body: reqBody } = requestData;
+  const { body: reqBody, headers: requestHeaders } = requestData;
   const { body: resBody } = responseData || {};
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;
   const parsedResBody = jsonResponseBody || (resBody ? traverse(resBody) : undefined);
@@ -215,7 +219,7 @@ export const sqsParser = (requestData, responseData, jsonResponseBody = undefine
     });
   }
 
-  if (shouldSkipSqsSpan(parsedReqBody, awsServiceData.messageId)) {
+  if (shouldSkipSqsSpan(parsedReqBody, requestHeaders, awsServiceData.messageId)) {
     logger.debug(
       `Not tracing empty SQS polling requests (override by setting the env var LUMIGO_AUTO_FILTER_EMPTY_SQS=FALSE)`
     );
