@@ -78,7 +78,7 @@ export const getAwsServiceData = (requestData, responseData, span: Span): AwsSer
   // We can remove this logic when we move to entirely relying on the aws-sdk instrumentation, and use the suppressInternalInstrumentation
   // flag. See:
   // https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-sdk#aws-sdk-instrumentation-options
-  if (isAwsInstrumentationSpanActive()) {
+  if (isAwsInstrumentationSpanActive() && serviceType === AwsParsedService.SQS) {
     setSpanAsNotExportable(span);
     return {};
   }

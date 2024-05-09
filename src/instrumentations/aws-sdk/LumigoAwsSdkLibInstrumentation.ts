@@ -6,7 +6,7 @@ export abstract class LumigoAwsSdkLibInstrumentation extends Instrumentor<AwsIns
   override isApplicable(): boolean {
     return (
       super.isApplicable() &&
-      process.env.LUMIGO_USE_AWS_SDK_INSTRUMENTATION?.toLocaleLowerCase() === 'true'
+      process.env.LUMIGO_USE_AWS_SDK_INSTRUMENTATION?.toLocaleLowerCase() !== 'false'
     );
   }
 
