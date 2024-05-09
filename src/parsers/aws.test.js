@@ -450,139 +450,108 @@ describe('aws parser', () => {
     ]);
   });
 
-  [
-    {
-      description: 'Do not skip a non-empty receive message',
-      cases: [
-        {
-          envVar: undefined,
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: 'messageId',
-          expectedShouldSkipSpan: false,
-        },
-      ],
-    },
-    {
-      description: 'Skip an empty receive message',
-      cases: [
-        {
-          envVar: undefined,
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: null,
-          expectedShouldSkipSpan: true,
-        },
-        {
-          envVar: undefined,
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: undefined,
-          expectedShouldSkipSpan: true,
-        },
-      ],
-    },
-    {
-      description: 'Do not skip other actions, no matter if they have a message or not',
-      cases: [
-        {
-          envVar: undefined,
-          parsedReqBody: { Action: 'OtherAction' },
-          messageId: 'messageId',
-          expectedShouldSkipSpan: false,
-        },
-        {
-          envVar: undefined,
-          parsedReqBody: { Action: 'OtherAction' },
-          messageId: null,
-          expectedShouldSkipSpan: false,
-        },
-      ],
-    },
-    {
-      description: 'Dont skip if parsedReqBody not in expected format',
-      cases: [
-        { envVar: undefined, parsedReqBody: null, messageId: null, expectedShouldSkipSpan: false },
-        {
-          envVar: undefined,
-          parsedReqBody: undefined,
-          messageId: null,
-          expectedShouldSkipSpan: false,
-        },
-        { envVar: undefined, parsedReqBody: {}, messageId: null, expectedShouldSkipSpan: false },
-      ],
-    },
-    {
-      description: 'Do not skip if env var is explicitly set to false',
-      cases: [
-        {
-          envVar: 'false',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: null,
-          expectedShouldSkipSpan: false,
-        },
-        {
-          envVar: 'false',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: undefined,
-          expectedShouldSkipSpan: false,
-        },
-        {
-          envVar: 'false',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: 'messageId',
-          expectedShouldSkipSpan: false,
-        },
-      ],
-    },
-    {
-      description: 'Skip if env var is explicitly set to true',
-      cases: [
-        {
-          envVar: 'true',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: null,
-          expectedShouldSkipSpan: true,
-        },
-        {
-          envVar: 'true',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: undefined,
-          expectedShouldSkipSpan: true,
-        },
-      ],
-    },
-    {
-      description: 'Do not skip if env var is set to true but response is not empty',
-      cases: [
-        {
-          envVar: 'true',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: 'messageId',
-          expectedShouldSkipSpan: false,
-        },
-      ],
-    },
-    {
-      description: 'Skip by default if env var value is not supported',
-      cases: [
-        {
-          envVar: 'unknown',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: 'messageId',
-          expectedShouldSkipSpan: false,
-        },
-        {
-          envVar: 'unknown',
-          parsedReqBody: { Action: 'ReceiveMessage' },
-          messageId: null,
-          expectedShouldSkipSpan: true,
-        },
-      ],
-    },
-  ].map(({ description, cases }) => {
-    cases.map(({ envVar, parsedReqBody, messageId, expectedShouldSkipSpan }) => {
-      test(`sqsParser -> should skip span export (${description})`, () => {
-        process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = envVar;
-        expect(shouldSkipSqsSpan(parsedReqBody, messageId)).toEqual(expectedShouldSkipSpan);
-      });
+  describe('shouldSkipSqsSpan', () => {
+    test.each`
+      parsedReqBody                   | requestHeaders
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+    `('does not skip a non-empty receive message', ({ parsedReqBody, requestHeaders }) => {
+      expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, 'some-message-id')).toBe(false);
+    });
+
+    test.each`
+      parsedReqBody                   | requestHeaders
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+    `('skips an empty receive message', ({ parsedReqBody, requestHeaders }) => {
+      expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, undefined)).toBe(true);
+    });
+
+    test.each`
+      parsedReqBody                    | requestHeaders                                     | messageId
+      ${{ Action: 'SomeOtherAction' }} | ${null}                                            | ${undefined}
+      ${{ Action: 'SomeOtherAction' }} | ${null}                                            | ${'some-message-id'}
+      ${null}                          | ${{ 'x-amz-target': 'AmazonSQS.SomeOtherAction' }} | ${undefined}
+      ${null}                          | ${{ 'x-amz-target': 'AmazonSQS.SomeOtherAction' }} | ${'some-message-id'}
+    `(
+      'does not skip other actions, regardless of messageId',
+      ({ parsedReqBody, requestHeaders, messageId }) => {
+        process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
+
+        expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, messageId)).toBe(false);
+      }
+    );
+
+    test.each`
+      parsedReqBody                    | requestHeaders
+      ${null}                          | ${null}
+      ${{}}                            | ${null}
+      ${{ Action: 'SomeOtherAction' }} | ${null}
+      ${{ Action: 'SomeOtherAction' }} | ${{}}
+    `(
+      'Does not skip if parsedReqBody requestHeaders are not of an expected format',
+      ({ parsedReqBody, requestHeaders }) => {
+        process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
+
+        expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, 'some-message-id')).toBe(false);
+      }
+    );
+
+    test.each`
+      parsedReqBody                   | requestHeaders
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+    `(
+      'does not skip if env var is explicitly set to false, regardless of action or messageId',
+      ({ parsedReqBody, requestHeaders }) => {
+        process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'false';
+
+        expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, 'some-message-id')).toEqual(false);
+      }
+    );
+
+    test.each`
+      parsedReqBody                   | requestHeaders
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+    `(
+      'skips if env-var is explicitly set to true, action is ReceiveMessage and response body is empty',
+      ({ parsedReqBody, requestHeaders }) => {
+        process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
+
+        expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, undefined)).toEqual(true);
+      }
+    );
+
+    test.each`
+      parsedReqBody                   | requestHeaders
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+    `(
+      'does not skip if env var is set to true but response is not empty',
+      ({ parsedReqBody, requestHeaders }) => {
+        process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
+
+        expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, 'some-message-id')).toEqual(false);
+      }
+    );
+
+    test.each`
+      parsedReqBody                   | requestHeaders
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${{ Action: 'ReceiveMessage' }} | ${null}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+      ${null}                         | ${{ 'x-amz-target': 'AmazonSQS.ReceiveMessage' }}
+    `('skips if env-var value is not supported', ({ parsedReqBody, requestHeaders }) => {
+      process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'unknown';
+
+      expect(shouldSkipSqsSpan(parsedReqBody, requestHeaders, 'some-message-id')).toEqual(false);
     });
   });
 
