@@ -34,6 +34,7 @@ export default class LumigoIORedisInstrumentation extends Instrumentor<IORedisIn
           )
         );
       },
+      requireParentSpan: false,
     });
   }
 }
