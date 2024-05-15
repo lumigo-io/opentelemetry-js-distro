@@ -5,7 +5,7 @@ export default class LumigoPgInstrumentation extends Instrumentor<PgInstrumentat
   override isApplicable(): boolean {
     return (
       super.isApplicable() &&
-      process.env.LUMIGO_DISABLE_PG_INSTRUMENTATION?.toLocaleLowerCase() === 'false'
+      process.env.LUMIGO_DISABLE_PG_INSTRUMENTATION?.toLocaleLowerCase() !== 'true'
     );
   }
 
