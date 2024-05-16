@@ -10,7 +10,7 @@
  * with `undefined` as value; the promise is resolved, instead of rejected, to avoid UnhandledPromiseRejectionWarning
  * or errors affecting processes using unsupported Node.js versions.
  */
-import { LumigoSdkInitialization } from './bootstrap';
+import type { LumigoSdkInitialization } from './bootstrap';
 import { LUMIGO_LOGGING_NAMESPACE } from './constants';
 import { minMajor, maxMajor } from './supportedVersions.json';
 export type { LumigoSdkInitialization } from './bootstrap';
