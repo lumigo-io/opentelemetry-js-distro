@@ -307,11 +307,13 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
 | core | [@nestjs/core](https://www.npmjs.com/package/@nestjs/core) |  |10.3.2|10.3.2|10.3.2|
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|
-| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1610.0|2.1533.0~2.1610.0|2.1533.0~2.1610.0|2.1533.0~2.1610.0|
+| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1623.0|2.1533.0~2.1623.0|2.1533.0~2.1623.0|2.1533.0~2.1623.0|
+| bunyan | [bunyan](https://www.npmjs.com/package/bunyan) | 1.8.15|1.8.15|1.8.15|1.8.15|
+| | | 2.0.5| 2.0.5| 2.0.5| 2.0.5|
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
 | | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
-| | | 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2| 4.0.1~4.26.2|
+| | | 4.0.1~4.27.0| 4.0.1~4.27.0| 4.0.1~4.27.0| 4.0.1~4.27.0|
 | ioredis | [ioredis](https://www.npmjs.com/package/ioredis) | 4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|4.0.0~4.28.5|
 | | | 5.0.0~5.4.1| 5.0.0~5.4.1| 5.0.0~5.4.1| 5.0.0~5.4.1|
 | kafkajs | [kafkajs](https://www.npmjs.com/package/kafkajs) | 2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|2.0.0~2.2.4|
@@ -321,9 +323,10 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
 | pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3~8.11.5|8.11.3~8.11.5|8.11.3~8.11.5|8.11.3~8.11.5|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
-| | | 5.0.0~5.13.0| 5.0.0~5.13.0| 5.0.0~5.11.0| 5.0.0~5.13.0|
-| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.13|4.0.0~4.6.13|4.0.0~4.6.13|
-| | | 4.6.10~4.6.13| | | |
+| | | 5.0.0~5.14.0| 5.0.0~5.14.0| 5.0.0~5.14.0| 5.0.0~5.14.0|
+| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.14|4.0.0~4.6.14|4.0.0~4.6.14|
+| | | 4.6.10~4.6.14| | | |
+| winston | [winston](https://www.npmjs.com/package/winston) | 3.13.0|3.13.0|3.13.0|3.13.0|
 
 ### Activating your Prisma client's instrumentation
 If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
