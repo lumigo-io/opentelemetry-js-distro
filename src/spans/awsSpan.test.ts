@@ -1,7 +1,7 @@
 import { getAwsServiceData, getAwsServiceFromHost } from './awsSpan';
 import { Span } from '@opentelemetry/sdk-trace-base';
 import { AwsOtherService, AwsParsedService } from './types';
-import { rootSpanWithAttributes } from '../../test/utils/spans';
+import { rootSpanWithAttributes, rootSpanWithoutAttributes } from '../../test/utils/spans';
 import { LumigoAwsSdkLibInstrumentation } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
 
 describe('awsSpan', () => {
@@ -44,6 +44,15 @@ describe('awsSpan', () => {
 
           expect(root.attributes['SKIP_EXPORT']).toBeUndefined();
         });
+      });
+
+      test('do not raise when span attributes are undefined', () => {
+        const requestData = {
+          body: '',
+          host: 'anything',
+        };
+        const awsServiceAttributes = getAwsServiceData(requestData, undefined, {} as Span);
+        expect(awsServiceAttributes).toEqual({});
       });
 
       test('does not mark Elastic Beanstalk SQS Daemon spans as skipped', () => {
