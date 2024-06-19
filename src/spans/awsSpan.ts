@@ -55,7 +55,7 @@ export const getAwsServiceData = (requestData, responseData, span: Span): AwsSer
   if (host?.includes('amazonaws.com')) {
     serviceType = getAwsServiceFromHost(host);
   } else if (
-    span.attributes[SemanticAttributes.HTTP_USER_AGENT]?.toString().startsWith('aws-sqsd')
+    span.attributes?.[SemanticAttributes.HTTP_USER_AGENT]?.toString().startsWith('aws-sqsd')
   ) {
     /*
      * Workaround for Elastic Beanstalk, where a local proxy called "AWS SQS Daemon"
