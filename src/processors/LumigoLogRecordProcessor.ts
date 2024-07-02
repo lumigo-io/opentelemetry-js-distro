@@ -7,6 +7,7 @@ export class LumigoLogRecordProcessor implements LogRecordProcessor {
     return Promise.resolve();
   }
 
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   onEmit(logRecord: LogRecord, context?: Context): void {
     logRecord.body = scrub(logRecord.body);
 

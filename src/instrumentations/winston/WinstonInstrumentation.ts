@@ -1,6 +1,5 @@
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { Instrumentor } from '../instrumentor';
-import { canRequireModule } from '../../utils';
 
 export default class LumigoWinstonInstrumentation extends Instrumentor<WinstonInstrumentation> {
   getInstrumentedModule(): string {

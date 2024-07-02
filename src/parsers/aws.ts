@@ -2,8 +2,7 @@ import { logger } from '../logging';
 import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
 import { traverse } from '../tools/xmlToJson';
 import { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
-import { CommonUtils } from '@lumigo/node-core';
-import { Triggers } from '@lumigo/node-core';
+import { CommonUtils, Triggers } from '@lumigo/node-core';
 import { AwsServiceAttributes } from '../spans/awsSpan';
 import { getSpanSkipExportAttributes } from '../resources/spanProcessor';
 

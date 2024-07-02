@@ -8,6 +8,8 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'prettier',
+    'plugin:import/recommended',
+    'plugin:import/typescript'
   ],
   rules: {
     '@typescript-eslint/ban-ts-comment': 'off',
@@ -41,5 +43,6 @@ module.exports = {
     'no-console': 'off',
     'ban-types': 'off',
     'no-case-declarations': 'off',
+    'import/no-extraneous-dependencies': 'error'
   },
 };
