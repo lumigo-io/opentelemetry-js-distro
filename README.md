@@ -307,7 +307,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
 | core | [@nestjs/core](https://www.npmjs.com/package/@nestjs/core) |  |10.3.2|10.3.2|10.3.2|
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|
-| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1651.0|2.1533.0~2.1651.0|2.1533.0~2.1651.0|2.1533.0~2.1651.0|
+| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1652.0|2.1533.0~2.1652.0|2.1533.0~2.1652.0|2.1533.0~2.1652.0|
 | bunyan | [bunyan](https://www.npmjs.com/package/bunyan) | 1.8.15|1.8.15|1.8.15|1.8.15|
 | | | 2.0.5| 2.0.5| 2.0.5| 2.0.5|
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|
