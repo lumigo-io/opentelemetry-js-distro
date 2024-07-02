@@ -1,5 +1,5 @@
 import { CommonUtils, Triggers } from '@lumigo/node-core';
-import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { logger } from '../../logging';
 
 type SqsReceivedMessage = {

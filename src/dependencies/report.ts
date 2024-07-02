@@ -31,7 +31,7 @@
 
 import { access, lstat, readFile, readdir } from 'fs/promises';
 import { postUri } from '../utils';
-import { ResourceAttributes } from '@opentelemetry/resources';
+import type { ResourceAttributes } from '@opentelemetry/resources';
 
 export async function report(
   dependenciesEndpoint: string,

@@ -1,5 +1,5 @@
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
-import { Span } from '@opentelemetry/api';
+import type { Span } from '@opentelemetry/api';
 import { FastifyInstrumentation, FastifyRequestInfo } from '@opentelemetry/instrumentation-fastify';
 import { contentType, scrubHttpPayload } from '../../tools/payloads';
 import { getSpanAttributeMaxLength } from '../../utils';

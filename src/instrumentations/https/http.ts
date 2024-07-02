@@ -3,10 +3,9 @@ import * as shimmer from 'shimmer';
 import { URL } from 'url';
 
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
-import { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
-import { Span } from '@opentelemetry/sdk-trace-base';
-
-import { InstrumentationIfc } from '../hooksIfc';
+import type { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
+import type { Span } from '@opentelemetry/sdk-trace-base';
+import type { InstrumentationIfc } from '../hooksIfc';
 import { logger } from '../../logging';
 import { getAwsServiceData } from '../../spans/awsSpan';
 import { runOneTimeWrapper, safeExecute, getSpanAttributeMaxLength } from '../../utils';

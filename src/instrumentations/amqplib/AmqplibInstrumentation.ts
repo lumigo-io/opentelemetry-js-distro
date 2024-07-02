@@ -1,5 +1,5 @@
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
-import { Span } from '@opentelemetry/api';
+import type { Span } from '@opentelemetry/api';
 import {
   AmqplibInstrumentation,
   ConsumeInfo,

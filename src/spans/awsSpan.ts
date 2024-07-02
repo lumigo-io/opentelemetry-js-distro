@@ -1,4 +1,4 @@
-import { Span } from '@opentelemetry/sdk-trace-base';
+import type { Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 import {

@@ -1,4 +1,4 @@
-import { RequestOptions } from 'https';
+import type { RequestOptions } from 'https';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 
 import { HttpHooks } from './http';

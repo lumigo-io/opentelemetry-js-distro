@@ -2,7 +2,7 @@ import mockConsole from 'jest-mock-console';
 import mock from 'mock-fs';
 
 import { FileLogExporter } from './index';
-import { LoggerProvider, LogRecord, SimpleLogRecordProcessor } from '@opentelemetry/sdk-logs';
+import { LoggerProvider, SimpleLogRecordProcessor } from '@opentelemetry/sdk-logs';
 
 describe('FileLogExporter tests', () => {
   afterEach(() => {

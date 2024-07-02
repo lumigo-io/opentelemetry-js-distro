@@ -1,7 +1,7 @@
 import shimmer from 'shimmer';
 import * as grpcServerUtils from '@opentelemetry/instrumentation-grpc/build/src/grpc-js/serverUtils';
-import { Span } from '@opentelemetry/api';
-import {
+import type { Span } from '@opentelemetry/api';
+import type {
   HandleCall,
   SendUnaryDataCallback,
   ServerCallWithMeta,

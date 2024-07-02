@@ -15,7 +15,8 @@
     "noImplicitOverride": true,
     "declaration": true,
     "declarationMap": true,
-    "composite": true
+    "composite": true,
+    "importsNotUsedAsValues": "error"
   },
   "include": ["./src/**/*", "./src/**/*.json", "./package.json"],
   "exclude": ["**/*.test.js", "**/*.test.ts"]
