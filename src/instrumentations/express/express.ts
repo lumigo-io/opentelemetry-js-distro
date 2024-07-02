@@ -1,10 +1,10 @@
 import type express from 'express';
 
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
-import { Span } from '@opentelemetry/api';
+import type { Span } from '@opentelemetry/api';
 
 import { getSpanAttributeMaxLength, safeExecute } from '../../utils';
-import { InstrumentationIfc } from '../hooksIfc';
+import type { InstrumentationIfc } from '../hooksIfc';
 import { contentType, scrubHttpPayload } from '../../tools/payloads';
 
 type ExpressRequestType = { req: express.Request; res: express.Response };

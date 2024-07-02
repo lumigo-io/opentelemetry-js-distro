@@ -1,6 +1,6 @@
 import { scrub } from '@lumigo/node-core';
-import { Context } from '@opentelemetry/api';
-import { LogRecord, LogRecordProcessor } from '@opentelemetry/sdk-logs';
+import type { Context } from '@opentelemetry/api';
+import type { LogRecord, LogRecordProcessor } from '@opentelemetry/sdk-logs';
 
 export class LumigoLogRecordProcessor implements LogRecordProcessor {
   forceFlush(): Promise<void> {

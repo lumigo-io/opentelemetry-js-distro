@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { hrTimeToMicroseconds } from '@opentelemetry/core';
-import { ReadableLogRecord } from '@opentelemetry/sdk-logs';
+import type { ReadableLogRecord } from '@opentelemetry/sdk-logs';
 import { FileExporter } from './FileExporter';
 
 /**

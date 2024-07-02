@@ -1,5 +1,8 @@
 import { shouldAutoFilterEmptySqs } from '../../parsers/aws';
-import { isServiceSupportedByLumigoAwsSdkInstrumentation, setAwsInstrumentationSpanActive } from './shared';
+import {
+  isServiceSupportedByLumigoAwsSdkInstrumentation,
+  setAwsInstrumentationSpanActive,
+} from './shared';
 import type {
   AwsSdkRequestHookInformation,
   AwsSdkResponseHookInformation,

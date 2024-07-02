@@ -1,4 +1,9 @@
-import { Sampler, ParentBasedSampler, SamplingResult, SamplingDecision } from '@opentelemetry/sdk-trace-base';
+import {
+  Sampler,
+  ParentBasedSampler,
+  SamplingResult,
+  SamplingDecision,
+} from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
 
 export class LumigoSampler implements Sampler {

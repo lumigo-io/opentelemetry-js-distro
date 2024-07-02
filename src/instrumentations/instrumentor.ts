@@ -1,4 +1,4 @@
-import { Instrumentation } from '@opentelemetry/instrumentation';
+import type { Instrumentation } from '@opentelemetry/instrumentation';
 import { canRequireModule } from '../utils';
 
 export abstract class Instrumentor<T extends Instrumentation> {
