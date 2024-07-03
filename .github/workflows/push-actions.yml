@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false # We don't want linting to prevent unit testing
       matrix:
-        npm-task: ['prettier:ci', 'lint', 'test:unit']
+        npm-task: ['prettier:ci', 'lint', 'test:unit', 'build']
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node
@@ -22,7 +22,7 @@ jobs:
       - run: npm run ${{ matrix.npm-task }}
       - name: Upload distro as artifact
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.npm-task == 'test:unit' }}
+        if: ${{ matrix.npm-task == 'build' }}
         with:
           name: distro-package
           path: distro.tgz
