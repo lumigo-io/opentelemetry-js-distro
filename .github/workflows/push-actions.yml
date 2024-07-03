@@ -84,6 +84,7 @@ jobs:
           architecture: x64
       - name: Download distro
         uses: actions/download-artifact@v4
+        continue-on-error: true  # when there aren't changes the artifact won't be uploaded and this step will fail
         with:
           name: distro-package
       - run: npm i ./distro.tgz
