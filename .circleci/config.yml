@@ -60,6 +60,7 @@ workflows:
 
     - lumigo-orb/e2e-test:
         context: common
+        requires:
           - lumigo-orb/be-deploy
           - lumigo-orb/prep-it-resources
           - lumigo-orb/prep-k8s-and-operator
