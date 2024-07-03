@@ -44,12 +44,6 @@ workflows:
         requires:
           - lumigo-orb/is_environment_available
 
-    - lumigo-orb/integration-test-cleanup:
-        name: pre-test-cleanup
-        context: common
-        requires:
-          - lumigo-orb/integration-test-prep
-
     - lumigo-orb/integration-test-parallel:
         context: common
         run_test_cleanup: false
