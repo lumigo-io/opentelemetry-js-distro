@@ -1,5 +1,5 @@
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
-import { Span } from '@opentelemetry/api';
+import type { Span } from '@opentelemetry/api';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis-4';
 import { getSpanAttributeMaxLength } from '../../utils';
 import { Instrumentor } from '../instrumentor';

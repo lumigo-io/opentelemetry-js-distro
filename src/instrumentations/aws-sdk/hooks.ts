@@ -1,5 +1,8 @@
 import { shouldAutoFilterEmptySqs } from '../../parsers/aws';
-import { isServiceSupportedByLumigoAwsSdkInstrumentation } from './shared';
+import {
+  isServiceSupportedByLumigoAwsSdkInstrumentation,
+  setAwsInstrumentationSpanActive,
+} from './shared';
 import type {
   AwsSdkRequestHookInformation,
   AwsSdkResponseHookInformation,
@@ -11,7 +14,6 @@ import { extractAttributesFromSqsResponse } from './attribute-extractors';
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { getSpanAttributeMaxLength } from '../../utils';
 import { SpanKind } from '@opentelemetry/api';
-import { setAwsInstrumentationSpanActive } from './shared';
 
 const SQS_PUBLISH_OPERATIONS = ['SendMessage', 'SendMessageBatch'];
 const SQS_CONSUME_OPERATIONS = ['ReceiveMessage'];
