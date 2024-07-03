@@ -307,7 +307,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
 | core | [@nestjs/core](https://www.npmjs.com/package/@nestjs/core) |  |10.3.2|10.3.2|10.3.2|
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|
-| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1651.0|2.1533.0~2.1651.0|2.1533.0~2.1651.0|2.1533.0~2.1651.0|
+| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1653.0|2.1533.0~2.1652.0|2.1533.0~2.1653.0|2.1533.0~2.1653.0|
 | bunyan | [bunyan](https://www.npmjs.com/package/bunyan) | 1.8.15|1.8.15|1.8.15|1.8.15|
 | | | 2.0.5| 2.0.5| 2.0.5| 2.0.5|
 | express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|
@@ -324,8 +324,8 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3~8.12.0|8.11.3~8.12.0|8.11.3~8.12.0|8.11.3~8.12.0|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
 | | | 5.0.0~5.16.1| 5.0.0~5.16.1| 5.0.0~5.16.1| 5.0.0~5.16.1|
-| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.14|4.0.0~4.6.14|4.0.0~4.6.14|
-| | | 4.6.10~4.6.14| | | |
+| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.15|4.0.0~4.6.15|4.0.0~4.6.15|
+| | | 4.6.10~4.6.15| | | |
 | winston | [winston](https://www.npmjs.com/package/winston) | 3.13.0|3.13.0|3.13.0|3.13.0|
 
 ### Activating your Prisma client's instrumentation
