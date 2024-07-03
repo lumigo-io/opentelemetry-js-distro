@@ -31,6 +31,7 @@ workflows:
 
     - lumigo-orb/be-deploy:
         context: common
+        save_project_folder: false
         requires:
           - lumigo-orb/is_environment_available
 
