@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  lumigo-orb: &lumigo_orb_version lumigo/lumigo-orb@volatile
+  lumigo-orb: &lumigo_orb_version lumigo/lumigo-orb@dev:a3c939c
 
 defaults: &defaults
   docker:
@@ -31,7 +31,6 @@ workflows:
 
     - lumigo-orb/be-deploy:
         context: common
-        save_project_folder: false
         requires:
           - lumigo-orb/is_environment_available
 
@@ -47,7 +46,6 @@ workflows:
 
     - lumigo-orb/integration-test-parallel:
         context: common
-        run_test_cleanup: false
         requires:
           - lumigo-orb/be-deploy
           - lumigo-orb/prep-it-resources
