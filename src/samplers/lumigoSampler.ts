@@ -5,6 +5,7 @@ import {
   SamplingDecision,
 } from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
+import {logger} from '../logging';
 
 export class LumigoSampler implements Sampler {
   /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -20,7 +21,7 @@ export class LumigoSampler implements Sampler {
     const endpoint = extractEndpoint(attributes, spanKind);
     if (endpoint) {
       if (spanKind === SpanKind.CLIENT && doesMatchClientSpanFilteringRegexes(endpoint)) {
-        console.debug(
+        logger.debug(
           `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT'`
         );
         decision = SamplingDecision.NOT_RECORD;
@@ -30,7 +31,7 @@ export class LumigoSampler implements Sampler {
         spanKind === SpanKind.SERVER &&
         doesMatchServerSpanFilteringRegexes(endpoint)
       ) {
-        console.debug(
+        logger.debug(
           `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER'`
         );
         decision = SamplingDecision.NOT_RECORD;
@@ -39,7 +40,7 @@ export class LumigoSampler implements Sampler {
         decision !== SamplingDecision.NOT_RECORD &&
         doesMatchGeneralSpanFilteringRegexes(endpoint)
       ) {
-        console.debug(
+        logger.debug(
           `Dropping trace for endpoint '${endpoint} because it matches the filter regex specified by 'LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX'`
         );
         decision = SamplingDecision.NOT_RECORD;
@@ -111,7 +112,7 @@ export const doesEndpointMatchRegexes = (endpoint: string, regexes: string[]): b
         return true;
       }
     } catch (err) {
-      console.error(`Invalid regex: '${rawRegex}', skipping it.`);
+      logger.error(`Invalid regex: '${rawRegex}', skipping it.`);
     }
   }
 
@@ -127,7 +128,7 @@ export const parseStringToArray = (rawArray: string): string[] => {
     /* eslint-disable no-empty */
   } catch (err) {}
 
-  console.error(`Not valid JSON format for an array of strings: '${rawArray}'`);
+  logger.error(`Not valid JSON format for an array of strings: '${rawArray}'`);
   return [];
 };
 
