@@ -5,7 +5,7 @@ import {
   SamplingDecision,
 } from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
-import {logger} from '../logging';
+import { logger } from '../logging';
 
 export class LumigoSampler implements Sampler {
   /* eslint-disable @typescript-eslint/no-unused-vars */
