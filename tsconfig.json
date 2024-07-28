@@ -16,8 +16,8 @@
     "declaration": true,
     "declarationMap": true,
     "composite": true,
-    "importsNotUsedAsValues": "error"
+    "importsNotUsedAsValues": "error",
   },
-  "include": ["./src/**/*", "./src/**/*.json", "./package.json"],
-  "exclude": ["**/*.test.js", "**/*.test.ts"]
+  "include": ["./src/**/*", "./src/**/*.json", "./package.json", "./describeVersions.d.ts"],
+  "exclude": ["**/*.test.js", "**/*.test.ts"],
 }

@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import { versionsToTest } from '../../utils/versions';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { mkdirSync } from 'fs';
@@ -8,7 +7,6 @@ import { itTest } from '../../integration/setup';
 import { getSpanByName } from '../../utils/spans';
 import { SpanKind } from '@opentelemetry/api';
 const net = require('net');
-
 
 async function getPortFree() {
     return new Promise( res => {
@@ -30,9 +28,9 @@ const NEST_JS_CREATE = 'Create Nest App';
 const NEST_JS_INTERNAL = 'getHello';
 
 
-describe.each(versionsToTest('@nestjs/core', '@nestjs/core'))(
+describeVersions('@nestjs/core', '@nestjs/core')(
   'Instrumentation tests for the @nestjs/core package',
-    function (versionToTest) {
+    (versionToTest) => {
         let testApp: TestApp;
 
         beforeAll(async function() {
