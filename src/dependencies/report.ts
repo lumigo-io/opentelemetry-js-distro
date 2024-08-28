@@ -32,7 +32,7 @@
 import { access, lstat, readFile, readdir } from 'fs/promises';
 import { postUri } from '../utils';
 import type { ResourceAttributes } from '@opentelemetry/resources';
-import {logger} from '../logging';
+import { logger } from '../logging';
 
 export async function report(
   dependenciesEndpoint: string,
@@ -59,7 +59,7 @@ async function listPackages() {
 
     // Handle edge cases in esbuild / webpack builds where module.paths is not an array,
     // since it's behaves differently in these bundlers as opposed to running un-bundled in Node.js.
-    if (typeof module === "undefined" || !Array.isArray(module.paths)) {
+    if (typeof module === 'undefined' || !Array.isArray(module.paths)) {
       return [];
     }
 
