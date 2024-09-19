@@ -32,6 +32,7 @@
 import { access, lstat, readFile, readdir } from 'fs/promises';
 import { postUri } from '../utils';
 import type { ResourceAttributes } from '@opentelemetry/resources';
+import { logger } from '../logging';
 
 export async function report(
   dependenciesEndpoint: string,
@@ -53,51 +54,62 @@ export async function report(
 }
 
 async function listPackages() {
-  const validModulePaths = [];
+  try {
+    const validModulePaths = [];
 
-  for (const modulesPath of module.paths) {
-    try {
-      // Basic existence check of the modulesPath (no actual FS access)
-      await access(modulesPath);
-      // Check if modulesPath is an actual directory
-      const stats = await lstat(modulesPath);
-      if (stats.isDirectory()) {
-        validModulePaths.push(modulesPath);
-      }
-    } catch (err) {
-      /*
-       * Likely it is a default option, like /node_modules,
-       * that does not actually exist.
-       */
-      continue;
+    // Handle edge cases in esbuild / webpack builds where module.paths is not an array,
+    // since it's behaves differently in these bundlers as opposed to running un-bundled in Node.js.
+    if (typeof module === 'undefined' || !Array.isArray(module.paths)) {
+      return [];
     }
-  }
 
-  const packages = [];
-  for (const modulesPath of validModulePaths) {
-    const packageDirs = await readdir(modulesPath);
-
-    for (const packageDir of packageDirs) {
+    for (const modulesPath of module.paths) {
       try {
-        const packageJsonFile = `${modulesPath}/${packageDir}/package.json`;
-        const content = await readFile(packageJsonFile);
-        const packageJson = JSON.parse(content.toString());
-        packages.push({
-          name: packageJson.name,
-          version: packageJson.version,
-        });
+        // Basic existence check of the modulesPath (no actual FS access)
+        await access(modulesPath);
+        // Check if modulesPath is an actual directory
+        const stats = await lstat(modulesPath);
+        if (stats.isDirectory()) {
+          validModulePaths.push(modulesPath);
+        }
       } catch (err) {
         /*
-         * Could be that the packageDir is actually not a directory,
-         * or that it does not contain a package.json file (so it is
-         * actually not a package directory), or that the package.json
-         * file is malformed. In any of these cases, it is not an actual
-         * dependency the application can load, so it is safe to skip.
+         * Likely it is a default option, like /node_modules,
+         * that does not actually exist.
          */
         continue;
       }
     }
-  }
 
-  return packages;
+    const packages = [];
+    for (const modulesPath of validModulePaths) {
+      const packageDirs = await readdir(modulesPath);
+
+      for (const packageDir of packageDirs) {
+        try {
+          const packageJsonFile = `${modulesPath}/${packageDir}/package.json`;
+          const content = await readFile(packageJsonFile);
+          const packageJson = JSON.parse(content.toString());
+          packages.push({
+            name: packageJson.name,
+            version: packageJson.version,
+          });
+        } catch (err) {
+          /*
+           * Could be that the packageDir is actually not a directory,
+           * or that it does not contain a package.json file (so it is
+           * actually not a package directory), or that the package.json
+           * file is malformed. In any of these cases, it is not an actual
+           * dependency the application can load, so it is safe to skip.
+           */
+          continue;
+        }
+      }
+    }
+
+    return packages;
+  } catch (err) {
+    logger.debug('Failed to list dependencies', err);
+    return [];
+  }
 }
