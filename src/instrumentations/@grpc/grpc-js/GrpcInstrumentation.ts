@@ -1,9 +1,9 @@
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
-import { Instrumentor } from '../../instrumentor';
+import { TracingInstrumentor } from '../../instrumentor';
 import { wrapServer } from './wrapGrpcServer';
 import { wrapClient } from './wrapGrpcClient';
 
-export default class LumigoGrpcInstrumentation extends Instrumentor<GrpcInstrumentation> {
+export default class LumigoGrpcInstrumentation extends TracingInstrumentor<GrpcInstrumentation> {
   getInstrumentedModule(): string {
     return '@grpc/grpc-js';
   }

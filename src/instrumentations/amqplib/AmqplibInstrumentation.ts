@@ -6,9 +6,9 @@ import {
   PublishInfo,
 } from '@opentelemetry/instrumentation-amqplib';
 import { getSpanAttributeMaxLength } from '../../utils';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoAmqplibInstrumentation extends Instrumentor<AmqplibInstrumentation> {
+export default class LumigoAmqplibInstrumentation extends TracingInstrumentor<AmqplibInstrumentation> {
   getInstrumentedModule(): string {
     return 'amqplib';
   }

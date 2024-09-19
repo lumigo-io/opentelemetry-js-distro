@@ -100,6 +100,7 @@ Specifically supported are:
 
 `@lumigo/opentelemetry` additionally supports the following configuration options as environment variables:
 
+* `LUMIGO_ENABLE_TRACES` - Default: `true`. When set to `false`, turns off all of the *tracing* instrumentations. Note that this does not turn off the *logging* instrumentations, which are controlled by the `LUMIGO_ENABLE_LOGS` environment variable.
 * `LUMIGO_TRACER_TOKEN=<token>`: Configure the Lumigo token to enable to upload of telemetry to Lumigo; without this environment variable, your Node.js process will not send telemetry to Lumigo.
 * `LUMIGO_DEBUG=TRUE`: Enables debug logging
 * `LUMIGO_DEBUG_SPANDUMP=<path|console:log|console:error>`: Log all spans collected to the `<path>` file or, the value is `console:log` or `console:error`, to `console.log` or `console.error`; this is an option intended only for debugging purposes and should *not* be used in production.

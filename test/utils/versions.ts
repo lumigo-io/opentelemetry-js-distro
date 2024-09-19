@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs';
 import { dirname } from 'path';
 import { instrumentationsVersionManager } from '../helpers/InstrumentationsVersionManager';
-import {runOneTimeWrapper} from "@lumigo/node-core/lib/common";
 
 const VERSION_UNDER_TEST =
   process.env.INSTRUMENTATION_UNDER_TEST &&

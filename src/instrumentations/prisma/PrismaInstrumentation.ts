@@ -1,7 +1,7 @@
 import { PrismaInstrumentation } from '@prisma/instrumentation';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoPrismaInstrumentation extends Instrumentor<PrismaInstrumentation> {
+export default class LumigoPrismaInstrumentation extends TracingInstrumentor<PrismaInstrumentation> {
   getInstrumentedModule(): string {
     return 'prisma';
   }

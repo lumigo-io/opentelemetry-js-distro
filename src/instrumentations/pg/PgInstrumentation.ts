@@ -1,7 +1,7 @@
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoPgInstrumentation extends Instrumentor<PgInstrumentation> {
+export default class LumigoPgInstrumentation extends TracingInstrumentor<PgInstrumentation> {
   override isApplicable(): boolean {
     return (
       super.isApplicable() &&
