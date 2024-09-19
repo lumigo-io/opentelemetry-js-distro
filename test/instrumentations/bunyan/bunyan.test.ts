@@ -70,10 +70,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         await writeLogLine('Hello Bunyan!');
         await writeLogLine({ a: 1, sekret: 'this is secret!' });
 
-        await fakeEdge.waitFor(
-          ({ resources }) => resources.length == 1,
-          'waiting for resources to be processed'
-        );
+        await fakeEdge.waitFor(({ resources }) => resources.length > 1, 'waiting for resources to be processed');
         await fakeEdge.waitFor(({ logs } ) => logs.length == 2, 'waiting for logs to be processed');
 
         expect(fakeEdge.resources[0].attributes).toIncludeAllMembers([
