@@ -17,6 +17,8 @@ import {
   DEFAULT_DEPENDENCIES_ENDPOINT,
   DEFAULT_LUMIGO_TRACES_ENDPOINT,
   DEFAULT_LUMIGO_LOGS_ENDPOINT,
+  TRACING_ENABLED,
+  LOGGING_ENABLED,
 } from './constants';
 import { report } from './dependencies';
 import { FileLogExporter, FileSpanExporter } from './exporters';
@@ -241,14 +243,20 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
         },
       });
 
-      tracerProvider.addSpanProcessor(
-        new LumigoSpanProcessor(otlpTraceExporter, {
-          // The maximum queue size. After the size is reached spans are dropped.
-          maxQueueSize: 1000,
-          // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-          maxExportBatchSize: 100,
-        })
-      );
+      if (TRACING_ENABLED) {
+        tracerProvider.addSpanProcessor(
+          new LumigoSpanProcessor(otlpTraceExporter, {
+            // The maximum queue size. After the size is reached spans are dropped.
+            maxQueueSize: 1000,
+            // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+            maxExportBatchSize: 100,
+          })
+        );
+      } else {
+        logger.info(
+          'Tracing is disabled (the "LUMIGO_ENABLE_TRACES" environment variable is not set to "true"): no traces will be sent to Lumigo.'
+        );
+      }
 
       const otlpLogExporter = new OTLPLogExporter({
         url: lumigoLogEndpoint,
@@ -257,14 +265,20 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
         },
       });
 
-      loggerProvider.addLogRecordProcessor(
-        new BatchLogRecordProcessor(otlpLogExporter, {
-          // The maximum queue size. After the size is reached logs are dropped.
-          maxQueueSize: 1000,
-          // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-          maxExportBatchSize: 100,
-        })
-      );
+      if (LOGGING_ENABLED) {
+        loggerProvider.addLogRecordProcessor(
+          new BatchLogRecordProcessor(otlpLogExporter, {
+            // The maximum queue size. After the size is reached logs are dropped.
+            maxQueueSize: 1000,
+            // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+            maxExportBatchSize: 100,
+          })
+        );
+      } else {
+        logger.info(
+          'Logging is disabled (the "LUMIGO_ENABLE_LOGS" environment variable is not set to "true"): no logs will be sent to Lumigo.'
+        );
+      }
 
       /*
        * We do not wait for this promise, we do not want to delay the application.
