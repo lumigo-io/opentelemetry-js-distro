@@ -3,9 +3,9 @@ import type { Span } from '@opentelemetry/api';
 import { FastifyInstrumentation, FastifyRequestInfo } from '@opentelemetry/instrumentation-fastify';
 import { contentType, scrubHttpPayload } from '../../tools/payloads';
 import { getSpanAttributeMaxLength } from '../../utils';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoFastifyInstrumentation extends Instrumentor<FastifyInstrumentation> {
+export default class LumigoFastifyInstrumentation extends TracingInstrumentor<FastifyInstrumentation> {
   getInstrumentedModule(): string {
     return 'fastify';
   }

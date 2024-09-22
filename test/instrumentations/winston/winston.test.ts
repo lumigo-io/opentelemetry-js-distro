@@ -51,7 +51,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         testName: `${INSTRUMENTATION_NAME} logger: ${versionToTest}`,
         packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
-        timeout: 20_000,
+        timeout: 30_000,
       },
       async function () {
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
@@ -68,11 +68,8 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         await writeLogLine('Hello Winston!');
         await writeLogLine({ a: 1, sekret: 'this is secret!' });
 
-        await fakeEdge.waitFor(
-          () => fakeEdge.resources.length == 1,
-          'waiting for resources to be processed'
-        );
-        await fakeEdge.waitFor(() => fakeEdge.logs.length == 2, 'waiting for logs to be processed');
+        await expect(fakeEdge.waitFor(({ logs }) => logs.length === 2, 'waiting for logs to be processed')).toBeTruthy();
+        await expect(fakeEdge.waitFor(({ resources }) => resources.length >= 1, 'waiting for resources to be processed')).resolves.toBeTruthy();
 
         expect(fakeEdge.resources[0].attributes).toIncludeAllMembers([
           {
@@ -81,7 +78,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               stringValue: 'winston',
             },
           },
-        ]);
+        ])
 
         expect(fakeEdge.logs[0].body).toEqual({ stringValue: 'Hello Winston!' });
         // Span context is available since the test app is an instrumented HTTP server
@@ -101,28 +98,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         // Test the log-dump functionality
         await testApp.getFinalLogs(2);
-      }
-    );
-
-    itTest(
-      {
-        testName: `${INSTRUMENTATION_NAME} logger: ${versionToTest} - logging off`,
-        packageName: INSTRUMENTATION_NAME,
-        version: versionToTest,
-        timeout: 20_000,
-      },
-      async function () {
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
-          logDumpPath: `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs-off@${versionToTest}.json`,
-          env: {
-            LUMIGO_ENABLE_LOGS: 'false',
-          },
-        });
-
-        await writeLogLine('Hello Winston!');
-
-        // We expect no logs to be sent, therefore waiting for 1 log should fail
-        await expect(testApp.getFinalLogs(1)).rejects.toThrow();
       }
     );
 

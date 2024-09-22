@@ -1,8 +1,8 @@
 import { ExpressHooks } from './express';
 import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoExpressInstrumentation extends Instrumentor<ExpressInstrumentation> {
+export default class LumigoExpressInstrumentation extends TracingInstrumentor<ExpressInstrumentation> {
   getInstrumentedModule(): string {
     return 'express';
   }

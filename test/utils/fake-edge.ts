@@ -1,14 +1,22 @@
 import {IResource} from "@opentelemetry/resources";
 import { LogRecord } from "@opentelemetry/sdk-logs";
+import type { Span } from '@opentelemetry/api';
 import express, { Express, Request, Response } from 'express';
 import { Server } from "http";
 import { AddressInfo } from "net";
-import pRetry, { FailedAttemptError } from 'p-retry';
+import pRetry from 'p-retry';
+
+type FakeEdgeState = {
+  logs: LogRecord[];
+  spans: Span[];
+  resources: IResource[];
+}
 
 export class FakeEdge {
   private app: Express;
-  private _logs: LogRecord[] = [];
-  private _resources: IResource[] = [];
+  public logs: LogRecord[] = [];
+  public spans: Span[] = [];
+  public resources: IResource[] = [];
   private server: Server;
   private baseUrl: string;
 
@@ -16,18 +24,29 @@ export class FakeEdge {
     this.app = express();
     this.app.use(express.json());
     this.app.use('/v1/traces', (req: Request, res: Response) => {
-      // Currently not used in any tests, just respond with 200 so spans posted during logging tests will not produce errors
+      try {
+        const scopeSpans = req.body.resourceSpans.flatMap(rl => rl.scopeSpans.flatMap(sl => sl.scopeSpans))
+        console.log(`Received ${scopeSpans.length} logs in edge`);
+        this.spans.push(...scopeSpans)
+
+        const resources = req.body.resourceSpans.map(rl => rl.resource)
+        console.log(`Received ${resources.length} resources in edge`);
+        this.resources.push(...resources)
+      } catch (e) {
+        console.error('Error parsing spans in edge: ', e);
+        return res.sendStatus(500);
+      }
       res.sendStatus(200);
     });
     this.app.use('/v1/logs', (req: Request, res: Response) => {
       try {
         const logRecords = req.body.resourceLogs.flatMap(rl => rl.scopeLogs.flatMap(sl => sl.logRecords))
         console.log(`Received ${logRecords.length} logs in edge`);
-        this._logs.push(...logRecords)
+        this.logs.push(...logRecords)
 
         const resources = req.body.resourceLogs.map(rl => rl.resource)
         console.log(`Received ${resources.length} resources in edge`);
-        this._resources.push(...resources)
+        this.resources.push(...resources)
 
       } catch (e) {
         console.error('Error parsing logs in edge: ', e);
@@ -59,10 +78,10 @@ export class FakeEdge {
     return `http://${this.baseUrl}/v1/traces`;
   }
 
-  async waitFor(condition: () => boolean, message: string,  timeout = 5000) {
-    await pRetry(() => {
-      if (condition()) {
-        return Promise.resolve();
+  async waitFor(condition: (edgeFakeState: FakeEdgeState) => boolean, message: string,  timeout = 5000) {
+    return pRetry(() => {
+      if (condition({ logs: this.logs, spans: this.spans, resources: this.resources })) {
+        return Promise.resolve(true);
       } else {
         return Promise.reject(new Error('Condition not met'));
       }
@@ -81,16 +100,9 @@ export class FakeEdge {
     });
   }
 
-  get logs() {
-    return this._logs;
-  }
-
-  get resources() {
-    return this._resources;
-  }
-
   reset() {
-    this._logs = [];
-    this._resources = [];
+    this.logs = [];
+    this.spans = [];
+    this.resources = [];
   }
 }

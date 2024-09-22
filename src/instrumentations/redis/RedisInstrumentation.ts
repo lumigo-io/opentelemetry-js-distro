@@ -2,9 +2,9 @@ import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import type { Span } from '@opentelemetry/api';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis-4';
 import { getSpanAttributeMaxLength } from '../../utils';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoRedisInstrumentation extends Instrumentor<RedisInstrumentation> {
+export default class LumigoRedisInstrumentation extends TracingInstrumentor<RedisInstrumentation> {
   getInstrumentedModule(): string {
     return 'redis';
   }
