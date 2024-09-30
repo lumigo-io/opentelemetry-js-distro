@@ -10,6 +10,6 @@
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
     "body-parser": "^1.19.1",
-    "express": "^4.9.8"
+    "express": "^4.9.0"
   }
 }
