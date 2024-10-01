@@ -1,3 +1,4 @@
+import * as lumigo from "@lumigo/opentelemetry";
 import { createServer } from "http";
 import { parse } from "url";
 import next from "next";
@@ -5,6 +6,7 @@ import next from "next";
 // Set up the environment and fallback port
 const port = process.env.PORT || 3000;  // Default to port 3000 if PORT env is not set
 const dev = process.env.NODE_ENV !== "production";
+await lumigo.init;
 const app = next({ dev });
 const handle = app.getRequestHandler();
 

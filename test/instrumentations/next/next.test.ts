@@ -26,8 +26,8 @@ const SPANS_DIR = join(__dirname, 'spans');
 const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
-const NEXT_CREATE = 'Create Next App';
-const NEXT_INTERNAL = 'getHello';
+const NEXT_CREATE = 'build component tree';
+const NEXT_INTERNAL = 'render route (app) /';
 
 
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
@@ -87,19 +87,15 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       },
       async function () {
           await testApp.invokeGetPath(`/`);
-          const spans = await testApp.getFinalSpans(6);
-          expect(spans).toHaveLength(6);
+          const spans = await testApp.getFinalSpans(9);
+          expect(spans).toHaveLength(9);
 
           const createSpan = getSpanByName(spans, NEXT_CREATE);
-          expect(createSpan.attributes["nextjs.type"]).toEqual("app_creation");
-          // expect(createSpan.attributes["nextjs.version"]).toEqual(versionToTest);
-          // expect(createSpan.attributes["nextjs.module"]).toEqual("AppModule");
+          expect(createSpan.attributes["next.span_type"]).toEqual("NextNodeServer.createComponentTree");
           //
-          const nestJsInternal = getSpanByName(spans, NEXT_INTERNAL);
-          expect(nestJsInternal.kind).toEqual(SpanKind.INTERNAL);
-          // expect(nestJsInternal.attributes["nextjs.type"]).toEqual("handler");
-          // expect(nestJsInternal.attributes["nextjs.version"]).toEqual(versionToTest);
-          // expect(nestJsInternal.attributes["nextjs.callback"]).toEqual("getHello");
+          const nextInternal = getSpanByName(spans, NEXT_INTERNAL);
+          expect(nextInternal.kind).toEqual(SpanKind.INTERNAL);
+          expect(nextInternal.attributes["next.span_type"]).toEqual("AppRender.getBodyResult");
       });
     }
 );

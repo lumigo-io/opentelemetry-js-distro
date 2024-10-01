@@ -1,7 +1,7 @@
-import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
+import { FetchInstrumentation } from '@vercel/otel';
 import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoNestInstrumentation extends TracingInstrumentor<NestInstrumentation> {
+export default class LumigoNestInstrumentation extends TracingInstrumentor<FetchInstrumentation> {
   override isApplicable(): boolean {
     return (
       super.isApplicable() &&
@@ -10,10 +10,10 @@ export default class LumigoNestInstrumentation extends TracingInstrumentor<NestI
   }
 
   getInstrumentedModule(): string {
-    return '@nestjs/core';
+    return 'next';
   }
 
-  getInstrumentation(): NestInstrumentation {
-    return new NestInstrumentation();
+  getInstrumentation(): FetchInstrumentation {
+    return new FetchInstrumentation();
   }
 }
