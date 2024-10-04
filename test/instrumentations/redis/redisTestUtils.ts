@@ -11,9 +11,13 @@ export function getExpectedResourceAttributes() {
     'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
     'process.pid': expect.any(Number),
     'process.executable.name': 'node',
+    'process.executable.path': expect.any(String),
+    'process.command_args': expect.any(Array),
     'process.runtime.description': 'Node.js',
     'process.runtime.name': 'nodejs',
     'process.runtime.version': expect.stringMatching(/\d+\.\d+\.\d+/),
+    'process.command': expect.any(String),
+    'process.owner': expect.any(String),
   };
 }
 
@@ -33,12 +37,15 @@ export function getExpectedSpan({
   const expectedSpan = {
     traceId: expect.any(String),
     id: expect.any(String),
+    parentId: expect.any(String),
     timestamp: expect.any(Number),
     duration: expect.any(Number),
     name: nameSpanAttr,
     kind: SpanKind.CLIENT,
     resource: {
-      attributes: resourceAttributes,
+      _attributes: resourceAttributes,
+      asyncAttributesPending: expect.any(Boolean),
+      _syncAttributes: expect.any(Object),
     },
     attributes: {
       'db.system': 'redis',
