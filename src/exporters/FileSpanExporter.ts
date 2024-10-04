@@ -36,8 +36,8 @@ export class FileSpanExporter extends FileExporter<ReadableSpan> {
       status: span.status,
       events: span.events,
       resource: {
-        attributes: span.resource.attributes
-      }
+        attributes: span.resource.attributes,
+      },
     };
   }
 }
