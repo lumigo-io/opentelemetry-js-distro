@@ -14,7 +14,7 @@ const TEST_TIMEOUT = 20_000;
 const INSTRUMENTATION_NAME = 'http';
 
 const expectedResourceAttributes = {
-    attributes: {
+  attributes: {
         'framework': expect.toBeOneOf(['node', 'express']),
         'lumigo.distro.version': expect.stringMatching(/1\.\d+\.\d+/),
         'process.environ': expect.any(String),
@@ -27,7 +27,13 @@ const expectedResourceAttributes = {
         'telemetry.sdk.language': 'nodejs',
         'telemetry.sdk.name': 'opentelemetry',
         'telemetry.sdk.version': expect.any(String),
-    }
+        'process.executable.path': expect.any(String),
+        'process.command_args': expect.any(Array),
+        'process.owner': expect.any(String),
+        'process.command': expect.any(String),
+    },
+  asyncAttributesPending: expect.any(Boolean),
+  _syncAttributes: expect.any(Object),
 };
 
 describe('Instrumentation tests for the http package', function () {
@@ -248,7 +254,13 @@ describe('Instrumentation tests for the http package', function () {
                 'http.status_text': 'OK',
                 'http.url': 'htt',
                 'lumigo.execution_tags.foo': 'bar',
-                'lumigo.execution_tags.date': 1234567
+                'lumigo.execution_tags.date': 1234567,
+                'net.host.name': 'localhost',
+                "net.transport": "ip_tcp",
+                "net.host.ip": "::1",
+                "net.host.port": expect.any(Number),
+                "net.peer.ip": "::1",
+                "net.peer.port": expect.any(Number),
             }
         );
 

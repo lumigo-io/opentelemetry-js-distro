@@ -39,6 +39,7 @@ export function getExpectedSpan({
   return {
     traceId: expect.any(String),
     id: expect.any(String),
+    parentId: expect.any(String),
     timestamp: expect.any(Number),
     duration: expect.any(Number),
     name: nameSpanAttr,

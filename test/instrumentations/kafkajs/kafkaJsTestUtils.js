@@ -42,9 +42,7 @@ export function getExpectedSpan({ spanKind, resourceAttributes, host, topic, mes
     name: topic,
     kind: spanKind,
     resource: {
-      _attributes: resourceAttributes,
-      asyncAttributesPending: expect.any(Boolean),
-      _syncAttributes: expect.any(Object),
+      attributes: resourceAttributes,
     },
     attributes: {
       'messaging.destination': topic,

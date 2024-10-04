@@ -39,9 +39,7 @@ export function getExpectedSpan({
     name,
     kind: SpanKind.CLIENT,
     resource: {
-      _attributes: resourceAttributes,
-      asyncAttributesPending: expect.any(Boolean),
-      _syncAttributes: expect.any(Object),
+      attributes: resourceAttributes,
     },
     attributes,
     status: {

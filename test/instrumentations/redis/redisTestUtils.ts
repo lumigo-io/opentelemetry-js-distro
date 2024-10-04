@@ -43,9 +43,7 @@ export function getExpectedSpan({
     name: nameSpanAttr,
     kind: SpanKind.CLIENT,
     resource: {
-      _attributes: resourceAttributes,
-      asyncAttributesPending: expect.any(Boolean),
-      _syncAttributes: expect.any(Object),
+      attributes: resourceAttributes,
     },
     attributes: {
       'db.system': 'redis',
