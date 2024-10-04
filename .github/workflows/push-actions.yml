@@ -18,7 +18,7 @@ jobs:
           node-version: 16
           architecture: x64
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npm run ${{ matrix.npm-task }}
       - name: Upload distro as artifact
         uses: actions/upload-artifact@v4
@@ -64,7 +64,7 @@ jobs:
           node-version: ${{ matrix.node_cimg_tag }}
           architecture: x64
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npm run test:instrumentations:ci
         env:
           INSTRUMENTATION_UNDER_TEST: ${{ matrix.instrumentations_to_test }}
