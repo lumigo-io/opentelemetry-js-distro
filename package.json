@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.42.0",
+  "version": "1.43.0",
   "description": "Lumigo wrapper to trace distributed architecture",
   "main": "dist/src/distro.js",
   "private": false,
