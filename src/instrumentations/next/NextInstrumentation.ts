@@ -2,7 +2,7 @@
 import { FetchInstrumentation } from '@vercel/otel';
 import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoNestInstrumentation extends TracingInstrumentor<FetchInstrumentation> {
+export default class LumigoNextInstrumentation extends TracingInstrumentor<FetchInstrumentation> {
   getInstrumentedModule(): string {
     return 'next';
   }

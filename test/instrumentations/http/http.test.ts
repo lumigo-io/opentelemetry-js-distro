@@ -32,8 +32,6 @@ const expectedResourceAttributes = {
         'process.owner': expect.any(String),
         'process.command': expect.any(String),
     },
-  asyncAttributesPending: expect.any(Boolean),
-  _syncAttributes: expect.any(Object),
 };
 
 describe('Instrumentation tests for the http package', function () {
