@@ -328,6 +328,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.7.0|4.0.0~4.7.0|4.0.0~4.7.0|
 | | | 4.6.10~4.7.0| | | |
 | winston | [winston](https://www.npmjs.com/package/winston) | 3.13.0~3.15.0|3.13.0~3.15.0|3.13.0~3.15.0|3.13.0~3.15.0|
+| Next.js         | [next](https://www.npmjs.com/package/next)                               | ||||
 
 ### Activating your Prisma client's instrumentation
 If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.
