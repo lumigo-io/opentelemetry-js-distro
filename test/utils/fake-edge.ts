@@ -26,11 +26,11 @@ export class FakeEdge {
     this.app.use('/v1/traces', (req: Request, res: Response) => {
       try {
         const scopeSpans = req.body.resourceSpans.flatMap(rl => rl.scopeSpans.flatMap(sl => sl.scopeSpans))
-        console.log(`Received ${scopeSpans.length} logs in edge`);
+        console.log(`Received ${scopeSpans.length} logs in edge on /v1/traces`);
         this.spans.push(...scopeSpans)
 
         const resources = req.body.resourceSpans.map(rl => rl.resource)
-        console.log(`Received ${resources.length} resources in edge`);
+        console.log(`Received ${resources.length} resources in edge on /v1/traces`);
         this.resources.push(...resources)
       } catch (e) {
         console.error('Error parsing spans in edge: ', e);
@@ -41,11 +41,11 @@ export class FakeEdge {
     this.app.use('/v1/logs', (req: Request, res: Response) => {
       try {
         const logRecords = req.body.resourceLogs.flatMap(rl => rl.scopeLogs.flatMap(sl => sl.logRecords))
-        console.log(`Received ${logRecords.length} logs in edge`);
+        console.log(`Received ${logRecords.length} logs in edge on /v1/logs`);
         this.logs.push(...logRecords)
 
         const resources = req.body.resourceLogs.map(rl => rl.resource)
-        console.log(`Received ${resources.length} resources in edge`);
+        console.log(`Received ${resources.length} resources in edge /v1/logs`);
         this.resources.push(...resources)
 
       } catch (e) {
