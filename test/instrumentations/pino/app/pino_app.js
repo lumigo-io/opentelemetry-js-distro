@@ -19,7 +19,6 @@ const requestListener = async function (req, res) {
   await init;
 
   const pinoLogger = require('pino')()
-  // const pinoLogger = pino.createLogger({ name: __filename })
 
   console.error(`Received request: ${req.method} ${req.url}`);
 

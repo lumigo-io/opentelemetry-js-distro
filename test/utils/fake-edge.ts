@@ -26,7 +26,7 @@ export class FakeEdge {
     this.app.use('/v1/traces', (req: Request, res: Response) => {
       try {
         const scopeSpans = req.body.resourceSpans.flatMap(rl => rl.scopeSpans.flatMap(sl => sl.scopeSpans))
-        console.log(`Received ${scopeSpans.length} logs in edge on /v1/traces`);
+        console.log(`Received ${scopeSpans.length} spans in edge on /v1/traces`);
         this.spans.push(...scopeSpans)
 
         const resources = req.body.resourceSpans.map(rl => rl.resource)
