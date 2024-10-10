@@ -310,7 +310,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|
 | aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1691.0|2.1533.0~2.1691.0|2.1533.0~2.1691.0|2.1533.0~2.1691.0|
 | bunyan | [bunyan](https://www.npmjs.com/package/bunyan) | 1.8.15|1.8.15|1.8.15|1.8.15|
-| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.21.0|4.9.0~4.21.0|4.9.0~4.21.0|4.9.0~4.21.0|
+| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.21.1|4.9.0~4.21.1|4.9.0~4.21.1|4.9.0~4.21.1|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
 | | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
 | | | 4.0.1~4.28.1| 4.0.1~4.28.1| 4.0.1~4.28.1| 4.0.1~4.28.1|
@@ -321,7 +321,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | | | 5.0.0~5.9.2| 4.0.0~4.17.2| 4.0.0~4.17.2| 4.0.0~4.17.2|
 | | | | 5.0.0~5.9.2| 5.0.0~5.9.2| 5.0.0~5.9.2|
 | | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
-| next | [next](https://www.npmjs.com/package/next) | 11.1.2|13.5.6|14.2.13~14.2.14|14.2.13~14.2.14|
+| next | [next](https://www.npmjs.com/package/next) | 11.1.2|13.5.6|14.2.13~14.2.15|14.2.13~14.2.15|
 | pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3~8.13.0|8.11.3~8.13.0|8.11.3~8.13.0|8.11.3~8.13.0|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
 | | | 5.0.0~5.20.0| 5.0.0~5.20.0| 5.0.0~5.20.0| 5.0.0~5.20.0|
