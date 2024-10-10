@@ -21,9 +21,11 @@ const newHandleServerFunction = (originalPatcher) => {
 
     const serverStreamAndBidiHandlerPrefix = (): void => {
       let serverStreamAggData = '';
+      // @ts-ignore
       call.on('data', (res) => {
         serverStreamAggData = concatenatePayload(serverStreamAggData, res);
       });
+      // @ts-ignore
       call.on('finish', () => {
         safeExecute(() => {
           span.setAttribute(
@@ -36,6 +38,7 @@ const newHandleServerFunction = (originalPatcher) => {
     };
 
     const clientStreamAndUnaryHandlerPrefix = (): void => {
+      // @ts-ignore
       call.on('data', (res) => {
         clientStreamAggData = concatenatePayload(clientStreamAggData, res);
       });
