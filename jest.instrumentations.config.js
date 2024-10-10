@@ -6,7 +6,7 @@ const config = {
   testEnvironment: 'node',
   testMatch: [`**/instrumentations/${instrumentationToTest}/**/*.test.ts`],
   roots: ['./test'],
-  setupFilesAfterEnv: ['./jest.instrumentations.setup.js', 'jest-json', 'jest-expect-message', 'jest-extended/all'],
+  setupFilesAfterEnv: ['./jest.instrumentations.setup.js', 'jest-json', 'jest-expect-message', 'jest-extended/all', './describeVersions.ts'],
   reporters: ['default', 'jest-summarizing-reporter'],
 };
 
