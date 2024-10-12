@@ -88,6 +88,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         // Span context is available since the test app is an instrumented HTTP server
         expect(fakeEdge.logs[0]['traceId']).toHaveLength(32);
         expect(fakeEdge.logs[0]['spanId']).toHaveLength(16);
+        expect(fakeEdge.logs[0]['body']).toBeDefined();
 
         // Logging an object in Pino produces attributes, as opposed to making the body an object
         expect(fakeEdge.logs[1].attributes).toIncludeAllMembers([
@@ -96,6 +97,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         ]);
         expect(fakeEdge.logs[1]['traceId']).toHaveLength(32);
         expect(fakeEdge.logs[1]['spanId']).toHaveLength(16);
+        expect(fakeEdge.logs[1]['body']).toBeDefined();
 
         // Test the log-dump functionality
         await testApp.getFinalLogs(2);

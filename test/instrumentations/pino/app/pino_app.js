@@ -28,7 +28,12 @@ const requestListener = async function (req, res) {
     case '/write-log-line':
       try {
         const logLine = JSON.parse(requestUrl?.query?.logLine)
-        pinoLogger.info(logLine);
+        // Check if logLine is an object
+        if (typeof logLine === 'object' && logLine !== null) {
+          pinoLogger.info(logLine, "");
+        } else {
+          pinoLogger.info(logLine);
+        }
         respond(res, 200, {})
       } catch (err) {
         console.error(`Error writing log line`, err);

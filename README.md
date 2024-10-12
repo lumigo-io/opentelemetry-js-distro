@@ -341,6 +341,12 @@ generator client {
 
 **NOTE**: There have been reports of a possible bug that interferes with tracing when multiple Prisma clients have been instantiated, see [Prisma issue #20779](https://github.com/prisma/prisma/issues/20779).
 
+### Note about Pino logger instrumentation
+In Pino, if you pass an object to the logging method (e.g., `logger.info({ a: 'property' }))`, it logs that object as part of the structured log. 
+However, the default behavior of Pino does not add a message if the log entry is just an object without a message string. This kind of logs will not be captured by Lumigo.
+
+To ensure that all logs are captured by Lumigo, you should always pass a message string to the logging method, even if it is empty. (e.g. `logger.info({ a: 'property' }, 'This is a message')`).
+
 
 ## Automated dependency reporting
 
