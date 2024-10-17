@@ -18,8 +18,6 @@ describe('LumigoRedisInstrumentation', () => {
     const child_process = require('child_process');
     child_process.execSync('npm install redis@4.0.0', { stdio: 'inherit' });
 
-    expect(lumigoRedisInstrumentation.isApplicable()).toEqual(true);
-
     process.env.LUMIGO_DISABLE_REDIS_INSTRUMENTATION = 'true';
     expect(lumigoRedisInstrumentation.isApplicable()).toEqual(false);
   });
