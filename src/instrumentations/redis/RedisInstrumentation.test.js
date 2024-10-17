@@ -18,12 +18,13 @@ describe('LumigoRedisInstrumentation', () => {
     const child_process = require('child_process');
     child_process.execSync('npm install redis@4.0.0', { stdio: 'inherit' });
 
+    expect(lumigoRedisInstrumentation.isApplicable()).toEqual(true);
+
     process.env.LUMIGO_DISABLE_REDIS_INSTRUMENTATION = 'true';
     expect(lumigoRedisInstrumentation.isApplicable()).toEqual(false);
   });
 
   test('getInstrumentedModule should return "redis and be applicable"', () => {
     expect(lumigoRedisInstrumentation.getInstrumentedModule()).toEqual('redis');
-    expect(lumigoRedisInstrumentation.isApplicable()).toEqual(true);
   });
 });
