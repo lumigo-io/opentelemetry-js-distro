@@ -5,6 +5,13 @@ import { getSpanAttributeMaxLength } from '../../utils';
 import { TracingInstrumentor } from '../instrumentor';
 
 export default class LumigoRedisInstrumentation extends TracingInstrumentor<RedisInstrumentation> {
+  override isApplicable(): boolean {
+    return (
+      super.isApplicable() &&
+      process.env.LUMIGO_DISABLE_REDIS_INSTRUMENTATION?.toLocaleLowerCase() !== 'true'
+    );
+  }
+
   getInstrumentedModule(): string {
     return 'redis';
   }
