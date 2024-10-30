@@ -107,6 +107,37 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
     itTest(
       {
+        testName: `${INSTRUMENTATION_NAME} disable works: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}.disable-works@${versionToTest}.json`;
+
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+          spanDumpPath: exporterFile,
+          env: { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096', LUMIGO_DISABLE_IOREDIS_INSTRUMENTATION: 'true'}
+        });
+
+        const key = 'test:set-and-get';
+        const value = 'test-set-and-get-value';
+        const host = redisContainer.getHost();
+        const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
+        await testApp.invokeGetPath(`/set?key=${key}&value=${value}&host=${host}&port=${port}`);
+
+        await testApp.invokeGetPath(`/get?key=${key}&value=${value}&host=${host}&port=${port}`);
+
+        const spans = await testApp.getFinalSpans(2);
+
+        const redisSpans = filterRedisSpans(spans);
+        expect(redisSpans).toHaveLength(0);
+
+      }
+    );
+
+    itTest(
+      {
         testName: `${INSTRUMENTATION_NAME} set and get: ${versionToTest}`,
         packageName: INSTRUMENTATION_NAME,
         version: versionToTest,
