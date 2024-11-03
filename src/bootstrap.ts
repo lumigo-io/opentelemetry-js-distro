@@ -95,7 +95,7 @@ function reportInitError(err: Error) {
   );
 }
 
-export const init = async (): Promise<LumigoSdkInitialization> => {
+export const init = (): LumigoSdkInitialization => {
   if (isTraceInitialized) {
     const message =
       'The Lumigo OpenTelemetry Distro is already initialized: additional attempt to initialize has been ignored.';
@@ -193,19 +193,19 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
      * These are the resources describing the infrastructure and the runtime that will be
      * sent along with the dependency reporting.
      */
-    const infrastructureResource = Resource.default().merge(
-      await detectResources({
-        detectors: infrastructureDetectors,
-      })
-    );
+    // const infrastructureResource = Resource.default().merge(
+    //   await detectResources({
+    //     detectors: infrastructureDetectors,
+    //   })
+    // );
 
     const framework = instrumentedModules.includes('express') ? 'express' : 'node';
 
     const resource = new Resource({
       framework,
     })
-      .merge(infrastructureResource)
-      .merge(await new ProcessEnvironmentDetector().detect());
+    //   .merge(infrastructureResource)
+    //   .merge(await new ProcessEnvironmentDetector().detect());
 
     const tracerProvider = new NodeTracerProvider({
       sampler: getLumigoSampler(),
@@ -294,11 +294,11 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
          * because we want only the infrastructure-related resource attributes
          * like ARNs, and specifically we do not need the process environment.
          */
-        reportDependencies = report(
-          DEFAULT_DEPENDENCIES_ENDPOINT,
-          lumigoToken,
-          infrastructureResource.attributes
-        );
+        // reportDependencies = report(
+        //   DEFAULT_DEPENDENCIES_ENDPOINT,
+        //   lumigoToken,
+        //   infrastructureResource.attributes
+        // );
       }
     } else {
       reportDependencies = Promise.resolve('No Lumigo token available');

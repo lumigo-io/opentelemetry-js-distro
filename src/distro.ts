@@ -15,7 +15,7 @@ import { LUMIGO_LOGGING_NAMESPACE } from './constants';
 import { minMajor, maxMajor } from './supportedVersions.json';
 export type { LumigoSdkInitialization } from './bootstrap';
 
-export const init: Promise<LumigoSdkInitialization | undefined> = (() => {
+export const init: LumigoSdkInitialization | undefined = (() => {
   const version = process.version;
   try {
     const nodeJsMajorVersion = parseInt(version.match(/v(\d+)\..*/)[1]);
@@ -56,7 +56,7 @@ export const init: Promise<LumigoSdkInitialization | undefined> = (() => {
      */
     const { init: bootstrapInit } = require('./bootstrap');
     /* eslint-enable */
-    return Promise.resolve(bootstrapInit());
+    return bootstrapInit();
   } catch (err) {
     console.error(`${LUMIGO_LOGGING_NAMESPACE}: bootstrap failed: ${err}`);
   }
