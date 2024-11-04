@@ -35,7 +35,7 @@ export class TestApp {
             startupScript: 'start',
         }
     ) {
-        const { logDumpPath, spanDumpPath, startupScript } = options;
+        const { logDumpPath, spanDumpPath, startupScript = "start" } = options;
         if (spanDumpPath && existsSync(spanDumpPath)) {
             console.info(`removing previous span dump file ${spanDumpPath}...`)
             unlinkSync(spanDumpPath);
@@ -60,11 +60,11 @@ export class TestApp {
         });
     };
 
-    public runAppScript(startupScript): void {
+    private runAppScript(startupScript): void {
         const { spanDumpPath, logDumpPath, showStdout, env: envVars } = this.options;
 
         console.info(`starting test app with span dump file ${spanDumpPath}, log dump file ${logDumpPath}...`);
-        this.app = spawn('npm', ['run', this.options.startupScript], {
+        this.app = spawn('npm', ['run', startupScript], {
             cwd: this.cwd,
             env: {
                 ...process.env,
