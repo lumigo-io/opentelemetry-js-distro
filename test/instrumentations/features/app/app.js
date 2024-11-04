@@ -1,6 +1,7 @@
 const fastify = require('fastify')({ logger: true });
 const bunyan = require('bunyan');
 const bunyanLogger = bunyan.createLogger({ name: __filename })
+const assert = require('assert');
 
 let tracerProvider;
 let loggerProvider;
@@ -14,6 +15,11 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.get('/no-init', async (request, reply) => {
+  const lumigo = require('@lumigo/opentelemetry/sync');
+  assert(typeof lumigo == "object", 'the default export from the sync entrypoint is not an object!');
+  assert(typeof lumigo.tracerProvider == "object", `lumigo.tracerProvider is not an object! (${typeof lumigo.tracerProvider})`);
+  assert(typeof lumigo.loggerProvider == "object", `lumigo.default.loggerProvider is not an object! (${typeof lumigo.loggerProvider})`);
+
   bunyanLogger.info('this log should be exported to Lumigo without init');
   reply.send('no-init: all good')
 });
