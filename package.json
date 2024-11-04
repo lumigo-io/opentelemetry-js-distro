@@ -2,7 +2,6 @@
   "name": "@lumigo/opentelemetry",
   "version": "1.47.0",
   "description": "Lumigo wrapper to trace distributed architecture",
-  "main": "dist/src/distro.js",
   "private": false,
   "types": "dist/src/distro.js",
   "scripts": {
@@ -17,6 +16,10 @@
     "test:instrumentations:ci": "npm run build && jest -c jest.instrumentations.config.js --runInBand --forceExit --silent=false",
     "test:untested-instrumentations": "node scripts/test_untested_versions.js",
     "tsc": "tsc"
+  },
+  "exports": {
+    ".": "./dist/src/distro.js",
+    "./sync": "./dist/src/distro-sync-init.js"
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
   "license": "Apache-2.0",

@@ -15,6 +15,7 @@ type TestAppOptions = {
     logDumpPath?: string,
     env?: Record<string, string>,
     showStdout?: boolean
+    startupScript?: string
 }
 
 export class TestApp {
@@ -31,9 +32,10 @@ export class TestApp {
         private readonly options: TestAppOptions = {
             env: {},
             showStdout: false,
+            startupScript: 'start',
         }
     ) {
-        const { logDumpPath, spanDumpPath } = options;
+        const { logDumpPath, spanDumpPath, startupScript } = options;
         if (spanDumpPath && existsSync(spanDumpPath)) {
             console.info(`removing previous span dump file ${spanDumpPath}...`)
             unlinkSync(spanDumpPath);
@@ -44,7 +46,7 @@ export class TestApp {
             unlinkSync(logDumpPath);
         }
 
-        this.runAppScript();
+        this.runAppScript(startupScript);
     }
 
     public static runAuxiliaryScript(scriptName: string, cwd: string, envVars = {}): void {
@@ -58,11 +60,11 @@ export class TestApp {
         });
     };
 
-    public runAppScript(): void {
+    public runAppScript(startupScript): void {
         const { spanDumpPath, logDumpPath, showStdout, env: envVars } = this.options;
 
         console.info(`starting test app with span dump file ${spanDumpPath}, log dump file ${logDumpPath}...`);
-        this.app = spawn('npm', ['run', 'start'], {
+        this.app = spawn('npm', ['run', this.options.startupScript], {
             cwd: this.cwd,
             env: {
                 ...process.env,
