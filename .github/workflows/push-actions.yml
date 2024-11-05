@@ -75,7 +75,7 @@ jobs:
     needs: [build-package]
     strategy:
       matrix:
-        node_cimg_tag: [ 10, 12 ]
+        node_cimg_tag: [ 12 ]
     steps:
       - name: Set up Node
         uses: actions/setup-node@v3
