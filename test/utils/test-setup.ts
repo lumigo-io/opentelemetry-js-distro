@@ -15,7 +15,7 @@ export const reinstallPackages = ({appDir}: {appDir: string}) => {
   }
 
   console.log(`installing node packages into ${appDir}...`);
-  const { stderr, status, error } = spawnSync('npm', ['install', '--quiet'], {
+  const { stderr, status, error } = spawnSync('npm', ['install', '--no-save', '--quiet'], {
     cwd: appDir,
   });
 
