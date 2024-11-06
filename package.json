@@ -1,8 +1,7 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.47.0",
+  "version": "1.48.0",
   "description": "Lumigo wrapper to trace distributed architecture",
-  "main": "dist/src/distro.js",
   "private": false,
   "types": "dist/src/distro.js",
   "scripts": {
@@ -17,6 +16,16 @@
     "test:instrumentations:ci": "npm run build && jest -c jest.instrumentations.config.js --runInBand --forceExit --silent=false",
     "test:untested-instrumentations": "node scripts/test_untested_versions.js",
     "tsc": "tsc"
+  },
+  "exports": {
+    ".": {
+      "default": "./dist/src/distro.js",
+      "types": "./dist/src/distro.d.ts"
+    },
+    "./sync": {
+      "default": "./dist/src/distro-sync-init.js",
+      "types": "./dist/src/distro-sync-init.d.ts"
+    }
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
   "license": "Apache-2.0",
@@ -50,6 +59,7 @@
     "@opentelemetry/semantic-conventions": "1.17.1",
     "@opentelemetry/winston-transport": "0.2.0",
     "@prisma/instrumentation": "^4.14.0",
+    "deasync": "^0.1.30",
     "opentelemetry-instrumentation-express": "0.39.1",
     "opentelemetry-instrumentation-kafkajs": "^0.39.1",
     "shimmer": "^1.2.1"
@@ -67,6 +77,7 @@
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^8.0.5",
+    "@types/deasync": "^0.1.5",
     "@types/express": "^4.17.8",
     "@types/jest": "^29.5.1",
     "@types/kafkajs": "^1.9.0",
