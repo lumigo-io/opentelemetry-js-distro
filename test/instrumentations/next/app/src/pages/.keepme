@@ -1,0 +1,5 @@
+Having this empty folder should fix the following error:
+
+  Couldn't find a `pages` directory. Please create one under the project root
+
+when running the test suite with Next 11.x
