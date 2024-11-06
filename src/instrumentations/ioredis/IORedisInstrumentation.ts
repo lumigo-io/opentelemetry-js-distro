@@ -5,6 +5,13 @@ import { getSpanAttributeMaxLength } from '../../utils';
 import { TracingInstrumentor } from '../instrumentor';
 
 export default class LumigoIORedisInstrumentation extends TracingInstrumentor<IORedisInstrumentation> {
+  override isApplicable(): boolean {
+    return (
+      super.isApplicable() &&
+      process.env.LUMIGO_DISABLE_IOREDIS_INSTRUMENTATION?.toLocaleLowerCase() !== 'true'
+    );
+  }
+
   getInstrumentedModule(): string {
     return 'ioredis';
   }

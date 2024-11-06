@@ -41,6 +41,7 @@ import {
 } from './instrumentations/aws-sdk';
 import LumigoWinstonInstrumentation from './instrumentations/winston/WinstonInstrumentation';
 import LumigoBunyanInstrumentation from './instrumentations/bunyan/BunyanInstrumentation';
+import LumigoPinoInstrumentation from './instrumentations/pino/PinoInstrumentation';
 
 import { LumigoW3CTraceContextPropagator } from './propagator/w3cTraceContextPropagator';
 import {
@@ -142,6 +143,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       // Loggers
       new LumigoWinstonInstrumentation(),
       new LumigoBunyanInstrumentation(),
+      new LumigoPinoInstrumentation(),
     ].filter((i) => i.isApplicable());
 
     /*
