@@ -19,11 +19,11 @@
   },
   "exports": {
     ".": {
-      "require": "./dist/src/distro.js",
+      "default": "./dist/src/distro.js",
       "types": "./dist/src/distro.d.ts"
     },
     "./sync": {
-      "require": "./dist/src/distro-sync-init.js",
+      "default": "./dist/src/distro-sync-init.js",
       "types": "./dist/src/distro-sync-init.d.ts"
     }
   },
