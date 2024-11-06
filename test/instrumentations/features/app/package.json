@@ -4,13 +4,15 @@
   "description": "",
   "scripts": {
     "start": "node -r @lumigo/opentelemetry app.js",
-    "start-sync": "node -r @lumigo/opentelemetry/sync app.js"
+    "start-sync": "node -r @lumigo/opentelemetry/sync app.js",
+    "start-sync-ts": "ts-node -r @lumigo/opentelemetry/sync app.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
     "fastify": "4.0.1",
-    "bunyan": "1.8.15"
+    "bunyan": "1.8.15",
+    "ts-node": "10.9.2"
   }
 }

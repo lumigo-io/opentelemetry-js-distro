@@ -55,7 +55,7 @@ describe("global distro features", () => {
     }, 2 * 60 * 1000);
   })
 
-  describe("synchronous initialization", () => {
+  describe("synchronous initialization - Javascript", () => {
     beforeEach(async () => {
         testApp = new TestApp(
           APP_DIR,
@@ -74,7 +74,32 @@ describe("global distro features", () => {
     }, SETUP_TIMEOUT);
 
     test('allows logging without await-ing on the init promise', async () => {
-      await testApp.invokeGetPath('/no-init');
+      await testApp.invokeGetPath('/sync-init');
+
+      await expect(fakeEdge.waitFor(({ logs }) => logs.some(log => log.body["stringValue"] === "this log should be exported to Lumigo without init"), 'waiting for logs')).resolves.toBeTruthy();
+    }, 2 * 60 * 1000);
+  })
+
+  describe("synchronous initialization - Typescript", () => {
+    beforeEach(async () => {
+        testApp = new TestApp(
+          APP_DIR,
+          "test-sync-init-ts",
+          {
+              env: {
+                LUMIGO_TRACER_TOKEN: 't_123456789',
+                LUMIGO_LOGS_ENDPOINT: fakeEdge.logsUrl,
+                LUMIGO_ENDPOINT: fakeEdge.tracesUrl,
+                LUMIGO_ENABLE_LOGS: 'true'
+              },
+              startupScript: 'start-sync-ts'
+          }
+        );
+        await testApp.waitUntilReady()
+    }, SETUP_TIMEOUT);
+
+    test('allows logging without await-ing on the init promise in a Typescript app', async () => {
+      await testApp.invokeGetPath('/sync-init');
 
       await expect(fakeEdge.waitFor(({ logs }) => logs.some(log => log.body["stringValue"] === "this log should be exported to Lumigo without init"), 'waiting for logs')).resolves.toBeTruthy();
     }, 2 * 60 * 1000);

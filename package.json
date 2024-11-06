@@ -18,8 +18,14 @@
     "tsc": "tsc"
   },
   "exports": {
-    ".": "./dist/src/distro.js",
-    "./sync": "./dist/src/distro-sync-init.js"
+    ".": {
+      "require": "./dist/src/distro.js",
+      "types": "./dist/src/distro.d.ts"
+    },
+    "./sync": {
+      "require": "./dist/src/distro-sync-init.js",
+      "types": "./dist/src/distro-sync-init.d.ts"
+    }
   },
   "repository": "git@github.com:lumigo-io/opentelemetry-js-distro.git",
   "license": "Apache-2.0",
