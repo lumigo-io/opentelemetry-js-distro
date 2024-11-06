@@ -3,9 +3,9 @@ import type { Span } from '@opentelemetry/api';
 import type { Message } from 'kafkajs';
 import { KafkaJsInstrumentation } from 'opentelemetry-instrumentation-kafkajs';
 import { getSpanAttributeMaxLength } from '../../utils';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoKafkaJsInstrumentation extends Instrumentor<KafkaJsInstrumentation> {
+export default class LumigoKafkaJsInstrumentation extends TracingInstrumentor<KafkaJsInstrumentation> {
   getInstrumentedModule(): string {
     return 'kafkajs';
   }

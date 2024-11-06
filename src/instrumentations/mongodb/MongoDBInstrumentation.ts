@@ -1,7 +1,7 @@
 import { MongoDBInstrumentation } from '@opentelemetry/instrumentation-mongodb';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoMongoDBInstrumentation extends Instrumentor<MongoDBInstrumentation> {
+export default class LumigoMongoDBInstrumentation extends TracingInstrumentor<MongoDBInstrumentation> {
   getInstrumentedModule(): string {
     return 'mongodb';
   }

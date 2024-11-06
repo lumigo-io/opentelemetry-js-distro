@@ -2,9 +2,9 @@ import type { RequestOptions } from 'https';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 
 import { HttpHooks } from './http';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoHttpInstrumentation extends Instrumentor<HttpInstrumentation> {
+export default class LumigoHttpInstrumentation extends TracingInstrumentor<HttpInstrumentation> {
   private readonly ignoredHostnames: string[];
 
   constructor(...ignoredHostnames: string[]) {

@@ -1,7 +1,7 @@
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
-import { Instrumentor } from '../../instrumentor';
+import { TracingInstrumentor } from '../../instrumentor';
 
-export default class LumigoNestInstrumentation extends Instrumentor<NestInstrumentation> {
+export default class LumigoNestInstrumentation extends TracingInstrumentor<NestInstrumentation> {
   override isApplicable(): boolean {
     return (
       super.isApplicable() &&

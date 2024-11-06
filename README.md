@@ -100,6 +100,7 @@ Specifically supported are:
 
 `@lumigo/opentelemetry` additionally supports the following configuration options as environment variables:
 
+* `LUMIGO_ENABLE_TRACES` - Default: `true`. When set to `false`, turns off all of the *tracing* instrumentations. Note that this does not turn off the *logging* instrumentations, which are controlled by the `LUMIGO_ENABLE_LOGS` environment variable.
 * `LUMIGO_TRACER_TOKEN=<token>`: Configure the Lumigo token to enable to upload of telemetry to Lumigo; without this environment variable, your Node.js process will not send telemetry to Lumigo.
 * `LUMIGO_DEBUG=TRUE`: Enables debug logging
 * `LUMIGO_DEBUG_SPANDUMP=<path|console:log|console:error>`: Log all spans collected to the `<path>` file or, the value is `console:log` or `console:error`, to `console.log` or `console.error`; this is an option intended only for debugging purposes and should *not* be used in production.
@@ -108,6 +109,8 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 * `LUMIGO_DISABLE_PG_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [postgres](https://www.npmjs.com/package/pg).
+* `LUMIGO_DISABLE_REDIS_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [redis](https://www.npmjs.com/package/redis).
+* `LUMIGO_DISABLE_IOREDIS_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [ioredis](https://www.npmjs.com/package/ioredis).
 * `LUMIGO_DISABLE_NEST_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [@nestjs/core](https://www.npmjs.com/package/@nestjs/core).
 * `LUMIGO_SECRET_MASKING_REGEX='["regex1", "regex2"]'`: Prevents Lumigo from sending keys that match the supplied regular expressions in process environment data, HTTP headers, payloads and queries. All regular expressions are case-insensitive. The "magic" value `all` will redact everything. By default, Lumigo applies the following regular expressions: `[".*pass.*", ".*key.*", ".*secret.*", ".*credential.*", ".*passphrase.*"]`. More fine-grained settings can be applied via the following environment variables, which will override `LUMIGO_SECRET_MASKING_REGEX` for a specific type of data:
   * `LUMIGO_SECRET_MASKING_REGEX_HTTP_REQUEST_BODIES` applies secret redaction to HTTP request bodies
@@ -307,10 +310,9 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | grpc-js | [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) | 1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|1.8.0~1.8.20|
 | core | [@nestjs/core](https://www.npmjs.com/package/@nestjs/core) |  |10.3.2|10.3.2|10.3.2|
 | amqplib | [amqplib](https://www.npmjs.com/package/amqplib) | 0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|0.9.0~0.10.4|
-| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1651.0|2.1533.0~2.1651.0|2.1533.0~2.1651.0|2.1533.0~2.1651.0|
+| aws-sdk | [aws-sdk](https://www.npmjs.com/package/aws-sdk) | 2.1533.0~2.1691.0|2.1533.0~2.1691.0|2.1533.0~2.1691.0|2.1533.0~2.1691.0|
 | bunyan | [bunyan](https://www.npmjs.com/package/bunyan) | 1.8.15|1.8.15|1.8.15|1.8.15|
-| | | 2.0.5| 2.0.5| 2.0.5| 2.0.5|
-| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|4.9.0~4.19.2|
+| express | [express](https://www.npmjs.com/package/express) | 4.9.0~4.21.0|4.9.0~4.21.0|4.9.0~4.21.0|4.9.0~4.21.0|
 | fastify | [fastify](https://www.npmjs.com/package/fastify) | 3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|3.3.0~3.29.5|
 | | | 4.0.0| 4.0.0| 4.0.0| 4.0.0|
 | | | 4.0.1~4.28.1| 4.0.1~4.28.1| 4.0.1~4.28.1| 4.0.1~4.28.1|
@@ -321,12 +323,13 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 | | | 5.0.0~5.9.2| 4.0.0~4.17.2| 4.0.0~4.17.2| 4.0.0~4.17.2|
 | | | | 5.0.0~5.9.2| 5.0.0~5.9.2| 5.0.0~5.9.2|
 | | | | 6.0.0~6.3.0| 6.0.0~6.3.0| 6.0.0~6.3.0|
-| pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3~8.12.0|8.11.3~8.12.0|8.11.3~8.12.0|8.11.3~8.12.0|
+| next | [next](https://www.npmjs.com/package/next) | 11.1.2|13.5.6|14.2.13~14.2.14|14.2.13~14.2.14|
+| pg | [pg](https://www.npmjs.com/package/pg) | 8.11.3~8.13.0|8.11.3~8.13.0|8.11.3~8.13.0|8.11.3~8.13.0|
 | prisma | [prisma](https://www.npmjs.com/package/prisma) | 4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|4.2.0~4.16.2|
-| | | 5.0.0~5.16.1| 5.0.0~5.16.1| 5.0.0~5.16.1| 5.0.0~5.16.1|
-| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.6.14|4.0.0~4.6.14|4.0.0~4.6.14|
-| | | 4.6.10~4.6.14| | | |
-| winston | [winston](https://www.npmjs.com/package/winston) | 3.13.0|3.13.0|3.13.0|3.13.0|
+| | | 5.0.0~5.20.0| 5.0.0~5.20.0| 5.0.0~5.20.0| 5.0.0~5.20.0|
+| redis | [redis](https://www.npmjs.com/package/redis) | 4.0.0~4.6.8|4.0.0~4.7.0|4.0.0~4.7.0|4.0.0~4.7.0|
+| | | 4.6.10~4.7.0| | | |
+| winston | [winston](https://www.npmjs.com/package/winston) | 3.13.0~3.15.0|3.13.0~3.15.0|3.13.0~3.15.0|3.13.0~3.15.0|
 
 ### Activating your Prisma client's instrumentation
 If you're using [Prisma](https://www.npmjs.com/package/prisma) and you would like it instrumented, the *only* thing you will need to do (aside from [activating the tracer](#tracer-activation), of course) is ensure that your schema file's `generator client` has the `tracing` preview feature enabled prior to generating the client itself.

@@ -2,9 +2,16 @@ import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import type { Span } from '@opentelemetry/api';
 import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
 import { getSpanAttributeMaxLength } from '../../utils';
-import { Instrumentor } from '../instrumentor';
+import { TracingInstrumentor } from '../instrumentor';
 
-export default class LumigoIORedisInstrumentation extends Instrumentor<IORedisInstrumentation> {
+export default class LumigoIORedisInstrumentation extends TracingInstrumentor<IORedisInstrumentation> {
+  override isApplicable(): boolean {
+    return (
+      super.isApplicable() &&
+      process.env.LUMIGO_DISABLE_IOREDIS_INSTRUMENTATION?.toLocaleLowerCase() !== 'true'
+    );
+  }
+
   getInstrumentedModule(): string {
     return 'ioredis';
   }
