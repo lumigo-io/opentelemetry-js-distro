@@ -5,7 +5,6 @@ import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
 import { FakeEdge } from '../../utils/fake-edge';
-import { setTimeout } from 'timers/promises';
 
 const INSTRUMENTATION_NAME = 'winston';
 const LOGS_DIR = join(__dirname, 'logs');

@@ -412,11 +412,32 @@ If the [Task Metadata endpoint v4](https://docs.aws.amazon.com/AmazonECS/latest/
 
 ### Waiting for the initialization of the Lumigo OpenTelemetry Distro
 
-The initialization of the Lumigo OpenTelemetry Distro is performed asynchronously to avoid potentially blocking behavior.
+The initialization of the Lumigo OpenTelemetry Distro is performed asynchronously by default, to avoid potentially blocking behavior. See the [synchronous initialization] section(#synchronous-initialization-of-the-Lumigo-OpenTelemetry-Distro) for an alternate method of initializing.
 
 Due to the asynchronous nature of this initialization logic, some CLI or batch-like applications that perform their logic on startup without needing to wait on external request responses may find that they are missing some of the trace data, for example the first span that represents the startup of the application.
 
 For scenarios in which each and every span is required, the Lumigo OpenTelemetry Distro provides a `Promise` called `init` that you can wait on as follows:
+
+### Synchronous initialization of the Lumigo OpenTelemetry Distro
+
+For cases where the startup time is not a great concern, and you want to ensure that all spans and logs are captured, an alternative initialization method is available via the `@lumigo/oprntelemetry/sync` entrypoint. This entrypoint will block the main thread until the Lumigo OpenTelemetry Distro is fully initialized, without the need to wait on the `init` promise, and will provide an already-initialized Lumigo SDK objects:
+
+
+```typescript
+import { tracerProvider, loggerProvider } from '@lumigo/opentelemetry/sync';
+```
+
+```js
+const { tracerProvider, loggerProvider } = require('@lumigo/opentelemetry/sync');
+```
+
+This will also possible with preloading, using the `-r` None option:
+
+```bash
+node -r '@lumigo/opentelemetry/sync' your-app-main-file.js
+```
+
+these methods will ensure that your app will wait for the Lumigo OpenTelemetry Distro to be fully initialized before attempting to capture and export any telemetry data.
 
 #### Node.js prior to v18
 

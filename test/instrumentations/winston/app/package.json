@@ -10,6 +10,6 @@
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
     "@opentelemetry/winston-transport": "^0.2.0",
-    "winston": "^3.13.0"
+    "winston": "^3.14.0"
   }
 }
