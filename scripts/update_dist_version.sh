@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Expected to come from running the script with `nextRelease.version` during a semantic-release hook run
 next_version=$1
 
 pushd ./dist
