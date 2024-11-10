@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.48.0",
+  "version": "$next_version",
   "description": "Lumigo wrapper to trace distributed architecture",
   "private": false,
   "types": "dist/src/distro.js",
@@ -75,6 +75,7 @@
     "@grpc/grpc-js": "^1.9.0",
     "@jest/globals": "^29.4.0",
     "@semantic-release/changelog": "^6.0.1",
+    "@semantic-release/exec": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^8.0.5",
     "@types/deasync": "^0.1.5",
@@ -134,7 +135,13 @@
       "@semantic-release/release-notes-generator",
       "@semantic-release/npm",
       "@semantic-release/git",
-      "@semantic-release/github"
+      "@semantic-release/github",
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "./scripts/update_dist_version.sh ${nextRelease.version}"
+        }
+      ]
     ]
   },
   "husky": {
