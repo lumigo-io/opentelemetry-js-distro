@@ -4,7 +4,7 @@ next_version=$1
 
 pushd ./dist
 if [ ! -f "package.json" ]; then
-  echo "File dist/package.json found."
+  echo "No dist/package.json found, failing deployment!"
   exit 1
 fi
 
