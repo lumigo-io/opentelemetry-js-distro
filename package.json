@@ -10,7 +10,7 @@
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
-    "semantic-release": "semantic-release",
+    "semantic-release": "semantic-release --debug",
     "test:unit": "NODE_OPTIONS=--unhandled-rejections=strict jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
     "test:instrumentations": "npm run build && jest -c jest.instrumentations.config.js --detectOpenHandles --runInBand --silent=false",
     "test:instrumentations:ci": "npm run build && jest -c jest.instrumentations.config.js --runInBand --forceExit --silent=false",
