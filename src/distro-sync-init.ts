@@ -1,21 +1,12 @@
 import { init, LumigoSdkInitialization } from './distro';
-import deasync from 'deasync';
+import { logger } from './logging';
 
-let done = false;
 let lumigoSdk: LumigoSdkInitialization | undefined;
 
-init
-  .then((initializedLumigoSdk) => {
-    lumigoSdk = initializedLumigoSdk;
-  })
-  .catch((err) => {
-    console.error(`Lumigo JS distro synchronous bootstrap failed: ${err}`);
-  })
-  .finally(() => {
-    done = true;
-  });
-
-deasync.loopWhile(() => !done);
+(async () => {
+  logger.info('Lumigo OpenTelemetry Distro synchronous bootstrapping starting...');
+  lumigoSdk = await init;
+})();
 
 /*
   The `export =` syntax makes sure that using the sync endpoint from both TS and JS will return the same object structure:
