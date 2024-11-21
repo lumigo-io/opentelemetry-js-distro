@@ -9,6 +9,6 @@
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.0"
   }
 }
