@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.48.0",
+  "version": "1.48.2",
   "description": "Lumigo wrapper to trace distributed architecture",
   "private": false,
   "types": "dist/src/distro.js",
@@ -10,7 +10,7 @@
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
-    "semantic-release": "semantic-release",
+    "semantic-release": "semantic-release --debug",
     "test:unit": "NODE_OPTIONS=--unhandled-rejections=strict jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
     "test:instrumentations": "npm run build && jest -c jest.instrumentations.config.js --detectOpenHandles --runInBand --silent=false",
     "test:instrumentations:ci": "npm run build && jest -c jest.instrumentations.config.js --runInBand --forceExit --silent=false",
@@ -75,6 +75,7 @@
     "@grpc/grpc-js": "^1.9.0",
     "@jest/globals": "^29.4.0",
     "@semantic-release/changelog": "^6.0.1",
+    "@semantic-release/exec": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^8.0.5",
     "@types/deasync": "^0.1.5",
@@ -134,7 +135,13 @@
       "@semantic-release/release-notes-generator",
       "@semantic-release/npm",
       "@semantic-release/git",
-      "@semantic-release/github"
+      "@semantic-release/github",
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "./scripts/update_dist_version.sh ${nextRelease.version}"
+        }
+      ]
     ]
   },
   "husky": {
