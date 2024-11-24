@@ -32,7 +32,7 @@ const SAMPLE_INNER_SNS_MESSAGE_BODY = JSON.stringify({
   "UnsubscribeURL": "https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&amp;SubscriptionArn=arn:aws:sns:us-west-2:123456789:inner-sns:123456789"
 })
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, PACKAGE_NAME))(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
+describeVersions(INSTRUMENTATION_NAME, PACKAGE_NAME)(`Instrumentation tests for the ${INSTRUMENTATION_NAME} package`, (versionToTest) => {
   let sqsContainer: StartedTestContainer;
   let testApp: TestApp;
   let sqsPort: number;

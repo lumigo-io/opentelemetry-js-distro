@@ -30,7 +30,7 @@ const NEXT_CREATE = 'build component tree';
 const NEXT_INTERNAL = 'render route (app) /';
 
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
+describeVersions(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME)(
   'Instrumentation tests for the next package',
     function (versionToTest) {
         let testApp: TestApp;

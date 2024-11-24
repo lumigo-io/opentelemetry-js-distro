@@ -10,7 +10,7 @@ const INSTRUMENTATION_NAME = 'bunyan';
 const LOGS_DIR = join(__dirname, 'logs');
 const TEST_APP_DIR = join(__dirname, 'app');
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
+describeVersions(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME)(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
     let testApp: TestApp;
