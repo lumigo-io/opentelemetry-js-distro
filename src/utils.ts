@@ -170,38 +170,39 @@ const getRequireFunction = (): NodeRequire =>
   // @ts-ignore __non_webpack_require__ not available at compile time
   typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
 
-export const safeRequire = (moduleNameOrPath) => {
-  const customRequire = getRequireFunction();
-
+export const safeRequire = (moduleSpecifier) => {
   try {
-    const resolvedPath = safeResolvePath(moduleNameOrPath);
-    if (resolvedPath) {
-      logger.debug(`resolved ${moduleNameOrPath} to ${resolvedPath}`);
-    } else {
-      logger.debug(`unable to resolve ${moduleNameOrPath}`);
-    }
+    const customRequire = getRequireFunction();
+    const resolvedPath = safeResolvePath(moduleSpecifier);
     return resolvedPath && customRequire(resolvedPath);
   } catch (e) {
-    if (e.code !== 'MODULE_NOT_FOUND') {
-      logger.warn('Unable to load module', {
-        error: e,
-        libId: moduleNameOrPath,
-      });
-    }
+    logger.warn('Unable to load module', {
+      error: e,
+      libId: moduleSpecifier,
+    });
 
     return undefined;
   }
 };
 
-const tryResolveFromPaths = (
+const tryResolveFromPathGroup = (
   customRequire: NodeRequire,
   moduleSpecifier: string,
   paths: string[]
 ): string => {
   try {
-    logger.debug(`checking if ${moduleSpecifier} can be required from the following paths`, paths);
     const resolvedPath = customRequire.resolve(moduleSpecifier, { paths });
-    logger.debug(`resolved ${moduleSpecifier} from ${resolvedPath}`);
+    if (resolvedPath) {
+      logger.debug(
+        `${moduleSpecifier} successfully loaded from ${resolvedPath}. Paths searched: `,
+        paths
+      );
+    } else {
+      logger.debug(
+        `${moduleSpecifier} could not be loaded from any of the following paths: `,
+        paths
+      );
+    }
     return resolvedPath;
   } catch (error) {
     if (error.code !== 'MODULE_NOT_FOUND') {
@@ -214,7 +215,7 @@ const tryResolveFromPaths = (
 const safeResolvePath = (moduleSpecifier: string): string | undefined => {
   const customReq = getRequireFunction();
 
-  const pathSet = [
+  const pathGroups = [
     // process CWD - i.e. the node_nodules folder of the process require()-ed the distro
     [path.resolve(process.cwd(), 'node_modules')],
     // default paths - same as not specifying paths to require.resolve()
@@ -223,8 +224,8 @@ const safeResolvePath = (moduleSpecifier: string): string | undefined => {
     (process.env.NODE_PATH || '').split(':'),
   ];
 
-  return pathSet
-    .map((paths) => tryResolveFromPaths(customReq, moduleSpecifier, paths))
+  return pathGroups
+    .map((pathGroup) => tryResolveFromPathGroup(customReq, moduleSpecifier, pathGroup))
     .find(Boolean);
 };
 
