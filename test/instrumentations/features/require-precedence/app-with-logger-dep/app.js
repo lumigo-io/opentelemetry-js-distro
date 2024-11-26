@@ -5,7 +5,7 @@ const bunyanLogger = bunyan.createLogger({ name: __filename })
 
 const server = http.createServer(async (req, res) => {
   switch (req.url) {
-    case '/test-case-2':
+    case '/write-log':
       bunyanLogger.info('sure thing it works!');
       res.writeHead(200);
       res.end();

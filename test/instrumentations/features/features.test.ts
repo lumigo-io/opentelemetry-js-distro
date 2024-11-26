@@ -142,18 +142,23 @@ describe("global distro features", () => {
       ]);
     });
 
-
-    describe("both distro and instrumented package are direct dependencies of the app", () => {
+    describe.each`
+    testFolder                            | NODE_PATH                         | description
+    ${"app-with-logger-and-distro-deps"}  | ${undefined}                      | ${"both distro and instrumented module are direct deps of the app"}
+    ${"app-with-logger-dep"}              | ${"../distro-only/node_modules"}  | ${"instrumented package is a direct dep of the app, distro is loaded via NODE_PATH"}
+    ${"app-with-distro-dep"}              | ${"../logger-only/node_modules"}  | ${"distro is a direct dep of the app, instrumented package is loaded via NODE_PATH"}
+    `("$description", ({ testFolder, NODE_PATH, description }) => {
       beforeEach(async () => {
         testApp = new TestApp(
-          path.join(targetFolder, "app-with-logger-and-distro-deps"),
-          "test-case-1",
+          path.join(targetFolder, testFolder),
+          description.replace(/ /g, "-"),
           {
               env: {
                 LUMIGO_TRACER_TOKEN: 't_123456789',
                 LUMIGO_LOGS_ENDPOINT: fakeEdge.logsUrl,
                 LUMIGO_ENDPOINT: fakeEdge.tracesUrl,
                 LUMIGO_ENABLE_LOGS: 'true',
+                NODE_PATH
               }
           },
         );
@@ -161,55 +166,7 @@ describe("global distro features", () => {
       }, SETUP_TIMEOUT);
 
       test('properly resolves modules to instrument relative to the app folder', async () => {
-        await testApp.invokeGetPath('/test-case-1');
-        await expect(fakeEdge.waitFor(({ logs }) => logs.some(log => log.body["stringValue"] === "sure thing it works!"), 'waiting for logs', MINUTE)).resolves.toBeTruthy();
-      }, 2 * MINUTE);
-    });
-
-    describe("distro is loaded via NODE_PATH, instrumented package is a direct dependency of the app", () => {
-      beforeEach(async () => {
-        testApp = new TestApp(
-          path.join(targetFolder, "app-with-logger-dep"),
-          "test-case-2",
-          {
-              env: {
-                LUMIGO_TRACER_TOKEN: 't_123456789',
-                LUMIGO_LOGS_ENDPOINT: fakeEdge.logsUrl,
-                LUMIGO_ENDPOINT: fakeEdge.tracesUrl,
-                LUMIGO_ENABLE_LOGS: 'true',
-                NODE_PATH: '../distro-only/node_modules'
-              }
-          },
-        );
-        await testApp.waitUntilReady()
-      }, SETUP_TIMEOUT);
-
-      test('properly resolves modules to instrument relative to the app folder', async () => {
-        await testApp.invokeGetPath('/test-case-2');
-        await expect(fakeEdge.waitFor(({ logs }) => logs.some(log => log.body["stringValue"] === "sure thing it works!"), 'waiting for logs', MINUTE)).resolves.toBeTruthy();
-      }, 2 * MINUTE);
-    });
-
-    describe("distro is a direct dependency of the app, instrumented package is loaded via NODE_PATH", () => {
-      beforeEach(async () => {
-        testApp = new TestApp(
-          path.join(targetFolder, "app-with-distro-dep"),
-          "test-case-3",
-          {
-              env: {
-                LUMIGO_TRACER_TOKEN: 't_123456789',
-                LUMIGO_LOGS_ENDPOINT: fakeEdge.logsUrl,
-                LUMIGO_ENDPOINT: fakeEdge.tracesUrl,
-                LUMIGO_ENABLE_LOGS: 'true',
-                NODE_PATH: '../logger-only/node_modules'
-              }
-          },
-        );
-        await testApp.waitUntilReady()
-      }, SETUP_TIMEOUT);
-
-      test('properly resolves modules to instrument relative to the app folder', async () => {
-        await testApp.invokeGetPath('/test-case-3');
+        await testApp.invokeGetPath(`/write-log`);
         await expect(fakeEdge.waitFor(({ logs }) => logs.some(log => log.body["stringValue"] === "sure thing it works!"), 'waiting for logs', MINUTE)).resolves.toBeTruthy();
       }, 2 * MINUTE);
     });
