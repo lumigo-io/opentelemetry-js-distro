@@ -1,3 +1,5 @@
+import { getSpanAttributeMaxLength } from './utils';
+
 describe('getSpanAttributeMaxLength', () => {
   describe('value according to env. vars', () => {
     beforeEach(() => {
