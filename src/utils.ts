@@ -174,7 +174,7 @@ export const safeRequire = (moduleNameOrPath) => {
   const customRequire = getRequireFunction();
 
   try {
-    const resolvedPath = safeResolvePath(moduleNameOrPath)
+    const resolvedPath = safeResolvePath(moduleNameOrPath);
     if (resolvedPath) {
       logger.debug(`resolved ${moduleNameOrPath} to ${resolvedPath}`);
     } else {
@@ -193,7 +193,11 @@ export const safeRequire = (moduleNameOrPath) => {
   }
 };
 
-const tryResolveFromPaths = (customRequire: NodeRequire, moduleSpecifier: string, paths: string[]): string => {
+const tryResolveFromPaths = (
+  customRequire: NodeRequire,
+  moduleSpecifier: string,
+  paths: string[]
+): string => {
   try {
     logger.debug(`checking if ${moduleSpecifier} can be required from the following paths`, paths);
     const resolvedPath = customRequire.resolve(moduleSpecifier, { paths });
@@ -205,22 +209,24 @@ const tryResolveFromPaths = (customRequire: NodeRequire, moduleSpecifier: string
       return undefined;
     }
   }
-}
+};
 
 const safeResolvePath = (moduleSpecifier: string): string | undefined => {
   const customReq = getRequireFunction();
 
   const pathSet = [
     // process CWD - i.e. the node_nodules folder of the process require()-ed the distro
-    [path.resolve(process.cwd(), "node_modules")],
+    [path.resolve(process.cwd(), 'node_modules')],
     // default paths - same as not specifying paths to require.resolve()
     customReq.resolve?.paths?.(moduleSpecifier) || [],
     // paths specified in NODE_PATH, in case the user has set it for some reason
-    (process.env.NODE_PATH || '').split(':')
-  ]
+    (process.env.NODE_PATH || '').split(':'),
+  ];
 
-  return pathSet.map(paths => tryResolveFromPaths(customReq, moduleSpecifier, paths)).find(Boolean);
-}
+  return pathSet
+    .map((paths) => tryResolveFromPaths(customReq, moduleSpecifier, paths))
+    .find(Boolean);
+};
 
 export const canRequireModule = (moduleSpecifier) => !!safeResolvePath(moduleSpecifier);
 
