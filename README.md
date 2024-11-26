@@ -559,8 +559,9 @@ Examples:
 
 ### Using the distro with `esbuild`
 
-Applications bundled with `esbuild` using `@lumigo/opentelemetry` will **not be able to instrument** any libararies for tracing or logging purposes unless the instrumted module is marked as `[external](https://esbuild.github.io/api/#external)`.
-For instance, instrumenting Postgres calls via the `pg` module requires the following `esbuild` setup:
+Applications bundled with `esbuild` using `@lumigo/opentelemetry` will **not be able to instrument** any libraries for tracing or logging purposes unless the instrumented module is marked as [external](https://esbuild.github.io/api/#external).
+
+For instance, instrumenting Postgres calls via the `pg` library requires the following `esbuild` setup:
 ```bash
 esbuild your-app-file-name.js --bundle --external:pg
 ```
