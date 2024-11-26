@@ -4,6 +4,7 @@ import * as https from 'https';
 
 import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
+import path from 'path';
 
 export const DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
@@ -186,26 +187,33 @@ export const safeRequire = (moduleNameOrPath) => {
   }
 };
 
-export const canRequireModule = (libId) => {
-  const customReq = getRequireFunction();
-
+const tryResolveFromPaths = (customRequire: NodeRequire, moduleSpecifier: string, paths: string[]): string => {
   try {
-    return !!customReq.resolve(libId);
-  } catch (e) {
-    try {
-      return !!customReq.resolve(libId, {
-        paths: (process.env.NODE_PATH || '').split(':'),
-      });
-    } catch (e) {
-      if (e.code !== 'MODULE_NOT_FOUND') {
-        logger.warn('Unable to resolve module', {
-          error: e,
-          libId: libId,
-        });
-      }
+    logger.debug(`checking if ${moduleSpecifier} can be required from the following paths`, paths);
+    const resolvedPath = customRequire.resolve(moduleSpecifier, { paths });
+    logger.debug(`resolved ${moduleSpecifier} from ${resolvedPath}`);
+    return resolvedPath;
+  } catch (error) {
+    if (error.code !== 'MODULE_NOT_FOUND') {
+      logger.warn('Unable to resolve module', { error, moduleSpecifier });
+      return undefined;
     }
   }
-  return false;
+}
+
+export const canRequireModule = (moduleSpecifier) => {
+  const customReq = getRequireFunction();
+
+  const pathSet = [
+    // process CWD - i.e. the node_nodules folder of the process require()-ed the distro
+    [path.resolve(process.cwd(), "node_modules")],
+    // default paths - same as not specifying paths to require.resolve()
+    customReq.resolve?.paths?.(moduleSpecifier) || [],
+    // paths specified in NODE_PATH, in case the user has set it for some reason
+    (process.env.NODE_PATH || '').split(':')
+  ]
+
+  return pathSet.some(paths => !!tryResolveFromPaths(customReq, moduleSpecifier, paths));
 };
 
 export const getSpanAttributeMaxLength = () => {

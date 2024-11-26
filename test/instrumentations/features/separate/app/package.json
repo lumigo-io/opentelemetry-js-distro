@@ -1,0 +1,13 @@
+{
+  "name": "lumigo-features-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "NODE_PATH='../distro/node_modules' node -r @lumigo/opentelemetry app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bunyan": "1.8.15"
+  }
+}
