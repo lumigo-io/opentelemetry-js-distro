@@ -166,15 +166,21 @@ export const md5Hash = (item: {}): string | undefined => {
 // @ts-ignore
 export const removeDuplicates = (arr) => Array.from(new Set(arr));
 
-const getRequireFunction = () =>
+const getRequireFunction = (): NodeRequire =>
   // @ts-ignore __non_webpack_require__ not available at compile time
   typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
 
 export const safeRequire = (moduleNameOrPath) => {
-  const customReq = getRequireFunction();
+  const customRequire = getRequireFunction();
 
   try {
-    return customReq(moduleNameOrPath);
+    const resolvedPath = safeResolvePath(moduleNameOrPath)
+    if (resolvedPath) {
+      logger.debug(`resolved ${moduleNameOrPath} to ${resolvedPath}`);
+    } else {
+      logger.debug(`unable to resolve ${moduleNameOrPath}`);
+    }
+    return resolvedPath && customRequire(resolvedPath);
   } catch (e) {
     if (e.code !== 'MODULE_NOT_FOUND') {
       logger.warn('Unable to load module', {
@@ -201,7 +207,7 @@ const tryResolveFromPaths = (customRequire: NodeRequire, moduleSpecifier: string
   }
 }
 
-export const canRequireModule = (moduleSpecifier) => {
+const safeResolvePath = (moduleSpecifier: string): string | undefined => {
   const customReq = getRequireFunction();
 
   const pathSet = [
@@ -213,8 +219,10 @@ export const canRequireModule = (moduleSpecifier) => {
     (process.env.NODE_PATH || '').split(':')
   ]
 
-  return pathSet.some(paths => !!tryResolveFromPaths(customReq, moduleSpecifier, paths));
-};
+  return pathSet.map(paths => tryResolveFromPaths(customReq, moduleSpecifier, paths)).find(Boolean);
+}
+
+export const canRequireModule = (moduleSpecifier) => !!safeResolvePath(moduleSpecifier);
 
 export const getSpanAttributeMaxLength = () => {
   return (
