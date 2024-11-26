@@ -555,6 +555,23 @@ Examples:
 * Filtering out every HTTP request (incoming or outgoing) with the word `login`:
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX=["login"]`
 
+## Important notes
+
+### Using the distro with `esbuild`
+
+Applications bundled with `esbuild` using `@lumigo/opentelemetry` will **not be able to instrument** any libararies for tracing or logging purposes unless the instrumted module is marked as `[external](https://esbuild.github.io/api/#external)`.
+For instance, instrumenting Postgres calls via the `pg` module requires the following `esbuild` setup:
+```bash
+esbuild your-app-file-name.js --bundle --external:pg
+```
+or in the config file:
+```js
+{
+    // ...
+    external: ["pg"]
+}
+```
+
 ## Contributing
 
 For guidelines on contributing, please see [CONTRIBUTING.md](./CONTRIBUTING.md).
