@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "NODE_PATH='../distro/node_modules' node -r @lumigo/opentelemetry/sync app.js"
+    "start": "node -r @lumigo/opentelemetry/sync app.js"
   },
   "author": "",
   "license": "ISC",

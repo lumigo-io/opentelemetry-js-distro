@@ -50,7 +50,8 @@ import {
   LumigoKubernetesDetector,
   LumigoTagDetector,
 } from './resources/detectors';
-import { getLogAttributeMaxLength, getSpanAttributeMaxLength, safeRequire } from './utils';
+import { getLogAttributeMaxLength, getSpanAttributeMaxLength } from './utils';
+import { safeRequire } from './requireUtils';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -5,8 +5,8 @@ const bunyanLogger = bunyan.createLogger({ name: __filename })
 
 const server = http.createServer(async (req, res) => {
   switch (req.url) {
-    case '/write-log':
-      bunyanLogger.error('a brother from another folder');
+    case '/test-case-1':
+      bunyanLogger.info('sure thing it works!');
       res.writeHead(200);
       res.end();
       break;
