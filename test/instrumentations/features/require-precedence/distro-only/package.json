@@ -1,0 +1,7 @@
+{
+
+  "description": "This is a test package.json file for the case where the distro is loaded via NODE_PATH from another path",
+  "dependencies": {
+    "@lumigo/opentelemetry": "file:./distro.tgz"
+  }
+}

@@ -4,6 +4,7 @@ import * as https from 'https';
 
 import { logger } from './logging';
 import { sortify } from './tools/jsonSortify';
+import path from 'path';
 
 export const DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT = 2048;
 export const DEFAULT_CONNECTION_TIMEOUT = 5000;
@@ -164,49 +165,6 @@ export const md5Hash = (item: {}): string | undefined => {
 
 // @ts-ignore
 export const removeDuplicates = (arr) => Array.from(new Set(arr));
-
-const getRequireFunction = () =>
-  // @ts-ignore __non_webpack_require__ not available at compile time
-  typeof __non_webpack_require__ !== 'undefined' ? __non_webpack_require__ : require;
-
-export const safeRequire = (moduleNameOrPath) => {
-  const customReq = getRequireFunction();
-
-  try {
-    return customReq(moduleNameOrPath);
-  } catch (e) {
-    if (e.code !== 'MODULE_NOT_FOUND') {
-      logger.warn('Unable to load module', {
-        error: e,
-        libId: moduleNameOrPath,
-      });
-    }
-
-    return undefined;
-  }
-};
-
-export const canRequireModule = (libId) => {
-  const customReq = getRequireFunction();
-
-  try {
-    return !!customReq.resolve(libId);
-  } catch (e) {
-    try {
-      return !!customReq.resolve(libId, {
-        paths: (process.env.NODE_PATH || '').split(':'),
-      });
-    } catch (e) {
-      if (e.code !== 'MODULE_NOT_FOUND') {
-        logger.warn('Unable to resolve module', {
-          error: e,
-          libId: libId,
-        });
-      }
-    }
-  }
-  return false;
-};
 
 export const getSpanAttributeMaxLength = () => {
   return (
