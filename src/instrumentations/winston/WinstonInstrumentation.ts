@@ -1,4 +1,4 @@
-import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
+import { WinstonInstrumentation } from './opentelemetry-instrumentation-winston/src';
 import { LoggingInstrumentor } from '../instrumentor';
 
 export default class LumigoWinstonInstrumentation extends LoggingInstrumentor<WinstonInstrumentation> {
