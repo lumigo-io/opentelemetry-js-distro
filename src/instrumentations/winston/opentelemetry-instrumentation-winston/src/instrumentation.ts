@@ -23,14 +23,14 @@ import {
   isWrapped,
   safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
-import type { WinstonInstrumentationConfig } from './types'
+import type { WinstonInstrumentationConfig } from './types';
 import type {
   Winston2LoggerModule,
   Winston2LogMethod,
   Winston3ConfigureMethod,
   Winston3LogMethod,
   Winston3Logger,
-} from './internal-types'
+} from './internal-types';
 import { OpenTelemetryTransportV3 } from '@opentelemetry/winston-transport';
 
 const winston3Versions = ['>=3 <4'];
@@ -42,72 +42,66 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
   }
 
   protected init() {
-    const winstons3instrumentationNodeModuleDefinition =
-      new InstrumentationNodeModuleDefinition(
-        'winston',
-        winston3Versions,
-        moduleExports => moduleExports,
-        () => {},
-        [
-          new InstrumentationNodeModuleFile(
-            'winston/lib/winston/logger.js',
-            winston3Versions,
-            (logger: Winston3Logger) => {
-              const loggerCtor = (logger as unknown as Function)
-              if (isWrapped(loggerCtor.prototype['write'])) {
-                this._unwrap(loggerCtor.prototype, 'write');
-              }
-              this._wrap(loggerCtor.prototype, 'write', this._getPatchedWrite());
-
-              // Wrap configure
-              if (isWrapped(loggerCtor.prototype['configure'])) {
-                this._unwrap(loggerCtor.prototype, 'configure');
-              }
-              this._wrap(
-                loggerCtor.prototype,
-                'configure',
-                this._getPatchedConfigure()
-              );
-
-              return logger;
-            },
-            (logger: Winston3Logger) => {
-              const loggerCtor = (logger as unknown as Function)
-              if (logger === undefined) return;
+    const winstons3instrumentationNodeModuleDefinition = new InstrumentationNodeModuleDefinition(
+      'winston',
+      winston3Versions,
+      (moduleExports) => moduleExports,
+      () => {},
+      [
+        new InstrumentationNodeModuleFile(
+          'winston/lib/winston/logger.js',
+          winston3Versions,
+          (logger: Winston3Logger) => {
+            const loggerCtor = logger as unknown as Function;
+            if (isWrapped(loggerCtor.prototype['write'])) {
               this._unwrap(loggerCtor.prototype, 'write');
+            }
+            this._wrap(loggerCtor.prototype, 'write', this._getPatchedWrite());
+
+            // Wrap configure
+            if (isWrapped(loggerCtor.prototype['configure'])) {
               this._unwrap(loggerCtor.prototype, 'configure');
             }
-          ),
-        ]
-      );
+            this._wrap(loggerCtor.prototype, 'configure', this._getPatchedConfigure());
 
-    const winstons2instrumentationNodeModuleDefinition =
-      new InstrumentationNodeModuleDefinition(
-        'winston',
-        winstonPre3Versions,
-        moduleExports => moduleExports,
-        () => {},
-        [
-          new InstrumentationNodeModuleFile(
-            'winston/lib/winston/logger.js',
-            winstonPre3Versions,
-            (fileExports: Winston2LoggerModule) => {
-              const proto = fileExports.Logger.prototype;
+            return logger;
+          },
+          (logger: Winston3Logger) => {
+            const loggerCtor = logger as unknown as Function;
+            if (logger === undefined) return;
+            this._unwrap(loggerCtor.prototype, 'write');
+            this._unwrap(loggerCtor.prototype, 'configure');
+          }
+        ),
+      ]
+    );
 
-              if (isWrapped(proto.log)) {
-                this._unwrap(proto, 'log');
-              }
-              this._wrap(proto, 'log', this._getPatchedLog());
+    const winstons2instrumentationNodeModuleDefinition = new InstrumentationNodeModuleDefinition(
+      'winston',
+      winstonPre3Versions,
+      (moduleExports) => moduleExports,
+      () => {},
+      [
+        new InstrumentationNodeModuleFile(
+          'winston/lib/winston/logger.js',
+          winstonPre3Versions,
+          (fileExports: Winston2LoggerModule) => {
+            const proto = fileExports.Logger.prototype;
 
-              return fileExports;
-            },
-            (fileExports: Winston2LoggerModule) => {
-              if (fileExports === undefined) return;
-              this._unwrap(fileExports.Logger.prototype, 'log');
+            if (isWrapped(proto.log)) {
+              this._unwrap(proto, 'log');
             }
-          ),
-        ]
-      );
+            this._wrap(proto, 'log', this._getPatchedLog());
+
+            return fileExports;
+          },
+          (fileExports: Winston2LoggerModule) => {
+            if (fileExports === undefined) return;
+            this._unwrap(fileExports.Logger.prototype, 'log');
+          }
+        ),
+      ]
+    );
     return [
       winstons3instrumentationNodeModuleDefinition,
       winstons2instrumentationNodeModuleDefinition,
@@ -123,7 +117,7 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
 
     safeExecuteInTheMiddle(
       () => logHook(span, record),
-      err => {
+      (err) => {
         if (err) {
           this._diag.error('error calling logHook', err);
         }
@@ -135,10 +129,7 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
   private _getPatchedWrite() {
     return (original: Winston3LogMethod) => {
       const instrumentation = this;
-      return function patchedWrite(
-        this: never,
-        ...args: Parameters<typeof original>
-      ) {
+      return function patchedWrite(this: never, ...args: Parameters<typeof original>) {
         const record = args[0];
         instrumentation._handleLogCorrelation(record);
         return original.apply(this, args);
@@ -149,10 +140,7 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
   private _getPatchedLog() {
     return (original: Winston2LogMethod) => {
       const instrumentation = this;
-      return function patchedLog(
-        this: never,
-        ...args: Parameters<typeof original>
-      ) {
+      return function patchedLog(this: never, ...args: Parameters<typeof original>) {
         const record: Record<string, any> = {};
         instrumentation._handleLogCorrelation(record);
         // Inject in metadata argument
@@ -166,9 +154,7 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
         }
         if (!isDataInjected) {
           const insertAt =
-            typeof args[args.length - 1] === 'function'
-              ? args.length - 1
-              : args.length;
+            typeof args[args.length - 1] === 'function' ? args.length - 1 : args.length;
 
           args.splice(insertAt, 0, record);
         }
@@ -181,19 +167,14 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
   private _getPatchedConfigure() {
     return (original: Winston3ConfigureMethod) => {
       const instrumentation = this;
-      return function patchedConfigure(
-        this: never,
-        ...args: Parameters<typeof original>
-      ) {
+      return function patchedConfigure(this: never, ...args: Parameters<typeof original>) {
         const config = instrumentation.getConfig();
         if (!config.disableLogSending) {
           if (args && args.length > 0) {
             // Try to load Winston transport
             try {
               const originalTransports = args[0].transports;
-              let newTransports = Array.isArray(originalTransports)
-                ? originalTransports
-                : [];
+              let newTransports = Array.isArray(originalTransports) ? originalTransports : [];
               let transportOptions = {};
               if (config.logSeverity) {
                 const winstonLevel = instrumentation._winstonLevelFromSeverity(
@@ -202,9 +183,7 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
                 );
                 transportOptions = { level: winstonLevel };
               }
-              const openTelemetryTransport = new OpenTelemetryTransportV3(
-                transportOptions
-              );
+              const openTelemetryTransport = new OpenTelemetryTransportV3(transportOptions);
               if (originalTransports && !Array.isArray(originalTransports)) {
                 newTransports = [originalTransports];
               }
@@ -305,9 +284,7 @@ export class WinstonInstrumentation extends InstrumentationBase<WinstonInstrumen
         }
       }
       // Unknown level
-      this._diag.warn(
-        'failed to configure severity with existing winston levels'
-      );
+      this._diag.warn('failed to configure severity with existing winston levels');
     }
 
     function isCliLevels(arg: any): boolean {
