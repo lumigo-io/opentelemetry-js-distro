@@ -5,6 +5,7 @@
   "private": false,
   "types": "dist/src/distro.js",
   "scripts": {
+    "postinstall": "./scripts/hooks/postinstall/index.js",
     "build": "rm -rf dist *.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" distro.tgz && cp distro.tgz wrapper.tgz",
     "prepublishOnly": "npm run prettier:fix && npm run lint && npm run test:unit",
     "lint": "eslint \"src/**/*.{ts,tsx,js}\"",
