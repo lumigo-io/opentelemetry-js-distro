@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node -r @lumigo/opentelemetry winston_app.js"
+    "start": "node -r @lumigo/opentelemetry/sync winston_app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@lumigo/opentelemetry": "file:../../../../distro.tgz",
-    "@opentelemetry/winston-transport": "^0.2.0",
-    "winston": "^3.14.0"
+    "@lumigo/opentelemetry": "file:./distro.tgz",
+    "winston": "^3.13.1"
   }
 }

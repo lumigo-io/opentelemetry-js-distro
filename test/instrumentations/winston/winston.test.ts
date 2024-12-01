@@ -1,28 +1,37 @@
-import fs from 'fs';
-import { join } from 'path';
+import path from 'path';
 import { itTest } from '../../integration/setup';
 import { TestApp } from '../../utils/test-apps';
-import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
+import { installPackage, reinstallPackages } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
 import { FakeEdge } from '../../utils/fake-edge';
+import tmp from 'tmp';
+import fs from 'fs-extra';
 
 const INSTRUMENTATION_NAME = 'winston';
-const LOGS_DIR = join(__dirname, 'logs');
-const TEST_APP_DIR = join(__dirname, 'app');
+const LOGS_DIR = path.join(__dirname, 'logs');
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
+describe.each([versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME)[0]])(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
     let testApp: TestApp;
     const fakeEdge = new FakeEdge();
+    let targetAppDir: string;
 
     beforeAll(async () => {
       await fakeEdge.start();
+      await fs.mkdir(LOGS_DIR, { recursive: true });
+    });
 
-      reinstallPackages({ appDir: TEST_APP_DIR });
-      fs.mkdirSync(LOGS_DIR, { recursive: true });
+    beforeEach(async () => {
+      // copy the entire test project-root to a temp folder, to isolate dependencies
+      const sourceFolder = path.join(__dirname, "app");
+      targetAppDir = tmp.dirSync({ keep: process.env.KEEP_TEMP_TEST_FOLDERS == "true" }).name;
+      await fs.copy(sourceFolder, targetAppDir),
+      await fs.copy("distro.tgz", path.join(targetAppDir, "distro.tgz"));
+      reinstallPackages({ appDir: targetAppDir });
+
       installPackage({
-        appDir: TEST_APP_DIR,
+        appDir: targetAppDir,
         packageName: INSTRUMENTATION_NAME,
         packageVersion: versionToTest,
       });
@@ -38,11 +47,6 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
     afterAll(async () => {
       await fakeEdge.stop();
-      uninstallPackage({
-        appDir: TEST_APP_DIR,
-        packageName: INSTRUMENTATION_NAME,
-        packageVersion: versionToTest,
-      });
     });
 
     itTest(
@@ -53,7 +57,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         timeout: 30_000,
       },
       async function () {
-        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
+        testApp = new TestApp(targetAppDir, INSTRUMENTATION_NAME, {
           logDumpPath: `${LOGS_DIR}/${INSTRUMENTATION_NAME}.${INSTRUMENTATION_NAME}-logs@${versionToTest}.json`,
           env: {
             LUMIGO_ENABLE_LOGS: 'true',
@@ -67,7 +71,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         await writeLogLine('Hello Winston!');
         await writeLogLine({ a: 1, sekret: 'this is secret!' });
 
-        await expect(fakeEdge.waitFor(({ logs }) => logs.length === 2, 'waiting for logs to be processed')).toBeTruthy();
+        await expect(fakeEdge.waitFor(({ logs }) => logs.length === 2, 'waiting for logs to be processed')).resolves.toBeTruthy();
         await expect(fakeEdge.waitFor(({ resources }) => resources.length >= 1, 'waiting for resources to be processed')).resolves.toBeTruthy();
 
         expect(fakeEdge.resources[0].attributes).toIncludeAllMembers([
