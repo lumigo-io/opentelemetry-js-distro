@@ -24,12 +24,12 @@ describe.each([versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME)[0]])(
 
     beforeEach(async () => {
       // copy the entire test project-root to a temp folder, to isolate dependencies
-      const sourceFolder = path.join(__dirname, "app");
-      targetAppDir = tmp.dirSync({ keep: process.env.KEEP_TEMP_TEST_FOLDERS == "true" }).name;
-      await fs.copy(sourceFolder, targetAppDir),
-      await fs.copy("distro.tgz", path.join(targetAppDir, "distro.tgz"));
-      reinstallPackages({ appDir: targetAppDir });
-
+      const sourceFolder = path.join(__dirname);
+      const targetTestProjectDir = tmp.dirSync({ keep: process.env.KEEP_TEMP_TEST_FOLDERS == "true" }).name;
+      targetAppDir = path.join(targetTestProjectDir, "app");
+      await fs.copy(sourceFolder, targetTestProjectDir),
+      await fs.copy("distro.tgz", path.join(targetTestProjectDir, "deps", "distro.tgz"));
+      reinstallPackages({ appDir: path.join(targetTestProjectDir, "deps") });
       installPackage({
         appDir: targetAppDir,
         packageName: INSTRUMENTATION_NAME,
@@ -65,6 +65,7 @@ describe.each([versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME)[0]])(
             LUMIGO_LOGS_ENDPOINT: fakeEdge.logsUrl,
             LUMIGO_ENDPOINT: fakeEdge.tracesUrl,
             LUMIGO_TRACER_TOKEN: 't_123456789',
+            NODE_PATH: path.join(targetAppDir, '..', "deps", "node_modules"),
           },
         });
 

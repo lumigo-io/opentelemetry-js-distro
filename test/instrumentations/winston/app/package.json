@@ -6,9 +6,5 @@
     "start": "node -r @lumigo/opentelemetry/sync winston_app.js"
   },
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@lumigo/opentelemetry": "file:./distro.tgz",
-    "winston": "^3.13.1"
-  }
+  "license": "ISC"
 }
