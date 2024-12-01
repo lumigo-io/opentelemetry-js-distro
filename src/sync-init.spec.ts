@@ -1,11 +1,11 @@
-import path from "path"
-import { range } from 'lodash'
-import fs from "fs"
+import path from 'path';
+import { range } from 'lodash';
+import fs from 'fs';
 
-const deasyncPath = path.dirname(require.resolve("deasync"))
-const supportedSyncInitNodeVersions = range(14, 22)
+const deasyncPath = path.dirname(require.resolve('deasync'));
+const supportedSyncInitNodeVersions = range(14, 22);
 
-describe("pre-built binaries for arm64 (applicable when loaded by the operator)", () => {
+describe('pre-built binaries for arm64 (applicable when loaded by the operator)', () => {
   /*
   This test effectively checks the correctness of our post-install script, responsible for adding pre-built binaries
   for the `deasync` package to be used on arm64 hosts.
@@ -16,8 +16,11 @@ describe("pre-built binaries for arm64 (applicable when loaded by the operator)"
   3. Since that pre-installed version is compiled when building the injector image, it does not product a binary for other target plafforms
   4. `deasync` addresses that by providing pre-built binaries for the most common platforms, but not for arm64 :(
   */
-  test.each(supportedSyncInitNodeVersions)("binaries are added for arm64 running Node %i", nodeVersion => {
-    const expectedBinaryPath = path.join(deasyncPath, "bin", `linux-arm64-node-${nodeVersion}`)
-    expect(fs.existsSync(expectedBinaryPath)).toBe(true)
-  })
-})
+  test.each(supportedSyncInitNodeVersions)(
+    'binaries are added for arm64 running Node %i',
+    (nodeVersion) => {
+      const expectedBinaryPath = path.join(deasyncPath, 'bin', `linux-arm64-node-${nodeVersion}`);
+      expect(fs.existsSync(expectedBinaryPath)).toBe(true);
+    }
+  );
+});
