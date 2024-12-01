@@ -10,7 +10,7 @@ import fs from 'fs-extra';
 const INSTRUMENTATION_NAME = 'winston';
 const LOGS_DIR = path.join(__dirname, 'logs');
 
-describe.each([versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME)[0]])(
+describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
     let testApp: TestApp;
