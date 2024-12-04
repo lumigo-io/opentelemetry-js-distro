@@ -32,7 +32,7 @@ const expectedResourceAttributes = {
   },
 };
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
+describeVersions(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME)(
   `Instrumentation tests for the ${INSTRUMENTATION_NAME} package`,
   function (versionToTest) {
     let testApp: TestApp;

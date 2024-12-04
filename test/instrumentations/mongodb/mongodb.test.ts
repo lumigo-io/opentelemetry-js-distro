@@ -63,7 +63,7 @@ const warmupContainer = async () => {
   }
 };
 
-describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
+describeVersions(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   'Instrumentation tests for the mongodb package',
   function (versionToTest) {
     let testApp: TestApp;

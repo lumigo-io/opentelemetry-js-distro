@@ -33,7 +33,7 @@ const expectedResourceAttributes = {
   },
 };
 
-describe.each(versionsToTest('@grpc/grpc-js', '@grpc/grpc-js'))(
+describeVersions('@grpc/grpc-js', '@grpc/grpc-js')(
   'Instrumentation tests for the @grpc/grpc-js package',
   function (versionToTest) {
     let testApp: TestApp;
