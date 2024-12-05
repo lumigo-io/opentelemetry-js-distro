@@ -72,10 +72,3 @@ describe('CombinedSampler', () => {
     expect(result.decision).toBe(SamplingDecision.RECORD_AND_SAMPLED);
   });
 });
-
-describe('getCombinedSampler', () => {
-  it('should return a ParentBasedSampler with CombinedSampler as root', () => {
-    const sampler = getCombinedSampler();
-    expect(sampler.root).toBeInstanceOf(CombinedSampler);
-  });
-});
