@@ -1,8 +1,10 @@
 const http = require('http');
 const url = require('url');
-const { init } = require("@lumigo/opentelemetry")
+const winston = require('winston');
 
-require('log-timestamp');
+const winstonLogger = winston.createLogger({
+  transports: [new winston.transports.Console()],
+})
 
 const host = 'localhost';
 let httpServer;
@@ -16,15 +18,7 @@ function respond(res, status, body) {
 }
 
 const requestListener = async function (req, res) {
-  await init;
-
-  const winston = require('winston');
-  const winstonLogger = winston.createLogger({
-    transports: [new winston.transports.Console()],
-  })
-
-  console.error(`Received request: ${req.method} ${req.url}`);
-
+  console.log(`Received request: ${req.method} ${req.url}`);
   const requestUrl = url.parse(req.url, true);
 
   switch (requestUrl.pathname) {
