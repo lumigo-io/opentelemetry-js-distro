@@ -5,7 +5,7 @@ import { join } from 'path';
 import { MongoDBContainer, StartedMongoDBContainer } from 'testcontainers';
 
 import { itTest } from '../../integration/setup';
-import { getSpanByName } from '../../utils/spans';
+import { getSpanByName, getSpansByAttribute } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
@@ -203,6 +203,28 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             '$cmd'
           )
         );
+      }
+    );
+
+    itTest(
+      {
+        testName: `filter isMaster request: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        if (versionToTest.startsWith('3')) {
+
+          await testApp.invokeGetPath(`/mongodb-isMaster`);
+          // older versions of mongodb driver add extra spans
+          let spans = await testApp.getFinalSpans(2);
+          expect(getSpansByAttribute(spans, 'db.system', 'mongodb')).toHaveLength(1);
+        } else {
+          await testApp.invokeGetPath(`/mongodb-isMaster`);
+          let spans = await testApp.getFinalSpans(1);
+          expect(getSpansByAttribute(spans, 'db.system', 'mongodb')).toHaveLength(0);
+        }
       }
     );
   }
