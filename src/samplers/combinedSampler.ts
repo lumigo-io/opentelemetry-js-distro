@@ -8,6 +8,7 @@ import type { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
 
 import { LumigoSampler } from './lumigoSampler';
 import { MongodbSampler } from './mongodbSampler';
+import { RedisSampler } from './redisSampler';
 
 export class CombinedSampler implements Sampler {
   private samplers: Sampler[];
@@ -43,7 +44,8 @@ export class CombinedSampler implements Sampler {
 export const getCombinedSampler = () => {
   const lumigoSampler = new LumigoSampler();
   const mongodbSampler = new MongodbSampler();
-  const combinedSampler = new CombinedSampler(lumigoSampler, mongodbSampler);
+  const redisSampler = new RedisSampler();
+  const combinedSampler = new CombinedSampler(lumigoSampler, mongodbSampler, redisSampler);
 
   return new ParentBasedSampler({
     root: combinedSampler,
