@@ -27,7 +27,6 @@ export class CombinedSampler implements Sampler {
   ): SamplingResult {
     // Iterate through each sampler
     for (const sampler of this.samplers) {
-      console.log(`spanName: ${spanName}, attributes: ${JSON.stringify(attributes)}`);
       const result = sampler.shouldSample(context, traceId, spanName, spanKind, attributes, links);
 
       // If any sampler decides NOT_RECORD, we respect that decision

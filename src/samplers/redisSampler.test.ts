@@ -161,13 +161,19 @@ describe('extractClientAttribute', () => {
 describe('matchRedisInfoStatement', () => {
   it('should return true when dbSystem is redis, dbStatement is INFO and LUMIGO_REDUCED_REDIS_INSTRUMENTATION is true', () => {
     process.env.LUMIGO_REDUCED_REDIS_INSTRUMENTATION = 'true';
-    const result = matchRedisInfoStatement('redis.Info', 'redis', 'INFO');
+    const result = matchRedisInfoStatement('any', 'redis', 'INFO');
+    expect(result).toBe(true);
+  });
+
+  it('should return true when spanName is redis-INFO and LUMIGO_REDUCED_REDIS_INSTRUMENTATION is true', () => {
+    process.env.LUMIGO_REDUCED_REDIS_INSTRUMENTATION = 'true';
+    const result = matchRedisInfoStatement('redis-INFO', 'any', 'any');
     expect(result).toBe(true);
   });
 
   it('should return false when LUMIGO_REDUCED_REDIS_INSTRUMENTATION is false', () => {
     process.env.LUMIGO_REDUCED_REDIS_INSTRUMENTATION = 'false';
-    const result = matchRedisInfoStatement('redis.Info', 'redis', 'INFO');
+    const result = matchRedisInfoStatement('any', 'redis', 'INFO');
     expect(result).toBe(false);
   });
 });

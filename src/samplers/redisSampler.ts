@@ -17,8 +17,6 @@ export class RedisSampler implements Sampler {
     attributes: Attributes,
     links: Link[]
   ): SamplingResult {
-    console.log(`spanName: ${spanName}, attributes: ${JSON.stringify(attributes)}`);
-
     let decision = SamplingDecision.RECORD_AND_SAMPLED;
     const dbSystem = extractClientAttribute(attributes, 'db.system', spanKind);
     const dbStatement = extractClientAttribute(attributes, 'db.statement', spanKind);
@@ -84,7 +82,7 @@ export const matchRedisInfoStatement = (
 
   return (
     isReducedRedisInstrumentationEnabled &&
-    (spanName === 'redis.Info' || (dbSystem === 'redis' && infoRegex.test(normalizedDbStatement)))
+    (spanName === 'redis-INFO' || (dbSystem === 'redis' && infoRegex.test(normalizedDbStatement)))
   );
 };
 
