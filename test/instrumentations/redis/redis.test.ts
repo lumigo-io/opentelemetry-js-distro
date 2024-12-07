@@ -343,5 +343,60 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         expect(getSpans).toHaveLength(3);
       }
     );
+
+    itTest(
+      {
+        testName: `${INSTRUMENTATION_NAME} filter INFO works: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}.filter-info-works@${versionToTest}.json`;
+
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
+            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+          }});
+
+        const host = redisContainer.getHost();
+        const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
+        await testApp.invokeGetPath(`/info?&host=${host}&port=${port}`);
+
+        const spans = await testApp.getFinalSpans(2);
+
+        const redisSpans = filterRedisSpans(spans);
+        // redis connection span only expected
+        expect(redisSpans).toHaveLength(1);
+      }
+    );
+
+    itTest(
+      {
+        testName: `${INSTRUMENTATION_NAME} filter INFO disabled works: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile = `${SPANS_DIR}/${INSTRUMENTATION_NAME}.filter-info-disabled-works@${versionToTest}.json`;
+
+        testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
+            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+            LUMIGO_REDUCED_REDIS_INSTRUMENTATION: 'false',
+          }});
+
+        const host = redisContainer.getHost();
+        const port = redisContainer.getMappedPort(DEFAULT_REDIS_PORT);
+        await testApp.invokeGetPath(`/info?&host=${host}&port=${port}`);
+
+        const spans = await testApp.getFinalSpans(3);
+
+        const redisSpans = filterRedisSpans(spans);
+        // redis connection span + redis INFO span expected
+        expect(redisSpans).toHaveLength(2);
+        expect(getSpanByName(redisSpans, 'redis-INFO')).toBeDefined();
+      }
+    );
+
   } // describe function
 );
