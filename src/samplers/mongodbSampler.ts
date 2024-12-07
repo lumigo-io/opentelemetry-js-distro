@@ -17,6 +17,10 @@ export class MongodbSampler implements Sampler {
     attributes: Attributes,
     links: Link[]
   ): SamplingResult {
+    // Note, there is probably a bug in opentelemetry api, making mongoSampler always receives attributes array empty.
+    // This makes it impossible to filter based on db.system and db.operation attributes. Filter based on spanName only.
+    // Opentemetry version upgrade might fix this issue.
+    // https://lumigo.atlassian.net/browse/RD-14250
     let decision = SamplingDecision.RECORD_AND_SAMPLED;
     const dbSystem = extractClientAttribute(attributes, 'db.system', spanKind);
     const dbOperation = extractClientAttribute(attributes, 'db.operation', spanKind);

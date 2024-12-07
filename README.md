@@ -122,6 +122,8 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX='["regex1", "regex2"]'`: This option enables the filtering of client and server endpoints through regular expression searches. Fine-tune your settings via the following environment variables, which work in conjunction with `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` for a specific span type:
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` applies the regular expression search exclusively to server spans. Searching is performed against the following attributes on a span: `url.path` and `http.target`.
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` applies the regular expression search exclusively to client spans. Searching is performed against the following attributes on a span: `url.full` and `http.url`.
+* `LUMIGO_REDUCED_MONGO_INSTRUMENTATION=true`: Reduces the amount of data collected by the MongoDB [instrumentation](https://www.npmjs.com/package/@opentelemetry/instrumentation-mongodb), such as not collecting the `db.operation` attribute `isMaster`. By default, the MongoDB instrumentation reduces the amount of data collected.
+* `LUMIGO_REDUCED_REDIS_INSTRUMENTATION=true`: Reduces the amount of data collected by the Redis [instrumentation](https://www.npmjs.com/package/@opentelemetry/instrumentation-redis-4), such as not collecting the `db.statement` attribute `INFO`. By default, the Redis instrumentation reduces the amount of data collected.
 
   For more information check out [Filtering http endpoints](#filtering-http-endpoints).
 
