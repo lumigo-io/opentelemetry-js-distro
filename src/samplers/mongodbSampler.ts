@@ -54,15 +54,9 @@ export const matchMongoIsMaster = (
   dbSystem: string,
   dbOperation: string
 ): boolean => {
-  const reduceMongoInstrumentation = process.env.LUMIGO_REDUCED_MONGO_INSTRUMENTATION;
-  let isReducedMongoInstrumentationEnabled: boolean;
-
-  if (reduceMongoInstrumentation == null || reduceMongoInstrumentation === '') {
-    isReducedMongoInstrumentationEnabled = true; // Default to true
-  } else if (reduceMongoInstrumentation.toLowerCase() === 'true') {
-    isReducedMongoInstrumentationEnabled = true;
-  } else
-    isReducedMongoInstrumentationEnabled = reduceMongoInstrumentation.toLowerCase() !== 'false';
+const reduceMongoInstrumentation = process.env.LUMIGO_REDUCED_MONGO_INSTRUMENTATION;
+const isReducedMongoInstrumentationEnabled =
+  reduceMongoInstrumentation == null || reduceMongoInstrumentation === '' || reduceMongoInstrumentation.toLowerCase() !== 'false';
 
   return (
     isReducedMongoInstrumentationEnabled &&
