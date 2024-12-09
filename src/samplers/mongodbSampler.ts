@@ -21,7 +21,6 @@ export class MongodbSampler implements Sampler {
     // This makes it impossible to filter based on db.system and db.operation attributes. Filter based on spanName only.
     // Opentemetry version upgrade might fix this issue.
     // https://lumigo.atlassian.net/browse/RD-14250
-    let decision = SamplingDecision.RECORD_AND_SAMPLED;
     const dbSystem = extractClientAttribute(attributes, 'db.system', spanKind);
     const dbOperation = extractClientAttribute(attributes, 'db.operation', spanKind);
 
@@ -29,10 +28,10 @@ export class MongodbSampler implements Sampler {
       logger.debug(
         `Drop span ${spanName} with db.system: ${dbSystem} and db.operation: ${dbOperation}, because LUMIGO_REDUCED_MONGO_INSTRUMENTATION is enabled`
       );
-      decision = SamplingDecision.NOT_RECORD;
+      return { decision: SamplingDecision.NOT_RECORD };
     }
 
-    return { decision: decision };
+    return { decision: SamplingDecision.RECORD_AND_SAMPLED };
   }
 }
 
@@ -54,9 +53,11 @@ export const matchMongoIsMaster = (
   dbSystem: string,
   dbOperation: string
 ): boolean => {
-const reduceMongoInstrumentation = process.env.LUMIGO_REDUCED_MONGO_INSTRUMENTATION;
-const isReducedMongoInstrumentationEnabled =
-  reduceMongoInstrumentation == null || reduceMongoInstrumentation === '' || reduceMongoInstrumentation.toLowerCase() !== 'false';
+  const reduceMongoInstrumentation = process.env.LUMIGO_REDUCED_MONGO_INSTRUMENTATION;
+  const isReducedMongoInstrumentationEnabled =
+    reduceMongoInstrumentation == null ||
+    reduceMongoInstrumentation === '' ||
+    reduceMongoInstrumentation.toLowerCase() !== 'false';
 
   return (
     isReducedMongoInstrumentationEnabled &&

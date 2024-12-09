@@ -17,7 +17,6 @@ export class RedisSampler implements Sampler {
     attributes: Attributes,
     links: Link[]
   ): SamplingResult {
-    let decision = SamplingDecision.RECORD_AND_SAMPLED;
     const dbSystem = extractClientAttribute(attributes, 'db.system', spanKind);
     const dbStatement = extractClientAttribute(attributes, 'db.statement', spanKind);
 
@@ -25,10 +24,10 @@ export class RedisSampler implements Sampler {
       logger.debug(
         `Dropping span ${spanName} with db.system: ${dbSystem} and db.statement: ${dbStatement}, because LUMIGO_REDUCED_REDIS_INSTRUMENTATION is enabled`
       );
-      decision = SamplingDecision.NOT_RECORD;
+      return { decision: SamplingDecision.NOT_RECORD };
     }
 
-    return { decision: decision };
+    return { decision: SamplingDecision.RECORD_AND_SAMPLED };
   }
 }
 
@@ -51,15 +50,10 @@ export const matchRedisInfoStatement = (
   dbStatement: string | null | undefined
 ): boolean => {
   const reduceRedisInstrumentation = process.env.LUMIGO_REDUCED_REDIS_INSTRUMENTATION;
-  let isReducedRedisInstrumentationEnabled: boolean;
-
-  if (reduceRedisInstrumentation == null || reduceRedisInstrumentation === '') {
-    isReducedRedisInstrumentationEnabled = true; // Default to true
-  } else if (reduceRedisInstrumentation.toLowerCase() === 'true') {
-    isReducedRedisInstrumentationEnabled = true;
-  } else {
-    isReducedRedisInstrumentationEnabled = reduceRedisInstrumentation.toLowerCase() !== 'false';
-  }
+  const isReducedRedisInstrumentationEnabled =
+    reduceRedisInstrumentation == null ||
+    reduceRedisInstrumentation === '' ||
+    reduceRedisInstrumentation.toLowerCase() !== 'false';
 
   // Safely handle null or undefined dbStatement by defaulting to empty string
   const safeDbStatement = dbStatement ?? '';

@@ -232,17 +232,15 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             }
           });
 
-        if (versionToTest.startsWith('3')) {
+        // older versions of mongodb driver add extra spans
+        const expectedSpanCount = versionToTest.startsWith('3') ? 2 : 1;
+        const expectedDbSystemAttributeSpans = versionToTest.startsWith('3') ? 1 : 0;
 
-          await testApp.invokeGetPath(`/mongodb-isMaster`);
-          // older versions of mongodb driver add extra spans
-          let spans = await testApp.getFinalSpans(2);
-          expect(getSpansByAttribute(spans, 'db.system', 'mongodb')).toHaveLength(1);
-        } else {
-          await testApp.invokeGetPath(`/mongodb-isMaster`);
-          let spans = await testApp.getFinalSpans(1);
-          expect(getSpansByAttribute(spans, 'db.system', 'mongodb')).toHaveLength(0);
-        }
+        await testApp.invokeGetPath(`/mongodb-isMaster`);
+
+        let spans = await testApp.getFinalSpans(expectedSpanCount);
+        expect(getSpansByAttribute(spans, 'db.system', 'mongodb')).toHaveLength(expectedDbSystemAttributeSpans);
+
       }
     );
 
@@ -268,17 +266,12 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             }
           });
 
-        if (versionToTest.startsWith('3')) {
+        // older versions of mongodb driver add extra spans
+        const expectedSpanCount = versionToTest.startsWith('3') ? 3 : 2;
+        await testApp.invokeGetPath(`/mongodb-isMaster`);
+        let spans = await testApp.getFinalSpans(expectedSpanCount);
+        expect(getSpansByAttribute(spans, 'db.operation', 'isMaster')).toHaveLength(1);
 
-          await testApp.invokeGetPath(`/mongodb-isMaster`);
-          // older versions of mongodb driver add extra spans
-          let spans = await testApp.getFinalSpans(3);
-          expect(getSpansByAttribute(spans, 'db.operation', 'isMaster')).toHaveLength(1);
-        } else {
-          await testApp.invokeGetPath(`/mongodb-isMaster`);
-          let spans = await testApp.getFinalSpans(2);
-          expect(getSpansByAttribute(spans, 'db.operation', 'isMaster')).toHaveLength(1);
-        }
       }
     );
   }
