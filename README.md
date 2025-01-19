@@ -109,6 +109,7 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 * `LUMIGO_DISABLE_PG_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [postgres](https://www.npmjs.com/package/pg).
+* `LUMIGO_DISABLE_MONGODB_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [mongodb](https://www.npmjs.com/package/mongodb).
 * `LUMIGO_DISABLE_REDIS_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [redis](https://www.npmjs.com/package/redis).
 * `LUMIGO_DISABLE_IOREDIS_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [ioredis](https://www.npmjs.com/package/ioredis).
 * `LUMIGO_DISABLE_NEST_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [@nestjs/core](https://www.npmjs.com/package/@nestjs/core).
