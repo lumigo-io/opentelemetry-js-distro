@@ -1,5 +1,5 @@
 import type { Instrumentation } from '@opentelemetry/instrumentation';
-import { canRequireModule } from '../utils';
+import { canRequireModule } from '../requireUtils';
 import { LOGGING_ENABLED, TRACING_ENABLED } from '../constants';
 
 abstract class Instrumentor<T extends Instrumentation> {

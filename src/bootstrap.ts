@@ -50,7 +50,8 @@ import {
   LumigoKubernetesDetector,
   LumigoTagDetector,
 } from './resources/detectors';
-import { getLogAttributeMaxLength, getSpanAttributeMaxLength, safeRequire } from './utils';
+import { getLogAttributeMaxLength, getSpanAttributeMaxLength } from './utils';
+import { safeRequire } from './requireUtils';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -80,7 +81,7 @@ import { dirname, join } from 'path';
 import { logger } from './logging';
 import { ProcessEnvironmentDetector } from './resources/detectors/ProcessEnvironmentDetector';
 import { LumigoSpanProcessor } from './resources/spanProcessor';
-import { getLumigoSampler } from './samplers/lumigoSampler';
+import { getCombinedSampler } from './samplers/combinedSampler';
 import { LumigoLogRecordProcessor } from './processors/LumigoLogRecordProcessor';
 
 const lumigoTraceEndpoint = process.env.LUMIGO_ENDPOINT || DEFAULT_LUMIGO_TRACES_ENDPOINT;
@@ -208,7 +209,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       .merge(await new ProcessEnvironmentDetector().detect());
 
     const tracerProvider = new NodeTracerProvider({
-      sampler: getLumigoSampler(),
+      sampler: getCombinedSampler(),
       resource,
       spanLimits: {
         attributeValueLengthLimit: getSpanAttributeMaxLength(),
