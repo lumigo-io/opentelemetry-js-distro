@@ -1,4 +1,4 @@
-import { getSpanAttributeMaxLength } from './utils';
+import { getSpanAttributeMaxLength, safeParse } from './utils';
 
 describe('getSpanAttributeMaxLength', () => {
   describe('value according to env. vars', () => {
@@ -37,5 +37,17 @@ describe('getSpanAttributeMaxLength', () => {
       const size = getSpanAttributeMaxLength();
       expect(size).toEqual(2048);
     });
+  });
+});
+
+describe('safeParse', () => {
+  it('should return the parsed object', () => {
+    const obj = { a: 1, b: 2 };
+    expect(safeParse(JSON.stringify(obj))).toEqual(obj);
+  });
+
+  it('should return the same string', () => {
+    const str = 'test';
+    expect(safeParse(str)).toEqual(str);
   });
 });

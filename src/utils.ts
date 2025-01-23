@@ -136,9 +136,22 @@ export const safeGet = (obj, arr, dflt = null) => {
   return current || dflt;
 };
 
+export const safeParse = (parseable) => {
+  try {
+    return JSON.parse(parseable);
+  } catch (e) {
+    return parseable;
+  }
+};
+
 export const parseQueryParams = (queryParams) => {
   return safeExecute(() => {
     if (typeof queryParams !== 'string') return {};
+    try {
+      return JSON.parse(queryParams);
+    } catch (e) {
+      // ignore because sqs request body could also be not a JSON
+    }
     const obj = {};
     queryParams.replace(
       /([^=&]+)=([^&]*)/g,
