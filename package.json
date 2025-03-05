@@ -148,5 +148,8 @@
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
+  },
+  "overrides": {
+    "path-to-regexp": "0.1.12"
   }
 }
