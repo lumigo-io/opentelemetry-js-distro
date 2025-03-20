@@ -109,6 +109,7 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_SWITCH_OFF=TRUE`: This option disables the Lumigo OpenTelemetry Distro entirely; no instrumentation will be injected, no tracing data will be collected.
 * `LUMIGO_AUTO_FILTER_EMPTY_SQS`: This option enables the automatic filtering of empty SQS messages from being sent to Lumigo SaaS. For more information, refer to the [Filtering out empty SQS messages](#filtering-out-empty-sqs-messages) section.
 * `LUMIGO_DISABLE_PG_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [postgres](https://www.npmjs.com/package/pg).
+* `LUMIGO_DISABLE_MONGODB_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [mongodb](https://www.npmjs.com/package/mongodb).
 * `LUMIGO_DISABLE_REDIS_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [redis](https://www.npmjs.com/package/redis).
 * `LUMIGO_DISABLE_IOREDIS_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [ioredis](https://www.npmjs.com/package/ioredis).
 * `LUMIGO_DISABLE_NEST_INSTRUMENTATION=true`: This option disables the automatic instrumentation of [@nestjs/core](https://www.npmjs.com/package/@nestjs/core).
@@ -122,6 +123,10 @@ This setting is independent from `LUMIGO_DEBUG`, that is, `LUMIGO_DEBUG` does no
 * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX='["regex1", "regex2"]'`: This option enables the filtering of client and server endpoints through regular expression searches. Fine-tune your settings via the following environment variables, which work in conjunction with `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX` for a specific span type:
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_SERVER` applies the regular expression search exclusively to server spans. Searching is performed against the following attributes on a span: `url.path` and `http.target`.
   * `LUMIGO_FILTER_HTTP_ENDPOINTS_REGEX_CLIENT` applies the regular expression search exclusively to client spans. Searching is performed against the following attributes on a span: `url.full` and `http.url`.
+* `LUMIGO_REDUCED_MONGO_INSTRUMENTATION=true`: Reduces the amount of data collected by the MongoDB [instrumentation](https://www.npmjs.com/package/@opentelemetry/instrumentation-mongodb), such as not collecting the `db.operation` attribute `isMaster`. 
+Defaults to `true`, meaning the MongoDB instrumentation reduces the amount of data collected.
+* `LUMIGO_REDUCED_REDIS_INSTRUMENTATION=true`: Reduces the amount of data collected by the Redis [instrumentation](https://www.npmjs.com/package/@opentelemetry/instrumentation-redis-4), such as not collecting the `db.statement` attribute `INFO`. 
+Defaults to `true`, meaning the Redis instrumentation reduces the amount of data collected.
 
   For more information check out [Filtering http endpoints](#filtering-http-endpoints).
 

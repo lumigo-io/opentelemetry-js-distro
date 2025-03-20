@@ -1,5 +1,5 @@
 import { logger } from '../logging';
-import { md5Hash, parseQueryParams, removeDuplicates, safeGet } from '../utils';
+import { md5Hash, parseQueryParams, removeDuplicates, safeGet, safeParse } from '../utils';
 import { traverse } from '../tools/xmlToJson';
 import type { HttpRawRequest, HttpRawResponse } from '@lumigo/node-core/lib/types/spans';
 import { CommonUtils, Triggers } from '@lumigo/node-core';
@@ -167,7 +167,7 @@ export const sqsParser = (requestData, responseData, jsonResponseBody = undefine
   const { body: reqBody, headers: requestHeaders } = requestData;
   const { body: resBody } = responseData || {};
   const parsedReqBody = reqBody ? parseQueryParams(reqBody) : undefined;
-  const parsedResBody = jsonResponseBody || (resBody ? traverse(resBody) : undefined);
+  const parsedResBody = jsonResponseBody || safeParse(resBody ? traverse(resBody) : undefined);
   const resourceName = parsedReqBody ? parsedReqBody['QueueUrl'] : undefined;
   const awsServiceData: AwsServiceAttributes = { 'aws.resource.name': resourceName };
   awsServiceData.messageId =
@@ -202,7 +202,8 @@ export const sqsParser = (requestData, responseData, jsonResponseBody = undefine
       parsedResBody,
       ['ReceiveMessageResponse', 'ReceiveMessageResult', 'Message', 0, 'MessageId'],
       undefined
-    );
+    ) ||
+    safeGet(parsedResBody, ['MessageId'], undefined);
   const innerRaw = parsedResBody?.ReceiveMessageResponse?.ReceiveMessageResult?.Message?.Body || '';
   if (innerRaw.search(Triggers.INNER_MESSAGES_IDENTIFIER_PATTERN) > 0) {
     const inner = JSON.parse(innerRaw.replace(/&quot;/g, '"'));

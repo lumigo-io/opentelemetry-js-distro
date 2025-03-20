@@ -325,6 +325,29 @@ describe('aws parser', () => {
     });
   });
 
+  test('sqsParser -> request, response of FIFO queue', () => {
+    const requestData = {
+      host: 'https://sqs.eu-central-1.amazonaws.com/',
+      body: '{"MessageBody":"{\\"jobId\\":\\"1073a67a-fca7-403a-aaac-45c791863e3a\\",\\"createdAt\\":\\"2025-01-22T08:57:43.416Z\\",\\"updatedAt\\":\\"2025-01-22T08:57:43.416Z\\",\\"respondent\\":{\\"_id\\":\\"6790b3070735fa471ac8a0cd\\",\\"respondentId\\":\\"107b635a-c5d9-40de-af4c-6bd356056b93\\",\\"surveyName\\":\\"Highlights from Your Last Vaction\\",\\"survey\\":\\"675198ef8647858063795098\\"},\\"synchronousResponse\\":true}","MessageDeduplicationId":"1073a67a-fca7-403a-aaac-45c791863e3a","MessageGroupId":"1073a67a-fca7-403a-aaac-45c791863e3a","QueueUrl":"https://sqs.eu-central-1.amazonaws.com/741448950100/staging-api-jobs-queue.fifo"}',
+      method: 'POST',
+      headers: {
+        host: 'sqs.eu-central-1.amazonaws.com',
+      },
+    };
+
+    const responseBody =
+      '{"MD5OfMessageBody":"a2c0703fb5c6b057cb3cf2eb9ab6d5be","MessageId":"3e8805d5-2413-480c-b297-2f7269311840","SequenceNumber":"18891553357147631616"}';
+    const responseData = { body: responseBody };
+
+    const result = aws.sqsParser(requestData, responseData);
+
+    expect(result).toEqual({
+      'aws.resource.name':
+        'https://sqs.eu-central-1.amazonaws.com/741448950100/staging-api-jobs-queue.fifo',
+      messageId: '3e8805d5-2413-480c-b297-2f7269311840',
+    });
+  });
+
   test('sqsParser -> empty request', () => {
     const result = aws.sqsParser({}, null);
     expect(result).toEqual({

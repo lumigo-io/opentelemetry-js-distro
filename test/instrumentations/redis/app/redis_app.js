@@ -166,6 +166,18 @@ const requestListener = async function (req, res) {
       }
       break;
 
+    case '/info':
+      try {
+        client = await openRedisConnection(host, port);
+        const infoData = await client.info();
+        // infoData is a multi-line string. You may wish to parse or just return as-is.
+        respond(res, 200, { info: infoData });
+      } catch (err) {
+        console.error(`Error retrieving info`, err);
+        respond(res, 500, { error: err });
+      }
+      break;
+
     case '/quit':
       console.error('Received quit command');
       respond(res, 200, {});

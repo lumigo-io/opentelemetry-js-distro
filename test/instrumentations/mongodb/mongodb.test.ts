@@ -5,7 +5,7 @@ import { join } from 'path';
 import { MongoDBContainer, StartedMongoDBContainer } from 'testcontainers';
 
 import { itTest } from '../../integration/setup';
-import { getSpanByName } from '../../utils/spans';
+import { getSpanByName, getSpansByAttribute } from '../../utils/spans';
 import { TestApp } from '../../utils/test-apps';
 import { installPackage, reinstallPackages, uninstallPackage } from '../../utils/test-setup';
 import { versionsToTest } from '../../utils/versions';
@@ -63,6 +63,23 @@ const warmupContainer = async () => {
   }
 };
 
+function getMongoContainerConnectionUrl(mongoContainer: StartedMongoDBContainer, versionToTest: string): URL {
+  let mongoConnectionUrl = new URL(mongoContainer.getConnectionString());
+  // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
+  mongoConnectionUrl.hostname = '127.0.0.1';
+
+  if (!versionToTest.startsWith('3.')) {
+    /*
+     * Prevent `MongoServerSelectionError: getaddrinfo EAI_AGAIN` errors
+     * by disabling MongoDB topology.
+     */
+    mongoConnectionUrl.searchParams.set('directConnection', 'true');
+  }
+
+  console.info(`Mongo container started, URL: ${mongoConnectionUrl}`);
+  return mongoConnectionUrl;
+}
+
 describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
   'Instrumentation tests for the mongodb package',
   function (versionToTest) {
@@ -84,31 +101,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
       });
 
       mongoContainer = await startMongoDbContainer();
-
-      let mongoConnectionUrl = new URL(mongoContainer.getConnectionString());
-      // On Node.js 18 there are pesky issues with IPv6; ensure we use IPv4
-      mongoConnectionUrl.hostname = '127.0.0.1';
-
-      if (!versionToTest.startsWith('3.')) {
-        /*
-         * Prevent `MongoServerSelectionError: getaddrinfo EAI_AGAIN` errors
-         * by disabling MongoDB topology.
-         */
-        mongoConnectionUrl.searchParams.set('directConnection', 'true');
-      }
-
-      console.info(`Mongo container started, URL: ${mongoConnectionUrl}`);
-
-      testApp = new TestApp(
-        TEST_APP_DIR,
-        INSTRUMENTATION_NAME,
-        {
-          spanDumpPath: `${SPANS_DIR}/basic-@${versionToTest}.json`,
-          env: {
-            MONGODB_URL: mongoConnectionUrl.toString(),
-            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
-          }
-        });
+      getMongoContainerConnectionUrl(mongoContainer, versionToTest);
     }, DOCKER_WARMUP_TIMEOUT);
 
     afterEach(async function () {
@@ -140,6 +133,18 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
         timeout: TEST_TIMEOUT,
       },
       async function () {
+        const exporterFile =  `${SPANS_DIR}/basic-@${versionToTest}.json`
+        let mongoConnectionUrl = getMongoContainerConnectionUrl(mongoContainer, versionToTest);
+          testApp = new TestApp(
+          TEST_APP_DIR,
+          INSTRUMENTATION_NAME,
+          {
+            spanDumpPath: exporterFile,
+            env: {
+              MONGODB_URL: mongoConnectionUrl.toString(),
+              OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+            }
+          });        
         await testApp.invokeGetPath(`/test-mongodb`);
 
         const spans = await testApp.getFinalSpans(5);
@@ -203,6 +208,70 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
             '$cmd'
           )
         );
+      }
+    );
+
+    itTest(
+      {
+        testName: `filter isMaster request: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile =  `${SPANS_DIR}/filter-isMaster@${versionToTest}.json`
+        let mongoConnectionUrl = getMongoContainerConnectionUrl(mongoContainer, versionToTest);
+        testApp = new TestApp(
+          TEST_APP_DIR,
+          INSTRUMENTATION_NAME,
+          {
+            spanDumpPath: exporterFile,
+            env: {
+              MONGODB_URL: mongoConnectionUrl.toString(),
+              OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+            }
+          });
+
+        // older versions of mongodb driver add extra spans
+        const expectedSpanCount = versionToTest.startsWith('3') ? 2 : 1;
+        const expectedDbSystemAttributeSpans = versionToTest.startsWith('3') ? 1 : 0;
+
+        await testApp.invokeGetPath(`/mongodb-isMaster`);
+
+        let spans = await testApp.getFinalSpans(expectedSpanCount);
+        expect(getSpansByAttribute(spans, 'db.system', 'mongodb')).toHaveLength(expectedDbSystemAttributeSpans);
+
+      }
+    );
+
+    itTest(
+      {
+        testName: `filter isMaster disabled: ${versionToTest}`,
+        packageName: INSTRUMENTATION_NAME,
+        version: versionToTest,
+        timeout: TEST_TIMEOUT,
+      },
+      async function () {
+        const exporterFile =  `${SPANS_DIR}/filter-isMaster-disabled@${versionToTest}.json`
+        let mongoConnectionUrl = getMongoContainerConnectionUrl(mongoContainer, versionToTest);
+        testApp = new TestApp(
+          TEST_APP_DIR,
+          INSTRUMENTATION_NAME,
+          {
+            spanDumpPath: exporterFile,
+            env: {
+              MONGODB_URL: mongoConnectionUrl.toString(),
+              OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+              LUMIGO_REDUCED_MONGO_INSTRUMENTATION: 'false'
+            }
+          });
+
+        // older versions of mongodb driver add extra spans
+        const expectedSpanCount = versionToTest.startsWith('3') ? 3 : 2;
+        await testApp.invokeGetPath(`/mongodb-isMaster`);
+        let spans = await testApp.getFinalSpans(expectedSpanCount);
+        expect(getSpansByAttribute(spans, 'db.operation', 'isMaster')).toHaveLength(1);
+
       }
     );
   }
