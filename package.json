@@ -1,6 +1,6 @@
 {
   "name": "@lumigo/opentelemetry",
-  "version": "1.51.0",
+  "version": "1.52.1",
   "description": "Lumigo wrapper to trace distributed architecture",
   "private": false,
   "types": "dist/src/distro.js",
@@ -45,7 +45,7 @@
     "@opentelemetry/instrumentation-grpc": "^0.41.0",
     "@opentelemetry/instrumentation-http": "0.38.0",
     "@opentelemetry/instrumentation-ioredis": "^0.35.2",
-    "@opentelemetry/instrumentation-mongodb": "0.39.0",
+    "@opentelemetry/instrumentation-mongodb": "0.51.0",
     "@opentelemetry/instrumentation-nestjs-core": "^0.34.0",
     "@opentelemetry/instrumentation-pg": "^0.38.0",
     "@opentelemetry/instrumentation-pino": "0.42.0",
@@ -148,5 +148,8 @@
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
+  },
+  "overrides": {
+    "path-to-regexp": "0.1.12"
   }
 }
