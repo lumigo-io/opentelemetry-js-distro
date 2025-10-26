@@ -5,7 +5,7 @@ on:
       - RD-16832-node-24-support
 jobs:
   test-untested-versions:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         # NOTE: if these are updated, don't forget to
