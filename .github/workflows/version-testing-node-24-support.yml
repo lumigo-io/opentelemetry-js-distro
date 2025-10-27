@@ -33,7 +33,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: mkdir versions_artifact
-      - run: npm run test:untested-instrumentations --silent 2>&1 | grep -E "(✓|✗|Error|FAIL|PASS|Found new versions|Testing)" || true
+      - run: npm run test:untested-instrumentations > /dev/null 2>&1
       - run: git --no-pager diff
       - run: |
           for path in `git diff --name-only`; do
