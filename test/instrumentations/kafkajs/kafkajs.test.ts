@@ -24,8 +24,7 @@ const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
 const startKafkaContainer = async () => {
-  return await new KafkaContainer('confluentinc/cp-kafka:latest')
-    .withExposedPorts(DEFAULT_KAFKA_PORT)
+  return await new KafkaContainer()
     .start();
 };
 
