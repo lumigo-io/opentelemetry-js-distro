@@ -72,7 +72,7 @@ const requestListener = async function (req, res) {
   switch (requestUrl.pathname) {
     case '/invoke-amqp-producer':
       try {
-        conn = await amqp.connect(`amqp://${host}:${port}`);
+        conn = await amqp.connect(`amqp://guest:guest@${host}:${port}`);
         await sendMessage(conn, topic, message);
         respond(res, 200, {});
       } catch (err) {
@@ -83,7 +83,7 @@ const requestListener = async function (req, res) {
 
     case '/invoke-amqp-consumer':
       try {
-        conn = await amqp.connect(`amqp://${host}:${port}`);
+        conn = await amqp.connect(`amqp://guest:guest@${host}:${port}`);
         await receiveMessage(conn, topic, message);
         respond(res, 200, {});
       } catch (err) {

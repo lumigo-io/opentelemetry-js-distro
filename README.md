@@ -304,7 +304,7 @@ trace.getActiveSpan()?.addEvent('<error-message>', {'lumigo.type': '<error-type>
 
 ## Supported runtimes
 
-* Node.js: 14.x, 16.x, 18.x, 20.x
+* Node.js: 14.x, 16.x, 18.x, 20.x, 22.x, 24.x
 
 ## Supported packages
 

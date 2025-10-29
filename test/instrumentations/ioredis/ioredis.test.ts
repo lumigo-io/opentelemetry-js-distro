@@ -148,7 +148,10 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, {
           spanDumpPath: exporterFile,
-          env: { OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096' }
+          env: { 
+            OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+            LUMIGO_REDUCED_REDIS_INSTRUMENTATION: 'false'
+          }
         });
 
         const key = 'test:set-and-get';
@@ -219,6 +222,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+          LUMIGO_REDUCED_REDIS_INSTRUMENTATION: 'false'
         }});
 
         const key = 'test:hash';
@@ -324,6 +328,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         testApp = new TestApp(TEST_APP_DIR, INSTRUMENTATION_NAME, { spanDumpPath: exporterFile, env: {
           OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: '4096',
+          LUMIGO_REDUCED_REDIS_INSTRUMENTATION: 'false'
         }});
 
         const key = 'test:transaction:set-and-get';
