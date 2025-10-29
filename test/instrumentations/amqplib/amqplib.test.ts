@@ -23,7 +23,11 @@ const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
 const startRabbitMqContainer = async () => {
-  return await new GenericContainer('rabbitmq:latest')
+  // Using RabbitMQ 3.8 instead of newer versions (3-management/latest) to avoid
+  // "Socket closed abruptly during opening handshake" errors. Newer RabbitMQ versions
+  // have stricter security policies that prevent external connections even with
+  // correct guest credentials, while 3.8 has more permissive default authentication
+  return await new GenericContainer('rabbitmq:3.8')
     .withExposedPorts(DEFAULT_RABBITMQ_PORT)
     .withWaitStrategy(Wait.forLogMessage('Server startup complete'))
     .withStartupTimeout(DOCKER_WARMUP_TIMEOUT)

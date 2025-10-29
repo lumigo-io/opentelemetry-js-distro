@@ -54,8 +54,8 @@ export function getExpectedSpan({
       'messaging.rabbitmq.routing_key': topic,
       [messageKey]: JSON.stringify(message),
       'messaging.system': 'rabbitmq',
-      // the port is reported inconsistently, ignore it
-      'messaging.url': expect.stringContaining(`amqp://${host}:`),
+      // the port is reported inconsistently, ignore it - URL may contain credentials
+      'messaging.url': expect.stringMatching(new RegExp(`amqp://(.*@)?${host}:`)),
       'net.peer.name': host,
       'net.peer.port': expect.any(Number),
     },
