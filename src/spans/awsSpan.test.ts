@@ -1,8 +1,7 @@
 import { getAwsServiceData, getAwsServiceFromHost } from './awsSpan';
-import { Span } from '@opentelemetry/sdk-trace-base';
+import type { Span } from '@opentelemetry/sdk-trace-base';
 import { AwsOtherService, AwsParsedService } from './types';
-import { rootSpanWithAttributes, rootSpanWithoutAttributes } from '../../test/utils/spans';
-import { LumigoAwsSdkLibInstrumentation } from '../instrumentations/aws-sdk/LumigoAwsSdkLibInstrumentation';
+import { rootSpanWithAttributes } from '../../test/utils/spans';
 
 describe('awsSpan', () => {
   describe('getAwsServiceFromHost', () => {
