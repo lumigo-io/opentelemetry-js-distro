@@ -91,15 +91,15 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - restore_cache:
-          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
+#      - restore_cache:
+#          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run:
           name: install-npm-wee
           command: npm ci
-      - save_cache:
-          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
-          paths:
-            - ./node_modules
+#      - save_cache:
+#          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
+#          paths:
+#            - ./node_modules
       - run:
           name: prettier
           command: npm run prettier:ci
