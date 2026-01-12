@@ -100,6 +100,9 @@ jobs:
           name: debug cat package-lock.json
           command: cat package-lock.json
       - run:
+          name: check node version
+          command: node -v
+      - run:
           name: install-npm-wee
           command: npm ci
 #      - save_cache:
@@ -112,9 +115,6 @@ jobs:
       - run:
           name: run checks script
           command: ./scripts/checks.sh
-      - run:
-          name: check node version
-          command: node -v
       - run:
           name: test
           command: npm run test:unit
