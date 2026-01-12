@@ -1,5 +1,4 @@
 import LumigoRedisInstrumentation from './RedisInstrumentation';
-import child_process from 'child_process';
 
 describe('LumigoRedisInstrumentation', () => {
   const oldEnv = Object.assign({}, process.env);
@@ -15,9 +14,7 @@ describe('LumigoRedisInstrumentation', () => {
   let lumigoRedisInstrumentation = new LumigoRedisInstrumentation();
 
   test('disable redis instrumentation', () => {
-    const child_process = require('child_process');
-    child_process.execSync('npm install redis@4.0.0', { stdio: 'inherit' });
-
+    // We've pre-installed redis in package.json
     process.env.LUMIGO_DISABLE_REDIS_INSTRUMENTATION = 'true';
     expect(lumigoRedisInstrumentation.isApplicable()).toEqual(false);
   });

@@ -1,5 +1,4 @@
 import LumigoIORedisInstrumentation from './IORedisInstrumentation';
-import child_process from 'child_process';
 
 describe('LumigoIORedisInstrumentation', () => {
   const oldEnv = Object.assign({}, process.env);
@@ -20,9 +19,7 @@ describe('LumigoIORedisInstrumentation', () => {
   });
 
   test('disable ioredis instrumentation', () => {
-    const child_process = require('child_process');
-    child_process.execSync('npm install ioredis', { stdio: 'inherit' });
-
+    // We've pre-installed ioredis in package.json
     process.env.LUMIGO_DISABLE_IOREDIS_INSTRUMENTATION = 'true';
     expect(lumigoIORedisInstrumentation.isApplicable()).toEqual(false);
   });

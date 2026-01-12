@@ -1,5 +1,4 @@
 import LumigoMongoDBInstrumentation from './MongoDBInstrumentation';
-import child_process from 'child_process';
 
 describe('LumigoMongoDBInstrumentation', () => {
   const oldEnv = Object.assign({}, process.env);
@@ -15,9 +14,7 @@ describe('LumigoMongoDBInstrumentation', () => {
   let lumigoMongoDBInstrumentation = new LumigoMongoDBInstrumentation();
 
   test('disable mongodb instrumentation', () => {
-    const child_process = require('child_process');
-    child_process.execSync('npm install mongodb', { stdio: 'inherit' });
-
+    // We've pre-installed mongodb in package.json
     process.env.LUMIGO_DISABLE_MONGODB_INSTRUMENTATION = 'true';
     expect(lumigoMongoDBInstrumentation.isApplicable()).toEqual(false);
   });

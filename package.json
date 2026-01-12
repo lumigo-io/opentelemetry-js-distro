@@ -12,7 +12,7 @@
     "prettier:ci": "prettier --list-different \"src/**/*.[jt]s\" --parser typescript",
     "prettier:fix": "prettier --write \"./src/**/*.[jt]s\" --parser typescript",
     "semantic-release": "semantic-release --debug",
-    "test:unit": "NODE_OPTIONS=--unhandled-rejections=strict jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit --silent",
+    "test:unit": "NODE_OPTIONS=--unhandled-rejections=strict jest -c jest.unit.config.js --detectOpenHandles --runInBand --forceExit",
     "test:instrumentations": "npm run build && jest -c jest.instrumentations.config.js --detectOpenHandles --runInBand --silent=false",
     "test:instrumentations:ci": "npm run build && jest -c jest.instrumentations.config.js --runInBand --forceExit --silent=false",
     "test:untested-instrumentations": "node scripts/test_untested_versions.js",
@@ -63,7 +63,7 @@
     "deasync": "^0.1.30",
     "opentelemetry-instrumentation-express": "0.40.0",
     "opentelemetry-instrumentation-kafkajs": "^0.40.0",
-    "pg": "^8.16.3",
+    "pg": "^8.7.3",
     "redis": "^4.0.0",
     "shimmer": "^1.2.1"
   },
@@ -127,7 +127,9 @@
     "utf-8-validate": "^5.0.2",
     "wait-on": "^6.0.1",
     "webpack": "^5.88.2",
-    "webpack-cli": "^4.10.0"
+    "webpack-cli": "^4.10.0",
+    "ioredis": "^4.28.5",
+    "mongodb": "^3.7.4"
   },
   "release": {
     "branches": [
