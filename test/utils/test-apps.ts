@@ -206,7 +206,7 @@ export class TestApp {
         const port = await this.port()
 
         const url = `http-get://localhost:${port}/${path.replace(/^\/+/, '')}`;
-        const spanDumpPath = this.spanDumpPath;
+        const spanDumpPath = this.options.spanDumpPath;
 
         return new Promise<Span[]>((resolve, reject) => {
             console.info(`invoking url: ${url} and waiting for span dump...`);

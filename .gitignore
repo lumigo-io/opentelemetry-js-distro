@@ -131,3 +131,8 @@ test/utils/*.d.ts
 test/utils/*.d.ts.map
 test/utils/*.js
 test/utils/*.js.map
+
+test/instrumentations/**/*.d.ts
+test/instrumentations/**/*.d.ts.map
+test/instrumentations/**/*.js
+test/instrumentations/**/*.js.map
