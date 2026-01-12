@@ -113,6 +113,9 @@ jobs:
           name: run checks script
           command: ./scripts/checks.sh
       - run:
+          name: check node version
+          command: node -v
+      - run:
           name: test
           command: npm run test:unit
       - run:
