@@ -104,7 +104,7 @@ jobs:
           command: node -v
       - run:
           name: install node 18
-          command: curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+          command: apt-get update && apt-get install -y nodejs
       - run:
           name: check node version
           command: node -v
