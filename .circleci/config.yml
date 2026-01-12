@@ -94,6 +94,12 @@ jobs:
 #      - restore_cache:
 #          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run:
+          name: debug ls
+          command: ls -alh
+      - run:
+          name: debug cat package-lock.json
+          command: cat package-lock.json
+      - run:
           name: install-npm-wee
           command: npm ci
 #      - save_cache:
