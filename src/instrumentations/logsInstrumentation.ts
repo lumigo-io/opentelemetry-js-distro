@@ -12,7 +12,7 @@ export default class LogsInstrumentation extends InstrumentationBase {
   supportedVersions: string[];
 
   constructor() {
-    super('logs-instrumentation', '0.0.1');
+    super('logs-instrumentation', '0.0.1', {});
   }
 
   protected init(): InstrumentationModuleDefinition | InstrumentationModuleDefinition[] | void {
