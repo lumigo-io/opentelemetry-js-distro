@@ -103,6 +103,12 @@ jobs:
           name: check node version
           command: node -v
       - run:
+          name: install node 18
+          command: curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+      - run:
+          name: check node version
+          command: node -v
+      - run:
           name: install-npm-wee
           command: npm ci
 #      - save_cache:
