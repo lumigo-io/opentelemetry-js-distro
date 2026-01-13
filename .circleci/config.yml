@@ -38,13 +38,7 @@ workflows:
     - lumigo-orb/prep-it-resources:
         context: common
         venv_python_version: "3.9"
-        executor:
-          name: custom
-          docker:
-            - image: lumigo/ci-ubuntu2204:26.1.13.13.5.11-testing
-              auth:
-                username: lumigo
-                password: $DOCKERHUB_PASSWORD
+        docker_image: lumigo/ci-ubuntu2204:26.1.13.13.5.11-testing
         requires:
           - lumigo-orb/is_environment_available
 
