@@ -5,7 +5,7 @@ orbs:
 
 defaults: &defaults
   docker:
-  - image: lumigo/ci-ubuntu2204:latest
+  - image: lumigo/ci-ubuntu2204:26.1.13.13.5.11-testing
     auth:
       username: lumigo
       password: $DOCKERHUB_PASSWORD
@@ -93,12 +93,6 @@ jobs:
       - checkout
 #      - restore_cache:
 #          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
-      - run:
-          name: check node version
-          command: node -v
-      - run:
-          name: install node 18
-          command: curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get update && apt-get install -y nodejs
       - run:
           name: check node version
           command: node -v
