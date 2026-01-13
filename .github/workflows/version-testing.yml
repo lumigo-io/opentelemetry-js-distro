@@ -57,21 +57,6 @@ jobs:
           python-version: 3.7
       - run: mkdir versions_artifacts
       - uses: actions/download-artifact@v4
-        continue-on-error: true  # when there aren't changes the artifact won't be uploaded and this step will fail
-        with:
-          name: 14
-          path: versions_artifacts/14
-      - uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: 16
-          path: versions_artifacts/16
-      - uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: 18
-          path: versions_artifacts/18
-      - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: 20
