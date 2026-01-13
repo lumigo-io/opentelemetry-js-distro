@@ -115,7 +115,7 @@ describe('FileLogExporter tests', () => {
     expect(() => {
       new FileLogExporter('\0');
     }).toThrowError(
-      "The argument 'path' must be a string or Uint8Array without null bytes. Received '\\x00'"
+      "The argument 'path' must be a string, Uint8Array, or URL without null bytes. Received '\\x00'"
     );
   });
 });
