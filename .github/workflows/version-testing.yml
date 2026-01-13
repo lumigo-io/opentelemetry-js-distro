@@ -10,7 +10,7 @@ jobs:
       matrix:
         # NOTE: if these are updated, don't forget to
         # update the download-artifacts versions as well
-        node_cimg_tag: [ 14, 16, 18, 20, 22, 24 ]
+        node_cimg_tag: [ 20, 22, 24 ]
     name: test-untested-versions
     steps:
       - uses: actions/checkout@v4

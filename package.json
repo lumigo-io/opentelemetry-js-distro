@@ -4,6 +4,9 @@
   "description": "Lumigo wrapper to trace distributed architecture",
   "private": false,
   "types": "dist/src/distro.js",
+  "engines": {
+    "node": ">=20.0.0 <=24.x"
+  },
   "scripts": {
     "build": "rm -rf dist *.tgz && tsc --build --force && tracer=\"$(npm pack)\" && mv \"$tracer\" distro.tgz && cp distro.tgz wrapper.tgz",
     "compile-tests": "tsc -p tsconfig.test.json",
