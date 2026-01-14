@@ -69,8 +69,7 @@ describe('Distro initialization', () => {
         process.env.VAR_TO_MASK = 'some value';
 
         const { init } = jest.requireActual('./distro');
-        const { tracerProvider } = await init;
-        const resource = tracerProvider.resource;
+        const { resource } = await init;
 
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.VAR_TO_MASK).toEqual('****');
@@ -89,8 +88,7 @@ describe('Distro initialization', () => {
             process.env.VAR_TO_MASK = 'some value';
 
             const { init } = jest.requireActual('./distro');
-            const { tracerProvider } = await init;
-            const resource = tracerProvider.resource;
+            const { resource } = await init;
 
             expect(JSON.parse(resource.attributes['process.environ'])).toEqual('****');
           });
@@ -106,8 +104,7 @@ describe('Distro initialization', () => {
         process.env.AUTHORIZATION = 'some value';
 
         const { init } = jest.requireActual('./distro');
-        const { tracerProvider } = await init;
-        const resource = tracerProvider.resource;
+        const { resource } = await init;
 
         const vars = JSON.parse(resource.attributes['process.environ']);
         expect(vars.AUTHORIZATION).toEqual('****');
@@ -193,8 +190,7 @@ describe('Distro initialization', () => {
         process.env.LUMIGO_REPORT_DEPENDENCIES = 'false';
 
         const { init } = jest.requireActual('./distro');
-        const { tracerProvider } = await init;
-        const resource = tracerProvider.resource;
+        const { resource } = await init;
 
         // expect(resource.attributes['framework']).toBe('node');
         expect(resource.attributes['service.name']).toBe('service-1');
@@ -229,8 +225,10 @@ describe('Distro initialization', () => {
         process.env.OTEL_SERVICE_NAME = 'service-1';
 
         const { init } = jest.requireActual('./distro');
-        const { tracerProvider } = await init;
-        const resource = tracerProvider.resource;
+        const { resource } = await init;
+
+        // Wait for async attributes (like ECS metadata) to resolve
+        await resource.waitForAsyncAttributes?.();
 
         checkBasicResourceAttributes(resource);
 

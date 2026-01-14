@@ -26,7 +26,7 @@ export class FileSpanExporter extends FileExporter<ReadableSpan> {
   protected exportInfo(span: ReadableSpan): Object {
     return {
       traceId: span.spanContext().traceId,
-      parentId: span.parentSpanId,
+      parentId: span.parentSpanContext?.spanId,
       name: span.name,
       id: span.spanContext().spanId,
       kind: span.kind,

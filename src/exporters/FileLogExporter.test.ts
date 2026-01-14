@@ -17,8 +17,9 @@ describe('FileLogExporter tests', () => {
     const exporterUnderTest = new FileLogExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
 
-    const provider = new LoggerProvider();
-    provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
+    const provider = new LoggerProvider({
+      processors: [new SimpleLogRecordProcessor(exporterUnderTest)],
+    });
 
     expect(spyExport).not.toHaveBeenCalled();
   });
@@ -29,8 +30,9 @@ describe('FileLogExporter tests', () => {
     const exporterUnderTest = new FileLogExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
 
-    const provider = new LoggerProvider();
-    provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
+    const provider = new LoggerProvider({
+      processors: [new SimpleLogRecordProcessor(exporterUnderTest)],
+    });
 
     provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
 
@@ -47,8 +49,9 @@ describe('FileLogExporter tests', () => {
     try {
       const exporterUnderTest = new FileLogExporter('console:log');
 
-      const provider = new LoggerProvider();
-      provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
+      const provider = new LoggerProvider({
+        processors: [new SimpleLogRecordProcessor(exporterUnderTest)],
+      });
 
       provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
 
@@ -70,8 +73,9 @@ describe('FileLogExporter tests', () => {
     try {
       const exporterUnderTest = new FileLogExporter('console:error');
 
-      const provider = new LoggerProvider();
-      provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
+      const provider = new LoggerProvider({
+        processors: [new SimpleLogRecordProcessor(exporterUnderTest)],
+      });
 
       provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
 
@@ -94,8 +98,9 @@ describe('FileLogExporter tests', () => {
     const exporterUnderTest = new FileLogExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
 
-    const provider = new LoggerProvider();
-    provider.addLogRecordProcessor(new SimpleLogRecordProcessor(exporterUnderTest));
+    const provider = new LoggerProvider({
+      processors: [new SimpleLogRecordProcessor(exporterUnderTest)],
+    });
 
     provider.getLogger('default').emit({ attributes: { foo: 'bar' } });
     provider.getLogger('default').emit({ attributes: { foo: 'baz' } });

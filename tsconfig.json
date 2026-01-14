@@ -4,7 +4,7 @@
     "allowJs": true,
     "target": "es6",
     "module": "CommonJS",
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "sourceMap": true,
     "inlineSources": true,
     "allowSyntheticDefaultImports": true,

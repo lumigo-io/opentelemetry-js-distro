@@ -1,11 +1,11 @@
 import shimmer from 'shimmer';
-import * as grpcServerUtils from '@opentelemetry/instrumentation-grpc/build/src/grpc-js/serverUtils';
+import * as grpcServerUtils from '@opentelemetry/instrumentation-grpc/build/src/serverUtils';
 import type { Span } from '@opentelemetry/api';
 import type {
   HandleCall,
   SendUnaryDataCallback,
   ServerCallWithMeta,
-} from '@opentelemetry/instrumentation-grpc/build/src/grpc-js/types';
+} from '@opentelemetry/instrumentation-grpc/build/src/internal-types';
 import { safeExecute } from '@lumigo/node-core/lib/utils';
 import { concatenatePayload } from './utils';
 

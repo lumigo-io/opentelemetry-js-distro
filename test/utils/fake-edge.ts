@@ -1,5 +1,5 @@
-import {IResource} from "@opentelemetry/resources";
-import { LogRecord } from "@opentelemetry/sdk-logs";
+import type { Resource } from "@opentelemetry/resources";
+import type { SdkLogRecord } from "@opentelemetry/sdk-logs";
 import type { Span } from '@opentelemetry/api';
 import express, { Express, Request, Response } from 'express';
 import { Server } from "http";
@@ -7,16 +7,16 @@ import { AddressInfo } from "net";
 import pRetry from 'p-retry';
 
 type FakeEdgeState = {
-  logs: LogRecord[];
+  logs: SdkLogRecord[];
   spans: Span[];
-  resources: IResource[];
+  resources: Resource[];
 }
 
 export class FakeEdge {
   private app: Express;
-  public logs: LogRecord[] = [];
+  public logs: SdkLogRecord[] = [];
   public spans: Span[] = [];
-  public resources: IResource[] = [];
+  public resources: Resource[] = [];
   private server: Server;
   private baseUrl: string;
 

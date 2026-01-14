@@ -1,6 +1,6 @@
 import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
 import { TracingInstrumentor } from '../instrumentor';
-import { preRequestHook, responseHook, sqsProcessHook } from './hooks';
+import { preRequestHook, responseHook } from './hooks';
 
 export abstract class LumigoAwsSdkLibInstrumentation extends TracingInstrumentor<AwsInstrumentation> {
   override isApplicable(): boolean {
@@ -14,7 +14,6 @@ export abstract class LumigoAwsSdkLibInstrumentation extends TracingInstrumentor
     return new AwsInstrumentation({
       responseHook,
       preRequestHook,
-      sqsProcessHook,
     });
   }
 }

@@ -2,7 +2,7 @@ import { SpanKind } from '@opentelemetry/api';
 import { BasicTracerProvider, Span } from '@opentelemetry/sdk-trace-base';
 
 export { Span } from '@opentelemetry/sdk-trace-base';
-export { LogRecord } from '@opentelemetry/sdk-logs';
+export { SdkLogRecord } from '@opentelemetry/sdk-logs';
 
 export function getSpanByName(spans: Span[] = [], spanName: string) {
     return spans.find((span) => span.name === spanName);

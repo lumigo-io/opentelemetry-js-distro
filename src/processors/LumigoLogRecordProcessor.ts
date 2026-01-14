@@ -1,6 +1,6 @@
 import { scrub } from '@lumigo/node-core';
 import type { Context } from '@opentelemetry/api';
-import type { LogRecord, LogRecordProcessor } from '@opentelemetry/sdk-logs';
+import type { LogRecordProcessor, SdkLogRecord } from '@opentelemetry/sdk-logs';
 
 export class LumigoLogRecordProcessor implements LogRecordProcessor {
   forceFlush(): Promise<void> {
@@ -8,7 +8,7 @@ export class LumigoLogRecordProcessor implements LogRecordProcessor {
   }
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  onEmit(logRecord: LogRecord, context?: Context): void {
+  onEmit(logRecord: SdkLogRecord, context?: Context): void {
     logRecord.body = scrub(logRecord.body);
 
     // @ts-ignore
