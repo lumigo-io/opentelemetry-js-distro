@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
           architecture: x64
       - run: sudo apt-get update && sudo apt-get install build-essential libsdl-pango-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev || true # Node.js 18 does not carry pango
       - run: npm ci
@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false # We want to see all tests being tried, rather than stop when the first fails
       matrix:
-        node_cimg_tag: [ 14, 16, 18, 20, 22, 24 ]
+        node_cimg_tag: [ 20, 22, 24 ]
         instrumentations_to_test: ${{ fromJson(needs.instrumentations-to-test.outputs.instrumentations) }}
     steps:
       - name: Set Swap Space
@@ -75,7 +75,7 @@ jobs:
     needs: [build-package]
     strategy:
       matrix:
-        node_cimg_tag: [ 12 ]
+        node_cimg_tag: [ 12, 14, 16, 18 ]
     steps:
       - name: Set up Node
         uses: actions/setup-node@v3
