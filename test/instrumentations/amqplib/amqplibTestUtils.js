@@ -67,5 +67,8 @@ export function getExpectedSpan({
 }
 
 export function filterAmqplibSpans(spans, topic) {
-  return spans.filter((span) => span.name.includes(topic));
+  return spans.filter((span) =>
+    span.name.includes(topic) || // Consumer spans include topic in name
+    span.name.startsWith('publish ') // Producer spans start with 'publish '
+  );
 }

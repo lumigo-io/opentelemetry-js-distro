@@ -143,7 +143,7 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
 
         let resourceAttributes = getExpectedResourceAttributes();
 
-        const expectedSendSpanName = `<default> -> ${topic} send`;
+        const expectedSendSpanName = `publish <default>`;
         const sendSpan = getSpanByName(amqplibSpans, expectedSendSpanName);
         expect(sendSpan).toMatchObject(
           getExpectedSpan({
