@@ -2,7 +2,13 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import type { Resource } from '@opentelemetry/resources';
-import { detectResources, envDetector, processDetector, emptyResource, resourceFromAttributes, defaultResource } from '@opentelemetry/resources';
+import {
+  detectResources,
+  envDetector,
+  processDetector,
+  resourceFromAttributes,
+  defaultResource,
+} from '@opentelemetry/resources';
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import {
   BatchLogRecordProcessor,
@@ -206,9 +212,11 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
 
     const processEnvDetectedResource = new ProcessEnvironmentDetector().detect();
     const resource = defaultResource()
-      .merge(resourceFromAttributes({
-        framework,
-      }))
+      .merge(
+        resourceFromAttributes({
+          framework,
+        })
+      )
       .merge(infrastructureResource)
       .merge(resourceFromAttributes(processEnvDetectedResource.attributes || {}));
 

@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ResourceDetector, DetectedResource } from '@opentelemetry/resources';
-import { logger } from '../../logging';
-import { ATTR_K8S_CONTAINER_NAME } from '@opentelemetry/semantic-conventions/incubating';
+
+const ATTR_K8S_CONTAINER_NAME = 'k8s.container.name';
 
 export const LUMIGO_CONTAINER_NAME_ENV_VAR = 'LUMIGO_CONTAINER_NAME';
 

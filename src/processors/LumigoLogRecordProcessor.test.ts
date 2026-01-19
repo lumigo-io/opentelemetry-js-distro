@@ -38,6 +38,9 @@ describe('LumigoLogRecordProcessor', () => {
   });
 
   const logRecordWith = (body: LogBody, attributes: LogAttributes = {}) =>
-    // @ts-ignore
-    new LogRecordImpl({ logRecordLimits: {} }, { name: 'test', version: 'v1' }, { body, attributes });
+    new LogRecordImpl(
+      { logRecordLimits: {} },
+      { name: 'test', version: 'v1' },
+      { body, attributes }
+    );
 });

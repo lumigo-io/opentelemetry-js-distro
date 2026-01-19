@@ -2,7 +2,9 @@
 import { readFileSync } from 'fs';
 import { logger } from '../../logging';
 import type { ResourceDetector, DetectedResource } from '@opentelemetry/resources';
-import { ATTR_K8S_POD_UID } from '@opentelemetry/semantic-conventions/incubating';
+
+// From @opentelemetry/semantic-conventions/incubating (ESLint can't resolve exports field)
+const ATTR_K8S_POD_UID = 'k8s.pod.uid';
 
 const POD_ID_LENGTH = 36;
 const CONTAINER_ID_LENGTH = 64;
