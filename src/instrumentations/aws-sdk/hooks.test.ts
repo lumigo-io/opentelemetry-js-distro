@@ -13,7 +13,7 @@ describe('aws-sdk instrumentation hooks', () => {
       const span = rootSpanWithAttributes({
         'rpc.service': 'SQS',
         'rpc.method': 'ReceiveMessage',
-        'messaging.destination': 'some-queue-name',
+        'messaging.destination.name': 'some-queue-name',
       });
       const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
         Messages: [{ Body: 'something' }],
@@ -167,7 +167,7 @@ describe('aws-sdk instrumentation hooks', () => {
         const span = rootSpanWithAttributes({
           'rpc.service': 'SQS',
           'rpc.method': sqsOperation,
-          'messaging.destination': 'some-queue-name',
+          'messaging.destination.name': 'some-queue-name',
         });
         const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
           some: 'thing',

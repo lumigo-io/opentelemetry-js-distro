@@ -33,7 +33,7 @@ export const preRequestHook = (span: MutableSpan, requestInfo: AwsSdkRequestHook
   const sqsOperation = span.attributes?.['rpc.method'] as string;
 
   if (SQS_PUBLISH_OPERATIONS.includes(sqsOperation)) {
-    span.setAttribute('aws.queue.name', span.attributes['messaging.destination']);
+    span.setAttribute('aws.queue.name', span.attributes['messaging.destination.name']);
     span.setAttribute('messaging.operation', sqsOperation);
     span.setAttribute(
       'messaging.publish.body',
@@ -69,7 +69,7 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
       span.setAttributes(extractAttributesFromSqsResponse(responseInfo.response.data, span));
 
       if (SQS_CONSUME_OPERATIONS.includes(sqsOperation)) {
-        span.setAttribute('aws.queue.name', span.attributes['messaging.destination']);
+        span.setAttribute('aws.queue.name', span.attributes['messaging.destination.name']);
         span.setAttribute('messaging.operation', sqsOperation);
         span.setAttribute(
           'messaging.consume.body',

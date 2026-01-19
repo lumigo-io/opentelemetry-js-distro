@@ -41,7 +41,7 @@ export const extractAttributesFromSqsResponse = (
   span: ReadableSpan
 ): AwsExtractedAttributes => {
   const operation = span.attributes['rpc.method'];
-  const awsResourceName = span.attributes['messaging.url'] as string;
+  const awsResourceName = span.attributes['url.full'] as string;
   const baseAttributes = { 'aws.resource.name': awsResourceName };
 
   switch (operation) {
@@ -60,7 +60,7 @@ export const extractAttributesFromSqsResponse = (
             targetId: null,
             triggeredBy: Triggers.MessageTrigger.SQS,
             fromMessageIds: [messageId],
-            extra: { resource: span.attributes['messaging.url'] },
+            extra: { resource: span.attributes['url.full'] },
           };
 
           lumigoData = JSON.stringify({

@@ -25,7 +25,7 @@ describe('extractAttributesFromSqsResponse', () => {
       });
       const sqsMessage = { Body: innerMessageBody, MessageId: sqsMessageId };
       const receiveMessagesSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
       const result = extractAttributesFromSqsResponse(
@@ -59,7 +59,7 @@ describe('extractAttributesFromSqsResponse', () => {
 
     test('does not produce a messageId when no messages received', () => {
       const receiveMessagesSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
       const result = extractAttributesFromSqsResponse({ Messages: [] }, receiveMessagesSpan);
@@ -69,7 +69,7 @@ describe('extractAttributesFromSqsResponse', () => {
 
     test('does not produce a messageId when a bad response is received', () => {
       const receiveMessagesSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
       // @ts-expect-error
@@ -80,7 +80,7 @@ describe('extractAttributesFromSqsResponse', () => {
 
     test('does not produce lumigoData when a message has empty body', () => {
       const receiveMessagesSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
       const result = extractAttributesFromSqsResponse(
@@ -96,7 +96,7 @@ describe('extractAttributesFromSqsResponse', () => {
         (p) => !!p.INNER_IDENTIFIER
       )?.INNER_IDENTIFIER;
       const receiveMessagesSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'ReceiveMessage',
       });
       const result = extractAttributesFromSqsResponse(
@@ -111,7 +111,7 @@ describe('extractAttributesFromSqsResponse', () => {
   describe('SendMessage operations', () => {
     test('builds the attribute-data correctly for inner messages', () => {
       const sendMessageSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'SendMessage',
       });
       const result = extractAttributesFromSqsResponse({ MessageId: sqsMessageId }, sendMessageSpan);
@@ -126,7 +126,7 @@ describe('extractAttributesFromSqsResponse', () => {
   describe('SendMessageBatch operations', () => {
     test('builds the attribute-data correctly using successful messages if available', () => {
       const sendMessageSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'SendMessageBatch',
       });
       const result = extractAttributesFromSqsResponse(
@@ -142,7 +142,7 @@ describe('extractAttributesFromSqsResponse', () => {
 
     test('does not produce a messageId property if all messages in the batch failed', () => {
       const sendMessageSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'SendMessageBatch',
       });
       const result = extractAttributesFromSqsResponse(
@@ -155,7 +155,7 @@ describe('extractAttributesFromSqsResponse', () => {
 
     test('does not produce a messageId when a bad response is received', () => {
       const receiveMessagesSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'SendMessageBatch',
       });
       // @ts-expect-error
@@ -168,7 +168,7 @@ describe('extractAttributesFromSqsResponse', () => {
   describe('Unsupported operations', () => {
     test('returns an empty object for unsupported operations', () => {
       const sendMessageSpan = rootSpanWithAttributes({
-        'messaging.url': queueUrl,
+        'url.full': queueUrl,
         'rpc.method': 'SomeWeirdStuff',
       });
       const result = extractAttributesFromSqsResponse(
