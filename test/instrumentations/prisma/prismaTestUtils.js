@@ -18,14 +18,14 @@ export function getExpectedResourceAttributes() {
   };
 }
 
-export function getExpectedSpan({ name, resourceAttributes, attributes }) {
+export function getExpectedSpan({ name, resourceAttributes, attributes, kind = SpanKind.INTERNAL }) {
   return {
     traceId: expect.any(String),
     id: expect.any(String),
     timestamp: expect.any(Number),
     duration: expect.any(Number),
     name: name,
-    kind: SpanKind.INTERNAL,
+    kind: kind,
     resource: {
       attributes: resourceAttributes,
     },
@@ -72,7 +72,7 @@ export function hasExpectedClientConnectionSpans({
         name: CLIENT_CONNECTION_SPAN,
         resourceAttributes,
         attributes: {
-          'db.type': engine.name,
+          'db.system': engine.provider,
         },
       })
     );

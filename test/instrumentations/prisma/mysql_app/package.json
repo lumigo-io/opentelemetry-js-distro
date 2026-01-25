@@ -14,7 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "@lumigo/opentelemetry": "file:../../../../distro.tgz",
-    "@prisma/client": "^4.2.0",
-    "prisma": "^4.2.0"
+    "@prisma/client": "^6.0.0",
+    "prisma": "^6.0.0"
   }
 }
