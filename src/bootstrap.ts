@@ -42,10 +42,7 @@ import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInst
 import LumigoPgInstrumentation from './instrumentations/pg/PgInstrumentation';
 import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
-import {
-  LumigoAwsSdkV2LibInstrumentation,
-  LumigoAwsSdkV3LibInstrumentation,
-} from './instrumentations/aws-sdk';
+import { LumigoAwsSdkV3LibInstrumentation } from './instrumentations/aws-sdk';
 import LumigoWinstonInstrumentation from './instrumentations/winston/WinstonInstrumentation';
 import LumigoBunyanInstrumentation from './instrumentations/bunyan/BunyanInstrumentation';
 import LumigoPinoInstrumentation from './instrumentations/pino/PinoInstrumentation';
@@ -146,7 +143,6 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoPgInstrumentation(),
       new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
-      new LumigoAwsSdkV2LibInstrumentation(),
       new LumigoAwsSdkV3LibInstrumentation(),
 
       // Loggers
