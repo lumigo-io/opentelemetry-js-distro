@@ -62,7 +62,7 @@ export const responseHook = (span: MutableSpan, responseInfo: AwsSdkResponseHook
     if (
       shouldAutoFilterEmptySqs() &&
       sqsOperation === 'ReceiveMessage' &&
-      responseInfo.response.data.Messages?.length === 0
+      !responseInfo.response.data.Messages?.length
     ) {
       setSpanAsNotExportable(span as MutableSpan);
     } else {
