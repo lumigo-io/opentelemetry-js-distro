@@ -5,7 +5,7 @@ orbs:
 
 defaults: &defaults
   docker:
-  - image: lumigo/ci-ubuntu2204:26.1.13.13.5.11-testing
+  - image: lumigo/ci-ubuntu2204:latest
     auth:
       username: lumigo
       password: $DOCKERHUB_PASSWORD
@@ -38,7 +38,6 @@ workflows:
     - lumigo-orb/prep-it-resources:
         context: common
         venv_python_version: "3.9"
-        docker_image: lumigo/ci-ubuntu2204:26.1.13.13.5.11-testing
         requires:
           - lumigo-orb/is_environment_available
 
@@ -92,18 +91,15 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-#      - restore_cache:
-#          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
-      - run:
-          name: check node version
-          command: node -v
+      - restore_cache:
+          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run:
           name: install-npm-wee
           command: npm ci
-#      - save_cache:
-#          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
-#          paths:
-#            - ./node_modules
+      - save_cache:
+          key: js-distro-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
       - run:
           name: prettier
           command: npm run prettier:ci
