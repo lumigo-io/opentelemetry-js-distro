@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ResourceDetector, DetectedResource } from '@opentelemetry/resources';
 
 export const LUMIGO_DISTRO_VERSION = 'lumigo.distro.version';
