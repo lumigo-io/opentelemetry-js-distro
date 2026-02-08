@@ -5,6 +5,7 @@ import {
   SamplingDecision,
 } from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
+import { ATTR_URL_FULL, ATTR_URL_PATH, SEMATTRS_HTTP_TARGET, SEMATTRS_HTTP_URL } from '@opentelemetry/semantic-conventions';
 import { logger } from '../logging';
 
 export class LumigoSampler implements Sampler {
@@ -64,10 +65,10 @@ export const extractEndpoint = (attributes: Attributes, spanKind: SpanKind): str
    * http.url - replaced by the url.full attribute. Example: "https://www.foo.bar/search?q=OpenTelemetry#SemConv"
    * */
   if (spanKind === SpanKind.CLIENT) {
-    const endpoint_attr = attributes['url.full'] || attributes['http.url'];
+    const endpoint_attr = attributes[ATTR_URL_FULL] || attributes[SEMATTRS_HTTP_URL];
     return endpoint_attr ? endpoint_attr.toString() : null;
   } else if (spanKind === SpanKind.SERVER) {
-    const endpoint_attr = attributes['url.path'] || attributes['http.target'];
+    const endpoint_attr = attributes[ATTR_URL_PATH] || attributes[SEMATTRS_HTTP_TARGET];
     return endpoint_attr ? endpoint_attr.toString() : null;
   }
 
