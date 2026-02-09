@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["./test/utils/*.ts"],
+  "compilerOptions": {
+    "outDir": ".",
+    "composite": false,
+    "declaration": true,
+    "importsNotUsedAsValues": "remove",
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "types": ["jest", "node"]
+  }
+}

@@ -1,10 +1,10 @@
 import shimmer from 'shimmer';
-import * as grpcClientUtils from '@opentelemetry/instrumentation-grpc/build/src/grpc-js/clientUtils';
-import type { metadataCaptureType } from '@opentelemetry/instrumentation-grpc/build/src/internal-types';
+import * as grpcClientUtils from '@opentelemetry/instrumentation-grpc/build/src/clientUtils';
 import type {
+  metadataCaptureType,
   GrpcClientFunc,
   GrpcEmitter,
-} from '@opentelemetry/instrumentation-grpc/build/src/grpc-js/types';
+} from '@opentelemetry/instrumentation-grpc/build/src/internal-types';
 import type { Client, Metadata } from '@grpc/grpc-js';
 import type { Span } from '@opentelemetry/api';
 import { safeExecute } from '@lumigo/node-core/lib/utils';

@@ -31,13 +31,13 @@
 
 import { access, lstat, readFile, readdir } from 'fs/promises';
 import { postUri } from '../utils';
-import type { ResourceAttributes } from '@opentelemetry/resources';
+import type { Attributes } from '@opentelemetry/api';
 import { logger } from '../logging';
 
 export async function report(
   dependenciesEndpoint: string,
   lumigoToken: string,
-  resourceAttributes: ResourceAttributes
+  resourceAttributes: Attributes
 ) {
   const packages = await listPackages();
 

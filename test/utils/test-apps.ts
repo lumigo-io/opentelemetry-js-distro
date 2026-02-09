@@ -3,7 +3,7 @@ import { existsSync, unlinkSync } from 'fs';
 import waitOn from 'wait-on';
 import { Span } from './spans';
 import { sleep } from './time';
-import { LogRecord } from '@opentelemetry/sdk-logs';
+import { SdkLogRecord } from '@opentelemetry/sdk-logs';
 import {readDumpFile} from './common';
 
 const WAIT_ON_INITIAL_DELAY = 1_000;
@@ -206,7 +206,7 @@ export class TestApp {
         const port = await this.port()
 
         const url = `http-get://localhost:${port}/${path.replace(/^\/+/, '')}`;
-        const spanDumpPath = this.spanDumpPath;
+        const spanDumpPath = this.options.spanDumpPath;
 
         return new Promise<Span[]>((resolve, reject) => {
             console.info(`invoking url: ${url} and waiting for span dump...`);
@@ -277,14 +277,14 @@ export class TestApp {
         return await this.getFinalRecords<Span>(spanDumpPath, expectedNumberOfSpans, timeout);
     }
 
-    public async getFinalLogs(expectedNumberOfLogs?: number, timeout = 10_000): Promise<LogRecord[]> {
+    public async getFinalLogs(expectedNumberOfLogs?: number, timeout = 10_000): Promise<SdkLogRecord[]> {
         const { logDumpPath } = this.options;
 
         if (!logDumpPath) {
             throw new Error('logDumpPath was not provided in the TestApp options');
         }
 
-        return await this.getFinalRecords<LogRecord>(logDumpPath, expectedNumberOfLogs, timeout);
+        return await this.getFinalRecords<SdkLogRecord>(logDumpPath, expectedNumberOfLogs, timeout);
     }
 
     public async getFinalRecords<T>(dumpFilePath: string, expectedNumberOfRecords?: number, timeout = 10_000): Promise<T[]> {

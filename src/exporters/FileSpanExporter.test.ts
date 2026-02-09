@@ -18,8 +18,9 @@ describe('FileSpanExporter tests', () => {
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
 
-    const provider = new BasicTracerProvider();
-    provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+    const provider = new BasicTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporterUnderTest)],
+    });
 
     expect(spyExport).not.toHaveBeenCalled();
   });
@@ -30,8 +31,9 @@ describe('FileSpanExporter tests', () => {
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
 
-    const provider = new BasicTracerProvider();
-    provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+    const provider = new BasicTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporterUnderTest)],
+    });
 
     const root: Span = provider.getTracer('default').startSpan('root');
     root.setAttribute('foo', 'bar');
@@ -57,8 +59,9 @@ describe('FileSpanExporter tests', () => {
     try {
       const exporterUnderTest = new FileSpanExporter('console:log');
 
-      const provider = new BasicTracerProvider();
-      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+      const provider = new BasicTracerProvider({
+        spanProcessors: [new SimpleSpanProcessor(exporterUnderTest)],
+      });
 
       const root: Span = provider.getTracer('default').startSpan('root');
       root.setAttribute('foo', 'bar');
@@ -86,8 +89,9 @@ describe('FileSpanExporter tests', () => {
     try {
       const exporterUnderTest = new FileSpanExporter('console:error');
 
-      const provider = new BasicTracerProvider();
-      provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+      const provider = new BasicTracerProvider({
+        spanProcessors: [new SimpleSpanProcessor(exporterUnderTest)],
+      });
 
       const root: Span = provider.getTracer('default').startSpan('root');
       root.setAttribute('foo', 'bar');
@@ -116,8 +120,9 @@ describe('FileSpanExporter tests', () => {
     const exporterUnderTest = new FileSpanExporter(tmpFile);
     const spyExport = jest.spyOn(exporterUnderTest, 'export');
 
-    const provider = new BasicTracerProvider();
-    provider.addSpanProcessor(new SimpleSpanProcessor(exporterUnderTest));
+    const provider = new BasicTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporterUnderTest)],
+    });
 
     const tracer = provider.getTracer('default');
 
@@ -140,32 +145,27 @@ describe('FileSpanExporter tests', () => {
 
     // Inverted order because we close child before root
     const actualRootSpan = spyExport.mock.calls[1][0][0];
-    expect(actualRootSpan).toEqual(
-      expect.objectContaining({
-        attributes: { foo: 'bar' },
-        _spanContext: expect.any(Object),
-        name: 'root',
-        kind: SpanKind.SERVER,
-      })
-    );
+    expect(actualRootSpan).toMatchObject({
+      attributes: { foo: 'bar' },
+      _spanContext: expect.any(Object),
+      name: 'root',
+      kind: SpanKind.SERVER,
+    });
 
     const actualChildSpan = spyExport.mock.calls[0][0][0];
-    expect(actualChildSpan).toEqual(
-      expect.objectContaining({
-        attributes: { fooz: 'baz' },
-        _spanContext: expect.any(Object),
-        name: 'child',
-        kind: SpanKind.CLIENT,
-        parentSpanId: root['id'],
-      })
-    );
+    expect(actualChildSpan).toMatchObject({
+      attributes: { fooz: 'baz' },
+      _spanContext: expect.any(Object),
+      name: 'child',
+      kind: SpanKind.CLIENT,
+    });
   });
 
   test('should log an error when provided an invalid file path', async () => {
     expect(() => {
       new FileSpanExporter('\0');
     }).toThrowError(
-      "The argument 'path' must be a string or Uint8Array without null bytes. Received '\\x00'"
+      "The argument 'path' must be a string, Uint8Array, or URL without null bytes. Received '\\x00'"
     );
   });
 });

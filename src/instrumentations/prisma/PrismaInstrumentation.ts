@@ -3,12 +3,10 @@ import { TracingInstrumentor } from '../instrumentor';
 
 export default class LumigoPrismaInstrumentation extends TracingInstrumentor<PrismaInstrumentation> {
   getInstrumentedModule(): string {
-    return 'prisma';
+    return '@prisma/client';
   }
 
   getInstrumentation(): PrismaInstrumentation {
-    return new PrismaInstrumentation({
-      middleware: true,
-    });
+    return new PrismaInstrumentation();
   }
 }

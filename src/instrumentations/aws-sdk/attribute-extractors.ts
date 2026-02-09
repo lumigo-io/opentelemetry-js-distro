@@ -1,5 +1,6 @@
 import { CommonUtils, Triggers } from '@lumigo/node-core';
 import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { ATTR_URL_FULL, SEMATTRS_RPC_METHOD } from '@opentelemetry/semantic-conventions';
 import { logger } from '../../logging';
 
 type SqsReceivedMessage = {
@@ -40,8 +41,8 @@ export const extractAttributesFromSqsResponse = (
   sqsResponse: SqsResponse,
   span: ReadableSpan
 ): AwsExtractedAttributes => {
-  const operation = span.attributes['rpc.method'];
-  const awsResourceName = span.attributes['messaging.url'] as string;
+  const operation = span.attributes[SEMATTRS_RPC_METHOD];
+  const awsResourceName = span.attributes[ATTR_URL_FULL] as string;
   const baseAttributes = { 'aws.resource.name': awsResourceName };
 
   switch (operation) {
@@ -60,7 +61,7 @@ export const extractAttributesFromSqsResponse = (
             targetId: null,
             triggeredBy: Triggers.MessageTrigger.SQS,
             fromMessageIds: [messageId],
-            extra: { resource: span.attributes['messaging.url'] },
+            extra: { resource: span.attributes[ATTR_URL_FULL] },
           };
 
           lumigoData = JSON.stringify({

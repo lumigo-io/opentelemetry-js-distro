@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { readFile } from 'fs/promises';
+import { readFileSync } from 'fs';
 import { logger } from '../../logging';
-import { Detector, Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import type { ResourceDetector, DetectedResource } from '@opentelemetry/resources';
+
+// From @opentelemetry/semantic-conventions/incubating (ESLint can't resolve exports field)
+const ATTR_K8S_POD_UID = 'k8s.pod.uid';
 
 const POD_ID_LENGTH = 36;
 const CONTAINER_ID_LENGTH = 64;
@@ -10,10 +12,10 @@ const CONTAINER_ID_LENGTH = 64;
 /*
  * Detector for the Kubernetes Pod UUID, based on https://github.com/open-telemetry/opentelemetry-python-contrib/pull/1489
  */
-export class LumigoKubernetesDetector implements Detector {
-  async detect(_config?: ResourceDetectionConfig): Promise<Resource> {
+export class LumigoKubernetesDetector implements ResourceDetector {
+  detect(): DetectedResource {
     try {
-      const hostFileContent = await readFile('/etc/hosts', {
+      const hostFileContent = readFileSync('/etc/hosts', {
         flag: 'r',
         encoding: 'utf8',
       });
@@ -28,35 +30,37 @@ export class LumigoKubernetesDetector implements Detector {
         ex
       );
 
-      return Resource.EMPTY;
+      return { attributes: {} };
     }
 
     let podId: string;
 
     try {
-      podId = await get_kubenertes_pod_uid_v1();
+      podId = get_kubenertes_pod_uid_v1();
     } catch (err) {
       try {
         logger.debug(`No Pod UID v1 found: ${err}`);
 
-        podId = await get_kubenertes_pod_uid_v2();
+        podId = get_kubenertes_pod_uid_v2();
       } catch (err) {
         logger.debug(`No Pod UID v2 found: ${err}`);
       }
     }
 
     if (!podId) {
-      return Resource.EMPTY;
+      return { attributes: {} };
     }
 
-    return new Resource({
-      [SemanticResourceAttributes.K8S_POD_UID]: podId,
-    });
+    return {
+      attributes: {
+        [ATTR_K8S_POD_UID]: podId,
+      },
+    };
   }
 }
 
-const get_kubenertes_pod_uid_v1 = async (): Promise<string> => {
-  const mountinfo = await readFile('/proc/self/mountinfo', {
+const get_kubenertes_pod_uid_v1 = (): string => {
+  const mountinfo = readFileSync('/proc/self/mountinfo', {
     flag: 'r',
     encoding: 'utf8',
   });
@@ -69,14 +73,14 @@ const get_kubenertes_pod_uid_v1 = async (): Promise<string> => {
     .find((line) => line.indexOf('/pods/') > 0);
 
   if (!podMountInfoEntry) {
-    return Promise.reject(new Error("No pod-like mountpoint found in '/proc/self/mountinfo'"));
+    throw new Error("No pod-like mountpoint found in '/proc/self/mountinfo'");
   }
 
   return podMountInfoEntry.split('/pods/')[1].substring(0, POD_ID_LENGTH);
 };
 
-const get_kubenertes_pod_uid_v2 = async (): Promise<string> => {
-  const cgroups = await readFile('/proc/self/cgroup', {
+const get_kubenertes_pod_uid_v2 = (): string => {
+  const cgroups = readFileSync('/proc/self/cgroup', {
     flag: 'r',
     encoding: 'utf8',
   });

@@ -1,7 +1,14 @@
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { Resource, detectResources, envDetector, processDetector } from '@opentelemetry/resources';
+import type { Resource } from '@opentelemetry/resources';
+import {
+  detectResources,
+  envDetector,
+  processDetector,
+  resourceFromAttributes,
+  defaultResource,
+} from '@opentelemetry/resources';
 import { BasicTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import {
   BatchLogRecordProcessor,
@@ -35,10 +42,7 @@ import LumigoMongoDBInstrumentation from './instrumentations/mongodb/MongoDBInst
 import LumigoPgInstrumentation from './instrumentations/pg/PgInstrumentation';
 import LumigoPrismaInstrumentation from './instrumentations/prisma/PrismaInstrumentation';
 import LumigoRedisInstrumentation from './instrumentations/redis/RedisInstrumentation';
-import {
-  LumigoAwsSdkV2LibInstrumentation,
-  LumigoAwsSdkV3LibInstrumentation,
-} from './instrumentations/aws-sdk';
+import { LumigoAwsSdkV3LibInstrumentation } from './instrumentations/aws-sdk';
 import LumigoWinstonInstrumentation from './instrumentations/winston/WinstonInstrumentation';
 import LumigoBunyanInstrumentation from './instrumentations/bunyan/BunyanInstrumentation';
 import LumigoPinoInstrumentation from './instrumentations/pino/PinoInstrumentation';
@@ -73,6 +77,7 @@ declare global {
 export interface LumigoSdkInitialization {
   readonly tracerProvider: BasicTracerProvider;
   readonly loggerProvider: ApiLoggerProvider;
+  readonly resource: Resource;
   readonly instrumentedModules: string[];
   readonly reportDependencies: Promise<void | Object>;
 }
@@ -138,7 +143,6 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       new LumigoPgInstrumentation(),
       new LumigoPrismaInstrumentation(),
       new LumigoRedisInstrumentation(),
-      new LumigoAwsSdkV2LibInstrumentation(),
       new LumigoAwsSdkV3LibInstrumentation(),
 
       // Loggers
@@ -194,44 +198,36 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
      * These are the resources describing the infrastructure and the runtime that will be
      * sent along with the dependency reporting.
      */
-    const infrastructureResource = Resource.default().merge(
-      await detectResources({
+    const infrastructureResource = defaultResource().merge(
+      detectResources({
         detectors: infrastructureDetectors,
       })
     );
 
     const framework = instrumentedModules.includes('express') ? 'express' : 'node';
 
-    const resource = new Resource({
-      framework,
-    })
+    const processEnvDetectedResource = new ProcessEnvironmentDetector().detect();
+    const resource = defaultResource()
+      .merge(
+        resourceFromAttributes({
+          framework,
+        })
+      )
       .merge(infrastructureResource)
-      .merge(await new ProcessEnvironmentDetector().detect());
+      .merge(resourceFromAttributes(processEnvDetectedResource.attributes || {}));
 
-    const tracerProvider = new NodeTracerProvider({
-      sampler: getCombinedSampler(),
-      resource,
-      spanLimits: {
-        attributeValueLengthLimit: getSpanAttributeMaxLength(),
-      },
-    });
-
+    // Build span processors array
+    const spanProcessors = [];
     if (process.env.LUMIGO_DEBUG_SPANDUMP) {
-      tracerProvider.addSpanProcessor(
+      spanProcessors.push(
         new SimpleSpanProcessor(new FileSpanExporter(process.env.LUMIGO_DEBUG_SPANDUMP))
       );
     }
 
-    const loggerProvider = new LoggerProvider({
-      resource,
-      logRecordLimits: {
-        attributeValueLengthLimit: getLogAttributeMaxLength(),
-      },
-    });
-    loggerProvider.addLogRecordProcessor(new LumigoLogRecordProcessor());
-
+    // Build log record processors array
+    const logRecordProcessors = [new LumigoLogRecordProcessor()];
     if (process.env.LUMIGO_DEBUG_LOGDUMP) {
-      loggerProvider.addLogRecordProcessor(
+      logRecordProcessors.push(
         new SimpleLogRecordProcessor(new FileLogExporter(process.env.LUMIGO_DEBUG_LOGDUMP))
       );
     }
@@ -247,7 +243,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       });
 
       if (TRACING_ENABLED) {
-        tracerProvider.addSpanProcessor(
+        spanProcessors.push(
           new LumigoSpanProcessor(otlpTraceExporter, {
             // The maximum queue size. After the size is reached spans are dropped.
             maxQueueSize: 1000,
@@ -269,7 +265,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       });
 
       if (LOGGING_ENABLED) {
-        loggerProvider.addLogRecordProcessor(
+        logRecordProcessors.push(
           new BatchLogRecordProcessor(otlpLogExporter, {
             // The maximum queue size. After the size is reached logs are dropped.
             maxQueueSize: 1000,
@@ -305,6 +301,24 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
       reportDependencies = Promise.resolve('No Lumigo token available');
     }
 
+    // Create providers with processors
+    const tracerProvider = new NodeTracerProvider({
+      sampler: getCombinedSampler(),
+      resource,
+      spanLimits: {
+        attributeValueLengthLimit: getSpanAttributeMaxLength(),
+      },
+      spanProcessors,
+    });
+
+    const loggerProvider = new LoggerProvider({
+      resource,
+      logRecordLimits: {
+        attributeValueLengthLimit: getLogAttributeMaxLength(),
+      },
+      processors: logRecordProcessors,
+    });
+
     tracerProvider.register({
       propagator: new LumigoW3CTraceContextPropagator(),
     });
@@ -320,6 +334,7 @@ export const init = async (): Promise<LumigoSdkInitialization> => {
     return {
       tracerProvider,
       loggerProvider,
+      resource,
       reportDependencies,
       instrumentedModules,
     };

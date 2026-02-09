@@ -13,7 +13,7 @@ describe('aws-sdk instrumentation hooks', () => {
       const span = rootSpanWithAttributes({
         'rpc.service': 'SQS',
         'rpc.method': 'ReceiveMessage',
-        'messaging.destination': 'some-queue-name',
+        'messaging.destination.name': 'some-queue-name',
       });
       const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
         Messages: [{ Body: 'something' }],
@@ -63,7 +63,7 @@ describe('aws-sdk instrumentation hooks', () => {
       });
 
       describe("when LUMIGO_AUTO_FILTER_EMPTY_SQS is 'true'", () => {
-        test('marks spans coming from an empty SQS-polling as non-exportable', () => {
+        test('marks spans coming from an empty SQS-polling as non-exportable (Messages: [])', () => {
           jest.isolateModules(() => {
             process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
 
@@ -73,6 +73,25 @@ describe('aws-sdk instrumentation hooks', () => {
             });
             const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
               Messages: [],
+            });
+
+            responseHook(span, awsSdkResponse);
+
+            expect(span.attributes).toHaveProperty('SKIP_EXPORT', true);
+          });
+        });
+
+        // AWS SDK v3 returns Messages: undefined (not []) when the queue is empty
+        test('marks spans coming from an empty SQS-polling as non-exportable (Messages: undefined)', () => {
+          jest.isolateModules(() => {
+            process.env.LUMIGO_AUTO_FILTER_EMPTY_SQS = 'true';
+
+            const span = rootSpanWithAttributes({
+              'rpc.service': 'SQS',
+              'rpc.method': 'ReceiveMessage',
+            });
+            const awsSdkResponse: AwsSdkResponseHookInformation = awsResponseWithData({
+              Messages: undefined,
             });
 
             responseHook(span, awsSdkResponse);
@@ -128,6 +147,7 @@ describe('aws-sdk instrumentation hooks', () => {
           'rpc.method': 'ReceiveMessage',
         });
         const payload = {
+          Messages: [{ Body: 'some message' }],
           [secretKey]: secretValue,
           'non-secret-key': 'a'.repeat(getSpanAttributeMaxLength() * 2),
         };
@@ -167,7 +187,7 @@ describe('aws-sdk instrumentation hooks', () => {
         const span = rootSpanWithAttributes({
           'rpc.service': 'SQS',
           'rpc.method': sqsOperation,
-          'messaging.destination': 'some-queue-name',
+          'messaging.destination.name': 'some-queue-name',
         });
         const awsSdkRequest: AwsSdkRequestHookInformation = awsRequestWithCommandInput({
           some: 'thing',

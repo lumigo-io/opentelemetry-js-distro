@@ -12,7 +12,6 @@ import 'jest-json';
 import { getSpansByAttribute } from '../../../utils/spans';
 import { createTempQueue, filterAwsSdkInstrumentationSpans, testAppQueryParams } from '../../../utils/aws-sdk-helpers';
 import { shouldSkipSpanExport } from '../../../../src/resources/spanProcessor'
-import { SpanKind } from '@opentelemetry/api';
 
 const INSTRUMENTATION_NAME = 'aws-sdk-v3';
 const PACKAGE_NAME = '@aws-sdk/client-sqs';
@@ -105,9 +104,9 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
       const sqsReceiveSpan = getSpansByAttribute(sqsSpans, "rpc.method", "ReceiveMessage")[0]
 
       // Fields that are implicitly set by the aws-sdk instrumentation
-      expect(sqsReceiveSpan.attributes['aws.region']).toEqual(region);
-      expect(sqsReceiveSpan.attributes['messaging.system']).toBe('aws.sqs')
-      expect(sqsReceiveSpan.attributes['messaging.url']).toBe(queueUrl)
+      expect(sqsReceiveSpan.attributes['cloud.region']).toEqual(region);
+      expect(sqsReceiveSpan.attributes['messaging.system']).toBe('aws_sqs')
+      expect(sqsReceiveSpan.attributes['url.full']).toBe(queueUrl)
 
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsReceiveSpan.attributes['aws.resource.name']).toEqual(queueUrl);
@@ -143,9 +142,7 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
         ]
       });
 
-      const processingSpans = getSpansByAttribute(spans, "messaging.operation", "process")
-      expect(processingSpans.length).toBeGreaterThanOrEqual(1)
-      expect(processingSpans).toSatisfyAll((span) => span.kind === SpanKind.INTERNAL && span.attributes['messaging.message_id'] === undefined)
+      // Note: The new OTel aws-sdk instrumentation no longer creates separate "process" spans
     }
   )
 
@@ -176,9 +173,9 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
       const sqsSendSpan = getSpansByAttribute(sqsSpans, "rpc.method", "SendMessage")[0]
 
       // Fields that are implicitly set by the aws-sdk instrumentation
-      expect(sqsSendSpan.attributes['aws.region']).toEqual(region);
-      expect(sqsSendSpan.attributes['messaging.system']).toBe('aws.sqs')
-      expect(sqsSendSpan.attributes['messaging.url']).toBe(queueUrl)
+      expect(sqsSendSpan.attributes['cloud.region']).toEqual(region);
+      expect(sqsSendSpan.attributes['messaging.system']).toBe('aws_sqs')
+      expect(sqsSendSpan.attributes['url.full']).toBe(queueUrl)
 
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsSendSpan.attributes['aws.resource.name']).toEqual(queueUrl);
@@ -222,9 +219,9 @@ describe.each(versionsToTest(PACKAGE_NAME, PACKAGE_NAME))(`Instrumentation tests
       const sqsSendBatchSpan = getSpansByAttribute(sqsSpans, "rpc.method", "SendMessageBatch")[0]
 
       // Fields that are implicitly set by the aws-sdk instrumentation
-      expect(sqsSendBatchSpan.attributes['aws.region']).toEqual(region);
-      expect(sqsSendBatchSpan.attributes['messaging.system']).toBe('aws.sqs')
-      expect(sqsSendBatchSpan.attributes['messaging.url']).toBe(queueUrl)
+      expect(sqsSendBatchSpan.attributes['cloud.region']).toEqual(region);
+      expect(sqsSendBatchSpan.attributes['messaging.system']).toBe('aws_sqs')
+      expect(sqsSendBatchSpan.attributes['url.full']).toBe(queueUrl)
 
       // Fields we explicitly set in our instrumentation wrapper
       expect(sqsSendBatchSpan.attributes['aws.resource.name']).toEqual(queueUrl);

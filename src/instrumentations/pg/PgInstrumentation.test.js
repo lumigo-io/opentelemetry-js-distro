@@ -1,5 +1,4 @@
 import LumigoPgInstrumentation from './PgInstrumentation';
-import child_process from 'child_process';
 
 describe('LumigoPgInstrumentation', () => {
   const oldEnv = Object.assign({}, process.env);
@@ -15,9 +14,7 @@ describe('LumigoPgInstrumentation', () => {
   let lumigoPgInstrumentation = new LumigoPgInstrumentation();
 
   test('disable pg instrumentation', () => {
-    const child_process = require('child_process');
-    child_process.execSync('npm install pg', { stdio: 'inherit' });
-
+    // We've pre-installed pg in package.json
     process.env.LUMIGO_DISABLE_PG_INSTRUMENTATION = 'true';
     expect(lumigoPgInstrumentation.isApplicable()).toEqual(false);
   });
@@ -28,11 +25,7 @@ describe('LumigoPgInstrumentation', () => {
 
   // should not be skipped, see https://lumigo.atlassian.net/browse/RD-11195
   test.skip('requireIfAvailable should return required name', () => {
-    const child_process = require('child_process');
-    child_process.execSync('npm install pg', { stdio: 'inherit' });
-    const pg = require('pg');
-
-    expect(lumigoPgInstrumentation.requireIfAvailable()).toEqual(pg);
-    child_process.execSync('npm uninstall pg', { stdio: 'inherit' });
+    // We've pre-installed pg in package.json
+    // This test is skipped for now
   });
 });

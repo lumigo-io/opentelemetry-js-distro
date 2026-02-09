@@ -18,7 +18,7 @@ const TEST_APP_DIR = join(__dirname, 'app');
 const TEST_TIMEOUT = 600_000;
 
 const PG_CONNECT = 'pg.connect';
-const PG_QUERY = 'pg.query:\n test';
+const PG_QUERY = 'pg.query:CREATE test';
 
 
 const startPostgresDbContainer = async () => {

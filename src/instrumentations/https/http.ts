@@ -5,6 +5,11 @@ import { URL } from 'url';
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import type { RequestRawData } from '@lumigo/node-core/lib/types/spans/httpSpan';
 import type { Span } from '@opentelemetry/sdk-trace-base';
+import {
+  SEMATTRS_HTTP_HOST,
+  SEMATTRS_HTTP_TARGET,
+  SEMATTRS_NET_PEER_NAME,
+} from '@opentelemetry/semantic-conventions';
 import type { InstrumentationIfc } from '../hooksIfc';
 import { logger } from '../../logging';
 import { getAwsServiceData } from '../../spans/awsSpan';
@@ -73,8 +78,9 @@ export const HttpHooks: InstrumentationIfc<
       safeExecute(() => {
         const requestData: RequestRawData = {
           request: {
-            path: span.attributes?.['http.target'],
-            host: span.attributes?.['http.host'] || span.attributes?.['net.peer.name'],
+            path: span.attributes?.[SEMATTRS_HTTP_TARGET],
+            host:
+              span.attributes?.[SEMATTRS_HTTP_HOST] || span.attributes?.[SEMATTRS_NET_PEER_NAME],
             truncated: false,
             body: '',
             headers: Http.getRequestHeaders(request),

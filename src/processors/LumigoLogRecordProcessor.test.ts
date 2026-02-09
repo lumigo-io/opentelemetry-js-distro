@@ -1,4 +1,5 @@
-import { LogRecord } from '@opentelemetry/sdk-logs';
+import { LogRecordImpl } from '@opentelemetry/sdk-logs/build/src/LogRecordImpl';
+import type { SdkLogRecord } from '@opentelemetry/sdk-logs';
 import { LumigoLogRecordProcessor } from './LumigoLogRecordProcessor';
 import { LogAttributes, LogBody } from '@opentelemetry/api-logs';
 
@@ -6,7 +7,7 @@ import 'jest-json';
 
 describe('LumigoLogRecordProcessor', () => {
   it('does not fail on missing attributes', () => {
-    const logRecord: LogRecord = logRecordWith('some body', undefined);
+    const logRecord: SdkLogRecord = logRecordWith('some body', undefined);
 
     // @ts-ignore
     delete logRecord.attributes;
@@ -23,7 +24,7 @@ describe('LumigoLogRecordProcessor', () => {
       process.env.LUMIGO_SECRET_MASKING_REGEX = '[".*sekret.*"]';
       const { LumigoLogRecordProcessor } = jest.requireActual('./LumigoLogRecordProcessor');
 
-      const logRecord: LogRecord = logRecordWith(
+      const logRecord: SdkLogRecord = logRecordWith(
         { 'sekret-body': '123' },
         { 'sekret-attr': '456' }
       );
@@ -37,6 +38,9 @@ describe('LumigoLogRecordProcessor', () => {
   });
 
   const logRecordWith = (body: LogBody, attributes: LogAttributes = {}) =>
-    // @ts-ignore
-    new LogRecord({ logRecordLimits: {} }, { name: 'test', version: 'v1' }, { body, attributes });
+    new LogRecordImpl(
+      { logRecordLimits: {} },
+      { name: 'test', version: 'v1' },
+      { body, attributes }
+    );
 });

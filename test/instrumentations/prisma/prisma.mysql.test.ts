@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import 'jest-expect-message';
 import 'jest-json';
 import { join } from 'path';
+import { SpanKind } from '@opentelemetry/api';
 import { MySqlContainer, StartedMySqlContainer } from 'testcontainers';
 import { itTest } from '../../integration/setup';
 import { getSpanByName } from '../../utils/spans';
@@ -256,8 +257,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
                 getExpectedSpan({
                   name: 'prisma:engine:db_query',
                   resourceAttributes,
+                  kind: SpanKind.CLIENT,
                   attributes: {
-                    'db.statement': 'BEGIN',
+                    'db.query.text': 'BEGIN',
                   },
                 })
               );
@@ -266,8 +268,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
                 getExpectedSpan({
                   name: 'prisma:engine:db_query',
                   resourceAttributes,
+                  kind: SpanKind.CLIENT,
                   attributes: {
-                    'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
+                    'db.query.text': expect.stringMatching(/^INSERT INTO .*User/),
                   },
                 })
               );
@@ -276,8 +279,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
                 getExpectedSpan({
                   name: 'prisma:engine:db_query',
                   resourceAttributes,
+                  kind: SpanKind.CLIENT,
                   attributes: {
-                    'db.statement': expect.stringMatching(/^SELECT .*User/),
+                    'db.query.text': expect.stringMatching(/^SELECT .*User/),
                   },
                 })
               );
@@ -286,8 +290,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
                 getExpectedSpan({
                   name: 'prisma:engine:db_query',
                   resourceAttributes,
+                  kind: SpanKind.CLIENT,
                   attributes: {
-                    'db.statement': 'COMMIT',
+                    'db.query.text': 'COMMIT',
                   },
                 })
               );
@@ -298,8 +303,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
                 getExpectedSpan({
                   name: 'prisma:engine:db_query',
                   resourceAttributes,
+                  kind: SpanKind.CLIENT,
                   attributes: {
-                    'db.statement': expect.stringMatching(/^INSERT INTO .*User/),
+                    'db.query.text': expect.stringMatching(/^INSERT INTO .*User/),
                   },
                 })
               );
@@ -325,9 +331,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               })
             );
 
-            expect(getSpanByName(insertQuerySpans, 'prisma:engine')).toMatchObject(
+            expect(getSpanByName(insertQuerySpans, 'prisma:engine:query')).toMatchObject(
               getExpectedSpan({
-                name: 'prisma:engine',
+                name: 'prisma:engine:query',
                 resourceAttributes,
                 attributes: {},
               })
@@ -361,8 +367,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               getExpectedSpan({
                 name: 'prisma:engine:db_query',
                 resourceAttributes,
+                kind: SpanKind.CLIENT,
                 attributes: {
-                  'db.statement': expect.stringMatching(/^SELECT .*User/),
+                  'db.query.text': expect.stringMatching(/^SELECT .*User/),
                 },
               })
             );
@@ -375,9 +382,9 @@ describe.each(versionsToTest(INSTRUMENTATION_NAME, INSTRUMENTATION_NAME))(
               })
             );
 
-            expect(getSpanByName(selectQuerySpans, 'prisma:engine')).toMatchObject(
+            expect(getSpanByName(selectQuerySpans, 'prisma:engine:query')).toMatchObject(
               getExpectedSpan({
-                name: 'prisma:engine',
+                name: 'prisma:engine:query',
                 resourceAttributes,
                 attributes: {},
               })
