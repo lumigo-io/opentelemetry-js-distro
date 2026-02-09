@@ -5,7 +5,12 @@ import {
   SamplingDecision,
 } from '@opentelemetry/sdk-trace-base';
 import { Context, Link, Attributes, SpanKind } from '@opentelemetry/api';
-import { ATTR_URL_FULL, ATTR_URL_PATH, SEMATTRS_HTTP_TARGET, SEMATTRS_HTTP_URL } from '@opentelemetry/semantic-conventions';
+import {
+  ATTR_URL_FULL,
+  ATTR_URL_PATH,
+  SEMATTRS_HTTP_TARGET,
+  SEMATTRS_HTTP_URL,
+} from '@opentelemetry/semantic-conventions';
 import { logger } from '../logging';
 
 export class LumigoSampler implements Sampler {

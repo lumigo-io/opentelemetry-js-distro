@@ -14,7 +14,12 @@ import { extractAttributesFromSqsResponse } from './attribute-extractors';
 import { CommonUtils, ScrubContext } from '@lumigo/node-core';
 import { getSpanAttributeMaxLength } from '../../utils';
 import { SpanKind } from '@opentelemetry/api';
-import { SEMATTRS_MESSAGING_MESSAGE_ID, SEMATTRS_MESSAGING_OPERATION, SEMATTRS_RPC_METHOD, SEMATTRS_RPC_SERVICE } from '@opentelemetry/semantic-conventions';
+import {
+  SEMATTRS_MESSAGING_MESSAGE_ID,
+  SEMATTRS_MESSAGING_OPERATION,
+  SEMATTRS_RPC_METHOD,
+  SEMATTRS_RPC_SERVICE,
+} from '@opentelemetry/semantic-conventions';
 
 const SQS_PUBLISH_OPERATIONS = ['SendMessage', 'SendMessageBatch'];
 const SQS_CONSUME_OPERATIONS = ['ReceiveMessage'];
