@@ -139,3 +139,4 @@ jobs:
       - run:
           name: deploy to npm
           command: ./scripts/bd_to_prod.sh
+
